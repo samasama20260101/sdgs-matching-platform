@@ -3,14 +3,14 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// APIキーの取得（両方の変数名に対応）
-const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+// APIキーの取得（両方の変数名に対応、なければ空文字列）
+const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
 
 // APIキーがない場合のデモモード
 const DEMO_MODE = !apiKey;
 
 // デモモードでない場合のみGemini AIインスタンスを初期化
-const genAI = DEMO_MODE ? null : new GoogleGenerativeAI(apiKey);
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 /**
  * 相談内容からSDGsゴールを分類する
