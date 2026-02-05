@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 
+// 動的レンダリングを強制
+export const dynamic = 'force-dynamic';
+
 export default function TestAIPage() {
   const [consultationText, setConsultationText] = useState('');
   const [loading, setLoading] = useState(false);
