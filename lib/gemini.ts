@@ -3,23 +3,17 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// APIキーの取得（両方の変数名に対応、なければ空文字列）
-const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-
-// APIキーがない場合のデモモード
-const DEMO_MODE = !apiKey;
-
-// デモモードでない場合のみGemini AIインスタンスを初期化
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
 /**
  * 相談内容からSDGsゴールを分類する
  * @param consultationText ユーザーの相談内容
  * @returns SDGsゴール番号の配列と理由
  */
 export async function classifySDGs(consultationText: string) {
+  // APIキーの取得（実行時に取得）
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+  
   // デモモードの場合
-  if (DEMO_MODE) {
+  if (!apiKey) {
     return {
       success: true,
       data: {
@@ -31,7 +25,8 @@ export async function classifySDGs(consultationText: string) {
   }
 
   try {
-    const model = genAI!.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 あなたはSDGs（持続可能な開発目標）の専門家です。
@@ -71,7 +66,6 @@ SDGsゴール一覧：
     const response = await result.response;
     const text = response.text();
 
-    // JSONレスポンスをパース
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
@@ -97,7 +91,9 @@ SDGsゴール一覧：
  * @returns 追加質問の配列
  */
 export async function generateFollowUpQuestions(consultationText: string) {
-  if (DEMO_MODE) {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+  
+  if (!apiKey) {
     return {
       success: true,
       data: [
@@ -109,7 +105,8 @@ export async function generateFollowUpQuestions(consultationText: string) {
   }
 
   try {
-    const model = genAI!.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 以下の相談内容に対して、より詳しい情報を得るための質問を3つ生成してください。
@@ -157,7 +154,9 @@ export async function calculateMatchingScore(
   consultationText: string,
   npoDescription: string
 ) {
-  if (DEMO_MODE) {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+  
+  if (!apiKey) {
     return {
       success: true,
       data: {
@@ -170,7 +169,8 @@ export async function calculateMatchingScore(
   }
 
   try {
-    const model = genAI!.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 以下の相談内容とNPOの活動内容を分析し、マッチング度を0-100のスコアで評価してください。
