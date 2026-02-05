@@ -3,24 +3,29 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// APIキーの取得（両方の変数名に対応）
-const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-
-if (!apiKey) {
-  throw new Error('GOOGLE_GEMINI_API_KEY is not defined in environment variables');
-}
-
-// Gemini AIインスタンスの初期化
-const genAI = new GoogleGenerativeAI(apiKey);
-
 /**
  * 相談内容からSDGsゴールを分類する
  * @param consultationText ユーザーの相談内容
  * @returns SDGsゴール番号の配列と理由
  */
 export async function classifySDGs(consultationText: string) {
+  // APIキーの取得（実行時に取得）
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+  
+  // デモモードの場合
+  if (!apiKey) {
+    return {
+      success: true,
+      data: {
+        sdgs_goals: [4, 1, 10],
+        reasoning: "【デモモード】このアプリケーションは現在デモモードで動作しています。実際のAI分類を有効にするには、管理者がGoogle Gemini APIキーを設定する必要があります。このメッセージは、入力された相談内容に対するダミーの応答です。",
+        keywords: ["デモモード", "APIキー未設定", "テスト"]
+      }
+    };
+  }
+
   try {
-    // Gemini 1.5 Flash Latest モデルを使用
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
@@ -61,7 +66,6 @@ SDGsゴール一覧：
     const response = await result.response;
     const text = response.text();
 
-    // JSONレスポンスをパース
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
@@ -87,7 +91,21 @@ SDGsゴール一覧：
  * @returns 追加質問の配列
  */
 export async function generateFollowUpQuestions(consultationText: string) {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+  
+  if (!apiKey) {
+    return {
+      success: true,
+      data: [
+        "【デモモード】質問1のサンプル",
+        "【デモモード】質問2のサンプル", 
+        "【デモモード】質問3のサンプル"
+      ]
+    };
+  }
+
   try {
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
@@ -136,7 +154,22 @@ export async function calculateMatchingScore(
   consultationText: string,
   npoDescription: string
 ) {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+  
+  if (!apiKey) {
+    return {
+      success: true,
+      data: {
+        score: 85,
+        reasoning: "【デモモード】これはデモ応答です。",
+        strengths: ["デモ強み1", "デモ強み2"],
+        considerations: ["デモ検討点1", "デモ検討点2"]
+      }
+    };
+  }
+
   try {
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
