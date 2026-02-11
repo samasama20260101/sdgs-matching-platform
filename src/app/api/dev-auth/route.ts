@@ -9,8 +9,6 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({ success: true });
-  
-  // Cookieにパスワードを保存（7日間）
   response.cookies.set('dev-auth', devPassword, {
     httpOnly: true,
     secure: true,
