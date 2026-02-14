@@ -8,6 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/lib/supabase/client';
+import AddressForm, { AddressFormData } from '@/components/form/AddressForm';
+import ServiceAreaSelector, { ServiceArea } from '@/components/form/ServiceAreaSelector';
+import { Modal } from '@/components/ui/modal';
 
 type UserRole = 'SOS' | 'SUPPORTER';
 type SupporterType = 'NPO' | 'CORPORATE' | null;
@@ -18,6 +21,9 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formType, setFormType] = useState<FormType>('help_seeker');
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // 困っている人用
   const [helpSeekerData, setHelpSeekerData] = useState({
@@ -31,14 +37,23 @@ export default function SignupPage() {
   const [organizationData, setOrganizationData] = useState({
     organizationName: '',
     representativeName: '',
-    address: '',
     phone: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
 
-  // formTypeからroleとsupporter_typeを取得
+  const [addressData, setAddressData] = useState<AddressFormData>({
+    postalCode: '',
+    prefecture: '',
+    city: '',
+    addressLine1: '',
+    addressLine2: '',
+  });
+
+  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
+  const [isNationwide, setIsNationwide] = useState(false);
+
   const getRoleAndType = (type: FormType): { role: UserRole; supporterType: SupporterType } => {
     switch (type) {
       case 'help_seeker':
@@ -56,7 +71,6 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // パスワード確認
       const password = formType === 'help_seeker'
         ? helpSeekerData.password
         : organizationData.password;
@@ -70,11 +84,24 @@ export default function SignupPage() {
         return;
       }
 
-      // 電話番号バリデーション（NPO/企業）
       if (formType !== 'help_seeker') {
         const phoneRegex = /^[0-9-]+$/;
         if (!phoneRegex.test(organizationData.phone)) {
           setError('電話番号は数字とハイフンのみ使用できます');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (formType !== 'help_seeker') {
+        if (!addressData.prefecture || !addressData.city || !addressData.addressLine1) {
+          setError('サポーターは住所（都道府県・市区町村・番地）の入力が必須です');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!isNationwide && serviceAreas.length === 0) {
+          setError('活動地域を少なくとも1つ選択してください');
           setIsLoading(false);
           return;
         }
@@ -86,7 +113,6 @@ export default function SignupPage() {
 
       const { role, supporterType } = getRoleAndType(formType);
 
-      // 1. Supabase Authでユーザー作成
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -107,7 +133,15 @@ export default function SignupPage() {
         return;
       }
 
-      // 2. public.usersテーブルに保存
+      const addressStructured = (addressData.postalCode || addressData.prefecture || addressData.city) ? {
+        country: 'JP',
+        postal_code: addressData.postalCode,
+        prefecture: addressData.prefecture,
+        city: addressData.city,
+        line1: addressData.addressLine1,
+        line2: addressData.addressLine2,
+      } : null;
+
       const userData = formType === 'help_seeker'
         ? {
           auth_user_id: authData.user.id,
@@ -115,6 +149,11 @@ export default function SignupPage() {
           supporter_type: null,
           display_name: helpSeekerData.name,
           email,
+          region_country: 'JP',
+          postal_code: addressData.postalCode || null,
+          prefecture: addressData.prefecture || null,
+          city: addressData.city || null,
+          address_structured: addressStructured,
         }
         : {
           auth_user_id: authData.user.id,
@@ -124,7 +163,13 @@ export default function SignupPage() {
           email,
           phone: organizationData.phone,
           organization_name: organizationData.organizationName,
-          address: organizationData.address,
+          region_country: 'JP',
+          postal_code: addressData.postalCode,
+          prefecture: addressData.prefecture,
+          city: addressData.city,
+          address_structured: addressStructured,
+          service_area_nationwide: isNationwide,
+          service_areas: serviceAreas.length > 0 ? serviceAreas : null,
         };
 
       const { error: dbError } = await supabase
@@ -138,9 +183,9 @@ export default function SignupPage() {
         return;
       }
 
-      // 登録成功
-      alert('登録が完了しました！\nメールアドレスに確認メールを送信しました。\nメールを確認してからログインしてください。');
-      router.push('/');
+      setRegisteredEmail(email);
+      setShowSuccessModal(true);
+      setIsLoading(false);
 
     } catch (err) {
       console.error('Signup error:', err);
@@ -258,6 +303,27 @@ export default function SignupPage() {
                     minLength={8}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">
+                    住所 <span className="text-gray-400 text-sm">（任意）</span>
+                  </Label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    💡 郵便番号を入力すると、お近くのサポーターが優先的に表示されます。<br />
+                    都道府県・市区町村までの入力でもマッチング可能です。
+                  </p>
+                  <AddressForm
+                    countryCode="JP"
+                    required={false}
+                    requiredFields={{
+                      postalCode: false,
+                      prefecture: false,
+                      city: false,
+                      addressLine1: false,
+                    }}
+                    onChange={setAddressData}
+                  />
+                </div>
               </>
             )}
 
@@ -294,16 +360,22 @@ export default function SignupPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">
+                  <Label className="text-base font-medium">
                     住所 <span className="text-red-500">*</span>
                   </Label>
-                  <Input
-                    id="address"
-                    type="text"
-                    placeholder="東京都〇〇区〇〇 1-2-3"
-                    value={organizationData.address}
-                    onChange={(e) => setOrganizationData({ ...organizationData, address: e.target.value })}
-                    required
+                  <p className="text-xs text-gray-500 mb-2">
+                    💡 活動拠点の住所を入力してください
+                  </p>
+                  <AddressForm
+                    countryCode="JP"
+                    required={true}
+                    requiredFields={{
+                      postalCode: true,
+                      prefecture: true,
+                      city: true,
+                      addressLine1: true,
+                    }}
+                    onChange={setAddressData}
                   />
                 </div>
 
@@ -318,6 +390,19 @@ export default function SignupPage() {
                     value={organizationData.phone}
                     onChange={(e) => setOrganizationData({ ...organizationData, phone: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">
+                    活動地域 <span className="text-red-500">*</span>
+                  </Label>
+                  <ServiceAreaSelector
+                    countryCode="JP"
+                    onChange={(areas, nationwide) => {
+                      setServiceAreas(areas);
+                      setIsNationwide(nationwide);
+                    }}
                   />
                 </div>
 
@@ -368,14 +453,12 @@ export default function SignupPage() {
               </>
             )}
 
-            {/* エラーメッセージ */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                 {error}
               </div>
             )}
 
-            {/* 登録ボタン */}
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
@@ -385,7 +468,6 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          {/* ログインリンク */}
           <div className="mt-4 text-center text-sm text-gray-600">
             すでにアカウントをお持ちですか？{' '}
             <a href="/login" className="text-blue-600 hover:underline">
@@ -394,6 +476,33 @@ export default function SignupPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 成功モーダル */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => router.push('/login')}
+        title="登録が完了しました！"
+        type="info"
+      >
+        <div className="text-center py-4">
+          <div className="text-4xl mb-4">✅</div>
+          <p className="text-gray-700 mb-4 font-medium">
+            メールアドレスに確認メールを送信しました。
+          </p>
+          <p className="text-sm text-gray-600 mb-2 px-4 py-2 bg-blue-50 rounded">
+            {registeredEmail}
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            メールを確認してからログインしてください。
+          </p>
+          <button
+            onClick={() => router.push('/login')}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            ログインページへ
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

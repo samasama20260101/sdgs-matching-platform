@@ -80,23 +80,40 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --sdgs-1: #e5243b;  /* No Poverty */
-  --sdgs-2: #dda63a;  /* Zero Hunger */
-  --sdgs-3: #4c9f38;  /* Good Health */
-  --sdgs-4: #c5192d;  /* Quality Education */
-  --sdgs-5: #ff3a21;  /* Gender Equality */
-  --sdgs-6: #26bde2;  /* Clean Water */
-  --sdgs-7: #fcc30b;  /* Affordable Energy */
-  --sdgs-8: #a21942;  /* Decent Work */
-  --sdgs-9: #fd6925;  /* Industry Innovation */
-  --sdgs-10: #dd1367; /* Reduced Inequalities */
-  --sdgs-11: #fd9d24; /* Sustainable Cities */
-  --sdgs-12: #bf8b2e; /* Responsible Consumption */
-  --sdgs-13: #3f7e44; /* Climate Action */
-  --sdgs-14: #0a97d9; /* Life Below Water */
-  --sdgs-15: #56c02b; /* Life on Land */
-  --sdgs-16: #00689d; /* Peace Justice */
-  --sdgs-17: #19486a; /* Partnerships */
+  --sdgs-1: #e5243b;
+  /* No Poverty */
+  --sdgs-2: #dda63a;
+  /* Zero Hunger */
+  --sdgs-3: #4c9f38;
+  /* Good Health */
+  --sdgs-4: #c5192d;
+  /* Quality Education */
+  --sdgs-5: #ff3a21;
+  /* Gender Equality */
+  --sdgs-6: #26bde2;
+  /* Clean Water */
+  --sdgs-7: #fcc30b;
+  /* Affordable Energy */
+  --sdgs-8: #a21942;
+  /* Decent Work */
+  --sdgs-9: #fd6925;
+  /* Industry Innovation */
+  --sdgs-10: #dd1367;
+  /* Reduced Inequalities */
+  --sdgs-11: #fd9d24;
+  /* Sustainable Cities */
+  --sdgs-12: #bf8b2e;
+  /* Responsible Consumption */
+  --sdgs-13: #3f7e44;
+  /* Climate Action */
+  --sdgs-14: #0a97d9;
+  /* Life Below Water */
+  --sdgs-15: #56c02b;
+  /* Life on Land */
+  --sdgs-16: #00689d;
+  /* Peace Justice */
+  --sdgs-17: #19486a;
+  /* Partnerships */
 }
 
 .dark {
@@ -137,7 +154,102 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* 🆕 カスタムアニメーション */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
 }
