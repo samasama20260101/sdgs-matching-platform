@@ -126,7 +126,7 @@ export default function SOSDashboard() {
   };
 
   const handleStartNewCase = () => {
-    const openCases = cases.filter(c => c.status === 'OPEN');
+    const openCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
 
     if (openCases.length >= 3) {
       toast.warning('進行中の相談は最大3件までです。既存の相談を取り消してから新規登録してください。');
@@ -149,7 +149,7 @@ export default function SOSDashboard() {
     return `${Math.floor(diffDays / 30)}ヶ月前`;
   };
 
-  const activeCases = cases.filter(c => c.status === 'OPEN');
+  const activeCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
   const pastCases = cases.filter(c => ['RESOLVED', 'CANCELLED', 'CLOSED'].includes(c.status));
 
   if (isLoading) {
@@ -180,8 +180,8 @@ export default function SOSDashboard() {
           <button
             onClick={() => setActiveTab('active')}
             className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'active'
-                ? 'text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             📋 進行中の相談
@@ -198,8 +198,8 @@ export default function SOSDashboard() {
           <button
             onClick={() => setActiveTab('past')}
             className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'past'
-                ? 'text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             📚 過去の相談
@@ -334,8 +334,8 @@ export default function SOSDashboard() {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-semibold text-gray-800">{case_.title}</h3>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${case_.status === 'RESOLVED'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-600'
                               }`}>
                               {case_.status === 'RESOLVED' ? '✓ 解決済み' : '取消済み'}
                             </span>
