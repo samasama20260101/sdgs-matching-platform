@@ -316,8 +316,8 @@ export default function SupporterDashboard() {
       if (userError || !user || user.role !== 'SUPPORTER') { router.push('/'); return; }
       setUserData(user);
 
-      // 公開中の案件を取得
-      const { data: casesData } = await supabase
+      // 公開中の案件（OPEN）+ 自分が関わっている案件（MATCHED）を取得
+      const { data: openCases } = await supabase
         .from('cases')
         .select(`
           *,
@@ -327,6 +327,37 @@ export default function SupporterDashboard() {
         .eq('status', 'OPEN')
         .not('ai_sdg_suggestion', 'is', null)
         .order('created_at', { ascending: false });
+
+      // 自分がオファーした案件（MATCHED含む）も取得
+      const { data: myOfferCases } = await supabase
+        .from('offers')
+        .select('case_id')
+        .eq('supporter_user_id', user.id)
+        .in('status', ['PENDING', 'ACCEPTED']);
+
+      const myOfferCaseIds = (myOfferCases || []).map(o => o.case_id);
+      let matchedCases: typeof openCases = [];
+
+      if (myOfferCaseIds.length > 0) {
+        const { data: matched } = await supabase
+          .from('cases')
+          .select(`
+            *,
+            users!cases_owner_user_id_fkey ( display_name, prefecture )
+          `)
+          .in('id', myOfferCaseIds)
+          .neq('status', 'OPEN') // OPENは既に取得済み
+          .order('created_at', { ascending: false });
+        matchedCases = matched || [];
+      }
+
+      // 重複排除してマージ
+      const caseMap = new Map<string, (typeof openCases extends (infer T)[] | null ? T : never)>();
+      [...(openCases || []), ...(matchedCases || [])].forEach(c => {
+        if (!caseMap.has(c.id)) caseMap.set(c.id, c);
+      });
+      const casesData = Array.from(caseMap.values())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       // 自分のオファー状況を取得
       const { data: myOffers } = await supabase

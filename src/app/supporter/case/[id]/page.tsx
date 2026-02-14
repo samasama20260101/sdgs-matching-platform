@@ -1,9 +1,14 @@
+// ─────────────────────────────────────────────────────────────
+// 📂 src/app/supporter/case/[id]/page.tsx
+// サポーター案件詳細ページ（案件確認・申し出・メッセージ）
+// ─────────────────────────────────────────────────────────────
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
+import MessageThread from '@/components/chat/MessageThread';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -61,6 +66,7 @@ export default function SupporterCaseDetailPage() {
 
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [myOffer, setMyOffer] = useState<OfferData | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -73,24 +79,20 @@ export default function SupporterCaseDetailPage() {
 
   const loadData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.push('/login');
-      return;
-    }
+    if (!session) { router.push('/login'); return; }
 
-    const { data: caseData, error: caseError } = await supabase
+    const { data: caseResult, error: caseError } = await supabase
       .from('cases')
       .select('*')
       .eq('id', params.id)
       .single();
 
-    if (caseError || !caseData) {
+    if (caseError || !caseResult) {
       toast.error('相談が見つかりませんでした');
       router.push('/supporter/dashboard');
       return;
     }
-
-    setCaseData(caseData);
+    setCaseData(caseResult);
 
     const { data: userData } = await supabase
       .from('users')
@@ -98,10 +100,9 @@ export default function SupporterCaseDetailPage() {
       .eq('auth_user_id', session.user.id)
       .single();
 
-    if (!userData) {
-      setIsLoading(false);
-      return;
-    }
+    if (!userData) { setIsLoading(false); return; }
+
+    setCurrentUserId(userData.id);
 
     const { data: offerData } = await supabase
       .from('offers')
@@ -115,68 +116,28 @@ export default function SupporterCaseDetailPage() {
   };
 
   const handleSubmitOffer = async () => {
-    if (!offerMessage.trim()) {
-      toast.warning('メッセージを入力してください');
-      return;
-    }
-
+    if (!offerMessage.trim()) { toast.warning('メッセージを入力してください'); return; }
     setIsSubmitting(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
+      if (!session) { router.push('/login'); return; }
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', session.user.id)
-        .single();
+      const { data: userData } = await supabase.from('users').select('id').eq('auth_user_id', session.user.id).single();
+      if (!userData) { toast.error('ユーザー情報が取得できませんでした'); setIsSubmitting(false); return; }
 
-      if (!userData) {
-        toast.error('ユーザー情報が取得できませんでした');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 🆕 既存のオファーがあるか確認
       if (myOffer && (myOffer.status === 'WITHDRAWN' || myOffer.status === 'DECLINED')) {
-        // 既存レコードを更新（再申し出）
         const { error } = await supabase
           .from('offers')
-          .update({
-            message: offerMessage,
-            status: 'PENDING',
-            created_at: new Date().toISOString(),
-          })
+          .update({ message: offerMessage, status: 'PENDING', created_at: new Date().toISOString() })
           .eq('id', myOffer.id);
-
-        if (error) {
-          console.error('Update offer error:', error);
-          toast.error('申し出の更新に失敗しました');
-          setIsSubmitting(false);
-          return;
-        }
+        if (error) { toast.error('申し出の更新に失敗しました'); setIsSubmitting(false); return; }
       } else {
-        // 新規作成
         const { error } = await supabase
           .from('offers')
-          .insert([{
-            case_id: params.id,
-            supporter_user_id: userData.id,
-            message: offerMessage,
-            status: 'PENDING',
-          }]);
-
+          .insert([{ case_id: params.id, supporter_user_id: userData.id, message: offerMessage, status: 'PENDING' }]);
         if (error) {
-          console.error('Insert offer error:', error);
-          if (error.code === '23505') {
-            toast.error('既に申し出を送信済みです');
-          } else {
-            toast.error('申し出の送信に失敗しました');
-          }
+          toast.error(error.code === '23505' ? '既に申し出を送信済みです' : '申し出の送信に失敗しました');
           setIsSubmitting(false);
           return;
         }
@@ -185,10 +146,8 @@ export default function SupporterCaseDetailPage() {
       setShowOfferModal(false);
       setOfferMessage('');
       setIsSubmitting(false);
-
       await loadData();
       toast.success('支援の申し出を送信しました');
-
     } catch (err) {
       console.error('Submit offer error:', err);
       toast.error('エラーが発生しました');
@@ -198,49 +157,24 @@ export default function SupporterCaseDetailPage() {
 
   const confirmWithdraw = async () => {
     if (!myOffer) return;
-
-    console.log('🔄 Withdrawing offer:', myOffer.id);
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('offers')
-      .update({
-        status: 'WITHDRAWN',
-        // updated_atは削除（トリガーで自動更新されるため）
-      })
+      .update({ status: 'WITHDRAWN' })
       .eq('id', myOffer.id)
-      .select(); // 🆕 結果を取得
+      .select();
 
-    console.log('📊 Withdraw result:', { data, error });
-
-    if (error) {
-      console.error('❌ Withdraw error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
-      toast.error('取り下げに失敗しました: ' + error.message);
-      return;
-    }
-
+    if (error) { toast.error('取り下げに失敗しました: ' + error.message); return; }
     setShowWithdrawModal(false);
     await loadData();
     toast.success('申し出を取り下げました');
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  // 🆕 オファーを送信できるか判定
   const canSendOffer = !myOffer || myOffer.status === 'WITHDRAWN' || myOffer.status === 'DECLINED';
-  // 🆕 オファーを表示すべきか判定
   const shouldShowOffer = myOffer && myOffer.status !== 'WITHDRAWN' && myOffer.status !== 'DECLINED';
+  const isAccepted = myOffer?.status === 'ACCEPTED';
 
   if (isLoading) {
     return (
@@ -255,14 +189,11 @@ export default function SupporterCaseDetailPage() {
       <Header />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
-        <Button
-          variant="outline"
-          onClick={() => router.push('/supporter/dashboard')}
-          className="mb-4"
-        >
+        <Button variant="outline" onClick={() => router.push('/supporter/dashboard')} className="mb-4">
           ← ダッシュボードに戻る
         </Button>
 
+        {/* 案件詳細カード */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -270,12 +201,15 @@ export default function SupporterCaseDetailPage() {
                 <CardTitle className="text-xl mb-2">{caseData?.title}</CardTitle>
                 <div className="flex gap-2 flex-wrap">
                   {caseData?.urgency === 'High' && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">
-                      ⚠️ 緊急
-                    </span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>
                   )}
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">
-                    {caseData?.status}
+                  <span className={`text-xs px-2 py-1 rounded-full ${caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                      caseData?.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
+                        'bg-gray-100 text-gray-600'
+                    }`}>
+                    {caseData?.status === 'MATCHED' ? '🤝 マッチ済み' :
+                      caseData?.status === 'OPEN' ? '⏳ サポーター待ち' :
+                        caseData?.status}
                   </span>
                   <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
                     📅 {formatDate(caseData?.created_at || '')}
@@ -287,47 +221,29 @@ export default function SupporterCaseDetailPage() {
           <CardContent className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-2">詳細</h3>
-              <p className="text-gray-700 whitespace-pre-line">
-                {caseData?.description_free}
-              </p>
+              <p className="text-gray-700 whitespace-pre-line">{caseData?.description_free}</p>
             </div>
 
             {caseData?.ai_sdg_suggestion && (
               <div className="border-t pt-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-3">🤖 AI分析結果</h3>
-
                 <div className="mb-3">
                   <p className="text-xs text-gray-500 mb-2">関連するSDGsゴール</p>
                   <div className="flex flex-wrap gap-2">
                     {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
-                      <div
-                        key={goalId}
-                        className="flex items-center gap-2 p-2 rounded-lg"
-                        style={{ backgroundColor: `${SDG_COLORS[goalId]}20` }}
-                      >
-                        <span
-                          className="text-white text-xs font-bold px-2 py-1 rounded"
-                          style={{ backgroundColor: SDG_COLORS[goalId] }}
-                        >
+                      <div key={goalId} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: `${SDG_COLORS[goalId]}20` }}>
+                        <span className="text-white text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>
                           SDG {goalId}
                         </span>
-                        <span className="text-sm font-medium">
-                          {SDG_NAMES[goalId]}
-                        </span>
+                        <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-
                 {caseData.ai_sdg_suggestion.keywords && (
                   <div className="flex flex-wrap gap-2">
                     {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
-                      <span
-                        key={i}
-                        className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600"
-                      >
-                        #{kw}
-                      </span>
+                      <span key={i} className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">#{kw}</span>
                     ))}
                   </div>
                 )}
@@ -336,7 +252,7 @@ export default function SupporterCaseDetailPage() {
           </CardContent>
         </Card>
 
-        {/* 🆕 オファー表示ロジック改善 */}
+        {/* ───── オファーステータス ───── */}
         {shouldShowOffer && myOffer ? (
           <Card className="mb-6">
             <CardHeader>
@@ -345,18 +261,14 @@ export default function SupporterCaseDetailPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${myOffer.status === 'PENDING'
-                    ? 'bg-yellow-100 text-yellow-700'
-                    : myOffer.status === 'ACCEPTED'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${myOffer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                      myOffer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-700'
                     }`}>
                     {myOffer.status === 'PENDING' && '⏳ 承認待ち'}
                     {myOffer.status === 'ACCEPTED' && '✅ 承認済み'}
                   </span>
-                  <span className="text-xs text-gray-500">
-                    {formatDate(myOffer.created_at)}
-                  </span>
+                  <span className="text-xs text-gray-500">{formatDate(myOffer.created_at)}</span>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-sm text-gray-700">{myOffer.message}</p>
@@ -364,12 +276,7 @@ export default function SupporterCaseDetailPage() {
 
                 {myOffer.status === 'PENDING' && (
                   <div className="pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowWithdrawModal(true)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setShowWithdrawModal(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
                       申し出を取り下げる
                     </Button>
                   </div>
@@ -378,8 +285,7 @@ export default function SupporterCaseDetailPage() {
                 {myOffer.status === 'ACCEPTED' && (
                   <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                     <p className="text-sm text-green-700">
-                      💚 相談者があなたの支援を承認しました。<br />
-                      連絡を取り合って支援を進めてください。
+                      💚 相談者があなたの支援を承認しました。下のメッセージで連絡を取り合いましょう。
                     </p>
                   </div>
                 )}
@@ -389,37 +295,31 @@ export default function SupporterCaseDetailPage() {
         ) : canSendOffer ? (
           <Card className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-none">
             <CardContent className="py-8 text-center">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">
-                この方を支援しませんか？
-              </h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">この方を支援しませんか？</h3>
               <p className="text-sm text-gray-600 mb-4">
                 {myOffer && (myOffer.status === 'WITHDRAWN' || myOffer.status === 'DECLINED')
                   ? '再度申し出を送信できます'
                   : 'あなたの組織で支援できる場合は、申し出を送信してください'}
               </p>
-              <Button
-                onClick={() => setShowOfferModal(true)}
-                className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-              >
+              <Button onClick={() => setShowOfferModal(true)} className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
                 💙 支援を申し出る
               </Button>
             </CardContent>
           </Card>
         ) : null}
+
+        {/* ───── 💬 メッセージスレッド（承認済みの場合のみ） ───── */}
+        {isAccepted && currentUserId && (
+          <div className="mb-6">
+            <MessageThread caseId={caseData!.id} currentUserId={currentUserId} />
+          </div>
+        )}
       </main>
 
       {/* オファー送信モーダル */}
-      <Modal
-        isOpen={showOfferModal}
-        onClose={() => setShowOfferModal(false)}
-        title="支援の申し出"
-        type="info"
-      >
+      <Modal isOpen={showOfferModal} onClose={() => setShowOfferModal(false)} title="支援の申し出" type="info">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            この方への支援について、メッセージを送信してください。
-          </p>
-
+          <p className="text-sm text-gray-600">この方への支援について、メッセージを送信してください。</p>
           <div className="space-y-2">
             <Label htmlFor="offerMessage">メッセージ <span className="text-red-500">*</span></Label>
             <textarea
@@ -431,54 +331,25 @@ export default function SupporterCaseDetailPage() {
               onChange={(e) => setOfferMessage(e.target.value)}
             />
           </div>
-
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowOfferModal(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              disabled={isSubmitting}
-            >
+            <button onClick={() => setShowOfferModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" disabled={isSubmitting}>
               キャンセル
             </button>
-            <button
-              onClick={handleSubmitOffer}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              disabled={isSubmitting}
-            >
+            <button onClick={handleSubmitOffer} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" disabled={isSubmitting}>
               {isSubmitting ? '送信中...' : '送信する'}
             </button>
           </div>
         </div>
       </Modal>
 
-      {/* 🆕 取り下げ確認モーダル */}
-      <Modal
-        isOpen={showWithdrawModal}
-        onClose={() => setShowWithdrawModal(false)}
-        title="申し出を取り下げますか？"
-        type="warning"
-      >
+      {/* 取り下げ確認モーダル */}
+      <Modal isOpen={showWithdrawModal} onClose={() => setShowWithdrawModal(false)} title="申し出を取り下げますか？" type="warning">
         <div className="space-y-4">
-          <p className="text-gray-700">
-            この申し出を取り下げると、相談者には表示されなくなります。
-          </p>
-          <p className="text-sm text-gray-500">
-            ※ 取り下げ後、再度申し出を送ることができます
-          </p>
-
+          <p className="text-gray-700">この申し出を取り下げると、相談者には表示されなくなります。</p>
+          <p className="text-sm text-gray-500">※ 取り下げ後、再度申し出を送ることができます</p>
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowWithdrawModal(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={confirmWithdraw}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              取り下げる
-            </button>
+            <button onClick={() => setShowWithdrawModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
+            <button onClick={confirmWithdraw} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">取り下げる</button>
           </div>
         </div>
       </Modal>
