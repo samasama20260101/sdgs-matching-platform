@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/toast';
+import { Modal } from '@/components/ui/modal';
 
 type CaseData = {
   id: string;
@@ -13,9 +15,7 @@ type CaseData = {
   description_free: string;
   urgency: string;
   status: string;
-  intake_qna: {
-    qa: Record<string, string>;
-  };
+  created_at: string;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -23,7 +23,19 @@ type CaseData = {
   } | null;
 };
 
-// SDGsゴールの色定義
+type OfferData = {
+  id: string;
+  message: string;
+  status: string;
+  created_at: string;
+  supporter: {
+    id: string;
+    display_name: string;
+    organization_name: string | null;
+    supporter_type: string;
+  };
+};
+
 const SDG_COLORS: Record<number, string> = {
   1: '#e5243b', 2: '#dda63a', 3: '#4c9f38', 4: '#c5192d',
   5: '#ff3a21', 6: '#26bde2', 7: '#fcc30b', 8: '#a21942',
@@ -32,7 +44,6 @@ const SDG_COLORS: Record<number, string> = {
   17: '#19486a',
 };
 
-// SDGsゴールの名前
 const SDG_NAMES: Record<number, string> = {
   1: '貧困をなくそう', 2: '飢餓をゼロに', 3: 'すべての人に健康と福祉を',
   4: '質の高い教育をみんなに', 5: 'ジェンダー平等を実現しよう',
@@ -47,82 +58,245 @@ const SDG_NAMES: Record<number, string> = {
 export default function SOSResultPage() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
+
   const [caseData, setCaseData] = useState<CaseData | null>(null);
+  const [offers, setOffers] = useState<OfferData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [limitModal, setLimitModal] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<OfferData | null>(null);
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
 
   useEffect(() => {
-    const loadCase = async () => {
-      // ログイン確認
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
+    loadData();
+  }, [params.id]);
 
-      // ケースデータ取得
-      const { data, error: fetchError } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('id', params.id)
-        .single();
+  const loadData = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push('/login');
+      return;
+    }
 
-      if (fetchError || !data) {
-        setError('相談内容が見つかりませんでした');
-        setIsLoading(false);
-        return;
-      }
+    // ケースデータ取得
+    const { data: caseData, error: caseError } = await supabase
+      .from('cases')
+      .select('*')
+      .eq('id', params.id)
+      .single();
 
-      setCaseData(data);
-      setIsLoading(false);
-    };
+    if (caseError || !caseData) {
+      toast.error('相談が見つかりませんでした');
+      router.push('/sos/dashboard');
+      return;
+    }
 
-    loadCase();
-  }, [params.id, router]);
+    // 自分の相談か確認
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', session.user.id)
+      .single();
 
-  const handleAnalyze = async () => {
-    if (!caseData) return;
+    if (!userData || caseData.owner_user_id !== userData.id) {
+      toast.error('アクセス権限がありません');
+      router.push('/sos/dashboard');
+      return;
+    }
+
+    setCaseData(caseData);
+
+    // AI分析がまだなら実行
+    if (!caseData.ai_sdg_suggestion) {
+      await runAIAnalysis(caseData);
+    }
+
+    // オファーを取得
+    await loadOffers();
+
+    setIsLoading(false);
+  };
+
+  const loadOffers = async () => {
+    // まずofferデータだけ取得
+    const { data: offersData, error: offersError } = await supabase
+      .from('offers')
+      .select('*')
+      .eq('case_id', params.id)
+      .in('status', ['PENDING', 'ACCEPTED'])
+      .order('created_at', { ascending: false });
+
+    console.log('📊 Raw offers:', offersData);
+    console.log('❌ Offers error:', offersError);
+
+    if (offersError || !offersData) {
+      console.error('Failed to fetch offers');
+      return;
+    }
+
+    // 各offerに対してサポーター情報を取得
+    const offersWithSupporter = await Promise.all(
+      offersData.map(async (offer) => {
+        const { data: supporter, error: supporterError } = await supabase
+          .from('users')
+          .select('id, display_name, organization_name, supporter_type')
+          .eq('id', offer.supporter_user_id)
+          .single();
+
+        console.log('👤 Supporter for offer:', offer.id, supporter, supporterError);
+
+        return {
+          ...offer,
+          supporter: supporter || {
+            id: '',
+            display_name: '不明',
+            organization_name: null,
+            supporter_type: 'NPO',
+          },
+        };
+      })
+    );
+
+    console.log('✅ Final offers with supporter:', offersWithSupporter);
+    setOffers(offersWithSupporter as any);
+  };
+
+  const runAIAnalysis = async (caseData: CaseData) => {
     setIsAnalyzing(true);
-    setError(null);
 
     try {
-      // APIが期待する形式に変換
-      const consultationText = [
-        caseData.description_free,
-        ...Object.values(caseData.intake_qna.qa)
-      ].join(' ');
-
-      const response = await fetch('/api/classify-sdgs', {
+      const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consultationText }),
+        body: JSON.stringify({
+          caseId: caseData.id,
+          description: caseData.description_free,
+        }),
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || 'APIエラー');
+        toast.error('AI分析に失敗しました');
+        return;
       }
 
       const result = await response.json();
 
-      // AI結果をDBに保存
-      await supabase
+      const { error: updateError } = await supabase
         .from('cases')
-        .update({ ai_sdg_suggestion: result.data })
+        .update({
+          ai_sdg_suggestion: result.analysis,
+          visibility: 'LISTED',
+        })
         .eq('id', caseData.id);
 
-      setCaseData(prev => prev
-        ? { ...prev, ai_sdg_suggestion: result.data }
-        : null
-      );
-
+      if (!updateError) {
+        toast.success('AI分析が完了しました');
+        setCaseData({ ...caseData, ai_sdg_suggestion: result.analysis });
+      }
     } catch (err) {
-      console.error('Analysis error:', err);
-      setError(`AI分析エラー: ${err instanceof Error ? err.message : '不明なエラー'}`);
+      console.error('AI analysis error:', err);
+      toast.error('AI分析に失敗しました');
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleAcceptOffer = async () => {
+    if (!selectedOffer) return;
+
+    const { error: offerError } = await supabase
+      .from('offers')
+      .update({
+        status: 'ACCEPTED',
+        accepted_at: new Date().toISOString(),
+      })
+      .eq('id', selectedOffer.id);
+
+    if (offerError) {
+      console.error('Accept offer error:', offerError);
+      toast.error('承認に失敗しました');
+      return;
+    }
+
+    // ケースのステータスをMATCHEDに更新
+    const { error: caseError } = await supabase
+      .from('cases')
+      .update({ status: 'MATCHED' })
+      .eq('id', params.id);
+
+    if (caseError) {
+      console.error('Update case error:', caseError);
+    }
+
+    setShowAcceptModal(false);
+    setSelectedOffer(null);
+    await loadData();
+    toast.success('サポーターを承認しました');
+  };
+
+  const handleDeclineOffer = async () => {
+    if (!selectedOffer) return;
+
+    const { error } = await supabase
+      .from('offers')
+      .update({
+        status: 'DECLINED',
+        declined_at: new Date().toISOString(),
+      })
+      .eq('id', selectedOffer.id);
+
+    if (error) {
+      console.error('Decline offer error:', error);
+      toast.error('辞退に失敗しました');
+      return;
+    }
+
+    setShowDeclineModal(false);
+    setSelectedOffer(null);
+    await loadOffers();
+    toast.success('申し出を辞退しました');
+  };
+
+  const handleNewConsultation = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    const { data: userIdData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', session.user.id)
+      .single();
+
+    if (!userIdData) return;
+
+    const { data: userCases } = await supabase
+      .from('cases')
+      .select('id, status')
+      .eq('owner_user_id', userIdData.id)
+      .eq('status', 'OPEN');
+
+    const openCount = userCases?.length || 0;
+
+    if (openCount >= 3) {
+      setLimitModal(true);
+      return;
+    }
+
+    router.push('/sos/hearing');
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   if (isLoading) {
@@ -133,82 +307,38 @@ export default function SOSResultPage() {
     );
   }
 
+  const pendingOffers = offers.filter(o => o.status === 'PENDING');
+  const acceptedOffers = offers.filter(o => o.status === 'ACCEPTED');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-6 py-8">
-        {/* 完了メッセージ */}
-        <div className="mb-8 text-center">
-          <div className="text-4xl mb-3">✅</div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            相談を受け付けました
-          </h1>
-          <p className="text-gray-500 mt-1">
-            内容を確認し、AIが支援組織をマッチングします
-          </p>
-        </div>
-
-        {/* 相談内容の確認 */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-base">📋 相談内容</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs text-gray-500">タイトル</p>
-              <p className="font-medium">{caseData?.title}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">詳細</p>
-              <p className="text-sm text-gray-700 whitespace-pre-line">
-                {caseData?.description_free}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <span className={`text-xs px-2 py-1 rounded-full ${caseData?.urgency === 'High'
-                ? 'bg-red-100 text-red-600'
-                : 'bg-yellow-100 text-yellow-600'
-                }`}>
-                {caseData?.urgency === 'High' ? '⚠️ 緊急' : '📋 通常'}
-              </span>
-              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">
-                {caseData?.status}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <Button
+          variant="outline"
+          onClick={() => router.push('/sos/dashboard')}
+          className="mb-4"
+        >
+          ← ダッシュボードに戻る
+        </Button>
 
         {/* AI分析結果 */}
-        {caseData?.ai_sdg_suggestion ? (
+        {isAnalyzing ? (
+          <Card className="mb-6">
+            <CardContent className="py-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">AI分析中...</p>
+            </CardContent>
+          </Card>
+        ) : caseData?.ai_sdg_suggestion ? (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-base">🤖 AI分析結果</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-
-              {/* 理由 */}
-              <p className="text-sm text-gray-700">
-                {caseData.ai_sdg_suggestion.reasoning}
-              </p>
-
-              {/* キーワード */}
-              <div className="flex flex-wrap gap-2">
-                {caseData.ai_sdg_suggestion.keywords?.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600"
-                  >
-                    #{kw}
-                  </span>
-                ))}
-              </div>
-
-              {/* SDGsゴール */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-500">
-                  関連するSDGsゴール
-                </p>
+              <div>
+                <p className="text-xs text-gray-500 mb-2">関連するSDGsゴール</p>
                 <div className="flex flex-wrap gap-2">
                   {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
                     <div
@@ -230,52 +360,249 @@ export default function SOSResultPage() {
                 </div>
               </div>
 
+              {caseData.ai_sdg_suggestion.keywords && (
+                <div className="flex flex-wrap gap-2">
+                  {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                    <span
+                      key={i}
+                      className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600"
+                    >
+                      #{kw}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-700">
+                  {caseData.ai_sdg_suggestion.reasoning}
+                </p>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          /* AI分析ボタン */
-          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-none">
-            <CardContent className="py-6 text-center">
-              <p className="text-gray-600 mb-4">
-                AIがあなたの相談を分析して、<br />
-                SDGsゴールと支援組織をマッチングします
+        ) : null}
+
+        {/* 承認済みサポーター */}
+        {acceptedOffers.length > 0 && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="text-base text-green-800">
+                ✅ 承認済みのサポーター
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {acceptedOffers.map((offer) => (
+                <div key={offer.id} className="bg-white p-4 rounded-lg border border-green-200">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-medium text-gray-800">
+                        {offer.supporter.organization_name || offer.supporter.display_name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {offer.supporter.supporter_type === 'NPO' ? 'NPO/支援組織' : '企業'}
+                      </p>
+                    </div>
+                    <span className="text-xs text-green-600">
+                      {formatDate(offer.created_at)}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-sm text-gray-700">{offer.message}</p>
+                  </div>
+                  <div className="mt-3 bg-green-50 p-3 rounded border border-green-200">
+                    <p className="text-sm text-green-700">
+                      💚 このサポーターと連絡を取り合って、支援を進めてください
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 新しいオファー */}
+        {pendingOffers.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">
+                💌 新しい支援の申し出 ({pendingOffers.length}件)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pendingOffers.map((offer) => (
+                <div key={offer.id} className="border border-gray-200 p-4 rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-medium text-gray-800">
+                        {offer.supporter.organization_name || offer.supporter.display_name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {offer.supporter.supporter_type === 'NPO' ? 'NPO/支援組織' : '企業'}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(offer.created_at)}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded mb-3">
+                    <p className="text-sm text-gray-700">{offer.message}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setSelectedOffer(offer);
+                        setShowAcceptModal(true);
+                      }}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      ✅ 承認する
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setSelectedOffer(offer);
+                        setShowDeclineModal(true);
+                      }}
+                      variant="outline"
+                      className="flex-1 text-red-600 hover:bg-red-50"
+                    >
+                      辞退する
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* オファーがない場合 */}
+        {offers.length === 0 && caseData?.ai_sdg_suggestion && (
+          <Card className="mb-6">
+            <CardContent className="py-8 text-center">
+              <div className="text-4xl mb-3">⏳</div>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">
+                サポーターからの申し出を待っています
+              </h3>
+              <p className="text-sm text-gray-500">
+                AIがSDGsゴールに基づいて、適切なサポーターにあなたの相談を届けています
               </p>
-              <Button
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-                className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-              >
-                {isAnalyzing ? '🤖 AI分析中...' : '🤖 AI分析を開始する'}
-              </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* エラーメッセージ */}
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm mb-4">
-            {error}
-          </div>
-        )}
-
-        {/* アクションボタン */}
+        {/* アクション */}
         <div className="flex gap-3">
           <Button
+            onClick={handleNewConsultation}
             variant="outline"
             className="flex-1"
-            onClick={() => router.push('/dashboard/sos')}
-          >
-            ダッシュボードへ
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => router.push('/sos/hearing')}
           >
             別の相談を投稿
           </Button>
+          <Button
+            onClick={() => router.push('/sos/dashboard')}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+          >
+            ダッシュボードへ
+          </Button>
         </div>
       </main>
+
+      {/* 承認確認モーダル */}
+      <Modal
+        isOpen={showAcceptModal}
+        onClose={() => setShowAcceptModal(false)}
+        title="サポーターを承認しますか？"
+        type="info"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            <span className="font-medium">
+              {selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name}
+            </span>
+            からの支援を承認します。
+          </p>
+          <p className="text-sm text-gray-500">
+            承認後、このサポーターと連絡を取り合って支援を進めてください。
+          </p>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowAcceptModal(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleAcceptOffer}
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              承認する
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 辞退確認モーダル */}
+      <Modal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        title="この申し出を辞退しますか？"
+        type="warning"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            <span className="font-medium">
+              {selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name}
+            </span>
+            からの支援を辞退します。
+          </p>
+          <p className="text-sm text-gray-500">
+            辞退後、このサポーターには通知されます。
+          </p>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowDeclineModal(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleDeclineOffer}
+              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              辞退する
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 3件制限モーダル */}
+      <Modal
+        isOpen={limitModal}
+        onClose={() => setLimitModal(false)}
+        title="相談件数の上限に達しています"
+        type="warning"
+      >
+        <div className="text-center py-4">
+          <div className="text-4xl mb-4">⚠️</div>
+          <p className="text-gray-700 mb-4 font-medium">
+            進行中の相談は最大3件までです。
+          </p>
+          <p className="text-sm text-gray-600 mb-6">
+            ダッシュボードから既存の相談を取り消してから、<br />
+            新しい相談を登録してください。
+          </p>
+          <button
+            onClick={() => router.push('/sos/dashboard')}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            ダッシュボードへ戻る
+          </button>
+        </div>
+      </Modal>
+
+      <toast.ToastContainer />
     </div>
   );
 }

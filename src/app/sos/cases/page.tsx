@@ -228,7 +228,7 @@ export default function SOSCasesPage() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => router.push('/dashboard/sos')}
+            onClick={() => router.push('/sos/dashboard')}
           >
             ダッシュボードへ戻る
           </Button>

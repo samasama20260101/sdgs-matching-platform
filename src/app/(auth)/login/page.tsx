@@ -34,28 +34,41 @@ export default function LoginPage() {
                 return;
             }
 
+            console.log('✅ Auth success, user ID:', data.user.id);
+
             // ログイン成功後、ユーザー情報を取得
-            const { data: userData } = await supabase
+            const { data: userData, error: userError } = await supabase
                 .from('users')
-                .select('role')
+                .select('role, display_name')
                 .eq('auth_user_id', data.user.id)
                 .single();
 
-            // roleによってリダイレクト先を変える
-            if (userData?.role === 'SOS') {
-                router.push('/dashboard/sos');
-            } else if (userData?.role === 'SUPPORTER') {
-                router.push('/dashboard/supporter');
-            } else {
-                router.push('/');
+            console.log('📊 User data:', userData);
+            console.log('❌ User error:', userError);
+
+            if (userError) {
+                setError('ユーザー情報の取得に失敗しました');
+                setIsLoading(false);
+                return;
             }
 
-            // roleによってリダイレクト先を変える（将来の拡張用）
-            if (userData?.role === 'SOS') {
-                router.push('/dashboard/sos');
-            } else if (userData?.role === 'SUPPORTER') {
-                router.push('/dashboard/supporter');
+            if (!userData) {
+                setError('ユーザーが見つかりません');
+                setIsLoading(false);
+                return;
+            }
+
+            // roleによってリダイレクト先を変える
+            console.log('🔀 Redirecting based on role:', userData.role);
+
+            if (userData.role === 'SOS') {
+                console.log('→ Going to /sos/dashboard');
+                router.push('/sos/dashboard');
+            } else if (userData.role === 'SUPPORTER') {
+                console.log('→ Going to /supporter/dashboard');
+                router.push('/supporter/dashboard');
             } else {
+                console.log('→ Unknown role, going to /');
                 router.push('/');
             }
 

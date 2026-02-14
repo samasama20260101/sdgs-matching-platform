@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 
 // Q&A選択肢の定義
 const QA_QUESTIONS = [
@@ -72,6 +73,7 @@ export default function SOSHearingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // 選択された回答
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
@@ -89,10 +91,42 @@ export default function SOSHearingPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push('/login');
+        return;
       }
+
+      const { data: userIdData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', session.user.id)
+        .single();
+
+      if (!userIdData) {
+        router.push('/login');
+        return;
+      }
+
+      const { data: userCases } = await supabase
+        .from('cases')
+        .select('id, status')
+        .eq('owner_user_id', userIdData.id)
+        .eq('status', 'OPEN');
+
+      const openCount = userCases?.length || 0;
+
+      if (openCount >= 3) {
+        setShowLimitModal(true);
+        return;
+      }
+
+      setIsLoading(false);
     };
+
     checkAuth();
   }, [router]);
+
+  const handleBackToDashboard = () => {
+    router.push('/sos/dashboard');
+  };
 
   // 選択肢の変更
   const handleAnswerChange = (questionId: number, optionText: string) => {
@@ -186,7 +220,6 @@ export default function SOSHearingPage() {
         alert('⚠️ あなたのことが心配です。\n今すぐ話を聞いてもらえる場所があります。\n\nよりそいホットライン: 0120-279-338（24時間）');
       }
 
-      // AI分析ページへ（次のステップで実装）
       router.push(`/sos/result/${caseData.id}`);
 
     } catch (err) {
@@ -314,6 +347,31 @@ export default function SOSHearingPage() {
           </p>
         </div>
       </main>
+
+      {/* 3件制限モーダル */}
+      <Modal
+        isOpen={showLimitModal}
+        onClose={handleBackToDashboard}
+        title="相談件数の上限に達しています"
+        type="warning"
+      >
+        <div className="text-center py-4">
+          <div className="text-4xl mb-4">⚠️</div>
+          <p className="text-gray-700 mb-4 font-medium">
+            進行中の相談は最大3件までです。
+          </p>
+          <p className="text-sm text-gray-600 mb-6">
+            ダッシュボードから既存の相談を取り消してから、<br />
+            新しい相談を登録してください。
+          </p>
+          <button
+            onClick={handleBackToDashboard}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            ダッシュボードへ戻る
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
