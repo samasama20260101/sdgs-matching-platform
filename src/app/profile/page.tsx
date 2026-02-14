@@ -15,6 +15,7 @@ type UserData = {
     id: string;
     auth_user_id: string;
     role: 'SOS' | 'SUPPORTER';
+    real_name: string;
     display_name: string;
     email: string;
     phone: string | null;
@@ -36,6 +37,7 @@ export default function ProfilePage() {
     const [userData, setUserData] = useState<UserData | null>(null);
 
     // 基本情報
+    const [realName, setRealName] = useState('');
     const [displayName, setDisplayName] = useState('');
     const [phone, setPhone] = useState('');
     const [organizationName, setOrganizationName] = useState('');
@@ -80,6 +82,7 @@ export default function ProfilePage() {
                 setUserData(data);
 
                 // フォームに初期値を設定
+                setRealName(data.real_name || '');
                 setDisplayName(data.display_name || '');
                 setPhone(data.phone || '');
                 setOrganizationName(data.organization_name || '');
@@ -134,8 +137,13 @@ export default function ProfilePage() {
             }
 
             // バリデーション
+            if (!realName.trim()) {
+                setError(userData.role === 'SOS' ? 'お名前（本名）は必須です' : '代表者名は必須です');
+                setIsSaving(false);
+                return;
+            }
             if (!displayName.trim()) {
-                setError('表示名は必須です');
+                setError(userData.role === 'SOS' ? 'ニックネームは必須です' : '表示名は必須です');
                 setIsSaving(false);
                 return;
             }
@@ -167,6 +175,7 @@ export default function ProfilePage() {
 
             // 更新データ
             const updateData: any = {
+                real_name: realName.trim(),
                 display_name: displayName.trim(),
                 phone: phone.trim() || null,
                 postal_code: addressData.postalCode || null,
@@ -246,18 +255,42 @@ export default function ProfilePage() {
                             <CardTitle className="text-base">基本情報</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {/* 表示名 */}
+                            {/* 本名 */}
+                            <div className="space-y-2">
+                                <Label htmlFor="realName">
+                                    {userData.role === 'SOS' ? 'お名前（本名）' : '代表者名'} <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    id="realName"
+                                    type="text"
+                                    value={realName}
+                                    onChange={(e) => setRealName(e.target.value)}
+                                    placeholder="山田太郎"
+                                />
+                                {userData.role === 'SOS' && (
+                                    <p className="text-xs text-gray-500">
+                                        ※サポーターとマッチ後に共有されます（公開されません）
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* ニックネーム / 表示名 */}
                             <div className="space-y-2">
                                 <Label htmlFor="displayName">
-                                    表示名 <span className="text-red-500">*</span>
+                                    {userData.role === 'SOS' ? 'ニックネーム' : '表示名'} <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
                                     id="displayName"
                                     type="text"
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
-                                    placeholder="山田太郎"
+                                    placeholder={userData.role === 'SOS' ? 'たろう' : '山田太郎'}
                                 />
+                                {userData.role === 'SOS' && (
+                                    <p className="text-xs text-gray-500">
+                                        ※サポーター側に表示される名前です
+                                    </p>
+                                )}
                             </div>
 
                             {/* メールアドレス（読み取り専用） */}

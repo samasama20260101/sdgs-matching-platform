@@ -27,7 +27,8 @@ export default function SignupPage() {
 
   // 困っている人用
   const [helpSeekerData, setHelpSeekerData] = useState({
-    name: '',
+    realName: '',
+    displayName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -147,7 +148,8 @@ export default function SignupPage() {
           auth_user_id: authData.user.id,
           role,
           supporter_type: null,
-          display_name: helpSeekerData.name,
+          real_name: helpSeekerData.realName,
+          display_name: helpSeekerData.displayName,
           email,
           region_country: 'JP',
           postal_code: addressData.postalCode || null,
@@ -159,7 +161,8 @@ export default function SignupPage() {
           auth_user_id: authData.user.id,
           role,
           supporter_type: supporterType,
-          display_name: organizationData.representativeName,
+          real_name: organizationData.representativeName,
+          display_name: organizationData.organizationName || organizationData.representativeName,
           email,
           phone: organizationData.phone,
           organization_name: organizationData.organizationName,
@@ -245,18 +248,33 @@ export default function SignupPage() {
             {formType === 'help_seeker' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="name">
-                    お名前 <span className="text-red-500">*</span>
+                  <Label htmlFor="realName">
+                    お名前（本名） <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="name"
+                    id="realName"
                     type="text"
-                    placeholder="山田太郎（ニックネームでも可）"
-                    value={helpSeekerData.name}
-                    onChange={(e) => setHelpSeekerData({ ...helpSeekerData, name: e.target.value })}
+                    placeholder="山田太郎"
+                    value={helpSeekerData.realName}
+                    onChange={(e) => setHelpSeekerData({ ...helpSeekerData, realName: e.target.value })}
                     required
                   />
-                  <p className="text-xs text-gray-500">※ニックネームでも構いません</p>
+                  <p className="text-xs text-gray-500">※サポーターとマッチ後に共有されます（公開されません）</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">
+                    ニックネーム <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="たろう"
+                    value={helpSeekerData.displayName}
+                    onChange={(e) => setHelpSeekerData({ ...helpSeekerData, displayName: e.target.value })}
+                    required
+                  />
+                  <p className="text-xs text-gray-500">※サポーター側に表示される名前です</p>
                 </div>
 
                 <div className="space-y-2">

@@ -36,7 +36,7 @@ export default function Header() {
 
         const { data, error } = await supabase
           .from('users')
-          .select('role, display_name')
+          .select('role, real_name, display_name')
           .eq('auth_user_id', session.user.id)
           .single();
 
@@ -46,7 +46,7 @@ export default function Header() {
           // Supabase の返却型が string になりがちなので、ここで安全に寄せる
           const r = (data.role ?? null) as UserRole;
           setRole(r);
-          setDisplayName(data.display_name ?? '');
+          setDisplayName(data.real_name || data.display_name || '');
         }
       } catch (e) {
         console.error('[Header] loadUserInfo error:', e);
