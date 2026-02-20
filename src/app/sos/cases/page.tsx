@@ -32,10 +32,12 @@ const SDG_COLORS: Record<number, string> = {
 
 // ステータスの日本語表示
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  OPEN:        { label: '受付中',   color: 'bg-blue-100 text-blue-600' },
-  IN_PROGRESS: { label: '対応中',   color: 'bg-yellow-100 text-yellow-600' },
-  DONE:        { label: '解決済み', color: 'bg-green-100 text-green-600' },
-  CANCELED:    { label: 'キャンセル', color: 'bg-gray-100 text-gray-500' },
+  OPEN: { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-600' },
+  MATCHED: { label: 'マッチ済み', color: 'bg-amber-100 text-amber-600' },
+  IN_PROGRESS: { label: '対応中', color: 'bg-purple-100 text-purple-600' },
+  RESOLVED: { label: '解決済み', color: 'bg-green-100 text-green-600' },
+  CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-500' },
+  CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-500' },
 };
 
 export default function SOSCasesPage() {
@@ -155,7 +157,7 @@ export default function SOSCasesPage() {
         {/* 相談一覧 */}
         <div className="space-y-4">
           {cases.map((c) => {
-            const statusInfo = STATUS_LABELS[c.status] || 
+            const statusInfo = STATUS_LABELS[c.status] ||
               { label: c.status, color: 'bg-gray-100 text-gray-500' };
 
             return (

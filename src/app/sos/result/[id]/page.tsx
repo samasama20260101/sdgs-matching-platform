@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
+import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 
 type CaseData = {
   id: string;
@@ -21,6 +22,7 @@ type CaseData = {
   urgency: string;
   status: string;
   created_at: string;
+  supporter_resolved_at: string | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -74,6 +76,11 @@ export default function SOSResultPage() {
   const [selectedOffer, setSelectedOffer] = useState<OfferData | null>(null);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [selectedBadges, setSelectedBadges] = useState<Set<BadgeKey>>(new Set());
+  const [isSubmittingBadges, setIsSubmittingBadges] = useState(false);
+  const [badgesSubmitted, setBadgesSubmitted] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -198,6 +205,70 @@ export default function SOSResultPage() {
     toast.success('申し出を辞退しました');
   };
 
+  // IN_PROGRESS → RESOLVED: 解決済みにする（SOS側のアクション）
+  const handleResolveCase = async () => {
+    const { error } = await supabase
+      .from('cases')
+      .update({ status: 'RESOLVED', resolved_at: new Date().toISOString() })
+      .eq('id', params.id);
+    if (error) { toast.error('ステータスの更新に失敗しました'); return; }
+    setShowResolveModal(false);
+    await loadData();
+
+    // 金メダルを自動付与してから評価モーダルを表示
+    const accepted = offers.filter(o => o.status === 'ACCEPTED');
+    if (accepted.length > 0 && currentUserId) {
+      const autoBadges = accepted.map((offer, i) => ({
+        case_id: params.id as string,
+        supporter_user_id: offer.supporter.id,
+        given_by_user_id: currentUserId,
+        badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
+      }));
+      await supabase.from('supporter_badges').upsert(autoBadges, {
+        onConflict: 'case_id,supporter_user_id,badge_key',
+      });
+    }
+
+    setShowEvalModal(true);
+  };
+
+  // 評価バッジを送信
+  const handleSubmitBadges = async () => {
+    const accepted = offers.filter(o => o.status === 'ACCEPTED');
+    if (accepted.length === 0 || !currentUserId) return;
+
+    setIsSubmittingBadges(true);
+    const badgeRows = accepted.flatMap((offer) =>
+      [...selectedBadges].map((badgeKey) => ({
+        case_id: params.id as string,
+        supporter_user_id: offer.supporter.id,
+        given_by_user_id: currentUserId,
+        badge_key: badgeKey,
+      }))
+    );
+
+    if (badgeRows.length > 0) {
+      const { error } = await supabase.from('supporter_badges').upsert(badgeRows, {
+        onConflict: 'case_id,supporter_user_id,badge_key',
+      });
+      if (error) { toast.error('評価の送信に失敗しました'); setIsSubmittingBadges(false); return; }
+    }
+
+    setIsSubmittingBadges(false);
+    setBadgesSubmitted(true);
+    setShowEvalModal(false);
+    toast.success('サポーターへの評価を送信しました！ありがとうございます 🎉');
+  };
+
+  // バッジ選択のトグル
+  const toggleBadge = (key: BadgeKey) => {
+    setSelectedBadges(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
   const handleNewConsultation = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login'); return; }
@@ -274,6 +345,99 @@ export default function SOSResultPage() {
         {/* ───── 承認済みサポーター + メッセージ ───── */}
         {hasAccepted && (
           <div className="mb-6 space-y-4">
+            {/* ステータス進行バー */}
+            <Card className="border-none bg-white shadow-sm">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at
+                    ? 'bg-emerald-100 text-emerald-600' :
+                    caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                        caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                          'bg-blue-100 text-blue-600'
+                    }`}>
+                    {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
+                    {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
+                    {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
+                    {caseData?.status === 'RESOLVED' && '✅ 解決済み'}
+                    {caseData?.status === 'OPEN' && '⏳ サポーター待ち'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {['マッチ', '対応中', '解決報告', '完了'].map((step, i) => {
+                    const stepNum = i + 1;
+                    const currentStep =
+                      caseData?.status === 'MATCHED' ? 1 :
+                        caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at ? 2 :
+                          caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 3 :
+                            caseData?.status === 'RESOLVED' ? 4 : 0;
+                    const isActive = stepNum <= currentStep;
+                    const isCurrent = stepNum === currentStep;
+                    return (
+                      <div key={step} className="flex-1 flex flex-col items-center">
+                        <div className={`w-full h-2 rounded-full ${isActive ? 'bg-gradient-to-r from-blue-500 to-green-500' : 'bg-gray-200'}`} />
+                        <span className={`text-[11px] mt-1 ${isCurrent ? 'font-bold text-gray-800' : isActive ? 'text-gray-600' : 'text-gray-400'}`}>
+                          {step}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* アクションボタン（SOS側） */}
+                <div className="mt-4">
+                  {caseData?.status === 'MATCHED' && (
+                    <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-center">
+                      <p className="text-sm text-amber-700">
+                        ⏳ サポーターが支援を開始するのをお待ちください
+                      </p>
+                    </div>
+                  )}
+                  {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && (
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 text-center">
+                      <p className="text-sm text-purple-700">
+                        🔄 サポーターが対応中です
+                      </p>
+                    </div>
+                  )}
+                  {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && (
+                    <div className="space-y-3">
+                      <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-center">
+                        <p className="text-sm text-emerald-700 font-medium">
+                          📋 サポーターが解決を報告しました
+                        </p>
+                        <p className="text-xs text-emerald-600 mt-1">
+                          問題が解決していれば、下のボタンで確認してください
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => setShowResolveModal(true)}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                      >
+                        ✅ 解決を確認する
+                      </Button>
+                    </div>
+                  )}
+                  {caseData?.status === 'RESOLVED' && (
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200 text-center">
+                      <p className="text-sm text-green-700 font-medium">
+                        ✅ この相談は解決済みです
+                      </p>
+                      {!badgesSubmitted && (
+                        <button
+                          onClick={() => setShowEvalModal(true)}
+                          className="mt-2 text-xs text-amber-600 hover:text-amber-700 underline"
+                        >
+                          🎁 サポーターにバッジを贈る
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="border-green-200 bg-green-50">
               <CardHeader>
                 <CardTitle className="text-base text-green-800">
@@ -304,7 +468,11 @@ export default function SOSResultPage() {
 
             {/* 💬 メッセージスレッド */}
             {currentUserId && (
-              <MessageThread caseId={caseData!.id} currentUserId={currentUserId} />
+              <MessageThread
+                caseId={caseData!.id}
+                currentUserId={currentUserId}
+                readOnly={caseData?.status === 'RESOLVED' || caseData?.status === 'CLOSED' || caseData?.status === 'CANCELLED'}
+              />
             )}
           </div>
         )}
@@ -402,6 +570,98 @@ export default function SOSResultPage() {
           <button onClick={() => router.push('/sos/dashboard')} className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             ダッシュボードへ戻る
           </button>
+        </div>
+      </Modal>
+
+      {/* 解決確認モーダル */}
+      <Modal isOpen={showResolveModal} onClose={() => setShowResolveModal(false)} title="解決を確認しますか？" type="info">
+        <div className="space-y-4">
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <p className="text-sm text-green-700">
+              ✅ サポーターが解決を報告しています。問題が解決したことを確認します。
+            </p>
+          </div>
+          <p className="text-sm text-gray-500">
+            確認後、案件は「解決済み」になります。これまでのメッセージ履歴は引き続き閲覧できます。
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              まだ解決していない
+            </button>
+            <button onClick={handleResolveCase} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+              解決を確認する
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 評価モーダル（解決確認後に表示） */}
+      <Modal isOpen={showEvalModal} onClose={() => { setShowEvalModal(false); if (!badgesSubmitted) toast.success('相談が解決済みになりました！'); }} title="🎉 サポーターを評価" type="info">
+        <div className="space-y-5">
+          <div className="text-center">
+            <div className="text-5xl mb-2">🎊</div>
+            <p className="text-sm text-gray-600">
+              相談が解決しました！サポーターに感謝のバッジを贈りましょう。
+            </p>
+          </div>
+
+          {/* 自動付与バッジ */}
+          <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <p className="text-xs text-amber-600 font-medium mb-2">🏅 自動付与済み</p>
+            <div className="flex gap-3">
+              {offers.filter(o => o.status === 'ACCEPTED').map((offer, i) => (
+                <div key={offer.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-amber-200">
+                  <span className="text-lg">{i === 0 ? '🥇' : '🥈'}</span>
+                  <span className="text-xs text-gray-700">{offer.supporter.organization_name || offer.supporter.display_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 選択バッジ */}
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-3">✨ 追加バッジを選択（任意・複数可）</p>
+            <div className="grid grid-cols-1 gap-2">
+              {SELECTABLE_BADGES.map((key) => {
+                const badge = SUPPORTER_BADGES[key];
+                const isSelected = selectedBadges.has(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleBadge(key)}
+                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${isSelected
+                      ? 'border-blue-400 bg-blue-50 shadow-sm'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                  >
+                    <span className="text-2xl">{badge.emoji}</span>
+                    <span className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+                      {badge.label}
+                    </span>
+                    {isSelected && (
+                      <span className="ml-auto text-blue-500 text-lg">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setShowEvalModal(false); toast.success('相談が解決済みになりました！'); }}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+            >
+              スキップ
+            </button>
+            <button
+              onClick={handleSubmitBadges}
+              disabled={isSubmittingBadges}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 text-sm font-medium disabled:opacity-50"
+            >
+              {isSubmittingBadges ? '送信中...' : `🎁 バッジを贈る${selectedBadges.size > 0 ? ` (${selectedBadges.size})` : ''}`}
+            </button>
+          </div>
         </div>
       </Modal>
 
