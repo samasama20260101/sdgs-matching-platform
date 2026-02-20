@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { SDG_COLORS, SDG_NAMES, CASE_STATUS, REGION_BLOCKS, formatRelativeDate } from '@/lib/constants/sdgs';
+import { SDG_COLORS, SDG_NAMES, CASE_STATUS, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 
 // ─── Types ────────────────────────────────────────────────────
 type Case = {
@@ -62,7 +62,20 @@ function SupporterCaseCard({
     WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
     DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
   };
-  const eng = engConfig[engagement] || engConfig.none;
+
+  // ケースのステータスを優先表示（ACCEPTED時のみケース進行状態で上書き）
+  const caseStatusOverride: Record<string, { label: string; color: string; icon: string; border: string }> = {
+    MATCHED: { label: 'マッチ済み', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
+    IN_PROGRESS: { label: '対応中', color: 'bg-purple-50 text-purple-600', icon: '🔄', border: 'border-l-purple-400' },
+    RESOLVED: { label: '解決済み', color: 'bg-green-50 text-green-700', icon: '✅', border: 'border-l-green-500' },
+    CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
+    CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
+  };
+
+  // ACCEPTEDでケースがMATCHED以降に進んでいる場合はケースステータスを優先
+  const eng = (engagement === 'ACCEPTED' && caseStatusOverride[case_.status])
+    ? caseStatusOverride[case_.status]
+    : engConfig[engagement] || engConfig.none;
 
   return (
     <Card
@@ -301,6 +314,7 @@ export default function SupporterDashboard() {
   const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -374,6 +388,21 @@ export default function SupporterDashboard() {
       }));
 
       setCases(enriched);
+
+      // バッジカウントを取得
+      const { data: badges } = await supabase
+        .from('supporter_badges')
+        .select('badge_key')
+        .eq('supporter_user_id', user.id);
+
+      if (badges) {
+        const counts: Record<string, number> = {};
+        badges.forEach((b: { badge_key: string }) => {
+          counts[b.badge_key] = (counts[b.badge_key] || 0) + 1;
+        });
+        setBadgeCounts(counts);
+      }
+
       setIsLoading(false);
     };
     loadData();
@@ -388,11 +417,20 @@ export default function SupporterDashboard() {
   }
 
   // ─── フィルタリング ─────────────────────────────────────────
+  // ケースの実質的なステータスを判定するヘルパー
+  const getCaseDisplayStatus = (c: Case): string => {
+    if (!c.my_offer_status) return 'none';                          // 未対応
+    if (c.my_offer_status === 'PENDING') return 'pending';          // 申し出中
+    if (c.my_offer_status === 'ACCEPTED') {
+      if (c.status === 'RESOLVED' || c.status === 'CLOSED') return 'resolved';  // 解決済み
+      return 'active';                                              // 対応中（MATCHED/IN_PROGRESS）
+    }
+    return 'other'; // WITHDRAWN, DECLINED
+  };
+
   const filteredCases = cases.filter((c) => {
     if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
-    if (engagementFilter === 'none' && c.my_offer_status) return false;
-    if (engagementFilter === 'offered' && !c.my_offer_status) return false;
-    if (engagementFilter === 'ACCEPTED' && c.my_offer_status !== 'ACCEPTED') return false;
+    if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
     if (regionFilter && c.users?.prefecture !== regionFilter) return false;
     return true;
   });
@@ -408,8 +446,8 @@ export default function SupporterDashboard() {
   // 統計
   const stats = [
     { label: '相談件数', value: cases.length, color: 'text-blue-600' },
-    { label: '申し出済み', value: cases.filter((c) => c.my_offer_status && c.my_offer_status !== 'WITHDRAWN').length, color: 'text-amber-500' },
-    { label: '承認済み', value: cases.filter((c) => c.my_offer_status === 'ACCEPTED').length, color: 'text-green-600' },
+    { label: '対応中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-purple-600' },
+    { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-green-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
 
@@ -459,6 +497,35 @@ export default function SupporterDashboard() {
             </div>
           ))}
         </div>
+
+        {/* 評価バッジ */}
+        {Object.keys(badgeCounts).length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-semibold text-gray-700">🏆 いただいた評価</span>
+              <span className="text-xs text-gray-400">
+                合計 {Object.values(badgeCounts).reduce((a, b) => a + b, 0)}件
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {(Object.keys(SUPPORTER_BADGES) as BadgeKey[]).map((key) => {
+                const count = badgeCounts[key] || 0;
+                if (count === 0) return null;
+                const badge = SUPPORTER_BADGES[key];
+                return (
+                  <div
+                    key={key}
+                    className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 transition-colors rounded-full px-3 py-1.5 border border-gray-200"
+                    title={badge.label}
+                  >
+                    <span className="text-lg">{badge.emoji}</span>
+                    <span className="text-sm font-bold text-gray-700">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* フィルターパネル */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
@@ -516,18 +583,18 @@ export default function SupporterDashboard() {
             />
           )}
 
-          {/* エンゲージメントフィルター */}
+          {/* ステータスフィルター */}
           <div className="flex gap-1.5 flex-wrap">
             {[
               { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
               { key: 'none', label: '○ 未対応', color: 'border-slate-300 bg-slate-50 text-slate-600' },
-              { key: 'offered', label: '⏳ 申し出済み', color: 'border-amber-300 bg-amber-50 text-amber-600' },
-              { key: 'ACCEPTED', label: '✅ 承認済み', color: 'border-green-300 bg-green-50 text-green-600' },
+              { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'active', label: '🔄 対応中', color: 'border-purple-300 bg-purple-50 text-purple-600' },
+              { key: 'resolved', label: '✅ 解決済み', color: 'border-green-300 bg-green-50 text-green-600' },
             ].map((f) => {
-              let count = cases.length;
-              if (f.key === 'none') count = cases.filter((c) => !c.my_offer_status).length;
-              if (f.key === 'offered') count = cases.filter((c) => c.my_offer_status && c.my_offer_status !== 'WITHDRAWN').length;
-              if (f.key === 'ACCEPTED') count = cases.filter((c) => c.my_offer_status === 'ACCEPTED').length;
+              const count = f.key === null
+                ? cases.length
+                : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
 
               return (
                 <button

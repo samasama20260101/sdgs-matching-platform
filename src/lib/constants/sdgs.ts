@@ -23,13 +23,33 @@ export const SDG_NAMES: Record<number, string> = {
 export const CASE_STATUS = {
     OPEN: { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-600', borderColor: 'border-l-blue-400', icon: '⏳', step: 1 },
     MATCHED: { label: 'マッチ済み', color: 'bg-amber-100 text-amber-600', borderColor: 'border-l-amber-400', icon: '🤝', step: 2 },
+    IN_PROGRESS: { label: '対応中', color: 'bg-purple-100 text-purple-600', borderColor: 'border-l-purple-400', icon: '🔄', step: 3 },
     RESOLVED: { label: '解決済み', color: 'bg-green-100 text-green-600', borderColor: 'border-l-green-500', icon: '✅', step: 4 },
     CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-500', borderColor: 'border-l-gray-300', icon: '✕', step: 0 },
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-500', borderColor: 'border-l-gray-300', icon: '📁', step: 0 },
 } as const;
 
+// ケースステータスのタイプ
+export type CaseStatusKey = keyof typeof CASE_STATUS;
+
+// アクティブなステータス（進行中のケースとして扱うもの）
+export const ACTIVE_STATUSES: CaseStatusKey[] = ['OPEN', 'MATCHED', 'IN_PROGRESS'];
+
+// 終了済みステータス
+export const PAST_STATUSES: CaseStatusKey[] = ['RESOLVED', 'CANCELLED', 'CLOSED'];
+
 // ステータスパイプラインのステップ名
 export const STATUS_STEPS = ['待ち', '確認中', '対応中', '解決'] as const;
+
+// ステータス遷移の許可マップ
+export const STATUS_TRANSITIONS: Record<string, string[]> = {
+    OPEN: ['MATCHED', 'CANCELLED'],
+    MATCHED: ['IN_PROGRESS', 'CANCELLED'],
+    IN_PROGRESS: ['RESOLVED', 'CANCELLED'],
+    RESOLVED: ['CLOSED'],
+    CANCELLED: [],
+    CLOSED: [],
+};
 
 // ─── サポーターのオファーステータス ─────────────────────────
 export const OFFER_STATUS = {
@@ -61,3 +81,21 @@ export function formatRelativeDate(dateStr: string): string {
     if (diffDays < 30) return `${Math.floor(diffDays / 7)}週間前`;
     return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
 }
+
+// ─── サポーター評価バッジ ─────────────────────────────────────
+export const SUPPORTER_BADGES = {
+    gold_medal: { emoji: '🥇', label: 'ありがとう（主）', auto: true },
+    silver_medal: { emoji: '🥈', label: 'ありがとう（副）', auto: true },
+    very_satisfied: { emoji: '😆', label: '大満足' },
+    quick_response: { emoji: '⚡', label: '迅速な対応' },
+    sincere_support: { emoji: '💎', label: '誠実なサポート' },
+    problem_solved: { emoji: '🌟', label: 'あきらめていた問題が解決' },
+    grateful_partner: { emoji: '🤝', label: '一緒に向き合い大感謝' },
+} as const;
+
+export type BadgeKey = keyof typeof SUPPORTER_BADGES;
+
+// SOSユーザーが選択可能なバッジ（auto を除く）
+export const SELECTABLE_BADGES: BadgeKey[] = [
+    'very_satisfied', 'quick_response', 'sincere_support', 'problem_solved', 'grateful_partner',
+];

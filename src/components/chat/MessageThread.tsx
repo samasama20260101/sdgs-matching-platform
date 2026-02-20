@@ -22,9 +22,10 @@ type Message = {
 type Props = {
     caseId: string;
     currentUserId: string; // public.users.id
+    readOnly?: boolean;    // RESOLVED時に入力を無効化
 };
 
-export default function MessageThread({ caseId, currentUserId }: Props) {
+export default function MessageThread({ caseId, currentUserId, readOnly = false }: Props) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -309,49 +310,55 @@ export default function MessageThread({ caseId, currentUserId }: Props) {
             )}
 
             {/* 入力エリア */}
-            <div className="px-4 py-3 bg-white border-t border-gray-100">
-                <div className="flex items-end gap-2">
-                    <textarea
-                        ref={textareaRef}
-                        value={newMessage}
-                        onChange={handleTextareaInput}
-                        onKeyDown={handleKeyDown}
-                        placeholder="メッセージを入力... (Shift+Enterで改行)"
-                        rows={1}
-                        className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300
-                       placeholder:text-gray-300 bg-gray-50/50 transition-all"
-                        style={{ minHeight: '40px', maxHeight: '120px' }}
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={!newMessage.trim() || isSending}
-                        className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 
-                       text-white flex items-center justify-center
-                       hover:from-blue-700 hover:to-green-700 
-                       disabled:opacity-40 disabled:cursor-not-allowed
-                       transition-all active:scale-95"
-                    >
-                        {isSending ? (
-                            <span className="animate-spin text-sm">⟳</span>
-                        ) : (
-                            <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                                />
-                            </svg>
-                        )}
-                    </button>
+            {readOnly ? (
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-center">
+                    <p className="text-xs text-gray-400">✅ この相談は解決済みです。メッセージ履歴は閲覧できます。</p>
                 </div>
-            </div>
+            ) : (
+                <div className="px-4 py-3 bg-white border-t border-gray-100">
+                    <div className="flex items-end gap-2">
+                        <textarea
+                            ref={textareaRef}
+                            value={newMessage}
+                            onChange={handleTextareaInput}
+                            onKeyDown={handleKeyDown}
+                            placeholder="メッセージを入力... (Shift+Enterで改行)"
+                            rows={1}
+                            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300
+                         placeholder:text-gray-300 bg-gray-50/50 transition-all"
+                            style={{ minHeight: '40px', maxHeight: '120px' }}
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={!newMessage.trim() || isSending}
+                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-green-600 
+                         text-white flex items-center justify-center
+                         hover:from-blue-700 hover:to-green-700 
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-all active:scale-95"
+                        >
+                            {isSending ? (
+                                <span className="animate-spin text-sm">⟳</span>
+                            ) : (
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                                    />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

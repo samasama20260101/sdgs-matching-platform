@@ -14,7 +14,7 @@ type Case = {
   title: string;
   description_free: string;
   urgency: string;
-  status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
+  status: 'OPEN' | 'MATCHED' | 'IN_PROGRESS' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
   created_at: string;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
@@ -126,7 +126,7 @@ export default function SOSDashboard() {
   };
 
   const handleStartNewCase = () => {
-    const openCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
+    const openCases = cases.filter(c => ['OPEN', 'MATCHED', 'IN_PROGRESS'].includes(c.status));
 
     if (openCases.length >= 3) {
       toast.warning('進行中の相談は最大3件までです。既存の相談を取り消してから新規登録してください。');
@@ -149,7 +149,7 @@ export default function SOSDashboard() {
     return `${Math.floor(diffDays / 30)}ヶ月前`;
   };
 
-  const activeCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
+  const activeCases = cases.filter(c => ['OPEN', 'MATCHED', 'IN_PROGRESS'].includes(c.status));
   const pastCases = cases.filter(c => ['RESOLVED', 'CANCELLED', 'CLOSED'].includes(c.status));
 
   if (isLoading) {
@@ -265,6 +265,16 @@ export default function SOSDashboard() {
                           緊急度: {URGENCY_LABELS[case_.urgency]?.label || '中'}
                         </span>
                       </div>
+                      {/* ステータスバッジ */}
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full w-fit ${case_.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
+                          case_.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                            case_.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                              'bg-gray-100 text-gray-600'
+                        }`}>
+                        {case_.status === 'OPEN' && '⏳ サポーター待ち'}
+                        {case_.status === 'MATCHED' && '🤝 マッチ済み'}
+                        {case_.status === 'IN_PROGRESS' && '🔄 対応中'}
+                      </span>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <p className="text-sm text-gray-600 line-clamp-2">
