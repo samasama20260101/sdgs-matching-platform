@@ -11,14 +11,20 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export async function classifySDGs(consultationText: string) {
   // APIキーの取得（実行時に取得）
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-  
+
   // デモモードの場合
   if (!apiKey) {
     return {
       success: true,
       data: {
         sdgs_goals: [4, 1, 10],
-        reasoning: "【デモモード】このアプリケーションは現在デモモードで動作しています。実際のAI分類を有効にするには、管理者がGoogle Gemini APIキーを設定する必要があります。このメッセージは、入力された相談内容に対するダミーの応答です。",
+        summary: "あなたが学びの機会を求めていること、経済的に厳しい状況にあること、そして不平等な扱いを受けていることが伝わりました。これらは世界中で多くの人が直面している課題であり、あなたは一人ではありません。",
+        per_goal: [
+          { goal: 4, title: "あなたの「学びたい」という気持ちは大切な権利です", explanation: "教育を受ける機会は、すべての人に保障されるべき基本的な権利です。あなたが感じている困難は、SDGsでも最も重要な課題の一つとして世界中で取り組まれています。" },
+          { goal: 1, title: "経済的な困難は、あなたのせいではありません", explanation: "生活に必要な資源が不足している状況は、社会の仕組みに原因があることが多いです。支援制度や相談窓口を通じて、状況を改善できる可能性があります。" },
+          { goal: 10, title: "誰もが公平に扱われる社会をめざして", explanation: "差別や不平等な扱いを受けることは、あってはならないことです。あなたの声を届けることが、より公正な社会への第一歩になります。" }
+        ],
+        reasoning: "【デモモード】実際のAI分析にはGoogle Gemini APIキーの設定が必要です。",
         keywords: ["デモモード", "APIキー未設定", "テスト"]
       }
     };
@@ -29,37 +35,44 @@ export async function classifySDGs(consultationText: string) {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
-あなたはSDGs（持続可能な開発目標）の専門家です。
+あなたはSDGs（持続可能な開発目標）の専門家であり、困っている人に寄り添うカウンセラーでもあります。
 以下の相談内容を分析し、関連するSDGsゴール（1-17）を最大3つまで選択してください。
+
+重要：相談者は困難な状況にいる一般の方です。専門用語を避け、温かく共感的な言葉で説明してください。
+「あなたの問題は世界でも大切にされている課題です」というメッセージを伝えてください。
 
 相談内容：
 ${consultationText}
 
 以下のJSON形式で回答してください：
 {
-  "sdgs_goals": [ゴール番号の配列],
-  "reasoning": "分類理由の説明",
-  "keywords": ["抽出されたキーワード"]
+  "sdgs_goals": [ゴール番号の配列（最大3つ）],
+  "summary": "全体の要約（2〜3文。相談者への共感と、あなたは一人ではないというメッセージを含める）",
+  "per_goal": [
+    {
+      "goal": ゴール番号,
+      "title": "相談者に寄り添う短いタイトル（例：あなたの健康を守る権利があります）",
+      "explanation": "このゴールと相談内容の関連を、相談者にわかりやすく、温かい言葉で説明（3〜4文）"
+    }
+  ],
+  "keywords": ["相談内容から抽出したキーワード（5〜8個）"]
 }
 
+注意：
+- per_goalはsdgs_goalsと同じ順番で、各ゴールに対して1つずつ
+- titleは相談者目線で、「〜する権利があります」「〜はあなたのせいではありません」のような温かい表現で
+- explanationは専門用語を使わず、やさしい日本語で
+- reasoningフィールドは不要です
+
 SDGsゴール一覧：
-1. 貧困をなくそう
-2. 飢餓をゼロに
-3. すべての人に健康と福祉を
-4. 質の高い教育をみんなに
-5. ジェンダー平等を実現しよう
-6. 安全な水とトイレを世界中に
-7. エネルギーをみんなに そしてクリーンに
-8. 働きがいも経済成長も
-9. 産業と技術革新の基盤をつくろう
-10. 人や国の不平等をなくそう
-11. 住み続けられるまちづくりを
-12. つくる責任 つかう責任
-13. 気候変動に具体的な対策を
-14. 海の豊かさを守ろう
-15. 陸の豊かさも守ろう
-16. 平和と公正をすべての人に
-17. パートナーシップで目標を達成しよう
+1. 貧困をなくそう  2. 飢餓をゼロに  3. すべての人に健康と福祉を
+4. 質の高い教育をみんなに  5. ジェンダー平等を実現しよう
+6. 安全な水とトイレを世界中に  7. エネルギーをみんなにそしてクリーンに
+8. 働きがいも経済成長も  9. 産業と技術革新の基盤をつくろう
+10. 人や国の不平等をなくそう  11. 住み続けられるまちづくりを
+12. つくる責任つかう責任  13. 気候変動に具体的な対策を
+14. 海の豊かさを守ろう  15. 陸の豊かさも守ろう
+16. 平和と公正をすべての人に  17. パートナーシップで目標を達成しよう
 `;
 
     const result = await model.generateContent(prompt);
@@ -92,13 +105,13 @@ SDGsゴール一覧：
  */
 export async function generateFollowUpQuestions(consultationText: string) {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-  
+
   if (!apiKey) {
     return {
       success: true,
       data: [
         "【デモモード】質問1のサンプル",
-        "【デモモード】質問2のサンプル", 
+        "【デモモード】質問2のサンプル",
         "【デモモード】質問3のサンプル"
       ]
     };
@@ -155,7 +168,7 @@ export async function calculateMatchingScore(
   npoDescription: string
 ) {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-  
+
   if (!apiKey) {
     return {
       success: true,
