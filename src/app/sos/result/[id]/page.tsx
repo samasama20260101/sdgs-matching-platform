@@ -25,7 +25,13 @@ type CaseData = {
   supporter_resolved_at: string | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
-    reasoning: string;
+    reasoning?: string;
+    summary?: string;
+    per_goal?: Array<{
+      goal: number;
+      title: string;
+      explanation: string;
+    }>;
     keywords: string[];
   } | null;
 };
@@ -72,6 +78,7 @@ export default function SOSResultPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeStep, setAnalyzeStep] = useState(0);
   const [limitModal, setLimitModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<OfferData | null>(null);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
@@ -152,6 +159,12 @@ export default function SOSResultPage() {
 
   const runAIAnalysis = async (cd: CaseData) => {
     setIsAnalyzing(true);
+    setAnalyzeStep(1); // 受付完了
+
+    // ステップ進行タイマー
+    const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
+    const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
+
     try {
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
@@ -160,12 +173,18 @@ export default function SOSResultPage() {
       });
       if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
       const result = await response.json();
+
+      clearTimeout(step2);
+      clearTimeout(step3);
+      setAnalyzeStep(4); // 完了
+
       const { error: updateError } = await supabase
         .from('cases')
         .update({ ai_sdg_suggestion: result.analysis, visibility: 'LISTED' })
         .eq('id', cd.id);
       if (!updateError) {
-        toast.success('AI分析が完了しました');
+        // 少し間を置いてから結果表示（完了ステップを見せる）
+        await new Promise(r => setTimeout(r, 800));
         setCaseData({ ...cd, ai_sdg_suggestion: result.analysis });
       }
     } catch (err) {
@@ -173,6 +192,7 @@ export default function SOSResultPage() {
       toast.error('AI分析に失敗しました');
     } finally {
       setIsAnalyzing(false);
+      setAnalyzeStep(0);
     }
   };
 
@@ -282,8 +302,29 @@ export default function SOSResultPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">読み込み中...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="text-center space-y-6">
+          {/* AIアイコンアニメーション */}
+          <div className="relative w-20 h-20 mx-auto">
+            <div className="absolute inset-0 rounded-full bg-blue-100 animate-ping opacity-20" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-green-400 opacity-10 animate-pulse" />
+            <div className="relative w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center">
+              <span className="text-3xl animate-bounce">🤖</span>
+            </div>
+          </div>
+
+          {/* テキスト */}
+          <div className="space-y-2">
+            <p className="text-gray-700 font-medium">AIがあなたの相談を分析中です</p>
+            <div className="flex justify-center gap-1">
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400">少々お待ちください</p>
+        </div>
       </div>
     );
   }
@@ -301,43 +342,139 @@ export default function SOSResultPage() {
           ← ダッシュボードに戻る
         </Button>
 
-        {/* AI分析結果 */}
-        {isAnalyzing ? (
-          <Card className="mb-6">
-            <CardContent className="py-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-              <p className="text-gray-600">AI分析中...</p>
-            </CardContent>
-          </Card>
-        ) : caseData?.ai_sdg_suggestion ? (
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">🤖 AI分析結果</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-xs text-gray-500 mb-2">関連するSDGsゴール</p>
-                <div className="flex flex-wrap gap-2">
-                  {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
-                    <div key={goalId} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: `${SDG_COLORS[goalId]}20` }}>
-                      <span className="text-white text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>
-                        SDG {goalId}
+        {/* AI分析 — ステップアニメーション */}
+        {isAnalyzing && (
+          <Card className="mb-6 overflow-hidden">
+            <CardContent className="py-8">
+              <div className="max-w-md mx-auto space-y-4">
+                {[
+                  { step: 1, icon: '📨', text: '相談内容を受け付けました' },
+                  { step: 2, icon: '🔍', text: 'AIがあなたの状況を分析しています...' },
+                  { step: 3, icon: '🌍', text: '関連するSDGsゴールを特定中...' },
+                  { step: 4, icon: '✨', text: '分析が完了しました！' },
+                ].map((s) => {
+                  const isActive = analyzeStep >= s.step;
+                  const isCurrent = analyzeStep === s.step && s.step < 4;
+                  return (
+                    <div
+                      key={s.step}
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
+                        } ${s.step === 4 ? 'bg-green-50 border border-green-200' : ''}`}
+                    >
+                      {isActive && !isCurrent ? (
+                        <span className="text-green-500 text-lg flex-shrink-0">✅</span>
+                      ) : isCurrent ? (
+                        <span className="text-lg flex-shrink-0 animate-pulse">{s.icon}</span>
+                      ) : (
+                        <span className="text-gray-300 text-lg flex-shrink-0">○</span>
+                      )}
+                      <span className={`text-sm ${isActive ? (s.step === 4 ? 'text-green-700 font-medium' : 'text-gray-700') : 'text-gray-300'}`}>
+                        {s.text}
                       </span>
-                      <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                      {isCurrent && (
+                        <div className="ml-auto flex gap-1">
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-              {caseData.ai_sdg_suggestion.keywords && (
-                <div className="flex flex-wrap gap-2">
-                  {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
-                    <span key={i} className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">#{kw}</span>
-                  ))}
+              {/* プログレスバー */}
+              <div className="mt-6 mx-auto max-w-md">
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${Math.min(analyzeStep * 25, 100)}%` }}
+                  />
                 </div>
-              )}
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-700">{caseData.ai_sdg_suggestion.reasoning}</p>
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* AI分析結果 — カード型表示 */}
+        {!isAnalyzing && caseData?.ai_sdg_suggestion ? (
+          <div className="mb-6 space-y-4">
+            {/* ヘッダー */}
+            <div className="text-center py-2">
+              <h2 className="text-lg font-bold text-gray-800">🌍 あなたの声と世界のつながり</h2>
+              <p className="text-xs text-gray-500 mt-1">あなたの相談がSDGs（持続可能な開発目標）のどの課題に関わるかをAIが分析しました</p>
+            </div>
+
+            {/* サマリーメッセージ */}
+            {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
+              <Card className="border-none bg-gradient-to-br from-blue-50 to-green-50 shadow-sm">
+                <CardContent className="py-4">
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ゴール別カード */}
+            {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
+              <div className="space-y-3">
+                {caseData.ai_sdg_suggestion.per_goal.map((pg, idx) => (
+                  <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
+                    <div className="flex">
+                      {/* SDGカラーバー */}
+                      <div
+                        className="w-2 flex-shrink-0"
+                        style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}
+                      />
+                      <div className="flex-1 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span
+                            className="text-white text-[11px] font-bold px-2 py-0.5 rounded"
+                            style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}
+                          >
+                            SDG {pg.goal}
+                          </span>
+                          <span className="text-xs text-gray-500">{SDG_NAMES[pg.goal]}</span>
+                        </div>
+                        <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
+                        <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              /* per_goal が無い旧データの場合はフォールバック */
+              <div className="space-y-3">
+                {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
+                  <Card key={goalId} className="border-none shadow-sm overflow-hidden">
+                    <div className="flex">
+                      <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
+                      <div className="flex-1 p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>
+                            SDG {goalId}
+                          </span>
+                          <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* キーワード */}
+            {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-1">
+                {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 bg-white border border-gray-200 rounded-full text-gray-600 shadow-sm">
+                    #{kw}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         ) : null}
 
         {/* ───── 承認済みサポーター + メッセージ ───── */}
@@ -349,11 +486,11 @@ export default function SOSResultPage() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at
-                      ? 'bg-emerald-100 text-emerald-600' :
-                      caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                        caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
-                          caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
-                            'bg-blue-100 text-blue-600'
+                    ? 'bg-emerald-100 text-emerald-600' :
+                    caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                        caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                          'bg-blue-100 text-blue-600'
                     }`}>
                     {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
                     {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
@@ -629,8 +766,8 @@ export default function SOSResultPage() {
                     key={key}
                     onClick={() => toggleBadge(key)}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${isSelected
-                        ? 'border-blue-400 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-blue-400 bg-blue-50 shadow-sm'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                       }`}
                   >
                     <span className="text-2xl">{badge.emoji}</span>
