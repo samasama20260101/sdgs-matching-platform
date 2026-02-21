@@ -93,6 +93,28 @@ export default function SOSResultPage() {
     loadData();
   }, [params.id]);
 
+  // casesテーブルのリアルタイム監視（サポーターの解決報告などを即座に反映）
+  useEffect(() => {
+    const channel = supabase
+      .channel(`case-updates:${params.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cases',
+          filter: `id=eq.${params.id}`,
+        },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [params.id]);
   const loadData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login'); return; }
@@ -281,6 +303,16 @@ export default function SOSResultPage() {
       toast.error('ステータスの更新に失敗しました');
       return;
     }
+
+    // チャットにシステムメッセージを投稿してサポーターに通知
+    if (currentUserId) {
+      await supabase.from('messages').insert([{
+        case_id: params.id as string,
+        sender_user_id: currentUserId,
+        content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
+      }]);
+    }
+
     toast.success('サポーターに対応継続を依頼しました');
     await loadData();
   };
@@ -520,11 +552,11 @@ export default function SOSResultPage() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at
-                      ? 'bg-emerald-100 text-emerald-600' :
-                      caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                        caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
-                          caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
-                            'bg-blue-100 text-blue-600'
+                    ? 'bg-emerald-100 text-emerald-600' :
+                    caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                        caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                          'bg-blue-100 text-blue-600'
                     }`}>
                     {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
                     {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
@@ -856,8 +888,8 @@ export default function SOSResultPage() {
                     key={key}
                     onClick={() => toggleBadge(key)}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${isSelected
-                        ? 'border-blue-400 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-blue-400 bg-blue-50 shadow-sm'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                       }`}
                   >
                     <span className="text-2xl">{badge.emoji}</span>

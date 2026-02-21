@@ -259,6 +259,24 @@ export default function MessageThread({ caseId, currentUserId, readOnly = false 
                 ) : (
                     messages.map((msg) => {
                         const isMe = msg.sender_user_id === currentUserId;
+                        const isSystem = msg.content.startsWith('__SYSTEM__');
+                        const displayContent = isSystem ? msg.content.replace('__SYSTEM__', '') : msg.content;
+
+                        // システムメッセージは中央寄せで特別表示
+                        if (isSystem) {
+                            return (
+                                <div key={msg.id} className="flex justify-center my-2">
+                                    <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 max-w-[85%] text-center">
+                                        <p className="text-sm text-orange-700 font-medium">
+                                            ⚠️ {displayContent}
+                                        </p>
+                                        <p className="text-[10px] text-orange-400 mt-1">
+                                            {formatTime(msg.created_at)}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        }
 
                         return (
                             <div
@@ -267,8 +285,8 @@ export default function MessageThread({ caseId, currentUserId, readOnly = false 
                             >
                                 <div
                                     className={`max-w-[75%] ${isMe
-                                            ? 'bg-blue-600 text-white rounded-2xl rounded-br-md'
-                                            : 'bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200'
+                                        ? 'bg-blue-600 text-white rounded-2xl rounded-br-md'
+                                        : 'bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200'
                                         } px-4 py-2.5 shadow-sm`}
                                 >
                                     {/* 相手のメッセージには送信者名を表示 */}

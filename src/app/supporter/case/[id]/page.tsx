@@ -80,6 +80,29 @@ export default function SupporterCaseDetailPage() {
     loadData();
   }, [params.id]);
 
+  // casesテーブルのリアルタイム監視（SOS側の拒否などを即座に反映）
+  useEffect(() => {
+    const channel = supabase
+      .channel(`case-updates:${params.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cases',
+          filter: `id=eq.${params.id}`,
+        },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [params.id]);
+
   const loadData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login'); return; }
@@ -191,6 +214,16 @@ export default function SupporterCaseDetailPage() {
       .update({ supporter_resolved_at: new Date().toISOString() })
       .eq('id', params.id);
     if (error) { toast.error('解決報告に失敗しました'); return; }
+
+    // チャットにシステムメッセージを投稿してSOS側に通知
+    if (currentUserId) {
+      await supabase.from('messages').insert([{
+        case_id: params.id as string,
+        sender_user_id: currentUserId,
+        content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
+      }]);
+    }
+
     setShowResolveModal(false);
     await loadData();
     toast.success('解決を報告しました。相談者の確認をお待ちください');
@@ -232,10 +265,10 @@ export default function SupporterCaseDetailPage() {
                     <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>
                   )}
                   <span className={`text-xs px-2 py-1 rounded-full ${caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
-                        caseData?.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
-                          caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
-                            'bg-gray-100 text-gray-600'
+                    caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                      caseData?.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
+                        caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                          'bg-gray-100 text-gray-600'
                     }`}>
                     {caseData?.status === 'MATCHED' ? '🤝 マッチ済み' :
                       caseData?.status === 'IN_PROGRESS' ? '🔄 対応中' :
@@ -291,14 +324,14 @@ export default function SupporterCaseDetailPage() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'RESOLVED'
-                    ? 'bg-green-100 text-green-600' :
-                    caseData?.status === 'IN_PROGRESS' && hasReportedResolution
-                      ? 'bg-emerald-100 text-emerald-600' :
-                      caseData?.status === 'IN_PROGRESS'
-                        ? 'bg-purple-100 text-purple-600' :
-                        caseData?.status === 'MATCHED'
-                          ? 'bg-amber-100 text-amber-600' :
-                          'bg-blue-100 text-blue-600'
+                  ? 'bg-green-100 text-green-600' :
+                  caseData?.status === 'IN_PROGRESS' && hasReportedResolution
+                    ? 'bg-emerald-100 text-emerald-600' :
+                    caseData?.status === 'IN_PROGRESS'
+                      ? 'bg-purple-100 text-purple-600' :
+                      caseData?.status === 'MATCHED'
+                        ? 'bg-amber-100 text-amber-600' :
+                        'bg-blue-100 text-blue-600'
                   }`}>
                   {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
                   {caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && '🔄 対応中'}
@@ -340,8 +373,8 @@ export default function SupporterCaseDetailPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${myOffer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                      myOffer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
+                    myOffer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
                     }`}>
                     {myOffer.status === 'PENDING' && '⏳ 承認待ち'}
                     {myOffer.status === 'ACCEPTED' && '✅ 承認済み'}
@@ -362,16 +395,16 @@ export default function SupporterCaseDetailPage() {
 
                 {myOffer.status === 'ACCEPTED' && (
                   <div className={`p-3 rounded-lg border ${caseData?.status === 'RESOLVED'
-                      ? 'bg-green-50 border-green-200'
-                      : hasReportedResolution
-                        ? 'bg-emerald-50 border-emerald-200'
-                        : caseData?.status === 'IN_PROGRESS'
-                          ? 'bg-purple-50 border-purple-200'
-                          : 'bg-green-50 border-green-200'
+                    ? 'bg-green-50 border-green-200'
+                    : hasReportedResolution
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : caseData?.status === 'IN_PROGRESS'
+                        ? 'bg-purple-50 border-purple-200'
+                        : 'bg-green-50 border-green-200'
                     }`}>
                     <p className={`text-sm ${caseData?.status === 'RESOLVED' ? 'text-green-700' :
-                        hasReportedResolution ? 'text-emerald-700' :
-                          caseData?.status === 'IN_PROGRESS' ? 'text-purple-700' : 'text-green-700'
+                      hasReportedResolution ? 'text-emerald-700' :
+                        caseData?.status === 'IN_PROGRESS' ? 'text-purple-700' : 'text-green-700'
                       }`}>
                       {caseData?.status === 'RESOLVED'
                         ? '✅ この相談は解決済みです。ご支援ありがとうございました。'
