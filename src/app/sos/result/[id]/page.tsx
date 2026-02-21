@@ -80,7 +80,6 @@ export default function SOSResultPage() {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [selectedBadges, setSelectedBadges] = useState<Set<BadgeKey>>(new Set());
   const [isSubmittingBadges, setIsSubmittingBadges] = useState(false);
-  const [badgesSubmitted, setBadgesSubmitted] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -255,7 +254,6 @@ export default function SOSResultPage() {
     }
 
     setIsSubmittingBadges(false);
-    setBadgesSubmitted(true);
     setShowEvalModal(false);
     toast.success('サポーターへの評価を送信しました！ありがとうございます 🎉');
   };
@@ -351,11 +349,11 @@ export default function SOSResultPage() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at
-                    ? 'bg-emerald-100 text-emerald-600' :
-                    caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
-                        caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
-                          'bg-blue-100 text-blue-600'
+                      ? 'bg-emerald-100 text-emerald-600' :
+                      caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                        caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                          caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                            'bg-blue-100 text-blue-600'
                     }`}>
                     {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
                     {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
@@ -410,6 +408,15 @@ export default function SOSResultPage() {
                         <p className="text-xs text-emerald-600 mt-1">
                           問題が解決していれば、下のボタンで確認してください
                         </p>
+                        {caseData?.supporter_resolved_at && (() => {
+                          const deadline = new Date(new Date(caseData.supporter_resolved_at).getTime() + 14 * 24 * 60 * 60 * 1000);
+                          const daysLeft = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                          return (
+                            <p className="text-[11px] text-gray-400 mt-2">
+                              ⏰ 未確認の場合、{daysLeft}日後に自動で解決済みになります
+                            </p>
+                          );
+                        })()}
                       </div>
                       <Button
                         onClick={() => setShowResolveModal(true)}
@@ -424,14 +431,6 @@ export default function SOSResultPage() {
                       <p className="text-sm text-green-700 font-medium">
                         ✅ この相談は解決済みです
                       </p>
-                      {!badgesSubmitted && (
-                        <button
-                          onClick={() => setShowEvalModal(true)}
-                          className="mt-2 text-xs text-amber-600 hover:text-amber-700 underline"
-                        >
-                          🎁 サポーターにバッジを贈る
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>
@@ -595,8 +594,8 @@ export default function SOSResultPage() {
         </div>
       </Modal>
 
-      {/* 評価モーダル（解決確認後に表示） */}
-      <Modal isOpen={showEvalModal} onClose={() => { setShowEvalModal(false); if (!badgesSubmitted) toast.success('相談が解決済みになりました！'); }} title="🎉 サポーターを評価" type="info">
+      {/* 評価モーダル（解決確認後に必須表示） */}
+      <Modal isOpen={showEvalModal} onClose={() => { }} title="🎉 サポーターを評価" type="info">
         <div className="space-y-5">
           <div className="text-center">
             <div className="text-5xl mb-2">🎊</div>
@@ -607,8 +606,8 @@ export default function SOSResultPage() {
 
           {/* 自動付与バッジ */}
           <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-            <p className="text-xs text-amber-600 font-medium mb-2">🏅 自動付与済み</p>
-            <div className="flex gap-3">
+            <p className="text-xs text-amber-600 font-medium mb-2">🏅 自動付与</p>
+            <div className="flex gap-3 flex-wrap">
               {offers.filter(o => o.status === 'ACCEPTED').map((offer, i) => (
                 <div key={offer.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-amber-200">
                   <span className="text-lg">{i === 0 ? '🥇' : '🥈'}</span>
@@ -620,7 +619,7 @@ export default function SOSResultPage() {
 
           {/* 選択バッジ */}
           <div>
-            <p className="text-xs text-gray-500 font-medium mb-3">✨ 追加バッジを選択（任意・複数可）</p>
+            <p className="text-xs text-gray-500 font-medium mb-3">✨ 追加バッジを選択してください（複数可）</p>
             <div className="grid grid-cols-1 gap-2">
               {SELECTABLE_BADGES.map((key) => {
                 const badge = SUPPORTER_BADGES[key];
@@ -630,8 +629,8 @@ export default function SOSResultPage() {
                     key={key}
                     onClick={() => toggleBadge(key)}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${isSelected
-                      ? 'border-blue-400 bg-blue-50 shadow-sm'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-400 bg-blue-50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                       }`}
                   >
                     <span className="text-2xl">{badge.emoji}</span>
@@ -647,21 +646,16 @@ export default function SOSResultPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => { setShowEvalModal(false); toast.success('相談が解決済みになりました！'); }}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
-            >
-              スキップ
-            </button>
-            <button
-              onClick={handleSubmitBadges}
-              disabled={isSubmittingBadges}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 text-sm font-medium disabled:opacity-50"
-            >
-              {isSubmittingBadges ? '送信中...' : `🎁 バッジを贈る${selectedBadges.size > 0 ? ` (${selectedBadges.size})` : ''}`}
-            </button>
-          </div>
+          <button
+            onClick={handleSubmitBadges}
+            disabled={isSubmittingBadges || selectedBadges.size === 0}
+            className="w-full px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 text-sm font-medium disabled:opacity-50"
+          >
+            {isSubmittingBadges ? '送信中...' : `🎁 バッジを贈る (${selectedBadges.size})`}
+          </button>
+          {selectedBadges.size === 0 && (
+            <p className="text-xs text-center text-gray-400">※ 1つ以上のバッジを選択してください</p>
+          )}
         </div>
       </Modal>
 
