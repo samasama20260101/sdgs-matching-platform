@@ -118,12 +118,16 @@ export default function SOSHearingPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
 
-      const { data: userIdData } = await supabase
-        .from('users').select('id').eq('auth_user_id', session.user.id).single();
-      if (!userIdData) { router.push('/login'); return; }
-
-      const { data: userCases } = await supabase
-        .from('cases').select('id, status').eq('owner_user_id', userIdData.id).eq('status', 'OPEN');
+      const roleRes = await fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const roleData = await roleRes.json();
+      if (!roleData.user) { router.push('/login'); return; }
+      const casesRes = await fetch('/api/sos/cases', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const casesData = await casesRes.json();
+      const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
       if ((userCases?.length || 0) >= 3) { setShowLimitModal(true); return; }
 
       setIsLoading(false);
@@ -206,14 +210,19 @@ export default function SOSHearingPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
 
-      const { data: userData } = await supabase
-        .from('users').select('id').eq('auth_user_id', session.user.id).single();
-      if (!userData) { setError('ユーザー情報が取得できませんでした'); setIsSubmitting(false); return; }
+      const roleRes2 = await fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const roleData2 = await roleRes2.json();
+      if (!roleData2.user) { setError('ユーザー情報が取得できませんでした'); setIsSubmitting(false); return; }
 
-      const { data: caseData, error: caseError } = await supabase
-        .from('cases')
-        .insert([{
-          owner_user_id: userData.id,
+      const caseRes = await fetch('/api/sos/cases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           intake_qna: { qa: qaData },
           description_free: [
             freeText.what,
@@ -224,16 +233,17 @@ export default function SOSHearingPage() {
           urgency: isUrgent ? 'High' : 'Medium',
           status: 'OPEN',
           region_country: 'ID',
-        }])
-        .select()
-        .single();
-
-      if (caseError) {
-        console.error('Case error:', caseError);
-        setError(`保存エラー: ${caseError.message}`);
+        }),
+      });
+      const caseResult = await caseRes.json();
+      if (!caseRes.ok) {
+        console.error('Case error:', caseResult);
+        setError(`保存エラー: ${caseResult.error}`);
         setIsSubmitting(false);
         return;
       }
+      const caseData = caseResult.case;
+
 
       if (isUrgent) {
         alert('⚠️ あなたのことが心配です。\n今すぐ話を聞いてもらえる場所があります。\n\nよりそいホットライン: 0120-279-338（24時間）');

@@ -1,7 +1,7 @@
+// src/app/(auth)/login/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -23,6 +22,7 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
+            // 1. ログイン
             const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email: formData.email,
                 password: formData.password,
@@ -30,51 +30,39 @@ export default function LoginPage() {
 
             if (authError) {
                 setError('メールアドレスまたはパスワードが正しくありません');
-                setIsLoading(false);
                 return;
             }
 
-            console.log('✅ Auth success, user ID:', data.user.id);
+            // 2. API経由でロール取得（RLSをバイパス）
+            const res = await fetch('/api/auth/get-role', {
+                headers: {
+                    'Authorization': `Bearer ${data.session.access_token}`,
+                },
+            });
+            const result = await res.json();
 
-            // ログイン成功後、ユーザー情報を取得
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('role, display_name')
-                .eq('auth_user_id', data.user.id)
-                .single();
-
-            console.log('📊 User data:', userData);
-            console.log('❌ User error:', userError);
-
-            if (userError) {
+            if (!result.role) {
                 setError('ユーザー情報の取得に失敗しました');
-                setIsLoading(false);
                 return;
             }
 
-            if (!userData) {
-                setError('ユーザーが見つかりません');
-                setIsLoading(false);
-                return;
-            }
-
-            // roleによってリダイレクト先を変える
-            console.log('🔀 Redirecting based on role:', userData.role);
-
-            if (userData.role === 'SOS') {
-                console.log('→ Going to /sos/dashboard');
-                router.push('/sos/dashboard');
-            } else if (userData.role === 'SUPPORTER') {
-                console.log('→ Going to /supporter/dashboard');
-                router.push('/supporter/dashboard');
+            // 3. ロール別リダイレクト
+            if (result.user?.must_change_password) {
+                window.location.href = '/change-password'
+            } else if (result.role === 'SOS') {
+                window.location.href = '/sos/dashboard';
+            } else if (result.role === 'SUPPORTER') {
+                window.location.href = '/supporter/dashboard';
+            } else if (result.role === 'ADMIN') {
+                window.location.href = '/admin/dashboard';
             } else {
-                console.log('→ Unknown role, going to /');
-                router.push('/');
+                window.location.href = '/';
             }
 
         } catch (err) {
             console.error('Login error:', err);
             setError('ログイン中にエラーが発生しました');
+        } finally {
             setIsLoading(false);
         }
     };
@@ -121,14 +109,12 @@ export default function LoginPage() {
                             />
                         </div>
 
-                        {/* エラーメッセージ */}
                         {error && (
                             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                                 {error}
                             </div>
                         )}
 
-                        {/* ログインボタン */}
                         <Button
                             type="submit"
                             className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
@@ -139,7 +125,6 @@ export default function LoginPage() {
 
                     </form>
 
-                    {/* リンク */}
                     <div className="mt-4 space-y-2 text-center text-sm text-gray-600">
                         <div>
                             アカウントをお持ちでない方は{' '}

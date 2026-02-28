@@ -74,34 +74,28 @@ export default function SOSDashboard() {
       return;
     }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('display_name, role')
-      .eq('auth_user_id', session.user.id)
-      .single();
 
-    if (!user || user.role !== 'SOS') {
+    // API経由でロール確認（RLSをバイパス）
+    const roleRes = await fetch('/api/auth/get-role', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    const roleData = await roleRes.json();
+    if (roleData.role !== 'SOS') {
       router.push('/');
       return;
     }
 
-    setUserData(user);
+    if (!roleData.user) {
+      router.push('/');
+      return;
+    }
+    setUserData(roleData.user);
 
-    const { data: userIdData } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', session.user.id)
-      .single();
-
-    if (!userIdData) return;
-
-    const { data: casesData } = await supabase
-      .from('cases')
-      .select('*')
-      .eq('owner_user_id', userIdData.id)
-      .order('created_at', { ascending: false });
-
-    setCases(casesData || []);
+    const casesRes = await fetch('/api/sos/cases', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    })
+    const casesData = await casesRes.json()
+    setCases(casesData.cases || [])
     setIsLoading(false);
   };
 
@@ -110,12 +104,16 @@ export default function SOSDashboard() {
   };
 
   const confirmCancel = async () => {
-    const { error } = await supabase
-      .from('cases')
-      .update({ status: 'CANCELLED' })
-      .eq('id', cancelModal.caseId);
-
-    if (error) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/sos/cases/${cancelModal.caseId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ status: 'CANCELLED' }),
+    });
+    if (!res.ok) {
       toast.error('取消に失敗しました');
       return;
     }
@@ -267,9 +265,9 @@ export default function SOSDashboard() {
                       </div>
                       {/* ステータスバッジ */}
                       <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full w-fit ${case_.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
-                          case_.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                            case_.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
-                              'bg-gray-100 text-gray-600'
+                        case_.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                          case_.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
+                            'bg-gray-100 text-gray-600'
                         }`}>
                         {case_.status === 'OPEN' && '⏳ サポーター待ち'}
                         {case_.status === 'MATCHED' && '🤝 マッチ済み'}
