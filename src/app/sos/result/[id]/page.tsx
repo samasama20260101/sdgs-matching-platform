@@ -88,6 +88,7 @@ export default function SOSResultPage() {
   const [selectedBadges, setSelectedBadges] = useState<Set<BadgeKey>>(new Set());
   const [isSubmittingBadges, setIsSubmittingBadges] = useState(false);
   const [supporterBadges, setSupporterBadges] = useState<Record<string, Record<string, number>>>({});
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -105,6 +106,8 @@ export default function SOSResultPage() {
   const loadData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login'); return; }
+
+    setAccessToken(session.access_token);
 
     const caseRes = await fetch(`/api/sos/cases/${params.id}`, {
       headers: { 'Authorization': `Bearer ${session.access_token}` },
@@ -193,10 +196,21 @@ export default function SOSResultPage() {
 
   const handleAcceptOffer = async () => {
     if (!selectedOffer) return;
-    const { error: offerError } = await supabase
-      .from('offers').update({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }).eq('id', selectedOffer.id);
-    if (offerError) { toast.error('承認に失敗しました'); return; }
-    await supabase.from('cases').update({ status: 'MATCHED' }).eq('id', params.id);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    // オファーを承認
+    const offerRes = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
+    });
+    if (!offerRes.ok) { toast.error('承認に失敗しました'); return; }
+    // ケースをMATCHEDに
+    await fetch(`/api/sos/cases/${params.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ status: 'MATCHED' }),
+    });
     setShowAcceptModal(false);
     setSelectedOffer(null);
     await loadData();
@@ -205,9 +219,14 @@ export default function SOSResultPage() {
 
   const handleDeclineOffer = async () => {
     if (!selectedOffer) return;
-    const { error } = await supabase
-      .from('offers').update({ status: 'DECLINED', declined_at: new Date().toISOString() }).eq('id', selectedOffer.id);
-    if (error) { toast.error('辞退に失敗しました'); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
+    });
+    if (!res.ok) { toast.error('辞退に失敗しました'); return; }
     setShowDeclineModal(false);
     setSelectedOffer(null);
     await loadOffers();
@@ -215,35 +234,52 @@ export default function SOSResultPage() {
   };
 
   const handleResolveCase = async () => {
-    const { error } = await supabase
-      .from('cases').update({ status: 'RESOLVED', resolved_at: new Date().toISOString() }).eq('id', params.id);
-    if (error) { toast.error('ステータスの更新に失敗しました'); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch(`/api/sos/cases/${params.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
+    });
+    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
     setShowResolveModal(false);
     await loadData();
+    // 自動バッジ付与（API経由）
     const accepted = offers.filter(o => o.status === 'ACCEPTED');
     if (accepted.length > 0 && currentUserId) {
       const autoBadges = accepted.map((offer, i) => ({
         case_id: params.id as string,
         supporter_user_id: offer.supporter.id,
-        given_by_user_id: currentUserId,
         badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
       }));
-      await supabase.from('supporter_badges').upsert(autoBadges, { onConflict: 'case_id,supporter_user_id,badge_key' });
+      await fetch('/api/sos/badges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ badges: autoBadges }),
+      });
     }
     setShowEvalModal(true);
   };
 
   const handleRejectResolution = async () => {
-    const { error } = await supabase
-      .from('cases').update({ supporter_resolved_at: null }).eq('id', params.id);
-    if (error) { toast.error('ステータスの更新に失敗しました'); return; }
-    if (currentUserId) {
-      await supabase.from('messages').insert([{
-        case_id: params.id as string,
-        sender_user_id: currentUserId,
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    // supporter_resolved_atをリセット
+    const res = await fetch(`/api/sos/cases/${params.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ supporter_resolved_at: null }),
+    });
+    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+    // システムメッセージをAPIで投稿
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({
+        case_id: params.id,
         content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
-      }]);
-    }
+      }),
+    });
     toast.success('サポーターに対応継続を依頼しました');
     await loadData();
   };
@@ -252,17 +288,22 @@ export default function SOSResultPage() {
     const accepted = offers.filter(o => o.status === 'ACCEPTED');
     if (accepted.length === 0 || !currentUserId) return;
     setIsSubmittingBadges(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setIsSubmittingBadges(false); return; }
     const badgeRows = accepted.flatMap((offer) =>
       [...selectedBadges].map((badgeKey) => ({
         case_id: params.id as string,
         supporter_user_id: offer.supporter.id,
-        given_by_user_id: currentUserId,
         badge_key: badgeKey,
       }))
     );
     if (badgeRows.length > 0) {
-      const { error } = await supabase.from('supporter_badges').upsert(badgeRows, { onConflict: 'case_id,supporter_user_id,badge_key' });
-      if (error) { toast.error('評価の送信に失敗しました'); setIsSubmittingBadges(false); return; }
+      const res = await fetch('/api/sos/badges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ badges: badgeRows }),
+      });
+      if (!res.ok) { toast.error('評価の送信に失敗しました'); setIsSubmittingBadges(false); return; }
     }
     setIsSubmittingBadges(false);
     setShowEvalModal(false);
@@ -532,6 +573,7 @@ export default function SOSResultPage() {
               <MessageThread
                 caseId={caseData!.id}
                 currentUserId={currentUserId}
+                accessToken={accessToken || ''}
                 readOnly={caseData?.status === 'RESOLVED' || caseData?.status === 'CLOSED' || caseData?.status === 'CANCELLED'}
               />
             )}
@@ -644,7 +686,7 @@ export default function SOSResultPage() {
         </div>
       </Modal>
 
-      <Modal isOpen={showEvalModal} onClose={() => { }} title="🎉 サポーターを評価" type="info">
+      <Modal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} title="🎉 サポーターを評価" type="info">
         <div className="space-y-5">
           <div className="text-center">
             <div className="text-5xl mb-2">🎊</div>
