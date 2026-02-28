@@ -1,3 +1,4 @@
+// src/components/layout/Header.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -19,51 +20,33 @@ export default function Header() {
 
     const loadUserInfo = async () => {
       try {
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
-
         if (!session) {
-          if (isMounted) {
-            setRole(null);
-            setDisplayName('');
-          }
+          if (isMounted) { setRole(null); setDisplayName(''); }
           return;
         }
 
-        const { data, error } = await supabase
-          .from('users')
-          .select('role, real_name, display_name')
-          .eq('auth_user_id', session.user.id)
-          .single();
+        // API経由でロール取得（RLSをバイパス）
+        const res = await fetch('/api/auth/get-role', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
 
-        if (error) throw error;
-
-        if (isMounted && data) {
-          // Supabase の返却型が string になりがちなので、ここで安全に寄せる
-          const r = (data.role ?? null) as UserRole;
-          setRole(r);
-          setDisplayName(data.real_name || data.display_name || '');
+        if (isMounted && data.user) {
+          setRole(data.role as UserRole);
+          setDisplayName(data.user.real_name || data.user.display_name || '');
         }
       } catch (e) {
         console.error('[Header] loadUserInfo error:', e);
-        if (isMounted) {
-          setRole(null);
-          setDisplayName('');
-        }
+        if (isMounted) { setRole(null); setDisplayName(''); }
       } finally {
         if (isMounted) setIsLoading(false);
       }
     };
 
     loadUserInfo();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   const handleLogout = async () => {
@@ -74,6 +57,7 @@ export default function Header() {
   const getDashboardLink = () => {
     if (role === 'SOS') return '/sos/dashboard';
     if (role === 'SUPPORTER') return '/supporter/dashboard';
+    if (role === 'ADMIN') return '/admin/dashboard';
     return '/';
   };
 
@@ -90,57 +74,33 @@ export default function Header() {
           <nav className="flex items-center gap-4">
             {role ? (
               <>
-                <Link
-                  href={getDashboardLink()}
-                  className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                >
+                <Link href={getDashboardLink()} className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
                   ダッシュボード
                 </Link>
 
                 {role === 'SOS' && (
                   <>
-                    <Link
-                      href="/sos/hearing"
-                      className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                    >
+                    <Link href="/sos/hearing" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
                       相談する
                     </Link>
-
-                    <Link
-                      href="/sos/cases"
-                      className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                    >
+                    <Link href="/sos/cases" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
                       相談履歴
                     </Link>
                   </>
                 )}
 
-                <Link
-                  href="/profile"
-                  className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                >
+                <Link href="/profile" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
                   {displayName || 'プロフィール'}
                 </Link>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-gray-600 hover:text-red-600 hover:border-red-300"
-                >
+                <Button variant="outline" size="sm" onClick={handleLogout} className="text-gray-600 hover:text-red-600 hover:border-red-300">
                   ログアウト
                 </Button>
               </>
             ) : (
               <>
-                <Link href="/login" className="text-sm text-gray-600 hover:text-blue-600">
-                  ログイン
-                </Link>
-
-                <Link
-                  href="/signup"
-                  className="text-sm bg-gradient-to-r from-blue-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-green-700"
-                >
+                <Link href="/login" className="text-sm text-gray-600 hover:text-blue-600">ログイン</Link>
+                <Link href="/signup" className="text-sm bg-gradient-to-r from-blue-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-green-700">
                   新規登録
                 </Link>
               </>

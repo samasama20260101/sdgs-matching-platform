@@ -66,19 +66,17 @@ export default function ProfilePage() {
                     return;
                 }
 
-                // ユーザー情報取得
-                const { data, error: fetchError } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('auth_user_id', session.user.id)
-                    .single();
-
-                if (fetchError || !data) {
-                    setError('ユーザー情報の取得に失敗しました');
+                // ユーザー情報取得（API経由でRLSをバイパス）
+                const roleRes = await fetch('/api/auth/get-role', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` },
+                });
+                const roleData = await roleRes.json();
+                if (!roleData.user) {
+                    setError('ユーザー情報が見つかりません');
                     setIsLoading(false);
                     return;
                 }
-
+                const data = roleData.user;
                 setUserData(data);
 
                 // フォームに初期値を設定
@@ -193,16 +191,21 @@ export default function ProfilePage() {
             }
 
             // データベース更新
-            const { error: updateError } = await supabase
-                .from('users')
-                .update(updateData)
-                .eq('id', userData.id);
-
-            if (updateError) {
-                console.error('Update error:', updateError);
-                setError(`更新エラー: ${updateError.message}`);
-                setIsSaving(false);
-                return;
+            const { data: { session } } = await supabase.auth.getSession()
+            const res = await fetch('/api/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify(updateData),
+            })
+            if (!res.ok) {
+                const result = await res.json()
+                console.error('Update error:', result)
+                setError(`更新エラー: ${result.error}`)
+                setIsSaving(false)
+                return
             }
 
             setSuccess(true);

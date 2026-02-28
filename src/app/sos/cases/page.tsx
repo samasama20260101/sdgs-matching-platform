@@ -56,24 +56,17 @@ export default function SOSCasesPage() {
       }
 
       // ユーザーID取得
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', session.user.id)
-        .single();
-
-      if (!userData) {
+      const casesRes = await fetch('/api/sos/cases', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const casesData = await casesRes.json();
+      if (!casesRes.ok) {
         setError('ユーザー情報が取得できませんでした');
         setIsLoading(false);
         return;
       }
-
-      // 相談履歴取得（新しい順）
-      const { data, error: fetchError } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('owner_user_id', userData.id)
-        .order('created_at', { ascending: false });
+      const data = casesData.cases;
+      const fetchError = null;
 
       if (fetchError) {
         setError('相談履歴の取得に失敗しました');

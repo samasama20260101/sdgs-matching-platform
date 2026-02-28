@@ -1,3 +1,4 @@
+// src/app/supporter/dashboard/page.tsx
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -8,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SDG_COLORS, SDG_NAMES, CASE_STATUS, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 
-// ─── Types ────────────────────────────────────────────────────
 type Case = {
   id: string;
   title: string;
@@ -40,20 +40,9 @@ type UserData = {
   service_areas?: Array<{ prefecture: string; city?: string }>;
 };
 
-// ─── Supporter Case Card ──────────────────────────────────────
-function SupporterCaseCard({
-  case_,
-  showUser = true,
-  onClick,
-}: {
-  case_: Case;
-  showUser?: boolean;
-  onClick: () => void;
-}) {
+function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
   const sdgs = case_.ai_sdg_suggestion?.sdgs_goals || [];
   const keywords = case_.ai_sdg_suggestion?.keywords || [];
-
-  // オファーステータスに基づくエンゲージメント表示
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
     none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
@@ -62,8 +51,6 @@ function SupporterCaseCard({
     WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
     DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
   };
-
-  // ケースのステータスを優先表示（ACCEPTED時のみケース進行状態で上書き）
   const caseStatusOverride: Record<string, { label: string; color: string; icon: string; border: string }> = {
     MATCHED: { label: 'マッチ済み', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
     IN_PROGRESS: { label: '対応中', color: 'bg-purple-50 text-purple-600', icon: '🔄', border: 'border-l-purple-400' },
@@ -71,69 +58,30 @@ function SupporterCaseCard({
     CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
   };
-
-  // ACCEPTEDでケースがMATCHED以降に進んでいる場合はケースステータスを優先
-  const eng = (engagement === 'ACCEPTED' && caseStatusOverride[case_.status])
-    ? caseStatusOverride[case_.status]
-    : engConfig[engagement] || engConfig.none;
+  const eng = (engagement === 'ACCEPTED' && caseStatusOverride[case_.status]) ? caseStatusOverride[case_.status] : engConfig[engagement] || engConfig.none;
 
   return (
-    <Card
-      className={`border-l-4 ${eng.border} hover:shadow-md transition-all cursor-pointer`}
-      onClick={onClick}
-    >
+    <Card className={`border-l-4 ${eng.border} hover:shadow-md transition-all cursor-pointer`} onClick={onClick}>
       <CardContent className="p-5">
-        {/* ヘッダー */}
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="text-[15px] font-bold text-gray-800 leading-snug truncate">
-              {case_.title}
-            </h3>
-            {showUser && case_.users && (
-              <span className="text-xs text-gray-500">👤 {case_.users.display_name}</span>
-            )}
+            <h3 className="text-[15px] font-bold text-gray-800 leading-snug truncate">{case_.title}</h3>
+            {showUser && case_.users && <span className="text-xs text-gray-500">👤 {case_.users.display_name}</span>}
           </div>
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${eng.color}`}>
-              {eng.icon} {eng.label}
-            </span>
-            {case_.urgency === 'High' && (
-              <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">
-                🔴 緊急
-              </span>
-            )}
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${eng.color}`}>{eng.icon} {eng.label}</span>
+            {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
           </div>
         </div>
-
-        {/* 詳細 */}
-        <p className="text-sm text-gray-500 line-clamp-2 mb-2">
-          {case_.description_free}
-        </p>
-
-        {/* タグ & SDGs */}
+        <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex gap-1 flex-wrap">
-            {keywords.slice(0, 3).map((kw) => (
-              <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">
-                #{kw}
-              </span>
-            ))}
+            {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
           </div>
           <div className="flex gap-1">
-            {sdgs.map((g) => (
-              <span
-                key={g}
-                className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center"
-                style={{ backgroundColor: SDG_COLORS[g] }}
-                title={SDG_NAMES[g]}
-              >
-                {g}
-              </span>
-            ))}
+            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={SDG_NAMES[g]}>{g}</span>)}
           </div>
         </div>
-
-        {/* 日付 & アクション */}
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-gray-400">📅 {formatRelativeDate(case_.created_at)}</span>
           <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); onClick(); }}>
@@ -145,54 +93,32 @@ function SupporterCaseCard({
   );
 }
 
-// ─── User Grouped View ────────────────────────────────────────
-function UserGroupedView({
-  cases,
-  onCaseClick,
-}: {
-  cases: Case[];
-  onCaseClick: (id: string) => void;
-}) {
+function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (id: string) => void; }) {
   const grouped: Record<string, { userName: string; items: Case[]; sdgs: Set<number> }> = {};
   cases.forEach((c) => {
     const uid = c.owner_user_id;
-    if (!grouped[uid]) {
-      grouped[uid] = { userName: c.users?.display_name || '不明', items: [], sdgs: new Set() };
-    }
+    if (!grouped[uid]) grouped[uid] = { userName: c.users?.display_name || '不明', items: [], sdgs: new Set() };
     grouped[uid].items.push(c);
     (c.ai_sdg_suggestion?.sdgs_goals || []).forEach((s) => grouped[uid].sdgs.add(s));
   });
-
   return (
     <div className="space-y-5">
       {Object.entries(grouped).map(([uid, group]) => (
         <div key={uid} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-gray-50 to-blue-50/30 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">
-                {group.userName.charAt(group.userName.length - 1)}
-              </div>
+              <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">{group.userName.charAt(group.userName.length - 1)}</div>
               <div>
                 <span className="text-sm font-bold text-gray-800">👤 {group.userName}</span>
                 <div className="text-xs text-gray-500">相談 {group.items.length}件</div>
               </div>
             </div>
             <div className="flex gap-1">
-              {[...group.sdgs].sort((a, b) => a - b).map((s) => (
-                <span
-                  key={s}
-                  className="w-6 h-6 rounded text-white text-[10px] font-bold flex items-center justify-center"
-                  style={{ backgroundColor: SDG_COLORS[s] }}
-                >
-                  {s}
-                </span>
-              ))}
+              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="w-6 h-6 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[s] }}>{s}</span>)}
             </div>
           </div>
           <div className="p-3 space-y-2">
-            {group.items.map((c) => (
-              <SupporterCaseCard key={c.id} case_={c} showUser={false} onClick={() => onCaseClick(c.id)} />
-            ))}
+            {group.items.map((c) => <SupporterCaseCard key={c.id} case_={c} showUser={false} onClick={() => onCaseClick(c.id)} />)}
           </div>
         </div>
       ))}
@@ -200,76 +126,29 @@ function UserGroupedView({
   );
 }
 
-// ─── Region Filter Dropdown ───────────────────────────────────
-function RegionFilterDropdown({
-  allRegions,
-  activityRegions,
-  regionFilter,
-  setRegionFilter,
-  getCaseCount,
-}: {
-  allRegions: string[];
-  activityRegions: string[];
-  regionFilter: string | null;
-  setRegionFilter: (v: string | null) => void;
-  getCaseCount: (r: string) => number;
-}) {
+function RegionFilterDropdown({ allRegions, activityRegions, regionFilter, setRegionFilter, getCaseCount }: { allRegions: string[]; activityRegions: string[]; regionFilter: string | null; setRegionFilter: (v: string | null) => void; getCaseCount: (r: string) => number; }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
   const otherRegions = allRegions.filter((r) => !activityRegions.includes(r));
   const otherCount = otherRegions.reduce((sum, r) => sum + getCaseCount(r), 0);
   const isOtherSelected = regionFilter && !activityRegions.includes(regionFilter);
-
   return (
     <div className="flex gap-1.5 flex-wrap items-center relative" ref={ref}>
       <span className="text-[11px] text-gray-400 font-semibold mr-0.5">📍 地域:</span>
-
-      <button
-        onClick={() => { setRegionFilter(null); setOpen(false); }}
-        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${regionFilter === null ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-          }`}
-      >
-        すべて
-      </button>
-
-      {/* 活動地域ピル */}
-      {activityRegions.map((r) => {
-        const count = getCaseCount(r);
-        if (count === 0) return null;
-        return (
-          <button
-            key={r}
-            onClick={() => { setRegionFilter(regionFilter === r ? null : r); setOpen(false); }}
-            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${regionFilter === r ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-indigo-200 bg-indigo-50 text-indigo-600'
-              }`}
-          >
-            📍 {r} ({count})
-          </button>
-        );
-      })}
-
-      {/* その他ドロップダウン */}
+      <button onClick={() => { setRegionFilter(null); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${regionFilter === null ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>すべて</button>
+      {activityRegions.map((r) => { const count = getCaseCount(r); if (count === 0) return null; return <button key={r} onClick={() => { setRegionFilter(regionFilter === r ? null : r); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${regionFilter === r ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-indigo-200 bg-indigo-50 text-indigo-600'}`}>📍 {r} ({count})</button>; })}
       {otherRegions.length > 0 && (
         <>
-          <button
-            onClick={() => setOpen(!open)}
-            className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${isOtherSelected || open ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-              }`}
-          >
+          <button onClick={() => setOpen(!open)} className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${isOtherSelected || open ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
             {isOtherSelected ? `📍 ${regionFilter}` : `その他 ${otherRegions.length}地域`}
             {!isOtherSelected && otherCount > 0 && <span className="text-gray-400">({otherCount})</span>}
             <span className={`text-[10px] transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
           </button>
-
           {open && (
             <div className="absolute top-full left-14 mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-xl p-4 min-w-[300px] max-w-[400px] max-h-[340px] overflow-y-auto">
               <div className="text-xs font-bold text-gray-700 mb-2">地域を選択</div>
@@ -280,16 +159,7 @@ function RegionFilterDropdown({
                   <div key={blockName} className="mb-3">
                     <div className="text-[11px] font-semibold text-gray-400 mb-1">{blockName}</div>
                     <div className="flex gap-1.5 flex-wrap">
-                      {active.map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => { setRegionFilter(regionFilter === p ? null : p); setOpen(false); }}
-                          className={`px-2.5 py-0.5 rounded-full text-xs border transition-colors ${regionFilter === p ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
-                            }`}
-                        >
-                          📍 {p} <span className="text-gray-400">({getCaseCount(p)})</span>
-                        </button>
-                      ))}
+                      {active.map((p) => <button key={p} onClick={() => { setRegionFilter(regionFilter === p ? null : p); setOpen(false); }} className={`px-2.5 py-0.5 rounded-full text-xs border transition-colors ${regionFilter === p ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>📍 {p} <span className="text-gray-400">({getCaseCount(p)})</span></button>)}
                     </div>
                   </div>
                 );
@@ -302,14 +172,11 @@ function RegionFilterDropdown({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────
 export default function SupporterDashboard() {
   const router = useRouter();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // フィルター
   const [sdgFilter, setSdgFilter] = useState<number | null>(null);
   const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
@@ -321,32 +188,29 @@ export default function SupporterDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
 
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id, display_name, organization_name, role, service_area_nationwide, service_areas')
-        .eq('auth_user_id', session.user.id)
-        .single();
+      // API経由でロール確認（RLSをバイパス）
+      const roleRes = await fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const roleData = await roleRes.json();
+      if (roleData.role !== 'SUPPORTER') { router.push('/'); return; }
+      if (!roleData.user) { router.push('/'); return; }
+      setUserData(roleData.user);
 
-      if (userError || !user || user.role !== 'SUPPORTER') { router.push('/'); return; }
-      setUserData(user);
+      const supporterUserId = roleData.user.id;
 
-      // 公開中の案件（OPEN）+ 自分が関わっている案件（MATCHED）を取得
       const { data: openCases } = await supabase
         .from('cases')
-        .select(`
-          *,
-          users!cases_owner_user_id_fkey ( display_name, prefecture )
-        `)
+        .select(`*, users!cases_owner_user_id_fkey ( display_name, prefecture )`)
         .eq('visibility', 'LISTED')
         .eq('status', 'OPEN')
         .not('ai_sdg_suggestion', 'is', null)
         .order('created_at', { ascending: false });
 
-      // 自分がオファーした案件（MATCHED含む）も取得
       const { data: myOfferCases } = await supabase
         .from('offers')
         .select('case_id')
-        .eq('supporter_user_id', user.id)
+        .eq('supporter_user_id', supporterUserId)
         .in('status', ['PENDING', 'ACCEPTED']);
 
       const myOfferCaseIds = (myOfferCases || []).map(o => o.case_id);
@@ -355,51 +219,27 @@ export default function SupporterDashboard() {
       if (myOfferCaseIds.length > 0) {
         const { data: matched } = await supabase
           .from('cases')
-          .select(`
-            *,
-            users!cases_owner_user_id_fkey ( display_name, prefecture )
-          `)
+          .select(`*, users!cases_owner_user_id_fkey ( display_name, prefecture )`)
           .in('id', myOfferCaseIds)
-          .neq('status', 'OPEN') // OPENは既に取得済み
+          .neq('status', 'OPEN')
           .order('created_at', { ascending: false });
         matchedCases = matched || [];
       }
 
-      // 重複排除してマージ
       const caseMap = new Map<string, (typeof openCases extends (infer T)[] | null ? T : never)>();
-      [...(openCases || []), ...(matchedCases || [])].forEach(c => {
-        if (!caseMap.has(c.id)) caseMap.set(c.id, c);
-      });
-      const casesData = Array.from(caseMap.values())
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      [...(openCases || []), ...(matchedCases || [])].forEach(c => { if (!caseMap.has(c.id)) caseMap.set(c.id, c); });
+      const casesData = Array.from(caseMap.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // 自分のオファー状況を取得
-      const { data: myOffers } = await supabase
-        .from('offers')
-        .select('case_id, status')
-        .eq('supporter_user_id', user.id);
-
+      const { data: myOffers } = await supabase.from('offers').select('case_id, status').eq('supporter_user_id', supporterUserId);
       const offerMap = new Map<string, string>();
       (myOffers || []).forEach((o: { case_id: string; status: string }) => offerMap.set(o.case_id, o.status));
-
-      const enriched = (casesData || []).map((c: Case) => ({
-        ...c,
-        my_offer_status: offerMap.get(c.id) || null,
-      }));
-
+      const enriched = (casesData || []).map((c: Case) => ({ ...c, my_offer_status: offerMap.get(c.id) || null }));
       setCases(enriched);
 
-      // バッジカウントを取得
-      const { data: badges } = await supabase
-        .from('supporter_badges')
-        .select('badge_key')
-        .eq('supporter_user_id', user.id);
-
+      const { data: badges } = await supabase.from('supporter_badges').select('badge_key').eq('supporter_user_id', supporterUserId);
       if (badges) {
         const counts: Record<string, number> = {};
-        badges.forEach((b: { badge_key: string }) => {
-          counts[b.badge_key] = (counts[b.badge_key] || 0) + 1;
-        });
+        badges.forEach((b: { badge_key: string }) => { counts[b.badge_key] = (counts[b.badge_key] || 0) + 1; });
         setBadgeCounts(counts);
       }
 
@@ -408,24 +248,13 @@ export default function SupporterDashboard() {
     loadData();
   }, [router]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">読み込み中...</p>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">読み込み中...</p></div>;
 
-  // ─── フィルタリング ─────────────────────────────────────────
-  // ケースの実質的なステータスを判定するヘルパー
   const getCaseDisplayStatus = (c: Case): string => {
-    if (!c.my_offer_status) return 'none';                          // 未対応
-    if (c.my_offer_status === 'PENDING') return 'pending';          // 申し出中
-    if (c.my_offer_status === 'ACCEPTED') {
-      if (c.status === 'RESOLVED' || c.status === 'CLOSED') return 'resolved';  // 解決済み
-      return 'active';                                              // 対応中（MATCHED/IN_PROGRESS）
-    }
-    return 'other'; // WITHDRAWN, DECLINED
+    if (!c.my_offer_status) return 'none';
+    if (c.my_offer_status === 'PENDING') return 'pending';
+    if (c.my_offer_status === 'ACCEPTED') { if (c.status === 'RESOLVED' || c.status === 'CLOSED') return 'resolved'; return 'active'; }
+    return 'other';
   };
 
   const filteredCases = cases.filter((c) => {
@@ -435,49 +264,33 @@ export default function SupporterDashboard() {
     return true;
   });
 
-  // SDGsリスト
   const allSdgs = [...new Set(cases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
-
-  // 地域データ
   const allRegions = [...new Set(cases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
   const activityRegions = (userData?.service_areas || []).map((a) => a.prefecture);
   const getCaseCount = (r: string) => cases.filter((c) => c.users?.prefecture === r).length;
-
-  // 統計
   const stats = [
     { label: '相談件数', value: cases.length, color: 'text-blue-600' },
     { label: '対応中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-purple-600' },
     { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-green-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
-
   const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); };
   const hasActiveFilter = sdgFilter || engagementFilter || regionFilter;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* ウェルカム */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            こんにちは、{userData?.organization_name || userData?.display_name} さん 👋
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
           <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
-
-          {/* 活動地域表示 */}
           <div className="mt-3 flex items-start gap-2">
             <span className="text-sm text-gray-600 flex-shrink-0">📍 活動地域:</span>
             {userData?.service_area_nationwide ? (
               <span className="text-sm font-medium text-blue-600">全国対応</span>
             ) : activityRegions.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {activityRegions.map((r, i) => (
-                  <span key={i} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">
-                    {r}
-                  </span>
-                ))}
+                {activityRegions.map((r, i) => <span key={i} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">{r}</span>)}
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -488,7 +301,6 @@ export default function SupporterDashboard() {
           </div>
         </div>
 
-        {/* サマリー統計 */}
         <div className="grid grid-cols-4 gap-3 mb-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
@@ -498,14 +310,11 @@ export default function SupporterDashboard() {
           ))}
         </div>
 
-        {/* 評価バッジ */}
         {Object.keys(badgeCounts).length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm font-semibold text-gray-700">🏆 いただいた評価</span>
-              <span className="text-xs text-gray-400">
-                合計 {Object.values(badgeCounts).reduce((a, b) => a + b, 0)}件
-              </span>
+              <span className="text-xs text-gray-400">合計 {Object.values(badgeCounts).reduce((a, b) => a + b, 0)}件</span>
             </div>
             <div className="flex flex-wrap gap-3">
               {(Object.keys(SUPPORTER_BADGES) as BadgeKey[]).map((key) => {
@@ -513,11 +322,7 @@ export default function SupporterDashboard() {
                 if (count === 0) return null;
                 const badge = SUPPORTER_BADGES[key];
                 return (
-                  <div
-                    key={key}
-                    className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 transition-colors rounded-full px-3 py-1.5 border border-gray-200"
-                    title={badge.label}
-                  >
+                  <div key={key} className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 transition-colors rounded-full px-3 py-1.5 border border-gray-200" title={badge.label}>
                     <span className="text-lg">{badge.emoji}</span>
                     <span className="text-sm font-bold text-gray-700">{count}</span>
                   </div>
@@ -527,63 +332,23 @@ export default function SupporterDashboard() {
           </div>
         )}
 
-        {/* フィルターパネル */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-semibold text-gray-700">🎯 フィルター</span>
             <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
               {([{ id: 'flat', label: '📋 案件' }, { id: 'grouped', label: '👥 ユーザー' }] as const).map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => setViewMode(v.id)}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                >
-                  {v.label}
-                </button>
+                <button key={v.id} onClick={() => setViewMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
               ))}
             </div>
           </div>
-
-          {/* SDGフィルター */}
           <div className="flex gap-1.5 flex-wrap">
-            <button
-              onClick={() => setSdgFilter(null)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'
-                }`}
-            >
-              すべて ({cases.length})
-            </button>
+            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({cases.length})</button>
             {allSdgs.map((s) => {
               const count = cases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
-              return (
-                <button
-                  key={s}
-                  onClick={() => setSdgFilter(sdgFilter === s ? null : s)}
-                  className="px-3 py-1 rounded-full text-xs font-semibold transition-colors"
-                  style={{
-                    backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20',
-                    color: sdgFilter === s ? '#fff' : SDG_COLORS[s],
-                  }}
-                >
-                  SDG {s} ({count})
-                </button>
-              );
+              return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
             })}
           </div>
-
-          {/* 地域フィルター */}
-          {allRegions.length > 0 && (
-            <RegionFilterDropdown
-              allRegions={allRegions}
-              activityRegions={activityRegions}
-              regionFilter={regionFilter}
-              setRegionFilter={setRegionFilter}
-              getCaseCount={getCaseCount}
-            />
-          )}
-
-          {/* ステータスフィルター */}
+          {allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
           <div className="flex gap-1.5 flex-wrap">
             {[
               { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
@@ -592,38 +357,17 @@ export default function SupporterDashboard() {
               { key: 'active', label: '🔄 対応中', color: 'border-purple-300 bg-purple-50 text-purple-600' },
               { key: 'resolved', label: '✅ 解決済み', color: 'border-green-300 bg-green-50 text-green-600' },
             ].map((f) => {
-              const count = f.key === null
-                ? cases.length
-                : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
-
-              return (
-                <button
-                  key={f.key || 'all'}
-                  onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-                    }`}
-                >
-                  {f.label} ({count})
-                </button>
-              );
+              const count = f.key === null ? cases.length : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
+              return <button key={f.key || 'all'} onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>{f.label} ({count})</button>;
             })}
           </div>
         </div>
 
-        {/* 結果カウント */}
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm text-gray-500">
-            📋 {filteredCases.length}件 表示中
-            {hasActiveFilter && <span className="text-gray-400"> / 全{cases.length}件</span>}
-          </span>
-          {hasActiveFilter && (
-            <button onClick={clearFilters} className="text-xs text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50">
-              ✕ フィルターをクリア
-            </button>
-          )}
+          <span className="text-sm text-gray-500">📋 {filteredCases.length}件 表示中{hasActiveFilter && <span className="text-gray-400"> / 全{cases.length}件</span>}</span>
+          {hasActiveFilter && <button onClick={clearFilters} className="text-xs text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50">✕ フィルターをクリア</button>}
         </div>
 
-        {/* コンテンツ */}
         {filteredCases.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
             <div className="text-4xl mb-3">🔍</div>
@@ -633,9 +377,7 @@ export default function SupporterDashboard() {
           </div>
         ) : viewMode === 'flat' ? (
           <div className="space-y-3">
-            {filteredCases.map((c) => (
-              <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />
-            ))}
+            {filteredCases.map((c) => <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />)}
           </div>
         ) : (
           <UserGroupedView cases={filteredCases} onCaseClick={(id) => router.push(`/supporter/case/${id}`)} />
