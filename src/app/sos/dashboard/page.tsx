@@ -63,11 +63,7 @@ export default function SOSDashboard() {
     title: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  async function loadData() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       router.push('/login');
@@ -97,7 +93,10 @@ export default function SOSDashboard() {
     const casesData = await casesRes.json()
     setCases(casesData.cases || [])
     setIsLoading(false);
-  };
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData(); }, []);
 
   const handleCancelCase = (caseId: string, title: string) => {
     setCancelModal({ isOpen: true, caseId, title });

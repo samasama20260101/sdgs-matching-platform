@@ -197,50 +197,14 @@ export default function SupporterDashboard() {
       if (!roleData.user) { router.push('/'); return; }
       setUserData(roleData.user);
 
-      const supporterUserId = roleData.user.id;
-
-      const { data: openCases } = await supabase
-        .from('cases')
-        .select(`*, users!cases_owner_user_id_fkey ( display_name, prefecture )`)
-        .eq('visibility', 'LISTED')
-        .eq('status', 'OPEN')
-        .not('ai_sdg_suggestion', 'is', null)
-        .order('created_at', { ascending: false });
-
-      const { data: myOfferCases } = await supabase
-        .from('offers')
-        .select('case_id')
-        .eq('supporter_user_id', supporterUserId)
-        .in('status', ['PENDING', 'ACCEPTED']);
-
-      const myOfferCaseIds = (myOfferCases || []).map(o => o.case_id);
-      let matchedCases: typeof openCases = [];
-
-      if (myOfferCaseIds.length > 0) {
-        const { data: matched } = await supabase
-          .from('cases')
-          .select(`*, users!cases_owner_user_id_fkey ( display_name, prefecture )`)
-          .in('id', myOfferCaseIds)
-          .neq('status', 'OPEN')
-          .order('created_at', { ascending: false });
-        matchedCases = matched || [];
-      }
-
-      const caseMap = new Map<string, (typeof openCases extends (infer T)[] | null ? T : never)>();
-      [...(openCases || []), ...(matchedCases || [])].forEach(c => { if (!caseMap.has(c.id)) caseMap.set(c.id, c); });
-      const casesData = Array.from(caseMap.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      const { data: myOffers } = await supabase.from('offers').select('case_id, status').eq('supporter_user_id', supporterUserId);
-      const offerMap = new Map<string, string>();
-      (myOffers || []).forEach((o: { case_id: string; status: string }) => offerMap.set(o.case_id, o.status));
-      const enriched = (casesData || []).map((c: Case) => ({ ...c, my_offer_status: offerMap.get(c.id) || null }));
-      setCases(enriched);
-
-      const { data: badges } = await supabase.from('supporter_badges').select('badge_key').eq('supporter_user_id', supporterUserId);
-      if (badges) {
-        const counts: Record<string, number> = {};
-        badges.forEach((b: { badge_key: string }) => { counts[b.badge_key] = (counts[b.badge_key] || 0) + 1; });
-        setBadgeCounts(counts);
+      // API経由で案件・オファー・バッジを一括取得（RLSバイパス）
+      const dashRes = await fetch('/api/supporter/dashboard', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (dashRes.ok) {
+        const { cases: enriched, badgeCounts } = await dashRes.json();
+        setCases(enriched || []);
+        setBadgeCounts(badgeCounts || {});
       }
 
       setIsLoading(false);

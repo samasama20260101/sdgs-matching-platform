@@ -29,12 +29,6 @@ export default function Home() {
             新規登録
           </Link>
 
-          <Link
-            href="/test-ai"
-            className="px-8 py-4 bg-white text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 text-center font-medium shadow-lg hover:shadow-xl transition-all"
-          >
-            AI分類テスト
-          </Link>
         </div>
       </div>
     </div>
