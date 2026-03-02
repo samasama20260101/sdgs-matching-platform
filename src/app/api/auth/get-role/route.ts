@@ -28,7 +28,14 @@ export async function GET(request: Request) {
             .from('supporter_service_areas')
             .select('region_code, is_nationwide, country, regions(name_local, name_en)')
             .eq('supporter_user_id', userData.id)
-        serviceAreas = areas || []
+        // Supabaseのネスト構造をフラット化: { regions: { name_local } } → { name_local }
+        serviceAreas = (areas || []).map((a: any) => ({
+            region_code: a.region_code,
+            is_nationwide: a.is_nationwide,
+            country: a.country,
+            name_local: a.regions?.name_local ?? a.region_code,
+            name_en: a.regions?.name_en ?? a.region_code,
+        }))
         serviceAreaNationwide = serviceAreas.some((a: any) => a.is_nationwide)
     }
 

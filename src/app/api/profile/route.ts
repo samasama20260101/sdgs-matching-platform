@@ -40,24 +40,18 @@ export async function POST(request: Request) {
             .eq('supporter_user_id', userData.id)
 
         if (service_area_nationwide) {
-            // 全国対応：countryごとに1レコード
-            const countries: string[] = [...new Set((service_areas as any[]).map((a: any) => a.country).filter(Boolean))]
-            const nationwideCountries = countries.length > 0 ? countries : ['JP']
-            await supabaseAdmin.from('supporter_service_areas').insert(
-                nationwideCountries.map(country => ({
-                    supporter_user_id: userData.id,
-                    region_code: null,
-                    is_nationwide: true,
-                    country,
-                }))
-            )
+            // 全国対応：1レコードのみ
+            await supabaseAdmin.from('supporter_service_areas').insert([{
+                supporter_user_id: userData.id,
+                region_code: null,
+                is_nationwide: true,
+            }])
         } else if (Array.isArray(service_areas) && service_areas.length > 0) {
             await supabaseAdmin.from('supporter_service_areas').insert(
                 service_areas.map((a: any) => ({
                     supporter_user_id: userData.id,
                     region_code: a.region_code,
                     is_nationwide: false,
-                    country: a.country,
                 }))
             )
         }

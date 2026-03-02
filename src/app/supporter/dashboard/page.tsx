@@ -37,7 +37,7 @@ type UserData = {
   organization_name: string | null;
   role: string;
   service_area_nationwide?: boolean;
-  service_areas?: Array<{ prefecture: string; city?: string }>;
+  service_areas?: Array<{ region_code: string; name_local: string; name_en: string }>;
 };
 
 function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
@@ -230,7 +230,7 @@ export default function SupporterDashboard() {
 
   const allSdgs = [...new Set(cases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
   const allRegions = [...new Set(cases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
-  const activityRegions = (userData?.service_areas || []).map((a) => a.prefecture);
+  const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
   const getCaseCount = (r: string) => cases.filter((c) => c.users?.prefecture === r).length;
   const stats = [
     { label: '相談件数', value: cases.length, color: 'text-blue-600' },
