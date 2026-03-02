@@ -168,19 +168,21 @@ export default function SignupPage() {
             <form onSubmit={handleProfileSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  本名 <span className="text-red-500">*</span>
+                  お名前 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={realName}
                   onChange={(e) => setRealName(e.target.value)}
+                  placeholder="ニックネームでもOKです"
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-500">※ニックネームでもOKです。マッチ後にサポーターへ共有されます（公開されません）</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  表示名（省略時は本名を使用）
+                  表示名（省略時はお名前を使用）
                 </label>
                 <input
                   type="text"
