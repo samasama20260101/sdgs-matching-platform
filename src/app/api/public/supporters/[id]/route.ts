@@ -7,7 +7,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: supporter, error } = await supabaseAdmin
     .from('users')
-    .select('id, display_name, organization_name, supporter_type, service_area_nationwide, service_areas, created_at')
+    .select('id, display_name, organization_name, supporter_type, service_area_nationwide, service_areas, bio, social_links, created_at')
     .eq('id', id)
     .eq('role', 'SUPPORTER')
     .single()
