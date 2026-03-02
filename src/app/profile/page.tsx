@@ -156,8 +156,18 @@ export default function ProfilePage() {
                 updateData.bio = bio.trim() || null;
                 const sl: Record<string, string> = {};
                 if (website.trim()) sl.website = website.trim();
-                if (twitter.trim()) sl.twitter = twitter.trim().replace('@', '');
-                if (instagram.trim()) sl.instagram = instagram.trim().replace('@', '');
+                if (twitter.trim()) {
+                    const tw = twitter.trim();
+                    // URLが入力された場合はユーザー名を抽出
+                    const twMatch = tw.match(/(?:twitter\.com|x\.com)\/([^/?]+)/);
+                    sl.twitter = twMatch ? twMatch[1] : tw.replace('@', '');
+                }
+                if (instagram.trim()) {
+                    const ig = instagram.trim();
+                    // URLが入力された場合はユーザー名を抽出
+                    const igMatch = ig.match(/instagram\.com\/([^/?]+)/);
+                    sl.instagram = igMatch ? igMatch[1] : ig.replace('@', '');
+                }
                 if (facebook.trim()) sl.facebook = facebook.trim();
                 if (line.trim()) sl.line = line.trim();
                 updateData.social_links = Object.keys(sl).length > 0 ? sl : null;

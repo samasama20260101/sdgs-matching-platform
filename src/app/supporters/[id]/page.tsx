@@ -19,12 +19,12 @@ type Supporter = {
 };
 
 const BADGE_INFO: Record<string, { emoji: string; label: string }> = {
-  gold_medal:       { emoji: '🥇', label: 'ありがとう（主要）' },
-  silver_medal:     { emoji: '🥈', label: 'ありがとう（サポート）' },
-  very_satisfied:   { emoji: '😆', label: '大満足' },
-  quick_response:   { emoji: '⚡', label: '迅速な対応' },
-  sincere_support:  { emoji: '💎', label: '誠実なサポート' },
-  problem_solved:   { emoji: '🌟', label: 'あきらめていた問題が解決' },
+  gold_medal: { emoji: '🥇', label: 'ありがとう（主要）' },
+  silver_medal: { emoji: '🥈', label: 'ありがとう（サポート）' },
+  very_satisfied: { emoji: '😆', label: '大満足' },
+  quick_response: { emoji: '⚡', label: '迅速な対応' },
+  sincere_support: { emoji: '💎', label: '誠実なサポート' },
+  problem_solved: { emoji: '🌟', label: 'あきらめていた問題が解決' },
   grateful_partner: { emoji: '🤝', label: '一緒に向き合い大感謝' },
 };
 
@@ -36,7 +36,7 @@ export default function SupporterProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/public/supporters/${id}`)
+    fetch(`/api/public/supporters/${id}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => {
         if (d.error) { router.push('/supporters'); return; }
@@ -69,7 +69,7 @@ export default function SupporterProfilePage() {
     (Date.now() - new Date(supporter.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)
   ));
   const sl = supporter.social_links || {};
-  const hasSocialLinks = sl.website || sl.twitter || sl.instagram || sl.facebook || sl.line;
+  const hasSocialLinks = !!(sl.website || sl.twitter || sl.instagram || sl.facebook || sl.line);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -97,60 +97,65 @@ export default function SupporterProfilePage() {
 
         {/* ── ヒーローカード ── */}
         <div className="mt-4 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* グラデーションバナー */}
           <div className="h-28 bg-gradient-to-r from-green-400 via-teal-400 to-blue-400 relative">
             <div className="absolute inset-0 opacity-20"
               style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           </div>
+
+          {/* プロフィール情報 */}
           <div className="px-6 pb-6">
-            <div className="flex items-end gap-4 -mt-8 mb-4">
+            {/* アイコン + タイプバッジ */}
+            <div className="relative z-10 flex items-end gap-4 -mt-8 mb-3">
               <div className="w-16 h-16 rounded-2xl bg-white shadow-md border-2 border-white flex items-center justify-center text-3xl flex-shrink-0">
                 {supporter.supporter_type === 'NPO' ? '🌿' : '🏢'}
               </div>
               <div className="pb-1 flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  supporter.supporter_type === 'NPO'
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${supporter.supporter_type === 'NPO'
                     ? 'bg-green-100 text-green-700 border border-green-200'
                     : 'bg-blue-100 text-blue-700 border border-blue-200'
-                }`}>
+                  }`}>
                   {supporter.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
                 </span>
                 <span className="text-xs text-gray-400">登録 {yearsActive}年</span>
               </div>
             </div>
-            <h1 className="text-xl font-black text-gray-900 mb-2">
+
+            {/* 団体名 */}
+            <h1 className="text-xl font-black text-gray-900 mb-4">
               {supporter.organization_name || supporter.display_name}
             </h1>
 
-            {/* SNSリンク（ヒーロー内に配置） */}
+            {/* SNSリンク（団体名の下に独立配置） */}
             {hasSocialLinks && (
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
                 {sl.website && (
                   <a href={sl.website} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full transition-colors">
-                    🌐 <span>公式サイト</span>
+                    🌐 公式サイト
                   </a>
                 )}
                 {sl.twitter && (
-                  <a href={`https://twitter.com/${sl.twitter.replace('@','')}`} target="_blank" rel="noopener noreferrer"
+                  <a href={sl.twitter.startsWith('http') ? sl.twitter : `https://twitter.com/${sl.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-white bg-black hover:bg-gray-800 px-3 py-1.5 rounded-full transition-colors">
-                    𝕏 <span>@{sl.twitter.replace('@','')}</span>
+                    𝕏 {sl.twitter.startsWith('http') ? 'X (Twitter)' : `@${sl.twitter.replace('@', '')}`}
                   </a>
                 )}
                 {sl.instagram && (
-                  <a href={`https://instagram.com/${sl.instagram.replace('@','')}`} target="_blank" rel="noopener noreferrer"
+                  <a href={sl.instagram.startsWith('http') ? sl.instagram : `https://instagram.com/${sl.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-3 py-1.5 rounded-full transition-colors">
-                    📷 <span>@{sl.instagram.replace('@','')}</span>
+                    IG {sl.instagram.startsWith('http') ? 'Instagram' : `@${sl.instagram.replace('@', '')}`}
                   </a>
                 )}
                 {sl.facebook && (
                   <a href={sl.facebook} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-full transition-colors">
-                    👥 <span>Facebook</span>
+                    👥 Facebook
                   </a>
                 )}
                 {sl.line && (
                   <span className="flex items-center gap-1.5 text-xs text-white bg-green-500 px-3 py-1.5 rounded-full">
-                    💬 <span>LINE: {sl.line}</span>
+                    💬 LINE: {sl.line}
                   </span>
                 )}
               </div>
