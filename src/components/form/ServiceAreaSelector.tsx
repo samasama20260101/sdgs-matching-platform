@@ -39,6 +39,17 @@ export default function ServiceAreaSelector({
     const [selectedCode, setSelectedCode] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
+    // 非同期でinitialAreasが渡ってきたときに同期する
+    useEffect(() => {
+        if (initialAreas.length > 0) {
+            setServiceAreas(initialAreas);
+        }
+    }, [initialAreas.length]);
+
+    useEffect(() => {
+        setIsNationwide(initialNationwide);
+    }, [initialNationwide]);
+
     useEffect(() => {
         fetch(`/api/regions?country=${country}`, { cache: 'no-store' })
             .then(r => r.json())

@@ -12,7 +12,6 @@ type Supporter = {
     organization_name: string | null
     supporter_type: string | null
     phone: string | null
-    service_area_nationwide: boolean
     created_at: string
 }
 
@@ -24,7 +23,6 @@ type FormData = {
     organization_name: string
     supporter_type: 'NPO' | 'CORPORATE'
     phone: string
-    service_area_nationwide: boolean
 }
 
 const initialForm: FormData = {
@@ -35,7 +33,6 @@ const initialForm: FormData = {
     organization_name: '',
     supporter_type: 'NPO',
     phone: '',
-    service_area_nationwide: false,
 }
 
 export default function AdminDashboardPage() {
@@ -200,7 +197,6 @@ export default function AdminDashboardPage() {
                                         <th className="px-6 py-3 text-left">担当者</th>
                                         <th className="px-6 py-3 text-left">種別</th>
                                         <th className="px-6 py-3 text-left">メール</th>
-                                        <th className="px-6 py-3 text-left">全国対応</th>
                                         <th className="px-6 py-3 text-left">登録日</th>
                                     </tr>
                                 </thead>
@@ -213,20 +209,13 @@ export default function AdminDashboardPage() {
                                             <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO'
-                                                        ? 'bg-blue-100 text-blue-700'
-                                                        : 'bg-orange-100 text-orange-700'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : 'bg-orange-100 text-orange-700'
                                                     }`}>
                                                     {s.supporter_type || '—'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-gray-500">{s.email}</td>
-                                            <td className="px-6 py-4">
-                                                {s.service_area_nationwide ? (
-                                                    <span className="text-green-600 font-medium">✓ 全国</span>
-                                                ) : (
-                                                    <span className="text-gray-400">—</span>
-                                                )}
-                                            </td>
                                             <td className="px-6 py-4 text-gray-400">
                                                 {new Date(s.created_at).toLocaleDateString('ja-JP')}
                                             </td>
@@ -358,19 +347,6 @@ export default function AdminDashboardPage() {
                                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                                 />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="nationwide"
-                                    checked={form.service_area_nationwide}
-                                    onChange={(e) => setForm({ ...form, service_area_nationwide: e.target.checked })}
-                                    className="w-4 h-4"
-                                />
-                                <label htmlFor="nationwide" className="text-sm text-gray-700">
-                                    全国対応
-                                </label>
                             </div>
 
                             <div className="flex gap-3 pt-2">

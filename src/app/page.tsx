@@ -8,21 +8,21 @@ type Stats = { resolvedCount: number; supporterCount: number; areaCount: number 
 type Supporter = {
   id: string; display_name: string; organization_name: string | null;
   supporter_type: string; service_area_nationwide: boolean;
-  service_areas: Array<{ prefecture: string }>; sdgs_goals: number[];
+  service_areas: Array<{ name_local: string }>; sdgs_goals: number[];
   resolved_count: number; badge_count: number;
 };
 
 const SDG_COLORS: Record<number, string> = {
-  1:'#e5243b',2:'#dda63a',3:'#4c9f38',4:'#c5192d',5:'#ff3a21',
-  6:'#26bde2',7:'#fcc30b',8:'#a21942',9:'#fd6925',10:'#dd1367',
-  11:'#fd9d24',12:'#bf8b2e',13:'#3f7e44',14:'#0a97d9',15:'#56c02b',
-  16:'#00689d',17:'#19486a',
+  1: '#e5243b', 2: '#dda63a', 3: '#4c9f38', 4: '#c5192d', 5: '#ff3a21',
+  6: '#26bde2', 7: '#fcc30b', 8: '#a21942', 9: '#fd6925', 10: '#dd1367',
+  11: '#fd9d24', 12: '#bf8b2e', 13: '#3f7e44', 14: '#0a97d9', 15: '#56c02b',
+  16: '#00689d', 17: '#19486a',
 };
 const SDG_NAMES: Record<number, string> = {
-  1:'貧困',2:'飢餓',3:'健康',4:'教育',5:'ジェンダー',
-  6:'水・衛生',7:'エネルギー',8:'経済成長',9:'産業・技術',10:'不平等',
-  11:'まちづくり',12:'生産・消費',13:'気候変動',14:'海洋',15:'陸上',
-  16:'平和・公正',17:'パートナー',
+  1: '貧困', 2: '飢餓', 3: '健康', 4: '教育', 5: 'ジェンダー',
+  6: '水・衛生', 7: 'エネルギー', 8: '経済成長', 9: '産業・技術', 10: '不平等',
+  11: 'まちづくり', 12: '生産・消費', 13: '気候変動', 14: '海洋', 15: '陸上',
+  16: '平和・公正', 17: 'パートナー',
 };
 
 const STEPS = [
@@ -101,8 +101,8 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/public/stats').then(r => r.json()).then(setStats).catch(() => {});
-    fetch('/api/public/supporters').then(r => r.json()).then(d => setSupporters(d.supporters || [])).catch(() => {});
+    fetch('/api/public/stats').then(r => r.json()).then(setStats).catch(() => { });
+    fetch('/api/public/supporters').then(r => r.json()).then(d => setSupporters(d.supporters || [])).catch(() => { });
   }, []);
 
   const previewSupporters = supporters.slice(0, 4);
@@ -210,7 +210,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-black text-gray-900 mb-3">対応するSDGsゴール</h2>
           <p className="text-gray-500 mb-8 text-sm">17のゴールすべての領域で、専門の支援団体が活動しています</p>
           <div className="flex flex-wrap gap-2 justify-center">
-            {Array.from({length: 17}, (_, i) => i + 1).map(g => (
+            {Array.from({ length: 17 }, (_, i) => i + 1).map(g => (
               <span key={g} style={{ background: SDG_COLORS[g] }}
                 className="text-white text-xs font-bold px-3 py-1.5 rounded-lg">
                 {g} {SDG_NAMES[g]}
@@ -252,7 +252,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="text-xs text-gray-400 mb-3">
-                    📍 {s.service_area_nationwide ? '全国対応' : (s.service_areas || []).map(a => a.prefecture).slice(0, 3).join(' · ')}
+                    📍 {s.service_area_nationwide ? '全国対応' : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')}
                   </div>
                   <div className="flex flex-wrap gap-1 mb-3">
                     {(s.sdgs_goals || []).slice(0, 5).map(g => (

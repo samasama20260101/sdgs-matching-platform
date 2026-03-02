@@ -62,7 +62,7 @@ export default function SupporterProfilePage() {
 
   const areas = supporter.service_area_nationwide
     ? ['全国対応']
-    : (supporter.service_areas || []).map(a => a.name_local);
+    : (supporter.service_areas || []).map(a => a.name_local || a.region_code);
 
   const totalBadges = Object.values(badges).reduce((s, n) => s + n, 0);
   const yearsActive = Math.max(1, Math.floor(
@@ -199,8 +199,8 @@ export default function SupporterProfilePage() {
             </span>
           ) : (
             <div className="flex flex-wrap gap-1.5">
-              {areas.map(area => (
-                <span key={area} className="text-xs bg-gray-50 text-gray-600 border border-gray-200 px-2.5 py-1 rounded-full">
+              {areas.map((area, i) => (
+                <span key={i} className="text-xs bg-gray-50 text-gray-600 border border-gray-200 px-2.5 py-1 rounded-full">
                   {area}
                 </span>
               ))}

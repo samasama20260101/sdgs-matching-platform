@@ -37,7 +37,6 @@ export async function POST(request: Request) {
         organization_name,
         supporter_type,
         phone,
-        service_area_nationwide,
     } = body
 
     if (!email || !password || !real_name || !organization_name || !supporter_type) {
@@ -67,7 +66,6 @@ export async function POST(request: Request) {
             phone: phone || null,
             organization_name,
             supporter_type,
-            service_area_nationwide: service_area_nationwide ?? false,
             must_change_password: true,
         })
         .select()
