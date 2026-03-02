@@ -16,12 +16,24 @@ export async function GET(request: Request) {
 
     const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, role, real_name, display_name, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, service_area_nationwide, service_areas, must_change_password, bio, social_links')
+        .select('id, role, real_name, display_name, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code')
         .eq('auth_user_id', user.id)
         .single()
 
+    // サポーターの活動地域を取得
+    let serviceAreas: any[] = []
+    let serviceAreaNationwide = false
+    if (userData?.role === 'SUPPORTER') {
+        const { data: areas } = await supabaseAdmin
+            .from('supporter_service_areas')
+            .select('region_code, is_nationwide, country, regions(name_local, name_en)')
+            .eq('supporter_user_id', userData.id)
+        serviceAreas = areas || []
+        serviceAreaNationwide = serviceAreas.some((a: any) => a.is_nationwide)
+    }
+
     return NextResponse.json({
         role: userData?.role ?? null,
-        user: userData ?? null,
+        user: userData ? { ...userData, service_areas: serviceAreas, service_area_nationwide: serviceAreaNationwide } : null,
     })
 }

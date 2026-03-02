@@ -33,6 +33,29 @@ type UserData = {
     } | null;
 };
 
+// SOSユーザー向け地域セレクト（DBのregionsテーブルから取得）
+function SosRegionSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const [regions, setRegions] = useState<{ code: string; name_local: string }[]>([]);
+    useEffect(() => {
+        fetch('/api/regions?country=JP', { cache: 'no-store' })
+            .then(r => r.json())
+            .then(d => setRegions(d.regions || []))
+            .catch(() => { });
+    }, []);
+    return (
+        <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+            <option value="">選択してください（任意）</option>
+            {regions.map(r => (
+                <option key={r.code} value={r.code}>{r.name_local}</option>
+            ))}
+        </select>
+    );
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +68,7 @@ export default function ProfilePage() {
     const [displayName, setDisplayName] = useState('');
     const [phone, setPhone] = useState('');
     const [organizationName, setOrganizationName] = useState('');
-    const [sosPrefecture, setSosPrefecture] = useState('');
+    const [sosRegionCode, setSosRegionCode] = useState('');
     const [addressData, setAddressData] = useState<AddressFormData>({
         postalCode: '', prefecture: '', city: '', addressLine1: '', addressLine2: '',
     });
@@ -80,7 +103,7 @@ export default function ProfilePage() {
                 setPhone(data.phone || '');
                 setOrganizationName(data.organization_name || '');
                 if (data.role === 'SOS') {
-                    setSosPrefecture(data.sos_prefecture || '');
+                    setSosRegionCode(data.sos_region_code || '');
                 }
 
                 if (data.address_structured) {
@@ -154,13 +177,13 @@ export default function ProfilePage() {
             };
 
             if (userData.role === 'SOS') {
-                updateData.sos_prefecture = sosPrefecture || null;
+                updateData.sos_region_code = sosRegionCode || null;
             }
 
             if (userData.role === 'SUPPORTER') {
                 updateData.organization_name = organizationName.trim() || null;
                 updateData.service_area_nationwide = isNationwide;
-                updateData.service_areas = serviceAreas.length > 0 ? serviceAreas : null;
+                updateData.service_areas = serviceAreas;
                 updateData.bio = bio.trim() || null;
                 const sl: Record<string, string> = {};
                 if (website.trim()) sl.website = website.trim();
@@ -257,28 +280,7 @@ export default function ProfilePage() {
                             <CardHeader><CardTitle className="text-base">お住まいの地域 <span className="text-xs font-normal text-gray-400">（任意）</span></CardTitle></CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-sm text-gray-600">💡 お近くのサポーターが優先的に表示されます。住所の詳細は公開されません。</p>
-                                <div className="space-y-2">
-                                    <Label htmlFor="sosPrefecture">都道府県</Label>
-                                    <select
-                                        id="sosPrefecture"
-                                        value={sosPrefecture}
-                                        onChange={(e) => setSosPrefecture(e.target.value)}
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    >
-                                        <option value="">選択してください（任意）</option>
-                                        {['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-                                            '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-                                            '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
-                                            '岐阜県', '静岡県', '愛知県', '三重県',
-                                            '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
-                                            '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-                                            '徳島県', '香川県', '愛媛県', '高知県',
-                                            '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
-                                        ].map(pref => (
-                                            <option key={pref} value={pref}>{pref}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <SosRegionSelect value={sosRegionCode} onChange={setSosRegionCode} />
                             </CardContent>
                         </Card>
                     )}
@@ -307,7 +309,7 @@ export default function ProfilePage() {
                         <Card>
                             <CardHeader><CardTitle className="text-base">活動地域 <span className="text-red-500">*</span></CardTitle></CardHeader>
                             <CardContent>
-                                <ServiceAreaSelector countryCode="JP"
+                                <ServiceAreaSelector country="JP"
                                     onChange={(areas, nationwide) => { setServiceAreas(areas); setIsNationwide(nationwide); }}
                                     initialAreas={serviceAreas} initialNationwide={isNationwide} />
                             </CardContent>

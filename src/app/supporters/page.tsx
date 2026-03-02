@@ -7,7 +7,7 @@ import Link from 'next/link';
 type Supporter = {
   id: string; display_name: string; organization_name: string | null;
   supporter_type: string; service_area_nationwide: boolean;
-  service_areas: Array<{ prefecture: string }>;
+  service_areas: Array<{ region_code: string; name_local: string; name_en: string; country: string }>;
   resolved_count: number; badge_count: number;
 };
 
@@ -60,17 +60,16 @@ export default function SupportersPage() {
         {/* タイプフィルター */}
         <div className="flex gap-2 mt-5 mb-6">
           {[
-            { key: null,        label: 'すべて' },
-            { key: 'NPO',       label: '🌿 NPO・支援団体' },
+            { key: null, label: 'すべて' },
+            { key: 'NPO', label: '🌿 NPO・支援団体' },
             { key: 'CORPORATE', label: '🏢 企業' },
           ].map(({ key, label }) => (
             <button key={String(key)}
               onClick={() => setTypeFilter(key)}
-              className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${
-                typeFilter === key
+              className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
                   ? 'bg-green-500 text-white border-green-500'
                   : 'bg-white text-gray-500 border-gray-200 hover:border-green-300'
-              }`}>
+                }`}>
               {label}
             </button>
           ))}
@@ -108,11 +107,10 @@ export default function SupportersPage() {
                     <h3 className="font-bold text-gray-800 text-sm leading-tight truncate">
                       {s.organization_name || s.display_name}
                     </h3>
-                    <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${
-                      s.supporter_type === 'NPO'
+                    <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${s.supporter_type === 'NPO'
                         ? 'text-green-600 bg-green-50 border border-green-200'
                         : 'text-blue-600 bg-blue-50 border border-blue-200'
-                    }`}>
+                      }`}>
                       {s.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
                     </span>
                   </div>
@@ -121,8 +119,8 @@ export default function SupportersPage() {
                 <div className="text-xs text-gray-400 mb-4">
                   📍 {s.service_area_nationwide
                     ? '全国対応'
-                    : (s.service_areas || []).map(a => a.prefecture).slice(0, 3).join(' · ')
-                      + ((s.service_areas || []).length > 3 ? ' 他' : '')}
+                    : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')
+                    + ((s.service_areas || []).length > 3 ? ' 他' : '')}
                 </div>
 
                 <div className="flex gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
