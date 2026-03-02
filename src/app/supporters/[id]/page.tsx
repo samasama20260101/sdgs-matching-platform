@@ -13,7 +13,7 @@ type SocialLinks = {
 type Supporter = {
   id: string; display_name: string; organization_name: string | null;
   supporter_type: string; service_area_nationwide: boolean;
-  service_areas: Array<{ prefecture: string }>;
+  service_areas: Array<{ region_code: string; name_local: string; name_en: string; country: string }>;
   created_at: string; resolved_count: number;
   bio?: string | null; social_links?: SocialLinks | null;
 };
@@ -62,7 +62,7 @@ export default function SupporterProfilePage() {
 
   const areas = supporter.service_area_nationwide
     ? ['全国対応']
-    : (supporter.service_areas || []).map(a => a.prefecture);
+    : (supporter.service_areas || []).map(a => a.name_local);
 
   const totalBadges = Object.values(badges).reduce((s, n) => s + n, 0);
   const yearsActive = Math.max(1, Math.floor(
