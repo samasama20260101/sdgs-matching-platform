@@ -45,6 +45,7 @@ export default function ProfilePage() {
     const [displayName, setDisplayName] = useState('');
     const [phone, setPhone] = useState('');
     const [organizationName, setOrganizationName] = useState('');
+    const [sosPrefecture, setSosPrefecture] = useState('');
     const [addressData, setAddressData] = useState<AddressFormData>({
         postalCode: '', prefecture: '', city: '', addressLine1: '', addressLine2: '',
     });
@@ -78,6 +79,9 @@ export default function ProfilePage() {
                 setDisplayName(data.display_name || '');
                 setPhone(data.phone || '');
                 setOrganizationName(data.organization_name || '');
+                if (data.role === 'SOS') {
+                    setSosPrefecture(data.sos_prefecture || '');
+                }
 
                 if (data.address_structured) {
                     setAddressData({
@@ -149,6 +153,10 @@ export default function ProfilePage() {
                 updated_at: new Date().toISOString(),
             };
 
+            if (userData.role === 'SOS') {
+                updateData.sos_prefecture = sosPrefecture || null;
+            }
+
             if (userData.role === 'SUPPORTER') {
                 updateData.organization_name = organizationName.trim() || null;
                 updateData.service_area_nationwide = isNationwide;
@@ -217,9 +225,9 @@ export default function ProfilePage() {
                         <CardHeader><CardTitle className="text-base">基本情報</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前（本名）' : '代表者名'} <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前' : '代表者名'} <span className="text-red-500">*</span></Label>
                                 <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" />
-                                {userData.role === 'SOS' && <p className="text-xs text-gray-500">※サポーターとマッチ後に共有されます（公開されません）</p>}
+                                {userData.role === 'SOS' && <p className="text-xs text-gray-500">※ニックネームでもOKです。サポーターとマッチ後に共有されます（公開されません）</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="displayName">{userData.role === 'SOS' ? 'ニックネーム' : '表示名'} <span className="text-red-500">*</span></Label>
@@ -244,12 +252,42 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
 
+                    {userData.role === 'SOS' && (
+                        <Card>
+                            <CardHeader><CardTitle className="text-base">お住まいの地域 <span className="text-xs font-normal text-gray-400">（任意）</span></CardTitle></CardHeader>
+                            <CardContent className="space-y-3">
+                                <p className="text-sm text-gray-600">💡 お近くのサポーターが優先的に表示されます。住所の詳細は公開されません。</p>
+                                <div className="space-y-2">
+                                    <Label htmlFor="sosPrefecture">都道府県</Label>
+                                    <select
+                                        id="sosPrefecture"
+                                        value={sosPrefecture}
+                                        onChange={(e) => setSosPrefecture(e.target.value)}
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    >
+                                        <option value="">選択してください（任意）</option>
+                                        {['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+                                            '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+                                            '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
+                                            '岐阜県', '静岡県', '愛知県', '三重県',
+                                            '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
+                                            '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+                                            '徳島県', '香川県', '愛媛県', '高知県',
+                                            '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
+                                        ].map(pref => (
+                                            <option key={pref} value={pref}>{pref}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card>
                         <CardHeader><CardTitle className="text-base">住所 {userData.role === 'SUPPORTER' && <span className="text-red-500">*</span>}</CardTitle></CardHeader>
                         <CardContent>
                             {userData.role === 'SOS' ? (
                                 <>
-                                    <p className="text-sm text-gray-600 mb-4">💡 郵便番号を入力すると、お近くのサポーターが優先的に表示されます。</p>
                                     <AddressForm countryCode="JP" required={false}
                                         requiredFields={{ postalCode: false, prefecture: false, city: false, addressLine1: false }}
                                         onChange={setAddressData} initialData={addressData} />
