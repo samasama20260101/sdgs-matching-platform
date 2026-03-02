@@ -5,21 +5,27 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+type SocialLinks = {
+  website?: string; twitter?: string;
+  instagram?: string; facebook?: string; line?: string;
+};
+
 type Supporter = {
   id: string; display_name: string; organization_name: string | null;
   supporter_type: string; service_area_nationwide: boolean;
   service_areas: Array<{ prefecture: string }>;
   created_at: string; resolved_count: number;
+  bio?: string | null; social_links?: SocialLinks | null;
 };
 
 const BADGE_INFO: Record<string, { emoji: string; label: string }> = {
-  gold_medal:      { emoji: '🥇', label: 'ありがとう（主要）' },
-  silver_medal:    { emoji: '🥈', label: 'ありがとう（サポート）' },
-  very_satisfied:  { emoji: '😆', label: '大満足' },
-  quick_response:  { emoji: '⚡', label: '迅速な対応' },
-  sincere_support: { emoji: '💎', label: '誠実なサポート' },
-  problem_solved:  { emoji: '🌟', label: 'あきらめていた問題が解決' },
-  grateful_partner:{ emoji: '🤝', label: '一緒に向き合い大感謝' },
+  gold_medal:       { emoji: '🥇', label: 'ありがとう（主要）' },
+  silver_medal:     { emoji: '🥈', label: 'ありがとう（サポート）' },
+  very_satisfied:   { emoji: '😆', label: '大満足' },
+  quick_response:   { emoji: '⚡', label: '迅速な対応' },
+  sincere_support:  { emoji: '💎', label: '誠実なサポート' },
+  problem_solved:   { emoji: '🌟', label: 'あきらめていた問題が解決' },
+  grateful_partner: { emoji: '🤝', label: '一緒に向き合い大感謝' },
 };
 
 export default function SupporterProfilePage() {
@@ -45,7 +51,7 @@ export default function SupporterProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center text-gray-400">
-          <div className="text-4xl mb-3">🔍</div>
+          <div className="text-4xl mb-3 animate-pulse">🔍</div>
           <p>読み込み中...</p>
         </div>
       </div>
@@ -59,7 +65,11 @@ export default function SupporterProfilePage() {
     : (supporter.service_areas || []).map(a => a.prefecture);
 
   const totalBadges = Object.values(badges).reduce((s, n) => s + n, 0);
-  const yearsActive = Math.max(1, Math.floor((Date.now() - new Date(supporter.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)));
+  const yearsActive = Math.max(1, Math.floor(
+    (Date.now() - new Date(supporter.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)
+  ));
+  const sl = supporter.social_links || {};
+  const hasSocialLinks = sl.website || sl.twitter || sl.instagram || sl.facebook || sl.line;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,13 +101,12 @@ export default function SupporterProfilePage() {
             <div className="absolute inset-0 opacity-20"
               style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           </div>
-
           <div className="px-6 pb-6">
             <div className="flex items-end gap-4 -mt-8 mb-4">
               <div className="w-16 h-16 rounded-2xl bg-white shadow-md border-2 border-white flex items-center justify-center text-3xl flex-shrink-0">
                 {supporter.supporter_type === 'NPO' ? '🌿' : '🏢'}
               </div>
-              <div className="pb-1">
+              <div className="pb-1 flex items-center gap-2 flex-wrap">
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                   supporter.supporter_type === 'NPO'
                     ? 'bg-green-100 text-green-700 border border-green-200'
@@ -105,13 +114,47 @@ export default function SupporterProfilePage() {
                 }`}>
                   {supporter.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
                 </span>
-                <span className="text-xs text-gray-400 ml-2">登録 {yearsActive}年</span>
+                <span className="text-xs text-gray-400">登録 {yearsActive}年</span>
               </div>
             </div>
-
-            <h1 className="text-xl font-black text-gray-900 mb-1">
+            <h1 className="text-xl font-black text-gray-900 mb-2">
               {supporter.organization_name || supporter.display_name}
             </h1>
+
+            {/* SNSリンク（ヒーロー内に配置） */}
+            {hasSocialLinks && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {sl.website && (
+                  <a href={sl.website} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full transition-colors">
+                    🌐 <span>公式サイト</span>
+                  </a>
+                )}
+                {sl.twitter && (
+                  <a href={`https://twitter.com/${sl.twitter.replace('@','')}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-white bg-black hover:bg-gray-800 px-3 py-1.5 rounded-full transition-colors">
+                    𝕏 <span>@{sl.twitter.replace('@','')}</span>
+                  </a>
+                )}
+                {sl.instagram && (
+                  <a href={`https://instagram.com/${sl.instagram.replace('@','')}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-3 py-1.5 rounded-full transition-colors">
+                    📷 <span>@{sl.instagram.replace('@','')}</span>
+                  </a>
+                )}
+                {sl.facebook && (
+                  <a href={sl.facebook} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-full transition-colors">
+                    👥 <span>Facebook</span>
+                  </a>
+                )}
+                {sl.line && (
+                  <span className="flex items-center gap-1.5 text-xs text-white bg-green-500 px-3 py-1.5 rounded-full">
+                    💬 <span>LINE: {sl.line}</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -129,6 +172,16 @@ export default function SupporterProfilePage() {
             </div>
           ))}
         </div>
+
+        {/* ── 自己紹介文 ── */}
+        {supporter.bio && (
+          <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>✍️</span> 自己紹介
+            </h2>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{supporter.bio}</p>
+          </div>
+        )}
 
         {/* ── 活動エリア ── */}
         <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
