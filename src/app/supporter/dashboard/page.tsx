@@ -246,8 +246,16 @@ export default function SupporterDashboard() {
       <Header />
       <main className="max-w-4xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
-          <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
+              <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
+            </div>
+            <a href="/profile"
+              className="flex-shrink-0 flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-green-400 hover:text-green-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+              ✏️ プロフィール編集
+            </a>
+          </div>
           <div className="mt-3 flex items-start gap-2">
             <span className="text-sm text-gray-600 flex-shrink-0">📍 活動地域:</span>
             {userData?.service_area_nationwide ? (
