@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase/client';
 
 type Supporter = {
   id: string; display_name: string; organization_name: string | null;
@@ -16,6 +17,7 @@ export default function SupportersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [userRegionCode, setUserRegionCode] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/public/supporters')
@@ -26,13 +28,43 @@ export default function SupportersPage() {
         setIsLoading(false);
       })
       .catch(e => { setApiError(String(e)); setIsLoading(false); });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.role === 'SOS' && d.user?.sos_region_code) {
+            setUserRegionCode(d.user.sos_region_code);
+          }
+        });
+    });
   }, []);
 
-  const filtered = typeFilter ? supporters.filter(s => s.supporter_type === typeFilter) : supporters;
+  const isRegionMatch = (s: Supporter) =>
+    s.service_area_nationwide ||
+    (s.service_areas || []).some(r => r.region_code === userRegionCode);
+
+  const sortedSupporters = userRegionCode
+    ? [...supporters].sort((a, b) => {
+        const aMatch = isRegionMatch(a);
+        const bMatch = isRegionMatch(b);
+        if (aMatch && !bMatch) return -1;
+        if (!aMatch && bMatch) return 1;
+        return 0;
+      })
+    : supporters;
+
+  const filtered = typeFilter
+    ? sortedSupporters.filter(s => s.supporter_type === typeFilter)
+    : sortedSupporters;
+
+  const regionMatchCount = userRegionCode ? supporters.filter(isRegionMatch).length : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -44,8 +76,7 @@ export default function SupportersPage() {
           </Link>
           <div className="flex gap-3">
             <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
-            <Link href="/signup"
-              className="text-sm bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+            <Link href="/signup" className="text-sm bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
               相談する
             </Link>
           </div>
@@ -60,19 +91,23 @@ export default function SupportersPage() {
           {supporters.length > 0 && <span className="ml-2 text-green-600 font-bold">{supporters.length}団体</span>}
         </p>
 
-        {/* タイプフィルター */}
+        {userRegionCode && regionMatchCount > 0 && (
+          <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-sm text-green-700">
+            <span>📍</span>
+            <span>あなたの地域をカバーする <strong>{regionMatchCount}団体</strong> を上位に表示しています</span>
+          </div>
+        )}
+
         <div className="flex gap-2 mt-5 mb-6">
           {[
             { key: null, label: 'すべて' },
             { key: 'NPO', label: '🌿 NPO・支援団体' },
             { key: 'CORPORATE', label: '🏢 企業' },
           ].map(({ key, label }) => (
-            <button key={String(key)}
-              onClick={() => setTypeFilter(key)}
+            <button key={String(key)} onClick={() => setTypeFilter(key)}
               className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
-                  ? 'bg-green-500 text-white border-green-500'
-                  : 'bg-white text-gray-500 border-gray-200 hover:border-green-300'
-                }`}>
+                ? 'bg-green-500 text-white border-green-500'
+                : 'bg-white text-gray-500 border-gray-200 hover:border-green-300'}`}>
               {label}
             </button>
           ))}
@@ -99,39 +134,52 @@ export default function SupportersPage() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
-            {filtered.map(s => (
-              <Link key={s.id} href={`/supporters/${s.id}`}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-green-100 transition-all block">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-2xl flex-shrink-0">
-                    {s.supporter_type === 'NPO' ? '🌿' : '🏢'}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-gray-800 text-sm leading-tight truncate">
-                      {s.organization_name || s.display_name}
-                    </h3>
-                    <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${s.supporter_type === 'NPO'
-                        ? 'text-green-600 bg-green-50 border border-green-200'
-                        : 'text-blue-600 bg-blue-50 border border-blue-200'
+            {filtered.map(s => {
+              const matched = !!(userRegionCode && isRegionMatch(s));
+              return (
+                <Link key={s.id} href={`/supporters/${s.id}`}
+                  className={`bg-white rounded-2xl p-5 shadow-sm border transition-all block hover:shadow-md ${
+                    matched ? 'border-green-300 hover:border-green-400' : 'border-gray-100 hover:border-green-100'
+                  }`}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-2xl flex-shrink-0">
+                      {s.supporter_type === 'NPO' ? '🌿' : '🏢'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className="font-bold text-gray-800 text-sm leading-tight truncate">
+                          {s.organization_name || s.display_name}
+                        </h3>
+                        {matched && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium whitespace-nowrap">
+                            📍 あなたの地域
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${
+                        s.supporter_type === 'NPO'
+                          ? 'text-green-600 bg-green-50 border border-green-200'
+                          : 'text-blue-600 bg-blue-50 border border-blue-200'
                       }`}>
-                      {s.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
-                    </span>
+                        {s.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="text-xs text-gray-400 mb-4">
-                  📍 {s.service_area_nationwide
-                    ? '全国対応'
-                    : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')
-                    + ((s.service_areas || []).length > 3 ? ' 他' : '')}
-                </div>
+                  <div className="text-xs text-gray-400 mb-4">
+                    📍 {s.service_area_nationwide
+                      ? '全国対応'
+                      : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')
+                        + ((s.service_areas || []).length > 3 ? ' 他' : '')}
+                  </div>
 
-                <div className="flex gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                  <span>✅ 解決 <strong className="text-green-600">{s.resolved_count}件</strong></span>
-                  <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
-                </div>
-              </Link>
-            ))}
+                  <div className="flex gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                    <span>✅ 解決 <strong className="text-green-600">{s.resolved_count}件</strong></span>
+                    <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
