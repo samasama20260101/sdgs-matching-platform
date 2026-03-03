@@ -186,30 +186,36 @@ export default function SupporterCaseDetailPage() {
   };
 
   const handleReportResolution = async () => {
+    if (isSubmitting) return;
     const token = await getToken();
     if (!token) return;
 
-    // ケースにsupporter_resolved_atをセット
-    const res = await fetch(`/api/supporter/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ supporter_resolved_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('解決報告に失敗しました'); return; }
+    setIsSubmitting(true);
+    try {
+      // ケースにsupporter_resolved_atをセット
+      const res = await fetch(`/api/supporter/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ supporter_resolved_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error('解決報告に失敗しました'); return; }
 
-    // システムメッセージをAPIで投稿
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({
-        case_id: params.id,
-        content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
-      }),
-    });
+      // システムメッセージをAPIで投稿
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          case_id: params.id,
+          content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
+        }),
+      });
 
-    setShowResolveModal(false);
-    await loadData();
-    toast.success('解決を報告しました。相談者の確認をお待ちください');
+      setShowResolveModal(false);
+      await loadData();
+      toast.success('解決を報告しました。相談者の確認をお待ちください');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatDate = (dateStr: string) =>
@@ -473,7 +479,7 @@ export default function SupporterCaseDetailPage() {
           <p className="text-sm text-gray-500">報告後、相談者が確認することで案件が「解決済み」になります。</p>
           <div className="flex gap-3">
             <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={handleReportResolution} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">解決を報告する</button>
+            <button onClick={handleReportResolution} disabled={isSubmitting} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? '送信中...' : '解決を報告する'}</button>
           </div>
         </div>
       </Modal>

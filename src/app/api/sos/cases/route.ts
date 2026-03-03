@@ -19,7 +19,28 @@ export async function GET(request: Request) {
         .from('cases').select('*').eq('owner_user_id', userData.id).order('created_at', { ascending: false })
     if (casesError) return NextResponse.json({ error: casesError.message }, { status: 500 })
 
-    return NextResponse.json({ cases: cases ?? [], userId: userData.id })
+    if (!cases || cases.length === 0) return NextResponse.json({ cases: [], userId: userData.id })
+
+    // OPENケースのPENDINGオファー数を取得
+    const openCaseIds = cases.filter((c: any) => c.status === 'OPEN').map((c: any) => c.id)
+    const offerCountMap: Record<string, number> = {}
+    if (openCaseIds.length > 0) {
+        const { data: offers } = await supabaseAdmin
+            .from('offers')
+            .select('case_id')
+            .in('case_id', openCaseIds)
+            .eq('status', 'PENDING')
+        ;(offers || []).forEach((o: any) => {
+            offerCountMap[o.case_id] = (offerCountMap[o.case_id] || 0) + 1
+        })
+    }
+
+    const enriched = cases.map((c: any) => ({
+        ...c,
+        pending_offer_count: offerCountMap[c.id] || 0,
+    }))
+
+    return NextResponse.json({ cases: enriched, userId: userData.id })
 }
 
 export async function POST(request: Request) {
