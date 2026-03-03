@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
 type Supporter = {
@@ -99,11 +100,30 @@ export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetch('/api/public/stats').then(r => r.json()).then(setStats).catch(() => { });
     fetch('/api/public/supporters').then(r => r.json()).then(d => setSupporters(d.supporters || [])).catch(() => { });
-  }, []);
+
+    // ログイン済みなら自動でダッシュボードへ
+    import('@/lib/supabase/client').then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        setIsLoggedIn(true);
+        fetch('/api/auth/get-role', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.role === 'SOS') router.replace('/sos/dashboard');
+            else if (d.role === 'SUPPORTER') router.replace('/supporter/dashboard');
+            else if (d.role === 'ADMIN') router.replace('/admin/dashboard');
+          });
+      });
+    });
+  }, [router]);
 
   const previewSupporters = supporters.slice(0, 4);
 
@@ -160,6 +180,12 @@ export default function HomePage() {
             </Link>
           </div>
           <p className="text-xs text-gray-400 mt-4">登録無料・承認するまで個人情報は渡りません</p>
+          <div className="mt-5 flex items-center justify-center gap-2 text-sm text-gray-400">
+            <span>すでにアカウントをお持ちの方は</span>
+            <Link href="/login" className="text-green-600 font-bold hover:text-green-700 border-b border-dashed border-green-400 hover:border-green-600 transition-colors">
+              こちらからログイン →
+            </Link>
+          </div>
         </div>
       </section>
 
