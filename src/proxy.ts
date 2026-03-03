@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
     if (process.env.NODE_ENV === 'production') {
         const devPassword = process.env.DEV_PASSWORD
         if (devPassword) {
-            if (pathname !== '/dev-login' && !pathname.startsWith('/api/dev-auth')) {
+            if (pathname !== '/dev-login' && !pathname.startsWith('/api/dev-auth') && !pathname.startsWith('/api/cron/')) {
                 const authCookie = request.cookies.get('dev-auth')
                 if (authCookie?.value !== devPassword) {
                     const url = request.nextUrl.clone()
