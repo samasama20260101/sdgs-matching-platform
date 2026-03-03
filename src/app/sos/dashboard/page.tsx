@@ -15,6 +15,7 @@ type Case = {
   description_free: string;
   urgency: string;
   status: 'OPEN' | 'MATCHED' | 'IN_PROGRESS' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
+  pending_offer_count?: number;
   created_at: string;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
@@ -272,6 +273,11 @@ export default function SOSDashboard() {
                         {case_.status === 'MATCHED' && '🤝 マッチ済み'}
                         {case_.status === 'IN_PROGRESS' && '🔄 対応中'}
                       </span>
+                      {case_.status === 'OPEN' && (case_.pending_offer_count ?? 0) > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">
+                          🙋 申し出 {case_.pending_offer_count}件
+                        </span>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <p className="text-sm text-gray-600 line-clamp-2">
