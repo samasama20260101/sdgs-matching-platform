@@ -540,7 +540,10 @@ export default function SOSResultPage() {
                     <div key={offer.id} className="bg-white p-4 rounded-lg border border-green-200">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="font-medium text-gray-800">{offer.supporter.organization_name || offer.supporter.display_name}</h3>
+                          <a href={`/supporters/${offer.supporter.id}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+                            {offer.supporter.organization_name || offer.supporter.display_name}
+                            <span className="text-[10px]">↗</span>
+                          </a>
                           <p className="text-xs text-gray-500">{offer.supporter.supporter_type === 'NPO' ? 'NPO/支援組織' : '企業'}</p>
                         </div>
                         <span className="text-xs text-green-600">{formatDate(offer.created_at)}</span>
