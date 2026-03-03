@@ -65,9 +65,14 @@ export default function Header() {
     <header className="w-full bg-white border-b border-gray-200 px-6 py-3">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <Link href={getDashboardLink()} className="flex items-center gap-2">
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-            SDGs Match
-          </span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+              明日もsamasama
+            </span>
+            <span className="text-[10px] font-medium text-gray-400 tracking-wide">
+              SDGs Match
+            </span>
+          </div>
         </Link>
 
         {!isLoading && (

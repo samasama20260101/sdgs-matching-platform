@@ -115,7 +115,10 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl">🌍</span>
-            <span className="font-bold text-gray-800 text-sm">明日もsamasama</span>
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-gray-800 text-sm">明日もsamasama</span>
+              <span className="text-[9px] font-medium text-gray-400 tracking-wide">SDGs Match</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/supporters" className="text-sm text-gray-500 hover:text-green-600 transition-colors">
@@ -325,7 +328,7 @@ export default function HomePage() {
       <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-xs">
         <div className="flex items-center justify-center gap-2 mb-2">
           <span className="text-lg">🌍</span>
-          <span className="font-bold text-white">明日もsamasama（SDGsマッチング）</span>
+          <span className="font-bold text-white">明日もsamasama</span><span className="text-xs text-white/60 ml-1">SDGs Match</span>
         </div>
         <p>© 2024 SDGs Matching Platform. All rights reserved.</p>
       </footer>
