@@ -34,6 +34,8 @@ export default function SupporterProfilePage() {
   const [supporter, setSupporter] = useState<Supporter | null>(null);
   const [badges, setBadges] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [ctaHref, setCtaHref] = useState('/');
+  const [ctaLabel, setCtaLabel] = useState('無料で相談してみる →');
 
   useEffect(() => {
     fetch(`/api/public/supporters/${id}`, { cache: 'no-store' })
@@ -46,6 +48,21 @@ export default function SupporterProfilePage() {
       })
       .catch(() => router.push('/supporters'));
   }, [id, router]);
+
+  // ログイン状態でCTA遷移先を切り替え
+  useEffect(() => {
+    import('@/lib/supabase/client').then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setCtaHref('/sos/dashboard');
+          setCtaLabel('ダッシュボードへ →');
+        } else {
+          setCtaHref('/');
+          setCtaLabel('無料で相談してみる →');
+        }
+      });
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -243,9 +260,9 @@ export default function SupporterProfilePage() {
             相談を投稿してサポーターを選ぶ仕組みです。<br />
             承認するまで個人情報は渡りません。
           </p>
-          <Link href="/signup"
+          <Link href={ctaHref}
             className="inline-block bg-white text-green-600 font-bold px-6 py-3 rounded-xl hover:bg-green-50 transition-colors text-sm shadow">
-            無料で相談してみる →
+            {ctaLabel}
           </Link>
         </div>
       </main>
