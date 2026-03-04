@@ -101,17 +101,24 @@ export default function AdminDashboardPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            const res = await fetch('/api/admin/stats', {
-                headers: { 'Authorization': `Bearer ${session.access_token}` },
-            })
-            const data = await res.json()
-            if (!res.ok) return
+            const [statsRes, featuredRes] = await Promise.all([
+                fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` },
+                }),
+                fetch('/api/admin/featured-supporters', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` },
+                }),
+            ])
+            const data = await statsRes.json()
+            if (!statsRes.ok) return
+            const featuredData = await featuredRes.json()
 
             setSupporters(data.supporters)
             setSosUsers(data.sosUsers ?? [])
             setAllCases(data.cases ?? [])
             setSosCount(data.sosCount)
             setCaseStats(data.caseStats)
+            setFeaturedSupporters(featuredData.supporters ?? [])
         } finally {
             setLoading(false)
         }
@@ -474,7 +481,8 @@ export default function AdminDashboardPage() {
                     </div>
                 )}
 
-                {/* サポーター一覧（常時表示） */}
+                {/* サポーター一覧（タイルパネルが開いていない時のみ表示） */}
+                {activeView !== 'supporters' && (
                 <div className="bg-white rounded-lg shadow">
                     <div className="px-6 py-4 border-b flex items-center justify-between flex-wrap gap-2">
                         <h2 className="text-lg font-semibold text-gray-800">サポーター一覧</h2>
@@ -550,6 +558,7 @@ export default function AdminDashboardPage() {
                         </div>
                     )}
                 </div>
+                )}
             </main>
 
             {/* ⭐ トップページ掲載設定モーダル */}
