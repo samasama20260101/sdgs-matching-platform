@@ -36,16 +36,16 @@ export async function GET() {
             .select('supporter_user_id, is_nationwide, region_code')
             .in('supporter_user_id', ids)
 
-        // region_codeからname_localを取得
+        // region_codeからname_localを取得（regionsテーブルのPKは"code"）
         const regionCodes = [...new Set((serviceAreas || [])
             .map((a: { region_code: string }) => a.region_code).filter(Boolean))]
         const { data: regionNames } = regionCodes.length > 0
-            ? await supabaseAdmin.from('regions').select('region_code, name_local').in('region_code', regionCodes)
+            ? await supabaseAdmin.from('regions').select('code, name_local').in('code', regionCodes)
             : { data: [] }
         const regionNameMap: Record<string, string> = {}
         for (const r of (regionNames || [])) {
-            const row = r as { region_code: string; name_local: string }
-            regionNameMap[row.region_code] = row.name_local
+            const row = r as { code: string; name_local: string }
+            regionNameMap[row.code] = row.name_local
         }
 
         const resolvedMap: Record<string, number> = {}
