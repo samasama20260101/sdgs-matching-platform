@@ -76,6 +76,11 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="mb-4 text-center">
+          <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-green-600 transition-colors">
+            ← トップページに戻る
+          </Link>
+        </div>
         <h1 className="text-center text-3xl font-bold text-gray-900">
           SDGsマッチング
         </h1>
