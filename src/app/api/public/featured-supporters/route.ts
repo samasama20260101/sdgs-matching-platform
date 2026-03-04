@@ -30,11 +30,23 @@ export async function GET() {
         const { data: badges } = await supabaseAdmin
             .from('supporter_badges').select('supporter_user_id').in('supporter_user_id', ids)
 
-        // service_areasはjoinせず別クエリで取得
+        // service_areasはregionsテーブルから名前も取得
         const { data: serviceAreas } = await supabaseAdmin
             .from('supporter_service_areas')
             .select('supporter_user_id, is_nationwide, region_code')
             .in('supporter_user_id', ids)
+
+        // region_codeからname_localを取得
+        const regionCodes = [...new Set((serviceAreas || [])
+            .map((a: { region_code: string }) => a.region_code).filter(Boolean))]
+        const { data: regionNames } = regionCodes.length > 0
+            ? await supabaseAdmin.from('regions').select('region_code, name_local').in('region_code', regionCodes)
+            : { data: [] }
+        const regionNameMap: Record<string, string> = {}
+        for (const r of (regionNames || [])) {
+            const row = r as { region_code: string; name_local: string }
+            regionNameMap[row.region_code] = row.name_local
+        }
 
         const resolvedMap: Record<string, number> = {}
         for (const o of (resolvedOffers || [])) {
@@ -55,7 +67,7 @@ export async function GET() {
                 nationwideSet.add(row.supporter_user_id)
             } else {
                 if (!areaMap[row.supporter_user_id]) areaMap[row.supporter_user_id] = []
-                areaMap[row.supporter_user_id].push({ name_local: row.region_code })
+                areaMap[row.supporter_user_id].push({ name_local: regionNameMap[row.region_code] || row.region_code })
             }
         }
 
