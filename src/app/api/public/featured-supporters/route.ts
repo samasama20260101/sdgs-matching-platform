@@ -13,7 +13,7 @@ export async function GET() {
 
     if (error) {
         console.error('featured-supporters API error:', error)
-        return NextResponse.json({ supporters: [] })
+        return NextResponse.json({ supporters: [], debug_error: error.message })
     }
 
     if (!supporters || supporters.length === 0) return NextResponse.json({ supporters: [] })
