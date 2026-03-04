@@ -50,7 +50,7 @@ export async function GET() {
         if (a.is_nationwide) {
             areaMap[a.supporter_user_id].is_nationwide = true
         } else if (a.regions) {
-            areaMap[a.supporter_user_id].regions.push(a.regions)
+            areaMap[a.supporter_user_id].regions.push(...a.regions)
         }
     })
 
