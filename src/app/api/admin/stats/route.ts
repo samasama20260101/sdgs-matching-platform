@@ -32,26 +32,30 @@ export async function GET(request: Request) {
         .eq('role', 'SUPPORTER')
         .order('created_at', { ascending: false })
 
-    // SOS件数
-    const { count: sosCount } = await supabaseAdmin
+    // SOSユーザー一覧
+    const { data: sosUsers } = await supabaseAdmin
         .from('users')
-        .select('id', { count: 'exact', head: true })
+        .select('id, display_name, real_name, email, created_at, sos_region_code')
         .eq('role', 'SOS')
+        .order('created_at', { ascending: false })
 
-    // 案件統計
+    // 案件一覧（全件）
     const { data: cases } = await supabaseAdmin
         .from('cases')
-        .select('status')
+        .select('id, title, status, created_at, region_code, owner_user_id, users!cases_owner_user_id_fkey(display_name)')
+        .order('created_at', { ascending: false })
 
     const caseStats = {
-        open: cases?.filter(c => c.status === 'OPEN').length ?? 0,
-        in_progress: cases?.filter(c => ['MATCHED', 'IN_PROGRESS'].includes(c.status)).length ?? 0,
-        resolved: cases?.filter(c => c.status === 'RESOLVED').length ?? 0,
+        open: cases?.filter((c: { status: string }) => c.status === 'OPEN').length ?? 0,
+        in_progress: cases?.filter((c: { status: string }) => ['MATCHED', 'IN_PROGRESS'].includes(c.status)).length ?? 0,
+        resolved: cases?.filter((c: { status: string }) => c.status === 'RESOLVED').length ?? 0,
     }
 
     return NextResponse.json({
         supporters: supporters ?? [],
-        sosCount: sosCount ?? 0,
+        sosUsers: sosUsers ?? [],
+        sosCount: (sosUsers ?? []).length,
+        cases: cases ?? [],
         caseStats,
     })
 }
