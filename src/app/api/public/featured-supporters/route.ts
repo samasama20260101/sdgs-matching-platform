@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
     const { data: supporters, error } = await supabaseAdmin
         .from('users')
-        .select('id, display_name, organization_name, supporter_type, bio, created_at, featured_order, sdgs_goals')
+        .select('id, display_name, organization_name, supporter_type, bio, created_at, featured_order')
         .eq('role', 'SUPPORTER')
         .eq('is_featured', true)
         .order('featured_order', { ascending: true })

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
     const { data: supporters, error } = await supabaseAdmin
         .from('users')
-        .select('id, display_name, organization_name, supporter_type, created_at, sdgs_goals')
+        .select('id, display_name, organization_name, supporter_type, created_at')
         .eq('role', 'SUPPORTER')
         .order('created_at', { ascending: false })
 
