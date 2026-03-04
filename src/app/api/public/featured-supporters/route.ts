@@ -5,6 +5,10 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
     try {
+        // デバッグ：全サポーター数とfeatured数を確認
+        const { data: allSupporters } = await supabaseAdmin
+            .from('users').select('id, is_featured').eq('role', 'SUPPORTER')
+
         const { data: supporters, error } = await supabaseAdmin
             .from('users')
             .select('id, display_name, organization_name, supporter_type, bio, created_at, featured_order')
@@ -13,10 +17,14 @@ export async function GET() {
             .order('featured_order', { ascending: true })
 
         if (error) {
-            return NextResponse.json({ supporters: [], debug_error: error.message }, { status: 200 })
+            return NextResponse.json({ supporters: [], debug_error: error.message, debug_all_count: allSupporters?.length }, { status: 200 })
         }
 
-        if (!supporters || supporters.length === 0) return NextResponse.json({ supporters: [] })
+        if (!supporters || supporters.length === 0) return NextResponse.json({ 
+            supporters: [],
+            debug_all_count: allSupporters?.length,
+            debug_featured_flags: allSupporters?.map(s => ({ id: s.id, is_featured: s.is_featured }))
+        })
 
         const ids = supporters.map((s: { id: string }) => s.id)
 

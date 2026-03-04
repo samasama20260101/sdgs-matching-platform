@@ -132,11 +132,16 @@ export default function AdminDashboardPage() {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
         const maxOrder = featuredSupporters.filter(s => s.is_featured).reduce((max, s) => Math.max(max, s.featured_order), 0)
-        await fetch('/api/admin/featured-supporters', {
+        const res = await fetch('/api/admin/featured-supporters', {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ supporter_id: supporterId, is_featured: !currentValue, featured_order: !currentValue ? maxOrder + 1 : 0 }),
         })
+        const result = await res.json()
+        if (!res.ok || result.error) {
+            alert('保存エラー: ' + (result.error || res.status))
+            return
+        }
         await loadFeaturedSupporters()
     }
 
