@@ -13,6 +13,17 @@ type Supporter = {
     supporter_type: string | null
     phone: string | null
     created_at: string
+    is_featured?: boolean
+    featured_order?: number
+}
+
+type FeaturedSupporter = {
+    id: string
+    display_name: string
+    organization_name: string | null
+    supporter_type: string | null
+    is_featured: boolean
+    featured_order: number
 }
 
 type SosUser = {
@@ -80,6 +91,9 @@ export default function AdminDashboardPage() {
     const [createSuccess, setCreateSuccess] = useState(false)
     const [activeView, setActiveView] = useState<ActiveView>(null)
     const detailRef = useRef<HTMLDivElement>(null)
+    const [featuredSupporters, setFeaturedSupporters] = useState<FeaturedSupporter[]>([])
+    const [showFeaturedModal, setShowFeaturedModal] = useState(false)
+    const [featuredSaving, setFeaturedSaving] = useState(false)
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -177,6 +191,65 @@ export default function AdminDashboardPage() {
         setTimeout(() => {
             detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }, 50)
+    }
+
+    const loadFeaturedSupporters = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const res = await fetch('/api/admin/featured-supporters', {
+            headers: { 'Authorization': `Bearer ${session.access_token}` },
+        })
+        const data = await res.json()
+        setFeaturedSupporters(data.supporters ?? [])
+    }
+
+    const toggleFeatured = async (supporterId: string, currentValue: boolean) => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        // 現在のfeaturedリストの最大order+1を新規に付与
+        const maxOrder = featuredSupporters.filter(s => s.is_featured)
+            .reduce((max, s) => Math.max(max, s.featured_order), 0)
+        await fetch('/api/admin/featured-supporters', {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                supporter_id: supporterId,
+                is_featured: !currentValue,
+                featured_order: !currentValue ? maxOrder + 1 : 0,
+            }),
+        })
+        await loadFeaturedSupporters()
+    }
+
+    const moveFeaturedOrder = async (id: string, direction: 'up' | 'down') => {
+        const featured = featuredSupporters.filter(s => s.is_featured)
+            .sort((a, b) => a.featured_order - b.featured_order)
+        const idx = featured.findIndex(s => s.id === id)
+        if (direction === 'up' && idx === 0) return
+        if (direction === 'down' && idx === featured.length - 1) return
+        const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+        const newOrders = featured.map((s, i) => ({ id: s.id, featured_order: i + 1 }))
+        // swap
+        const tmp = newOrders[idx].featured_order
+        newOrders[idx].featured_order = newOrders[swapIdx].featured_order
+        newOrders[swapIdx].featured_order = tmp
+
+        setFeaturedSaving(true)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { setFeaturedSaving(false); return }
+        await fetch('/api/admin/featured-supporters', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ orders: newOrders }),
+        })
+        setFeaturedSaving(false)
+        await loadFeaturedSupporters()
     }
 
     if (loading) {
@@ -403,14 +476,22 @@ export default function AdminDashboardPage() {
 
                 {/* サポーター一覧（常時表示） */}
                 <div className="bg-white rounded-lg shadow">
-                    <div className="px-6 py-4 border-b flex items-center justify-between">
+                    <div className="px-6 py-4 border-b flex items-center justify-between flex-wrap gap-2">
                         <h2 className="text-lg font-semibold text-gray-800">サポーター一覧</h2>
-                        <button
-                            onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateSuccess(false) }}
-                            className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition"
-                        >
-                            ＋ 新規サポーター追加
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { loadFeaturedSupporters(); setShowFeaturedModal(true) }}
+                                className="bg-amber-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-600 transition"
+                            >
+                                ⭐ トップページ掲載設定
+                            </button>
+                            <button
+                                onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateSuccess(false) }}
+                                className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition"
+                            >
+                                ＋ 新規サポーター追加
+                            </button>
+                        </div>
                     </div>
 
                     {supporters.length === 0 ? (
@@ -427,35 +508,138 @@ export default function AdminDashboardPage() {
                                         <th className="px-6 py-3 text-left">種別</th>
                                         <th className="px-6 py-3 text-left">メール</th>
                                         <th className="px-6 py-3 text-left">登録日</th>
+                                        <th className="px-6 py-3 text-center">トップ掲載</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {supporters.map((s) => (
-                                        <tr key={s.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 font-medium text-gray-900">
-                                                {s.organization_name || '—'}
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO'
-                                                    ? 'bg-blue-100 text-blue-700'
-                                                    : 'bg-orange-100 text-orange-700'
-                                                    }`}>
-                                                    {s.supporter_type || '—'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-500">{s.email}</td>
-                                            <td className="px-6 py-4 text-gray-400">
-                                                {new Date(s.created_at).toLocaleDateString('ja-JP')}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {supporters.map((s) => {
+                                        const featured = featuredSupporters.find(f => f.id === s.id)
+                                        const isFeatured = featured?.is_featured ?? false
+                                        return (
+                                            <tr key={s.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 font-medium text-gray-900">
+                                                    {s.organization_name || '—'}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO'
+                                                        ? 'bg-blue-100 text-blue-700'
+                                                        : 'bg-orange-100 text-orange-700'
+                                                        }`}>
+                                                        {s.supporter_type || '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500">{s.email}</td>
+                                                <td className="px-6 py-4 text-gray-400">
+                                                    {new Date(s.created_at).toLocaleDateString('ja-JP')}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <button
+                                                        onClick={() => toggleFeatured(s.id, isFeatured)}
+                                                        className={`text-lg transition-transform hover:scale-125 ${isFeatured ? 'opacity-100' : 'opacity-25 hover:opacity-60'}`}
+                                                        title={isFeatured ? 'トップ掲載中（クリックで解除）' : 'クリックでトップ掲載'}
+                                                    >
+                                                        ⭐
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
                                 </tbody>
                             </table>
                         </div>
                     )}
                 </div>
             </main>
+
+            {/* ⭐ トップページ掲載設定モーダル */}
+            {showFeaturedModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[85vh] flex flex-col">
+                        <div className="px-6 py-4 border-b flex items-center justify-between flex-shrink-0">
+                            <div>
+                                <h3 className="text-lg font-semibold">⭐ トップページ掲載設定</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">ONにしたサポーターがトップページに表示されます。↑↓で順番を変更できます。</p>
+                            </div>
+                            <button onClick={() => setShowFeaturedModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+                        </div>
+                        <div className="overflow-y-auto flex-1">
+                            {/* 掲載中（順番変更可能） */}
+                            {featuredSupporters.filter(s => s.is_featured).length > 0 && (
+                                <div className="px-6 pt-4 pb-2">
+                                    <p className="text-xs font-semibold text-amber-600 mb-2">📌 掲載中（表示順）</p>
+                                    <div className="space-y-2">
+                                        {featuredSupporters
+                                            .filter(s => s.is_featured)
+                                            .sort((a, b) => a.featured_order - b.featured_order)
+                                            .map((s, idx, arr) => (
+                                                <div key={s.id} className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                                                    <span className="text-amber-500 font-bold w-5 text-center">{idx + 1}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-800 truncate">{s.organization_name || s.display_name}</p>
+                                                        <span className={`text-xs ${s.supporter_type === 'NPO' ? 'text-blue-600' : 'text-orange-600'}`}>{s.supporter_type}</span>
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        <button
+                                                            onClick={() => moveFeaturedOrder(s.id, 'up')}
+                                                            disabled={idx === 0 || featuredSaving}
+                                                            className="w-7 h-7 flex items-center justify-center rounded bg-white border text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+                                                        >↑</button>
+                                                        <button
+                                                            onClick={() => moveFeaturedOrder(s.id, 'down')}
+                                                            disabled={idx === arr.length - 1 || featuredSaving}
+                                                            className="w-7 h-7 flex items-center justify-center rounded bg-white border text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+                                                        >↓</button>
+                                                        <button
+                                                            onClick={() => toggleFeatured(s.id, true)}
+                                                            className="w-7 h-7 flex items-center justify-center rounded bg-white border text-red-400 hover:bg-red-50"
+                                                            title="掲載解除"
+                                                        >✕</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 未掲載 */}
+                            <div className="px-6 pt-3 pb-4">
+                                <p className="text-xs font-semibold text-gray-400 mb-2">未掲載のサポーター</p>
+                                {featuredSupporters.filter(s => !s.is_featured).length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-4">すべて掲載中です</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {featuredSupporters
+                                            .filter(s => !s.is_featured)
+                                            .map(s => (
+                                                <div key={s.id} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-700 truncate">{s.organization_name || s.display_name}</p>
+                                                        <span className={`text-xs ${s.supporter_type === 'NPO' ? 'text-blue-600' : 'text-orange-600'}`}>{s.supporter_type}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => toggleFeatured(s.id, false)}
+                                                        className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-md hover:bg-amber-600 transition flex-shrink-0"
+                                                    >
+                                                        ⭐ 掲載する
+                                                    </button>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="px-6 py-3 border-t bg-gray-50 flex-shrink-0">
+                            <button
+                                onClick={() => setShowFeaturedModal(false)}
+                                className="w-full bg-gray-700 text-white py-2 rounded-md text-sm font-medium hover:bg-gray-800"
+                            >
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* サポーター作成モーダル */}
             {showCreateModal && (

@@ -99,6 +99,7 @@ function StatCard({ value, label, suffix = '' }: { value: number; label: string;
 export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [supporters, setSupporters] = useState<Supporter[]>([]);
+  const [featuredSupporters, setFeaturedSupporters] = useState<Supporter[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
@@ -106,6 +107,7 @@ export default function HomePage() {
   useEffect(() => {
     fetch('/api/public/stats').then(r => r.json()).then(setStats).catch(() => { });
     fetch('/api/public/supporters').then(r => r.json()).then(d => setSupporters(d.supporters || [])).catch(() => { });
+    fetch('/api/public/featured-supporters').then(r => r.json()).then(d => setFeaturedSupporters(d.supporters || [])).catch(() => { });
 
     // ログイン済みなら自動でダッシュボードへ
     import('@/lib/supabase/client').then(({ supabase }) => {
@@ -125,7 +127,8 @@ export default function HomePage() {
     });
   }, [router]);
 
-  const previewSupporters = supporters.slice(0, 4);
+  // フィーチャードが設定されていればそれを、なければ登録順上位4件を表示
+  const previewSupporters = featuredSupporters.length > 0 ? featuredSupporters : supporters.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -256,7 +259,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-black text-gray-900">参加サポーター</h2>
-                <p className="text-gray-500 text-sm mt-1">事前に確認してから相談できます</p>
+                                <p className="text-gray-500 text-sm mt-1">{featuredSupporters.length > 0 ? 'おすすめ団体をピックアップ' : '事前に確認してから相談できます'}</p>
               </div>
               <Link href="/supporters"
                 className="text-sm text-green-600 hover:text-green-700 font-medium border border-green-200 px-4 py-2 rounded-full hover:bg-green-50 transition-colors">
