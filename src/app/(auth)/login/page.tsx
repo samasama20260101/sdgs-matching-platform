@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,6 +70,12 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                <div className="mb-4">
+                    <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-green-600 transition-colors">
+                        ← トップページに戻る
+                    </Link>
+                </div>
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
                     <CardTitle className="text-2xl font-bold text-center">
@@ -140,6 +147,7 @@ export default function LoginPage() {
                     </div>
                 </CardContent>
             </Card>
+            </div>
         </div>
     );
 }
