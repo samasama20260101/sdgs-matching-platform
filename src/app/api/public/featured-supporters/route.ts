@@ -43,14 +43,14 @@ export async function GET() {
         })
 
         const areaMap: Record<string, { regions: { name_local: string }[]; is_nationwide: boolean }> = {}
-        ;(serviceAreas || []).forEach((a: { supporter_user_id: string; is_nationwide: boolean; regions: { name_local: string }[] | null }) => {
+        ;(serviceAreas || []).forEach((a: { supporter_user_id: string; is_nationwide: boolean; regions: { name_local: string } | null }) => {
             if (!areaMap[a.supporter_user_id]) {
                 areaMap[a.supporter_user_id] = { regions: [], is_nationwide: false }
             }
             if (a.is_nationwide) {
                 areaMap[a.supporter_user_id].is_nationwide = true
             } else if (a.regions) {
-                areaMap[a.supporter_user_id].regions.push(...a.regions)
+                areaMap[a.supporter_user_id].regions.push(a.regions)
             }
         })
 
