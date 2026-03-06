@@ -21,7 +21,7 @@ type Case = {
     id: string; title: string; status: string; created_at: string
     region_code: string | null; users?: { display_name: string } | null
 }
-type TabKey = 'supporters' | 'sos' | 'open_cases' | 'active_cases'
+type TabKey = 'supporters' | 'sos' | 'open_cases' | 'active_cases' | 'inquiries'
 type FormData = {
     email: string; password: string; real_name: string
     display_name: string; organization_name: string
@@ -51,6 +51,10 @@ export default function AdminDashboardPage() {
     const [caseStats, setCaseStats] = useState({ open: 0, in_progress: 0, resolved: 0 })
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<TabKey>('supporters')
+    const [inquiries, setInquiries] = useState<any[]>([])
+    const [inquiryOpenCount, setInquiryOpenCount] = useState(0)
+    const [inquiryStatusFilter, setInquiryStatusFilter] = useState<string>('OPEN')
+    const [savingInquiryId, setSavingInquiryId] = useState<string | null>(null)
     const [featuredSupporters, setFeaturedSupporters] = useState<FeaturedSupporter[]>([])
     const [showFeaturedModal, setShowFeaturedModal] = useState(false)
     const [featuredSaving, setFeaturedSaving] = useState(false)
@@ -65,9 +69,10 @@ export default function AdminDashboardPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const [statsRes, featuredRes] = await Promise.all([
+            const [statsRes, featuredRes, inquiryRes] = await Promise.all([
                 fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
                 fetch('/api/admin/featured-supporters', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
+                fetch('/api/admin/inquiries', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
             ])
             const data = await statsRes.json()
             if (!statsRes.ok) return
@@ -178,6 +183,7 @@ export default function AdminDashboardPage() {
         { key: 'sos',        label: '相談者（SOS）',  icon: '👥', count: sosCount,                               numColor: 'text-blue-600',   borderColor: 'border-blue-500',   bgColor: 'bg-blue-50' },
         { key: 'open_cases', label: '未対応の案件',   icon: '⏳', count: caseStats.open,                         numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
         { key: 'active_cases',label:'対応中・解決済み',icon:'🔄', count: caseStats.in_progress + caseStats.resolved, numColor: 'text-purple-600', borderColor: 'border-purple-500', bgColor: 'bg-purple-50' },
+        { key: 'inquiries',  label: 'お問い合わせ',   icon: '📩', count: inquiryOpenCount, numColor: 'text-rose-600', borderColor: 'border-rose-500', bgColor: 'bg-rose-50' },
     ]
 
     const openCases = allCases.filter(c => c.status === 'OPEN')
@@ -194,14 +200,14 @@ export default function AdminDashboardPage() {
                 <div className="bg-white rounded-xl shadow overflow-hidden">
 
                     {/* ── タブヘッダー（数字カード兼） ── */}
-                    <div className="grid grid-cols-2 md:grid-cols-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5">
                         {TABS.map((tab, i) => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
                                 className={[
                                     'px-5 py-5 text-left transition-all border-b-[3px]',
-                                    i < 3 ? 'border-r border-r-gray-100' : '',
+                                    i < 4 ? 'border-r border-r-gray-100' : '',
                                     activeTab === tab.key
                                         ? `${tab.borderColor} ${tab.bgColor}`
                                         : 'border-b-transparent hover:bg-gray-50',
@@ -393,6 +399,120 @@ export default function AdminDashboardPage() {
                                 </div>
                             )}
                         </>
+                    )}
+
+                    {/* ── 📩 お問い合わせタブ ── */}
+                    {activeTab === 'inquiries' && (
+                        <div className="p-6">
+                            {/* ステータスフィルター */}
+                            <div className="flex gap-2 mb-5">
+                                {[
+                                    { key: 'OPEN', label: '未対応', color: 'text-rose-600 border-rose-400 bg-rose-50' },
+                                    { key: 'IN_PROGRESS', label: '対応中', color: 'text-yellow-600 border-yellow-400 bg-yellow-50' },
+                                    { key: 'CLOSED', label: '解決済み', color: 'text-green-600 border-green-400 bg-green-50' },
+                                    { key: '', label: 'すべて', color: 'text-gray-600 border-gray-400 bg-gray-50' },
+                                ].map(s => (
+                                    <button key={s.key}
+                                        onClick={() => setInquiryStatusFilter(s.key)}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors ${inquiryStatusFilter === s.key ? s.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>
+                                        {s.label}
+                                        {s.key === 'OPEN' && inquiryOpenCount > 0 && (
+                                            <span className="ml-1.5 bg-rose-500 text-white text-[10px] rounded-full px-1.5 py-0.5">{inquiryOpenCount}</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* 問い合わせ一覧 */}
+                            <div className="space-y-4">
+                                {inquiries
+                                    .filter(iq => inquiryStatusFilter === '' || iq.status === inquiryStatusFilter)
+                                    .map(iq => (
+                                    <div key={iq.id} className="border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors">
+                                        <div className="flex items-start justify-between gap-4 mb-3">
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{iq.display_id}</span>
+                                                    {iq.role && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">{iq.role}</span>}
+                                                    {iq.users?.display_id && <span className="text-xs text-gray-400">{iq.users.display_id}</span>}
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                                        iq.status === 'OPEN' ? 'bg-rose-50 text-rose-600 border border-rose-200' :
+                                                        iq.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-600 border border-yellow-200' :
+                                                        'bg-green-50 text-green-600 border border-green-200'
+                                                    }`}>{iq.status === 'OPEN' ? '未対応' : iq.status === 'IN_PROGRESS' ? '対応中' : '解決済み'}</span>
+                                                </div>
+                                                <p className="text-sm font-semibold text-gray-800 mt-1">{iq.category}</p>
+                                                <p className="text-xs text-gray-400 mt-0.5">{new Date(iq.created_at).toLocaleString('ja-JP')}</p>
+                                            </div>
+                                            {/* ステータス変更 */}
+                                            <select
+                                                value={iq.status}
+                                                onChange={async (e) => {
+                                                    const newStatus = e.target.value
+                                                    setSavingInquiryId(iq.id)
+                                                    const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession()
+                                                    await fetch('/api/admin/inquiries', {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+                                                        body: JSON.stringify({ id: iq.id, status: newStatus }),
+                                                    })
+                                                    setInquiries(prev => prev.map(i => i.id === iq.id ? { ...i, status: newStatus } : i))
+                                                    setInquiryOpenCount(prev => {
+                                                        if (iq.status === 'OPEN' && newStatus !== 'OPEN') return prev - 1
+                                                        if (iq.status !== 'OPEN' && newStatus === 'OPEN') return prev + 1
+                                                        return prev
+                                                    })
+                                                    setSavingInquiryId(null)
+                                                }}
+                                                disabled={savingInquiryId === iq.id}
+                                                className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-300"
+                                            >
+                                                <option value="OPEN">未対応</option>
+                                                <option value="IN_PROGRESS">対応中</option>
+                                                <option value="CLOSED">解決済み</option>
+                                            </select>
+                                        </div>
+
+                                        {/* 送信者情報 */}
+                                        <div className="text-xs text-gray-500 mb-3 flex flex-wrap gap-3">
+                                            {iq.name && <span>👤 {iq.name}</span>}
+                                            <span>✉️ <a href={`mailto:${iq.email}`} className="text-blue-500 hover:underline">{iq.email}</a></span>
+                                            {iq.organization && <span>🏢 {iq.organization}</span>}
+                                            {iq.phone && <span>📞 {iq.phone}</span>}
+                                        </div>
+
+                                        {/* 本文 */}
+                                        <p className="text-sm text-gray-700 bg-gray-50 rounded-lg px-4 py-3 whitespace-pre-wrap mb-3">{iq.message}</p>
+
+                                        {/* 管理者メモ */}
+                                        <div>
+                                            <label className="text-xs font-semibold text-gray-500 mb-1 block">管理者メモ（対応記録）</label>
+                                            <textarea
+                                                defaultValue={iq.admin_memo || ''}
+                                                onBlur={async (e) => {
+                                                    const memo = e.target.value
+                                                    const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession()
+                                                    await fetch('/api/admin/inquiries', {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+                                                        body: JSON.stringify({ id: iq.id, admin_memo: memo }),
+                                                    })
+                                                }}
+                                                placeholder="対応内容をメモ（フォーカスが外れると自動保存）"
+                                                rows={2}
+                                                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-300 resize-none"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                                {inquiries.filter(iq => inquiryStatusFilter === '' || iq.status === inquiryStatusFilter).length === 0 && (
+                                    <div className="text-center py-16 text-gray-400">
+                                        <div className="text-4xl mb-3">📭</div>
+                                        <p className="text-sm">該当するお問い合わせはありません</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     )}
 
                 </div>

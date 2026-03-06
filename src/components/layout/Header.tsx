@@ -92,6 +92,10 @@ export default function Header() {
                   {displayName || 'プロフィール'}
                 </Link>
 
+                <Link href="/contact" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                  お問い合わせ
+                </Link>
+
                 <Button variant="outline" size="sm" onClick={handleLogout} className="text-gray-600 hover:text-red-600 hover:border-red-300">
                   ログアウト
                 </Button>
