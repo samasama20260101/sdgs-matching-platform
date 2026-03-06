@@ -1,547 +1,467 @@
-// src/app/story/page.tsx
-// 私たちの思い — ストーリーページ
-import type { Metadata } from 'next'
-import Link from 'next/link'
+'use client';
 
-export const metadata: Metadata = {
-  title: '私たちの思い | 明日もsamasama',
-  description: 'なぜ私たちはこのサービスをつくったのか。ロゴに込めた思い、世界の現実、そして私たちが信じること。',
-  openGraph: {
-    title: '私たちの思い | 明日もsamasama',
-    description: 'なぜ私たちはこのサービスをつくったのか。ロゴに込めた思い、世界の現実、そして私たちが信じること。',
-    images: [{ url: '/og-image.png' }],
-  },
+import Link from 'next/link';
+import { useEffect, useRef } from 'react';
+
+/* ── ロゴシンボル（涙型）─────────────────── */
+function TeardropMark({ size = 56 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="tm-g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0BC5A4" />
+          <stop offset="100%" stopColor="#0A8FD4" />
+        </linearGradient>
+      </defs>
+      <path d="M28 6C28 6 10 24 10 36C10 45.9 18.1 50 28 50C37.9 50 46 45.9 46 36C46 24 28 6 28 6Z"
+        fill="url(#tm-g)" />
+      <circle cx="28" cy="39" r="7" fill="white" opacity="0.22" />
+    </svg>
+  );
 }
 
+function TeardropIcon({ size = 56 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="ti-g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0BC5A4" />
+          <stop offset="100%" stopColor="#0A8FD4" />
+        </linearGradient>
+      </defs>
+      <rect width="56" height="56" rx="14" fill="#0A1628" />
+      <path d="M28 7C28 7 11 24 11 36C11 45.4 18.6 49 28 49C37.4 49 45 45.4 45 36C45 24 28 7 28 7Z"
+        fill="url(#ti-g)" />
+      <circle cx="28" cy="38" r="7" fill="white" opacity="0.2" />
+    </svg>
+  );
+}
+
+/* ── スクロールフェードイン ─────────────────── */
+function Reveal({ children, delay = 0, className = '' }: {
+  children: React.ReactNode; delay?: number; className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) el.style.cssText += 'opacity:1;transform:translateY(0)'; },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: 0,
+        transform: 'translateY(36px)',
+        transition: `opacity 0.9s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.9s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   PAGE
+══════════════════════════════════════════════ */
 export default function StoryPage() {
   return (
-    <>
+    <div className="bg-white text-slate-800 overflow-x-hidden" style={{ fontFamily: "'Noto Sans JP', sans-serif" }}>
+
+      {/* ── グローバルスタイル ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700;900&family=Noto+Sans+JP:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap');
 
-        .story-page {
-          font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
-          background: #fff;
-          color: #1a2535;
-          overflow-x: hidden;
-        }
-
-        /* NAV */
-        .story-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 18px 48px;
-          background: rgba(255,255,255,0.93);
-          backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(11,197,164,0.1);
-        }
-        .story-nav-logo {
-          display: flex; align-items: center; gap: 12px;
-          text-decoration: none;
-        }
-        .story-nav-name {
-          font-family: 'Noto Serif JP', serif;
-          font-size: 15px; font-weight: 700; color: #1a2535;
-          letter-spacing: 0.02em;
-        }
-        .story-nav-name span { color: #0BC5A4; }
-        .story-nav-link {
-          font-size: 12px; color: #94A3B8; text-decoration: none;
-          letter-spacing: 0.08em; transition: color 0.2s;
-        }
-        .story-nav-link:hover { color: #0BC5A4; }
-
-        /* HERO */
-        .story-hero {
-          min-height: 100vh;
-          display: grid; grid-template-columns: 1fr 1fr;
-        }
-        .story-hero-l {
-          background: #0A1628;
-          display: flex; flex-direction: column; justify-content: center;
-          padding: 140px 72px 80px;
-          position: relative; overflow: hidden;
-        }
-        .ripple {
-          position: absolute; border-radius: 50%;
-          border: 1px solid rgba(11,197,164,0.12);
-          animation: ripple-anim 7s ease-out infinite;
-        }
-        .r1 { width: 320px; height: 320px; top: 15%; left: -100px; animation-delay: 0s; }
-        .r2 { width: 560px; height: 560px; top: 5%; left: -200px; animation-delay: 2s; }
-        .r3 { width: 800px; height: 800px; top: -5%; left: -300px; animation-delay: 4s; }
-        @keyframes ripple-anim {
-          0% { transform: scale(0.85); opacity: 0.5; }
-          100% { transform: scale(1.1); opacity: 0; }
-        }
-        .hero-eyebrow {
-          font-size: 10px; letter-spacing: 5px; color: #0BC5A4;
-          text-transform: uppercase; margin-bottom: 28px; position: relative;
-          display: flex; align-items: center; gap: 12px;
-        }
-        .hero-eyebrow::before {
-          content: ''; display: block; width: 32px; height: 1px; background: #0BC5A4;
-        }
-        .hero-h1 {
-          font-family: 'Noto Serif JP', serif;
-          font-size: clamp(34px, 3.5vw, 54px);
-          font-weight: 700; color: #fff;
-          line-height: 1.65; letter-spacing: 0.03em;
-          margin-bottom: 36px; position: relative;
-        }
-        .hero-h1 em { font-style: normal; color: #0BC5A4; }
-        .hero-sub {
-          font-size: 14px; color: rgba(255,255,255,0.45);
-          line-height: 2.1; letter-spacing: 0.05em;
-          max-width: 360px; position: relative;
-        }
-        .hero-bg-drop {
-          position: absolute; right: -80px; bottom: -100px; opacity: 0.04; pointer-events: none;
-        }
-
-        .story-hero-r {
-          background: #F4F7F6;
-          display: flex; flex-direction: column; justify-content: center;
-          padding: 140px 72px 80px;
-        }
-        .hero-quote {
-          font-family: 'DM Serif Display', serif;
-          font-size: clamp(20px, 2.2vw, 30px);
-          color: #1a2535; line-height: 1.7; margin-bottom: 48px;
-        }
-        .hero-quote-ja {
-          display: block; font-family: 'Noto Serif JP', serif;
-          font-size: 0.6em; color: #94A3B8; margin-top: 10px; font-weight: 300;
-        }
-        .hero-stats { display: flex; gap: 40px; flex-wrap: wrap; }
-        .stat-num {
-          font-family: 'DM Serif Display', serif;
-          font-size: 40px; color: #0BC5A4; line-height: 1; margin-bottom: 6px;
-        }
-        .stat-lbl { font-size: 10px; color: #94A3B8; letter-spacing: 2px; line-height: 1.6; }
-
-        /* SECTIONS */
-        .story-section {
-          padding: 140px 72px;
-          max-width: 1100px; margin: 0 auto;
-        }
-        .section-tag {
-          display: inline-flex; align-items: center; gap: 12px;
-          font-size: 10px; letter-spacing: 5px; color: #0BC5A4;
-          text-transform: uppercase; margin-bottom: 64px;
-        }
-        .section-tag::after {
-          content: ''; display: block; width: 48px; height: 1px; background: #0BC5A4;
-        }
-
-        /* WHY WE BUILT */
-        .why-grid {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 96px; align-items: start;
-        }
-        .why-h2 {
-          font-family: 'Noto Serif JP', serif;
-          font-size: clamp(26px, 2.8vw, 40px);
-          font-weight: 700; line-height: 1.65; letter-spacing: 0.02em;
-          color: #1a2535; margin-bottom: 40px;
-        }
-        .why-h2 em {
-          font-style: normal;
-          background: linear-gradient(135deg, #0BC5A4, #0A8FD4);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .why-p {
-          font-size: 15px; line-height: 2.3; color: #3d4f63;
-          margin-bottom: 28px; letter-spacing: 0.04em;
-        }
-        .quote-card {
-          background: #0A1628; border-radius: 24px; padding: 48px 44px;
-          margin-bottom: 20px; position: relative; overflow: hidden;
-        }
-        .quote-card::before {
-          content: '\201C'; position: absolute; top: -12px; left: 28px;
-          font-size: 120px; color: #0BC5A4; opacity: 0.12;
-          font-family: Georgia, serif; line-height: 1;
-        }
-        .quote-card p {
-          font-family: 'Noto Serif JP', serif;
-          font-size: 15px; line-height: 2.1; color: rgba(255,255,255,0.82);
-          letter-spacing: 0.06em; position: relative;
-        }
-        .quote-author {
-          margin-top: 20px; font-size: 10px;
-          color: #0BC5A4; letter-spacing: 4px; text-transform: uppercase;
-        }
-        .data-card {
-          background: linear-gradient(135deg, #0BC5A4, #0A8FD4);
-          border-radius: 24px; padding: 40px 44px;
-        }
-        .data-card p { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.9; letter-spacing: 0.04em; }
-        .data-big { font-family: 'DM Serif Display', serif; font-size: 52px; color: #fff; line-height: 1; margin: 10px 0 4px; }
-        .data-src { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 3px; margin-bottom: 16px; }
-
-        /* LOGO STORY */
-        .logo-section { background: #F4F7F6; padding: 140px 72px; }
-        .logo-inner { max-width: 1100px; margin: 0 auto; }
-        .logo-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 120px; align-items: center; }
-        .logo-visual { display: flex; flex-direction: column; align-items: center; gap: 48px; }
-        .drop-float { animation: float-drop 4s ease-in-out infinite; }
-        @keyframes float-drop {
+        @keyframes float-logo {
           0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-14px); }
+          50%      { transform: translateY(-14px); }
         }
-        .size-row { display: flex; align-items: flex-end; gap: 20px; }
-        .size-item { text-align: center; }
-        .size-lbl { font-size: 9px; color: #94A3B8; letter-spacing: 2px; margin-top: 6px; }
-        .logo-h2 {
-          font-family: 'Noto Serif JP', serif;
-          font-size: clamp(24px, 2.6vw, 36px);
-          font-weight: 700; line-height: 1.7; color: #1a2535; margin-bottom: 48px;
-          letter-spacing: 0.02em;
+        @keyframes ripple-ring {
+          0%   { transform: scale(0.8); opacity: 0.4; }
+          100% { transform: scale(1.15); opacity: 0; }
         }
-        .meaning-list { list-style: none; display: flex; flex-direction: column; gap: 32px; }
-        .meaning-item { display: flex; gap: 20px; align-items: flex-start; }
-        .meaning-icon {
-          width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+        .float-anim { animation: float-logo 4s ease-in-out infinite; }
+        .ripple-r {
+          position: absolute; border-radius: 50%;
+          border: 1px solid rgba(11,197,164,0.18);
+          animation: ripple-ring 7s ease-out infinite;
+        }
+        .grad-text {
           background: linear-gradient(135deg, #0BC5A4, #0A8FD4);
-          display: flex; align-items: center; justify-content: center; font-size: 17px;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
-        .meaning-h4 { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 600; color: #1a2535; margin-bottom: 6px; }
-        .meaning-p { font-size: 13px; color: #6B7A8D; line-height: 1.95; letter-spacing: 0.04em; }
-
-        /* VALUES */
-        .values-h2 {
-          font-family: 'Noto Serif JP', serif;
-          font-size: clamp(28px, 3.2vw, 48px);
-          font-weight: 700; line-height: 1.6; letter-spacing: 0.02em;
-          color: #1a2535; margin-bottom: 80px; max-width: 780px;
-        }
-        .values-h2 em { font-style: normal; color: #0BC5A4; }
-        .values-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
-        .val-card {
-          padding: 44px 36px; border: 1px solid #E2EAE8; border-radius: 20px;
-          transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-        }
-        .val-card:hover { border-color: #0BC5A4; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(11,197,164,0.1); }
-        .val-num { font-family: 'DM Serif Display', serif; font-size: 52px; color: #E2EAE8; line-height: 1; margin-bottom: 18px; transition: color 0.3s; }
-        .val-card:hover .val-num { color: #0BC5A4; opacity: 0.35; }
-        .val-h3 { font-family: 'Noto Serif JP', serif; font-size: 17px; font-weight: 600; color: #1a2535; margin-bottom: 14px; letter-spacing: 0.04em; }
-        .val-p { font-size: 13px; color: #6B7A8D; line-height: 2.1; letter-spacing: 0.04em; }
-
-        /* MESSAGE */
-        .message-sec {
-          background: #0A1628; padding: 160px 72px;
-          position: relative; overflow: hidden;
-        }
-        .msg-bg { position: absolute; right: -200px; top: -200px; opacity: 0.03; pointer-events: none; }
-        .msg-inner { max-width: 760px; margin: 0 auto; text-align: center; position: relative; }
-        .msg-tag {
-          font-size: 10px; letter-spacing: 5px; color: #0BC5A4;
-          text-transform: uppercase; margin-bottom: 56px; display: block;
-        }
-        .msg-body {
-          font-family: 'Noto Serif JP', serif;
-          font-size: clamp(16px, 1.8vw, 21px);
-          color: rgba(255,255,255,0.82); line-height: 2.6;
-          letter-spacing: 0.07em; margin-bottom: 64px;
-        }
-        .msg-body strong { color: #0BC5A4; font-weight: 600; }
-        .msg-sign { font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 4px; text-transform: uppercase; }
-
-        /* CTA */
-        .cta-sec { padding: 120px 72px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .cta-h2 { font-family: 'Noto Serif JP', serif; font-size: clamp(26px, 3vw, 40px); font-weight: 700; color: #1a2535; margin-bottom: 18px; line-height: 1.6; }
-        .cta-p { font-size: 15px; color: #6B7A8D; line-height: 2; margin-bottom: 48px; }
-        .cta-btn {
-          display: inline-flex; align-items: center; gap: 10px;
-          background: linear-gradient(135deg, #0BC5A4, #0A8FD4);
-          color: #fff; text-decoration: none;
-          padding: 18px 52px; border-radius: 60px;
-          font-size: 15px; font-weight: 500; letter-spacing: 0.05em;
-          box-shadow: 0 8px 32px rgba(11,197,164,0.35);
-          transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(11,197,164,0.45); }
-
-        /* FOOTER */
-        .story-footer {
-          border-top: 1px solid #E2EAE8; padding: 36px 72px;
-          display: flex; justify-content: space-between; align-items: center;
-          flex-wrap: wrap; gap: 16px;
-        }
-        .footer-copy { font-size: 12px; color: #94A3B8; letter-spacing: 1px; }
-
-        @media (max-width: 900px) {
-          .story-nav { padding: 14px 20px; }
-          .story-hero, .why-grid, .logo-grid, .values-grid { grid-template-columns: 1fr; }
-          .story-hero-l, .story-hero-r { padding: 120px 28px 60px; }
-          .story-section, .logo-section, .message-sec, .cta-sec, .story-footer { padding-left: 24px; padding-right: 24px; }
-        }
+        .serif { font-family: 'Noto Serif JP', serif; }
+        .display { font-family: 'DM Serif Display', Georgia, serif; }
+        .vcard { transition: border-color .3s, transform .3s, box-shadow .3s; }
+        .vcard:hover { border-color: #0BC5A4; transform: translateY(-6px); box-shadow: 0 24px 48px rgba(11,197,164,.10); }
+        .vcard:hover .vnum { color: #0BC5A4; opacity: .3; }
       `}</style>
 
-      <div className="story-page">
+      {/* NAV */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 bg-white/90 backdrop-blur-md border-b border-teal-500/10">
+        <Link href="/" className="flex items-center gap-3 no-underline">
+          <TeardropIcon size={34} />
+          <span className="font-bold text-slate-800 text-sm tracking-wide serif">明日も<span className="text-teal-500">sama</span>sama</span>
+        </Link>
+        <Link href="/" className="text-sm text-slate-400 hover:text-teal-500 transition-colors tracking-wider">
+          ← サービストップへ
+        </Link>
+      </nav>
 
-        {/* NAV */}
-        <nav className="story-nav">
-          <Link href="/" className="story-nav-logo">
-            <svg width="30" height="30" viewBox="0 0 56 56" fill="none">
-              <defs>
-                <linearGradient id="sn-g" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0BC5A4"/>
-                  <stop offset="100%" stopColor="#0A8FD4"/>
-                </linearGradient>
-              </defs>
-              <rect width="56" height="56" rx="14" fill="#0A1628"/>
-              <path d="M28 6C28 6 10 24 10 36C10 45.9 18.1 50 28 50C37.9 50 46 45.9 46 36C46 24 28 6 28 6Z" fill="url(#sn-g)"/>
-              <circle cx="28" cy="38" r="8" fill="white" opacity="0.2"/>
-            </svg>
-            <span className="story-nav-name">明日も<span>sama</span>sama</span>
-          </Link>
-          <Link href="/" className="story-nav-link">← サービストップへ</Link>
-        </nav>
 
-        {/* HERO */}
-        <section className="story-hero">
-          <div className="story-hero-l">
-            <div className="ripple r1"/>
-            <div className="ripple r2"/>
-            <div className="ripple r3"/>
-            <p className="hero-eyebrow">Our Story</p>
-            <h1 className="hero-h1">
-              ひとりで<br/>
-              抱えないで<em>。</em><br/>
-              誰かが、<br/>
-              きっといる。
-            </h1>
-            <p className="hero-sub">
-              社会の片隅で、声を上げられずにいる人たちがいる。<br/>
-              私たちはその声を、必要な人へ届けたかった。
-            </p>
-            <svg className="hero-bg-drop" width="480" height="480" viewBox="0 0 56 56" fill="none">
-              <path d="M28 2C28 2 4 26 4 40C4 52.1 15 58 28 58C41 58 52 52.1 52 40C52 26 28 2 28 2Z" fill="white"/>
-            </svg>
-          </div>
+      {/* ════ HERO ════ */}
+      <section className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
 
-          <div className="story-hero-r">
-            <div className="hero-quote">
-              &ldquo;Tomorrow will be<br/>just the same —<br/>and that&rsquo;s enough.&rdquo;
-              <span className="hero-quote-ja">明日もsamasama。それでいい、という気持ちから。</span>
-            </div>
-            <div className="hero-stats">
-              <div>
-                <div className="stat-num">1.1B</div>
-                <div className="stat-lbl">人が深刻な<br/>多次元的貧困<br/><span style={{fontSize:'9px',letterSpacing:'1px',color:'#CBD5E1'}}>UNDP 2024</span></div>
-              </div>
-              <div>
-                <div className="stat-num">3.8B</div>
-                <div className="stat-lbl">人が社会保護を<br/>まったく受けていない<br/><span style={{fontSize:'9px',letterSpacing:'1px',color:'#CBD5E1'}}>UN 2024</span></div>
-              </div>
-              <div>
-                <div className="stat-num">0円</div>
-                <div className="stat-lbl">SOS側は<br/>完全無料</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* WHY WE BUILT */}
-        <section className="story-section">
-          <p className="section-tag">Why we built this</p>
-          <div className="why-grid">
-            <div>
-              <h2 className="why-h2">
-                「助けて」が<br/>
-                言えない社会に、<br/>
-                <em>私たちは気づいた。</em>
-              </h2>
-              <p className="why-p">
-                生活が苦しくなった時、家族関係に悩んだ時、孤立してしまった時——多くの人は誰にも言えずに抱え込みます。「迷惑をかけたくない」「自分だけが弱いのでは」という思いが、声を上げる手を止める。
-              </p>
-              <p className="why-p">
-                一方で、支援したいNPO・企業・行政・公共機関は世界中に何十万も存在します。専門的な知識と温かい手を持つ人たちが、助けを必要としている人に出会えないまま、時間が過ぎていく。
-              </p>
-              <p className="why-p">
-                このミスマッチは、テクノロジーで解決できると確信しました。AIを活用したマッチングプラットフォーム「明日もsamasama」の開発は、その確信から始まりました。
-              </p>
-            </div>
-            <div style={{position:'sticky', top:'120px'}}>
-              <div className="quote-card">
-                <p>
-                  支援を受けるのは恥ずかしいことでも、弱いことでもない。人は誰かに支えられながら生きている——それが当たり前の社会をつくりたい、という思いから、このサービスは生まれました。
-                </p>
-                <p className="quote-author">Founder&apos;s Note</p>
-              </div>
-              <div className="data-card">
-                <p>世界で多次元的な貧困に苦しむ人々のうち</p>
-                <div className="data-big">584M</div>
-                <div className="data-src">UNDP Global MPI 2024</div>
-                <p>が18歳未満の子ども。貧困は次の世代へと連鎖する。しかし、適切なサポートが届けば、その連鎖は断ち切れる。</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* LOGO STORY */}
-        <section className="logo-section">
-          <div className="logo-inner">
-            <p className="section-tag">The Mark — ロゴに込めた思い</p>
-            <div className="logo-grid">
-              <div className="logo-visual">
-                <div className="drop-float">
-                  <svg width="160" height="190" viewBox="0 0 56 62" fill="none">
-                    <defs>
-                      <linearGradient id="drop-hero" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#0BC5A4"/>
-                        <stop offset="100%" stopColor="#0A8FD4"/>
-                      </linearGradient>
-                    </defs>
-                    <path d="M28 3C28 3 6 25 6 39C6 51.7 16.1 57 28 57C39.9 57 50 51.7 50 39C50 25 28 3 28 3Z"
-                      fill="url(#drop-hero)"/>
-                    <circle cx="28" cy="42" r="10" fill="white" opacity="0.2"/>
-                  </svg>
-                </div>
-                <div className="size-row">
-                  {[['64','14','2'],['40','13','1'],['24','13','1'],['16','12','1']].map(([s,rx,op])=>(
-                    <div key={s} className="size-item">
-                      <svg width={s} height={s} viewBox="0 0 56 56" fill="none">
-                        <rect width="56" height="56" rx={rx} fill="#0A1628"/>
-                        <path d="M28 6C28 6 10 24 10 36C10 45.9 18.1 50 28 50C37.9 50 46 45.9 46 36C46 24 28 6 28 6Z" fill="#0BC5A4"/>
-                        {Number(s) >= 40 && <circle cx="28" cy="38" r="8" fill="white" opacity={op}/>}
-                      </svg>
-                      <div className="size-lbl">{s}px</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h2 className="logo-h2">
-                  涙は、<br/>
-                  悲しみだけの<br/>
-                  ものじゃない。
-                </h2>
-                <ul className="meaning-list">
-                  <li className="meaning-item">
-                    <div className="meaning-icon">💧</div>
-                    <div>
-                      <h4 className="meaning-h4">形の意味 — 涙のかたち</h4>
-                      <p className="meaning-p">
-                        涙のかたちは、追い詰められた誰かの痛みを表しています。泣くほど辛い状況を、私たちは直視する。目を逸らさない。そのための形です。
-                      </p>
-                    </div>
-                  </li>
-                  <li className="meaning-item">
-                    <div className="meaning-icon">🌊</div>
-                    <div>
-                      <h4 className="meaning-h4">グラデーションの意味 — 変化と可能性</h4>
-                      <p className="meaning-p">
-                        青緑（自然・癒し）から深い青（信頼・技術）へ。困難の中にある静けさと、その先に広がる可能性。変化は、いつも少しずつ始まる。
-                      </p>
-                    </div>
-                  </li>
-                  <li className="meaning-item">
-                    <div className="meaning-icon">✨</div>
-                    <div>
-                      <h4 className="meaning-h4">内側の光の意味 — 消えない灯</h4>
-                      <p className="meaning-p">
-                        どんなに辛い状況でも、内側に灯は残っている。支援とは、その灯を一緒に育てることだと私たちは信じています。
-                      </p>
-                    </div>
-                  </li>
-                  <li className="meaning-item">
-                    <div className="meaning-icon">🙏</div>
-                    <div>
-                      <h4 className="meaning-h4">涙が変わる瞬間 — サービスの本質</h4>
-                      <p className="meaning-p">
-                        悲しみの涙が、感謝の涙に変わる瞬間。そこに立ち会いたくて、私たちはこのサービスをつくりました。ロゴはその誓いです。
-                      </p>
-                    </div>
-                  </li>
-                  <li className="meaning-item">
-                    <div className="meaning-icon">📐</div>
-                    <div>
-                      <h4 className="meaning-h4">実用的な意味 — どんな場所でも</h4>
-                      <p className="meaning-p">
-                        1つの太い塊だから、16pxのファビコンでも、大きなバナーでも、同じシルエットで伝わる。複雑さを排して、本質だけを残した形です。
-                      </p>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* VALUES */}
-        <section className="story-section">
-          <p className="section-tag">Our Values</p>
-          <h2 className="values-h2">
-            テクノロジーは<br/>
-            人を<em>つなぐ</em>ための<br/>
-            道具にすぎない。
-          </h2>
-          <div className="values-grid">
-            {[
-              ['01','尊厳を守る','支援を受けることを、恥だと感じさせない。相談者の個人情報は、承認するまでサポーターに渡りません。自分のペースで、自分の意思で動ける設計です。'],
-              ['02','対等な関係','支援する側・される側という上下ではなく、同じ社会で生きる者同士として出会う場所。「samasama（さまさま）」という名前に込めた思いです。'],
-              ['03','AIは架け橋','AIは支援の決定をしません。あくまで出会いを促す架け橋です。最後に動くのは、人間の温かさと意思。テクノロジーはその補助をするだけです。'],
-              ['04','声なき声を聞く','「助けて」と言葉にできない人のために、少ない言葉でも状況を理解しようとするAI設計。敷居を低く、間口を広く。'],
-              ['05','持続可能な支援','一度きりで終わらない関係を設計します。バッジや感謝の仕組みで、サポーターのモチベーションも守る。持続可能な支援のエコシステムを目指します。'],
-              ['06','SDGsへの誠実さ','目の前の一人の生活を支えることが、すでにSDGsの実践です。世界の課題は、ローカルな一歩から動き始める。'],
-            ].map(([n,h,p])=>(
-              <div key={n} className="val-card">
-                <div className="val-num">{n}</div>
-                <h3 className="val-h3">{h}</h3>
-                <p className="val-p">{p}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* MESSAGE */}
-        <section className="message-sec">
-          <svg className="msg-bg" width="700" height="700" viewBox="0 0 56 56" fill="none">
+        {/* 左ダーク */}
+        <div className="relative bg-slate-900 flex flex-col justify-center px-14 pt-32 pb-20 overflow-hidden">
+          <div className="ripple-r w-72 h-72" style={{ top: '15%', left: '-80px', animationDelay: '0s' }} />
+          <div className="ripple-r w-[480px] h-[480px]" style={{ top: '5%', left: '-170px', animationDelay: '2s' }} />
+          <div className="ripple-r w-[680px] h-[680px]" style={{ top: '-5%', left: '-260px', animationDelay: '4s' }} />
+          <svg className="absolute right-[-80px] bottom-[-80px] opacity-[0.04]" width="420" height="420" viewBox="0 0 56 56" fill="none">
             <path d="M28 2C28 2 4 26 4 40C4 52.1 15 58 28 58C41 58 52 52.1 52 40C52 26 28 2 28 2Z" fill="white"/>
           </svg>
-          <div className="msg-inner">
-            <span className="msg-tag">A Message from the Team</span>
-            <p className="msg-body">
-              私たちが恐れるのは、<br/>
-              誰かが<strong>「もう明日はいらない」</strong>と思ってしまう瞬間です。<br/><br/>
-              このサービスの名前「明日もsamasama」は、<br/>
-              特別な明日でなくていい、という意味が込められています。<br/><br/>
-              今日と<strong>同じくらいの明日が来る</strong>こと。<br/>
-              それが、生きていくための最低限の希望だと思うから。<br/><br/>
-              世界中の、声を上げられずにいる誰かのために。<br/>
-              その希望を守るために、<br/>
+
+          <Reveal>
+            <p className="text-xs tracking-[5px] text-teal-400 uppercase mb-8 flex items-center gap-3">
+              <span className="w-8 h-px bg-teal-400 block" /> Our Story
+            </p>
+          </Reveal>
+          <Reveal delay={120}>
+            <h1 className="serif text-5xl lg:text-6xl font-black text-white leading-[1.5] tracking-tight mb-10">
+              ひとりで<br />抱えないで<span className="text-teal-400">。</span><br />誰かが、<br />きっといる。
+            </h1>
+          </Reveal>
+          <Reveal delay={240}>
+            <p className="text-slate-400 text-sm leading-9 tracking-wider max-w-sm">
+              社会の隅で、声を上げられずにいる人たちがいる。<br />私たちはその声を、必要な人へ届けたかった。
+            </p>
+          </Reveal>
+        </div>
+
+        {/* 右ライト */}
+        <div className="bg-slate-50 flex flex-col justify-center px-14 pt-32 pb-20">
+          <Reveal>
+            <blockquote className="mb-12">
+              <p className="display text-2xl lg:text-3xl leading-relaxed text-slate-700 mb-5">
+                "Tomorrow will be<br /><em>just the same</em> —<br />and that's enough."
+              </p>
+              <p className="text-slate-400 text-sm leading-9 tracking-widest serif">
+                明日もsamasama。<br />それでいい、という気持ちから。
+              </p>
+            </blockquote>
+          </Reveal>
+          <Reveal delay={150}>
+            <div className="grid grid-cols-3 gap-5">
+              {[
+                { num: '700M+', label: 'People in extreme\npoverty globally', src: 'World Bank 2024' },
+                { num: '80%',   label: 'Never access the\nsupport they need',  src: 'WHO 2023' },
+                { num: '0',     label: 'Cost for SOS users\non this platform',   src: '明日もsamasama' },
+              ].map(s => (
+                <div key={s.num}>
+                  <p className="display text-4xl font-black text-teal-500 leading-none mb-2">{s.num}</p>
+                  <p className="text-xs text-slate-500 leading-5 tracking-wide whitespace-pre-line">{s.label}</p>
+                  <p className="text-[10px] text-slate-300 tracking-wider mt-1">{s.src}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+
+      {/* ════ WHY WE BUILT THIS ════ */}
+      <section className="py-40 px-8 max-w-6xl mx-auto">
+        <Reveal>
+          <p className="text-[10px] tracking-[5px] text-teal-500 uppercase mb-16 flex items-center gap-3">
+            Why we built this <span className="w-12 h-px bg-teal-400 block" />
+          </p>
+        </Reveal>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+          <div>
+            <Reveal>
+              <h2 className="serif text-4xl lg:text-5xl font-black leading-[1.55] tracking-tight mb-12">
+                「助けて」が<br />言えない社会に、<br /><span className="grad-text">私たちは気づいた。</span>
+              </h2>
+            </Reveal>
+            {[
+              '生活が苦しくなった時、家族関係に悩んだ時、孤立してしまった時——多くの人は誰にも言えずに抱え込みます。「迷惑をかけたくない」「自分だけが弱いのでは」という思いが、声を上げる手を止める。',
+              '一方で、支援したいNPO・企業・行政は世界中に何千も存在します。専門的な知識と温かい手を持つ人たちが、助けを必要としている人に出会えないまま時間が過ぎていく。',
+              'このミスマッチは、テクノロジーで解決できると確信しました。人と人をつなぐ架け橋として、AIを活用したマッチングプラットフォーム「明日もsamasama」の開発が始まりました。',
+            ].map((t, i) => (
+              <Reveal key={i} delay={i * 100}>
+                <p className="text-slate-500 text-[15px] leading-9 tracking-wide mb-7">{t}</p>
+              </Reveal>
+            ))}
+          </div>
+          <div className="sticky top-28 flex flex-col gap-6">
+            <Reveal>
+              <div className="bg-slate-900 rounded-3xl p-12 relative overflow-hidden">
+                <span className="absolute top-2 left-8 text-[120px] text-teal-400/10 leading-none select-none" style={{ fontFamily: 'Georgia, serif' }}>"</span>
+                <p className="serif text-white/85 text-base leading-9 tracking-wider relative">
+                  支援を受けることは、恥でも弱さでもない。人は誰かに支えられながら生きている——それが当たり前の社会をつくりたい。
+                </p>
+                <p className="text-teal-400 text-[10px] tracking-[4px] uppercase mt-6">Founder's Note</p>
+              </div>
+            </Reveal>
+            <Reveal delay={100}>
+              <div className="rounded-3xl p-10 text-white" style={{ background: 'linear-gradient(135deg,#0BC5A4,#0A8FD4)' }}>
+                <p className="text-white/80 text-sm tracking-wide mb-3">World population in extreme poverty (under $2.15/day)</p>
+                <p className="display text-5xl font-black leading-none mb-2">8.5%</p>
+                <p className="text-white/60 text-[10px] tracking-[3px] uppercase mb-5">World Bank 2024</p>
+                <p className="text-white/80 text-sm leading-7 tracking-wide">
+                  約6億8,000万人が極度の貧困状態にある。支援の仕組みはあるのに、届かない現実がある。
+                </p>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ════ LOGO STORY ════ */}
+      <section className="bg-slate-50 py-40 px-8">
+        <div className="max-w-6xl mx-auto">
+          <Reveal>
+            <p className="text-[10px] tracking-[5px] text-teal-500 uppercase mb-16 flex items-center gap-3">
+              The Mark <span className="w-12 h-px bg-teal-400 block" />
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+
+            {/* 左：ロゴビジュアル */}
+            <Reveal className="flex flex-col items-center gap-14">
+              <div className="float-anim">
+                <svg width="180" height="210" viewBox="0 0 56 62" fill="none" aria-label="明日もsamasama ロゴマーク">
+                  <defs>
+                    <linearGradient id="td-hero" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0BC5A4" />
+                      <stop offset="100%" stopColor="#0A8FD4" />
+                    </linearGradient>
+                    <filter id="glow-h"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  </defs>
+                  <path d="M28 4C28 4 6 26 6 40C6 52.1 16.1 57 28 57C39.9 57 50 52.1 50 40C50 26 28 4 28 4Z"
+                    fill="url(#td-hero)" filter="url(#glow-h)" />
+                  <circle cx="28" cy="43" r="10" fill="white" opacity="0.18" />
+                </svg>
+              </div>
+              {/* サイズプレビュー */}
+              <div className="flex items-end gap-5">
+                {[64, 40, 24, 16].map(sz => (
+                  <div key={sz} className="flex flex-col items-center gap-2">
+                    <TeardropIcon size={sz} />
+                    <span className="text-[9px] text-slate-400 tracking-widest">{sz}px</span>
+                  </div>
+                ))}
+              </div>
+              {/* ライト／ダーク比較 */}
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="bg-white rounded-2xl px-6 py-4 shadow-sm flex items-center gap-3 border border-slate-100">
+                  <TeardropMark size={26} />
+                  <div>
+                    <p className="serif text-sm font-bold text-slate-800 leading-none">明日も<span className="text-teal-500">sama</span>sama</p>
+                    <p className="text-[8px] text-slate-400 tracking-[3px] mt-1">SDGs MATCH</p>
+                  </div>
+                </div>
+                <div className="bg-slate-900 rounded-2xl px-6 py-4 flex items-center gap-3">
+                  <TeardropMark size={26} />
+                  <div>
+                    <p className="serif text-sm font-bold text-white leading-none">明日も<span className="text-teal-400">sama</span>sama</p>
+                    <p className="text-[8px] text-slate-500 tracking-[3px] mt-1">SDGs MATCH</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* 右：テキスト */}
+            <div>
+              <Reveal>
+                <h2 className="serif text-4xl lg:text-5xl font-black leading-[1.6] tracking-tight mb-14">
+                  涙は、<br />悲しみだけの<br />ものじゃない。
+                </h2>
+              </Reveal>
+              <div className="flex flex-col gap-10">
+                {[
+                  { icon: '💧', title: '形に込めた意味',
+                    body: 'このマークは、涙のかたちをしています。追い詰められて泣くしかない夜が、世界中に何億もある。その痛みから目を背けないために——まず涙と向き合うことから始めました。' },
+                  { icon: '🌊', title: 'グラデーションの意味',
+                    body: 'ティールから深いブルーへ。これは「海」の色です。どんな川も、最後は海につながる。困難の中にいる人も、必ずどこかへつながっていけると信じています。' },
+                  { icon: '✨', title: '内側の光の意味',
+                    body: '涙型の底に、うっすらと白い光があります。どんなに暗い状況でも、内側に灯は残っている。支援とは、その灯を一緒に育てることだと私たちは考えます。' },
+                  { icon: '🔄', title: '涙が変わる瞬間',
+                    body: '悲しみの涙が、感謝の涙に変わる瞬間——それこそがこのプラットフォームの存在意義です。同じ一滴の涙に、ふたつの意味を込めました。' },
+                ].map((item, i) => (
+                  <Reveal key={i} delay={i * 80}>
+                    <div className="flex gap-5 items-start">
+                      <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
+                        style={{ background: 'linear-gradient(135deg,#0BC5A4,#0A8FD4)' }}>
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-[15px] mb-2 tracking-wide">{item.title}</h4>
+                        <p className="text-slate-500 text-[13px] leading-8 tracking-wide">{item.body}</p>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ════ OUR VALUES ════ */}
+      <section className="py-40 px-8 max-w-6xl mx-auto">
+        <Reveal>
+          <p className="text-[10px] tracking-[5px] text-teal-500 uppercase mb-6 flex items-center gap-3">
+            Our Values <span className="w-12 h-px bg-teal-400 block" />
+          </p>
+        </Reveal>
+        <Reveal delay={80}>
+          <h2 className="serif text-4xl lg:text-5xl font-black leading-[1.55] tracking-tight mb-20 max-w-3xl">
+            テクノロジーは<br />人を<span className="grad-text">つなぐ</span>ための<br />道具にすぎない。
+          </h2>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+          {[
+            { n:'01', title:'尊厳を守る',      body:'支援を受けることを、恥だと感じさせない。相談者の個人情報は、自分が承認するまでサポーターに渡りません。自分のペースで、自分の意思で動ける設計です。' },
+            { n:'02', title:'対等な関係',      body:'支援する側・される側という上下関係ではなく、同じ社会で生きる者同士として出会う場所。「samasama（さまさま）」という名前には、対等という思いが込められています。' },
+            { n:'03', title:'AIは架け橋',      body:'AIは支援の決定をしません。あくまで出会いを促す架け橋です。最後に動くのは、人間の温かさと意思。テクノロジーはその補助をするだけです。' },
+            { n:'04', title:'声なき声を聞く',  body:'「助けて」と言葉にできない人のために、少ない言葉でも状況を理解しようとするAI設計。世界中どこからでも、敷居を低く、間口を広く。' },
+            { n:'05', title:'継続できる仕組み', body:'一度きりの支援ではなく、関係が続く設計。サポーターのモチベーションも守ることで、持続可能な支援のエコシステムを目指します。' },
+            { n:'06', title:'SDGsへの誠実さ',  body:'持続可能な開発目標は、遠い国の話ではありません。目の前の一人の生活を支えることが、すでにSDGsの実践です。' },
+          ].map((v, i) => (
+            <Reveal key={v.n} delay={i * 60}>
+              <div className="vcard border border-slate-200 rounded-2xl p-10 h-full">
+                <p className="vnum display text-6xl font-black text-slate-100 leading-none mb-5 transition-colors duration-300">{v.n}</p>
+                <h3 className="serif font-bold text-slate-800 text-lg mb-4 tracking-wide">{v.title}</h3>
+                <p className="text-slate-500 text-[13px] leading-8 tracking-wide">{v.body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+
+      {/* ════ MESSAGE ════ */}
+      <section className="bg-slate-900 py-40 px-8 relative overflow-hidden">
+        <svg className="absolute right-[-180px] top-[-180px] opacity-[0.035] pointer-events-none" width="700" height="700" viewBox="0 0 56 56" fill="none">
+          <path d="M28 2C28 2 4 26 4 40C4 52.1 15 58 28 58C41 58 52 52.1 52 40C52 26 28 2 28 2Z" fill="white"/>
+        </svg>
+        <div className="max-w-3xl mx-auto text-center relative">
+          <Reveal>
+            <p className="text-[10px] tracking-[5px] text-teal-400 uppercase mb-14 flex items-center justify-center gap-3">
+              <span className="w-10 h-px bg-teal-400 block" /> A Message <span className="w-10 h-px bg-teal-400 block" />
+            </p>
+          </Reveal>
+          <Reveal delay={100}>
+            <p className="serif text-white/85 text-lg lg:text-[22px] leading-[2.8] tracking-widest mb-16">
+              私たちが恐れるのは、<br />
+              誰かが<strong className="text-teal-400">「もう明日はいらない」</strong>と<br />
+              思ってしまう瞬間です。<br /><br />
+              このサービスの名前「明日もsamasama」は、<br />
+              特別な明日でなくていい、という意味が込められています。<br /><br />
+              今日と<strong className="text-teal-400">同じくらいの明日が来る</strong>こと。<br />
+              それが、生きていくための最低限の希望だと思うから。<br /><br />
+              その希望を守るために、<br />
               私たちは今日も、このプラットフォームを育てています。
             </p>
-            <p className="msg-sign">明日もsamasama Team — 2026</p>
-          </div>
-        </section>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="flex justify-center mb-6">
+              <TeardropMark size={36} />
+            </div>
+            <p className="text-white/25 text-[11px] tracking-[5px] uppercase">
+              明日もsamasama 開発チーム — 2026
+            </p>
+          </Reveal>
+        </div>
+      </section>
 
-        {/* CTA */}
-        <section className="cta-sec">
-          <h2 className="cta-h2">一歩、踏み出してみませんか。</h2>
-          <p className="cta-p">
-            相談は無料。匿名でも大丈夫。<br/>
+
+      {/* ════ GLOBAL CONTEXT ════ */}
+      <section className="py-40 px-8 max-w-6xl mx-auto">
+        <Reveal>
+          <p className="text-[10px] tracking-[5px] text-teal-500 uppercase mb-16 flex items-center gap-3">
+            Global Context <span className="w-12 h-px bg-teal-400 block" />
+          </p>
+        </Reveal>
+        <Reveal delay={80}>
+          <h2 className="serif text-3xl lg:text-4xl font-black leading-[1.6] tracking-tight mb-16 max-w-2xl">
+            これは日本だけの話ではない。<br />
+            <span className="grad-text">世界中で起きている問題</span>だから、<br />
+            私たちはグローバルを意識する。
+          </h2>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { num:'700M',  label:'極度の貧困人口',    detail:'1日2.15ドル未満で生活する人々', src:'World Bank, 2024' },
+            { num:'1B+',   label:'障害を持つ人々',    detail:'支援へのアクセスが著しく制限される', src:'WHO, 2023' },
+            { num:'122M',  label:'強制移動・難民',    detail:'故郷を追われ支援を必要とする人々', src:'UNHCR, 2024' },
+            { num:'3.3B',  label:'最低賃金以下で就労', detail:'世界の労働人口の約半数', src:'ILO, 2023' },
+          ].map((s, i) => (
+            <Reveal key={s.num} delay={i * 70}>
+              <div className="border border-slate-100 rounded-2xl p-8 hover:border-teal-300 transition-colors h-full">
+                <p className="display text-4xl font-black text-teal-500 leading-none mb-3">{s.num}</p>
+                <p className="font-bold text-slate-800 text-sm mb-2 tracking-wide">{s.label}</p>
+                <p className="text-slate-400 text-[12px] leading-6 mb-3">{s.detail}</p>
+                <p className="text-[10px] text-slate-300 tracking-wider">{s.src}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+
+      {/* ════ CTA ════ */}
+      <section className="py-32 px-8 flex flex-col items-center text-center">
+        <Reveal>
+          <div className="float-anim mb-8"><TeardropMark size={52} /></div>
+        </Reveal>
+        <Reveal delay={100}>
+          <h2 className="serif text-3xl lg:text-4xl font-black leading-[1.65] tracking-tight mb-6">
+            一歩、踏み出してみませんか。
+          </h2>
+        </Reveal>
+        <Reveal delay={180}>
+          <p className="text-slate-500 text-[15px] leading-9 mb-12 tracking-wide">
+            相談は無料。匿名でも大丈夫。<br />
             あなたの状況に合ったサポーターを、AIが一緒に探します。
           </p>
-          <Link href="/signup" className="cta-btn">
-            <svg width="16" height="16" viewBox="0 0 56 56" fill="none">
-              <path d="M28 4C28 4 8 24 8 38C8 49.5 17.1 54 28 54C38.9 54 48 49.5 48 38C48 24 28 4 28 4Z" fill="white"/>
-            </svg>
-            無料で相談する
-          </Link>
-        </section>
+        </Reveal>
+        <Reveal delay={250}>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/signup"
+              className="inline-flex items-center gap-3 text-white px-10 py-5 rounded-full font-bold text-[15px] tracking-wide transition-all hover:-translate-y-1 no-underline"
+              style={{ background:'linear-gradient(135deg,#0BC5A4,#0A8FD4)', boxShadow:'0 8px 32px rgba(11,197,164,0.35)' }}>
+              <TeardropMark size={18} />
+              無料で相談する
+            </Link>
+            <Link href="/supporters"
+              className="inline-flex items-center gap-2 text-slate-600 border-2 border-slate-200 px-10 py-5 rounded-full font-bold text-[15px] tracking-wide transition-all hover:border-teal-400 hover:text-teal-600 no-underline">
+              サポーターを見る →
+            </Link>
+          </div>
+        </Reveal>
+      </section>
 
-        {/* FOOTER */}
-        <footer className="story-footer">
-          <p className="footer-copy">© 2026 明日もsamasama. All rights reserved.</p>
-          <p className="footer-copy" style={{letterSpacing:'3px'}}>SDGs MATCH PLATFORM</p>
-        </footer>
 
-      </div>
-    </>
-  )
+      {/* FOOTER */}
+      <footer className="border-t border-slate-100 py-10 px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-3">
+          <TeardropIcon size={28} />
+          <span className="serif text-sm text-slate-400 tracking-wide">明日もsamasama</span>
+        </div>
+        <p className="text-xs text-slate-300 tracking-[3px]">© 2026 明日もsamasama. All rights reserved.</p>
+        <p className="text-xs text-slate-300 tracking-[3px] uppercase">SDGs Match Platform</p>
+      </footer>
+
+    </div>
+  );
 }
