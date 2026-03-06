@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <defs>
+    <linearGradient id="drop1w" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7DD3FC"/>
+      <stop offset="100%" stop-color="#6EE7B7"/>
+    </linearGradient>
+    <linearGradient id="drop2w" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6EE7B7"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <filter id="gloww">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <path d="M22 38 C22 38 12 27 12 21 C12 14.4 16.5 10 22 10 C27.5 10 32 14.4 32 21 C32 27 22 38 22 38Z"
+    fill="url(#drop1w)" opacity="0.95" filter="url(#gloww)"/>
+  <path d="M36 22 C36 22 46 33 46 39 C46 45.6 41.5 50 36 50 C30.5 50 26 45.6 26 39 C26 33 36 22 36 22Z"
+    fill="url(#drop2w)" opacity="0.75"/>
+  <circle cx="29" cy="30" r="2.5" fill="white" opacity="0.9" filter="url(#gloww)"/>
+  <text x="58" y="27" font-family="'Helvetica Neue',Arial,sans-serif" font-size="15" font-weight="800" fill="white" letter-spacing="-0.3">明日も<tspan fill="url(#drop1w)">sama</tspan><tspan fill="url(#drop2w)">sama</tspan></text>
+  <text x="58" y="42" font-family="'Helvetica Neue',Arial,sans-serif" font-size="8" font-weight="300" fill="#94A3B8" letter-spacing="3.5">SDGs MATCH</text>
+</svg>

@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
+import { Logo } from '@/components/icons/Logo';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
 type Supporter = {
@@ -137,13 +138,7 @@ export default function HomePage() {
       {/* ── ヘッダー ── */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🌍</span>
-            <div className="flex flex-col leading-tight">
-              <span className="font-bold text-gray-800 text-sm">明日もsamasama</span>
-              <span className="text-[9px] font-medium text-gray-400 tracking-wide">SDGs Match</span>
-            </div>
-          </div>
+          <Logo variant="default" size="sm" showText={true} />
           <div className="flex items-center gap-3">
             <Link href="/supporters" className="text-sm text-gray-500 hover:text-green-600 transition-colors">
               サポーター一覧
@@ -335,7 +330,9 @@ export default function HomePage() {
       {/* ── 最終CTA ── */}
       <section className="py-20 px-6 bg-gradient-to-br from-green-500 to-teal-500 text-white text-center">
         <div className="max-w-xl mx-auto">
-          <div className="text-4xl mb-4">🌍</div>
+          <div className="flex justify-center mb-4">
+            <Logo variant="white" size="md" showText={false} />
+          </div>
           <h2 className="text-3xl font-black mb-4">一歩踏み出してみませんか</h2>
           <p className="text-green-100 mb-8 leading-relaxed">
             あなたの困りごとを解決できる専門家が、待っています。<br />
@@ -356,9 +353,8 @@ export default function HomePage() {
 
       {/* ── フッター ── */}
       <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-xs">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-lg">🌍</span>
-          <span className="font-bold text-white">明日もsamasama</span><span className="text-xs text-white/60 ml-1">SDGs Match</span>
+        <div className="flex justify-center mb-2">
+          <Logo variant="white" size="sm" showText={true} />
         </div>
         <p>© 2026 明日もsamasama. All rights reserved.</p>
       </footer>

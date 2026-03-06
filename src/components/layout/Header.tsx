@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/icons/Logo';
 
 type UserRole = 'SOS' | 'SUPPORTER' | 'ADMIN' | null;
 
@@ -64,15 +65,8 @@ export default function Header() {
   return (
     <header className="w-full bg-white border-b border-gray-200 px-6 py-3">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
-        <Link href={getDashboardLink()} className="flex items-center gap-2">
-          <div className="flex flex-col leading-tight">
-            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-              明日もsamasama
-            </span>
-            <span className="text-[10px] font-medium text-gray-400 tracking-wide">
-              SDGs Match
-            </span>
-          </div>
+        <Link href={getDashboardLink()} className="flex items-center">
+          <Logo variant="default" size="sm" showText={true} />
         </Link>
 
         {!isLoading && (

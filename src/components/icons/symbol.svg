@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="d1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="d2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <filter id="g">
+      <feGaussianBlur stdDeviation="1" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- 背景丸 -->
+  <rect width="64" height="64" rx="14" fill="#0F172A"/>
+  <!-- 左の雫 -->
+  <path d="M28 44 C28 44 14 30 14 22 C14 13.2 20.3 8 28 8 C35.7 8 42 13.2 42 22 C42 30 28 44 28 44Z"
+    fill="url(#d1)" opacity="0.95" filter="url(#g)"/>
+  <!-- 右の雫（反転） -->
+  <path d="M36 20 C36 20 50 34 50 42 C50 50.8 43.7 56 36 56 C28.3 56 22 50.8 22 42 C22 34 36 20 36 20Z"
+    fill="url(#d2)" opacity="0.75"/>
+  <!-- 交点 -->
+  <circle cx="32" cy="32" r="4" fill="white" opacity="0.9" filter="url(#g)"/>
+</svg>
