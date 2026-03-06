@@ -335,6 +335,17 @@ export default function SOSResultPage() {
 
   if (isLoading) {
     return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-gray-400">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAnalyzing) {
+    return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
         <div className="text-center space-y-6">
           <div className="relative w-20 h-20 mx-auto">
