@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
 import Link from 'next/link';
+import { Logo } from '@/components/icons/Logo';
 
 type SocialLinks = {
   website?: string; twitter?: string;
@@ -94,12 +95,8 @@ export default function SupporterProfilePage() {
       {/* ヘッダー */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl">🌍</span>
-            <div className="flex flex-col leading-tight">
-              <span className="font-bold text-gray-800 text-sm">明日もsamasama</span>
-              <span className="text-[9px] font-medium text-gray-400 tracking-wide">SDGs Match</span>
-            </div>
+          <Link href="/" className="flex items-center no-underline">
+            <Logo variant="default" size="sm" showText={true} />
           </Link>
           <div className="flex gap-3">
             <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
