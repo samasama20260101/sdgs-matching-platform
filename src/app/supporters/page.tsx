@@ -134,6 +134,7 @@ export default function SupportersPage() {
             </button>
           </div>
         ) : (
+          <>
           <div className="grid sm:grid-cols-2 gap-4">
             {filtered.slice(0, displayCount).map(s => {
               const matched = !!(userRegionCode && isRegionMatch(s));
@@ -188,6 +189,7 @@ export default function SupportersPage() {
               </button>
             </div>
           )}
+          </>
         )}
       </main>
     </div>
