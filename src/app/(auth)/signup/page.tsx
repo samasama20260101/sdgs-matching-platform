@@ -21,6 +21,8 @@ export default function SignupPage() {
   const [realName, setRealName] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
+  const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('')
+  const [birthDate, setBirthDate] = useState('')
 
   const handleAccountSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +42,10 @@ export default function SignupPage() {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (!gender) { setError('性別を選択してください'); return }
+    if (!birthDate) { setError('生年月日を入力してください'); return }
+
     setLoading(true)
 
     try {
@@ -60,6 +66,8 @@ export default function SignupPage() {
         display_name: displayName || realName,
         email,
         phone: phone || null,
+        gender,
+        birth_date: birthDate,
       })
 
       if (profileError) throw profileError
@@ -199,8 +207,42 @@ export default function SignupPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  電話番号（任意）
+                  性別 <span className="text-red-500">*</span>
                 </label>
+                <div className="mt-2 flex gap-3">
+                  {([
+                    { value: 'MALE', label: '男性' },
+                    { value: 'FEMALE', label: '女性' },
+                    { value: 'OTHER', label: 'その他／答えない' },
+                  ] as const).map(opt => (
+                    <label key={opt.value}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md border text-sm cursor-pointer transition ${
+                        gender === opt.value
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                          : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}>
+                      <input type="radio" name="gender" value={opt.value}
+                        checked={gender === opt.value}
+                        onChange={() => setGender(opt.value)}
+                        className="sr-only" />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  生年月日 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
                 <input
                   type="tel"
                   value={phone}
