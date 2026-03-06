@@ -24,19 +24,41 @@ export async function GET(request: Request) {
     let serviceAreas: any[] = []
     let serviceAreaNationwide = false
     if (userData?.role === 'SUPPORTER') {
-        const { data: areas } = await supabaseAdmin
+        // Step1: 活動地域レコード取得
+        const { data: areas, error: areasError } = await supabaseAdmin
             .from('supporter_service_areas')
-            .select('region_code, is_nationwide, country, regions(name_local, name_en)')
+            .select('region_code, is_nationwide, country')
             .eq('supporter_user_id', userData.id)
-        // Supabaseのネスト構造をフラット化: { regions: { name_local } } → { name_local }
-        serviceAreas = (areas || []).map((a: any) => ({
-            region_code: a.region_code,
-            is_nationwide: a.is_nationwide,
-            country: a.country,
-            name_local: a.regions?.name_local ?? a.region_code,
-            name_en: a.regions?.name_en ?? a.region_code,
-        }))
-        serviceAreaNationwide = serviceAreas.some((a: any) => a.is_nationwide)
+
+        if (areasError) {
+            console.error('[get-role] supporter_service_areas fetch error:', areasError)
+        }
+
+        if (areas && areas.length > 0) {
+            // Step2: region_codeからregionsテーブルを明示的に引く（FK依存を回避）
+            const codes = areas.filter((a: any) => a.region_code).map((a: any) => a.region_code)
+            let regionMap: Record<string, { name_local: string; name_en: string }> = {}
+
+            if (codes.length > 0) {
+                const { data: regionRows } = await supabaseAdmin
+                    .from('regions')
+                    .select('code, name_local, name_en')
+                    .in('code', codes)
+                regionMap = Object.fromEntries(
+                    (regionRows || []).map((r: any) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
+                )
+            }
+
+            serviceAreas = areas.map((a: any) => ({
+                region_code: a.region_code,
+                is_nationwide: a.is_nationwide,
+                country: a.country || 'JP',
+                name_local: regionMap[a.region_code]?.name_local ?? a.region_code ?? '',
+                name_en:    regionMap[a.region_code]?.name_en    ?? a.region_code ?? '',
+            }))
+        }
+
+        serviceAreaNationwide = (areas || []).some((a: any) => a.is_nationwide)
     }
 
     return NextResponse.json({
