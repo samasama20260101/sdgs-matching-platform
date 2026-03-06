@@ -665,6 +665,20 @@ export default function SOSResultPage() {
         <div className="space-y-4">
           <p className="text-gray-700"><span className="font-medium">{selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name}</span>からの支援を承認します。</p>
           <p className="text-sm text-gray-500">承認後、メッセージでやり取りができるようになります。</p>
+          {acceptedOffers.length > 0 ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+              <p className="text-sm font-medium text-amber-800">⚠️ チャット履歴について</p>
+              <p className="text-sm text-amber-700">
+                この案件のチャット欄はすでに{acceptedOffers.length}名のサポーターと共有されています。承認すると、<span className="font-medium">これまでの会話も含めて新しいサポーターにも見えるようになります。</span>
+              </p>
+            </div>
+          ) : (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+              <p className="text-sm text-blue-700">
+                💬 この案件は最大3名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
+              </p>
+            </div>
+          )}
           <div className="flex gap-3">
             <button onClick={() => setShowAcceptModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
             <button onClick={handleAcceptOffer} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">承認する</button>
