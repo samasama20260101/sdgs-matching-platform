@@ -149,10 +149,13 @@ export default function StoryPage() {
           <Reveal>
             <blockquote className="mb-12">
               <p className="display text-2xl lg:text-3xl leading-relaxed text-slate-700 mb-5">
-                "Tomorrow will be<br /><em>just the same</em> —<br />and that's enough."
+                "Not just the same —<br />
+                <em>a little better</em><br />
+                than yesterday."
               </p>
               <p className="text-slate-400 text-sm leading-9 tracking-widest serif">
-                明日もsamasama。<br />それでいい、という気持ちから。
+                昨日より、今日より、明日が少しだけ良くなる。<br />
+                その積み重ねが、人生を変えていく。
               </p>
             </blockquote>
           </Reveal>
@@ -211,11 +214,11 @@ export default function StoryPage() {
             </Reveal>
             <Reveal delay={100}>
               <div className="rounded-3xl p-10 text-white" style={{ background: 'linear-gradient(135deg,#0BC5A4,#0A8FD4)' }}>
-                <p className="text-white/80 text-sm tracking-wide mb-3">SDGs Goal 1 — No Poverty</p>
-                <p className="display text-5xl font-black leading-none mb-2">Goal 1</p>
-                <p className="text-white/60 text-[10px] tracking-[3px] uppercase mb-5">United Nations SDGs</p>
+                <p className="text-white/70 text-[10px] tracking-[4px] uppercase mb-4">Our Approach to SDGs</p>
+                <p className="display text-2xl font-black leading-tight mb-4">SDGsは、<br />私たちの羅針盤。</p>
                 <p className="text-white/80 text-sm leading-7 tracking-wide">
-                  「あらゆる場所で、あらゆる形の貧困を終わらせる」——SDGsが掲げるこの目標は、遠い話ではなく、今ここにいる一人の支援から始まります。
+                  SOSユーザーは、SDGsを知らなくていい。ただ「困っている」と言えばいい。<br /><br />
+                  私たちがその内容をSDGsの17目標に照らして分類し、最も適切なサポーターへつなぐ。SDGsは強要するものではなく、支援の精度を上げるための<strong className="text-white">内側の地図</strong>です。
                 </p>
               </div>
             </Reveal>
@@ -335,7 +338,7 @@ export default function StoryPage() {
             { n:'03', title:'AIは架け橋',      body:'AIは支援の決定をしません。あくまで出会いを促す架け橋です。最後に動くのは、人間の温かさと意思。テクノロジーはその補助をするだけです。' },
             { n:'04', title:'声なき声を聞く',  body:'「助けて」と言葉にできない人のために、少ない言葉でも状況を理解しようとするAI設計。世界中どこからでも、敷居を低く、間口を広く。' },
             { n:'05', title:'継続できる仕組み', body:'一度きりの支援ではなく、関係が続く設計。サポーターのモチベーションも守ることで、持続可能な支援のエコシステムを目指します。' },
-            { n:'06', title:'SDGsへの誠実さ',  body:'持続可能な開発目標は、遠い国の話ではありません。目の前の一人の生活を支えることが、すでにSDGsの実践です。' },
+            { n:'06', title:'SDGsへの誠実さ',  body:'SDGsは私たちの羅針盤であり、SOSユーザーに求めるものではありません。困りごとをAIがSDGsの視点で分類し、最適な支援者へつなぐ——ユーザーはただ「助けてほしい」と言うだけでいい。' },
           ].map((v, i) => (
             <Reveal key={v.n} delay={i * 60}>
               <div className="vcard border border-slate-200 rounded-2xl p-10 h-full">
@@ -398,9 +401,9 @@ export default function StoryPage() {
         </Reveal>
         <Reveal delay={80}>
           <h2 className="serif text-3xl lg:text-4xl font-black leading-[1.6] tracking-tight mb-16 max-w-2xl">
-            これは日本だけの話ではない。<br />
-            <span className="grad-text">世界中で起きている問題</span>だから、<br />
-            私たちはグローバルを意識する。
+            SDGsが示す課題は、<br />
+            <span className="grad-text">今ここにある現実</span>だ。<br />
+            <span className="text-slate-400 text-xl lg:text-2xl font-normal">だから私たちは、それを支援の指標にする。</span>
           </h2>
         </Reveal>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
