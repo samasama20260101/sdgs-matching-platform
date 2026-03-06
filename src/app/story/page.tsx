@@ -2,38 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
+import { LogoIcon, LogoMark, Logo } from '@/components/icons/Logo';
 
-/* ─── ロゴシンボル ─────────────────────── */
-function TeardropMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="tm" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0BC5A4" />
-          <stop offset="100%" stopColor="#0A8FD4" />
-        </linearGradient>
-      </defs>
-      <path d="M28 6C28 6 10 24 10 36C10 45.9 18.1 50 28 50C37.9 50 46 45.9 46 36C46 24 28 6 28 6Z" fill="url(#tm)" />
-      <circle cx="28" cy="39" r="7" fill="white" opacity="0.22" />
-    </svg>
-  );
-}
-
-function TeardropIcon({ size = 36 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="ti" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0BC5A4" />
-          <stop offset="100%" stopColor="#0A8FD4" />
-        </linearGradient>
-      </defs>
-      <rect width="56" height="56" rx="14" fill="#0A1628" />
-      <path d="M28 7C28 7 11 24 11 36C11 45.4 18.6 49 28 49C37.4 49 45 45.4 45 36C45 24 28 7 28 7Z" fill="url(#ti)" />
-      <circle cx="28" cy="38" r="7" fill="white" opacity="0.2" />
-    </svg>
-  );
-}
+const TeardropMark = ({ size = 40 }: { size?: number }) => <LogoMark size={size} />;
+const TeardropIcon = ({ size = 36 }: { size?: number }) => <LogoIcon size={size} />;
 
 /* ─── フェードイン ─────────────────────── */
 function Reveal({ children, delay = 0, className = '' }: {
@@ -79,9 +51,8 @@ export default function StoryPage() {
 
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 sm:px-8 py-4 bg-white/92 backdrop-blur-md border-b border-teal-500/10">
-        <Link href="/" className="flex items-center gap-2 no-underline">
-          <TeardropIcon size={30} />
-          <span className="serif font-bold text-slate-800 text-sm">明日も<span className="text-teal-500">sama</span>sama</span>
+        <Link href="/" className="flex items-center no-underline">
+          <Logo variant="default" size="sm" showText={true} />
         </Link>
         <Link href="/" className="text-xs text-slate-400 hover:text-teal-500 transition-colors tracking-wider hidden sm:block">
           ← サービストップへ
@@ -221,19 +192,11 @@ export default function StoryPage() {
               </div>
               {/* ライト／ダーク比較 */}
               <div className="flex flex-wrap justify-center gap-3">
-                <div className="bg-white rounded-xl px-4 py-3 shadow-sm flex items-center gap-2 border border-slate-100">
-                  <TeardropMark size={22} />
-                  <div>
-                    <p className="serif text-xs font-bold text-slate-800 leading-none">明日も<span className="text-teal-500">sama</span>sama</p>
-                    <p className="text-[8px] text-slate-400 tracking-[3px] mt-1">SDGs MATCH</p>
-                  </div>
+                <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-slate-100">
+                  <Logo variant="default" size="sm" showText={true} />
                 </div>
-                <div className="bg-slate-900 rounded-xl px-4 py-3 flex items-center gap-2">
-                  <TeardropMark size={22} />
-                  <div>
-                    <p className="serif text-xs font-bold text-white leading-none">明日も<span className="text-teal-400">sama</span>sama</p>
-                    <p className="text-[8px] text-slate-500 tracking-[3px] mt-1">SDGs MATCH</p>
-                  </div>
+                <div className="bg-slate-900 rounded-xl px-5 py-3">
+                  <Logo variant="white" size="sm" showText={true} />
                 </div>
               </div>
             </div>
@@ -401,9 +364,8 @@ export default function StoryPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-slate-100 py-8 px-6 sm:px-10 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div className="flex items-center gap-2">
-          <TeardropIcon size={24} />
-          <span className="serif text-xs text-slate-400">明日もsamasama</span>
+        <div className="flex items-center">
+          <Logo variant="default" size="sm" showText={true} />
         </div>
         <p className="text-xs text-slate-300 tracking-[2px]">© 2026 明日もsamasama. All rights reserved.</p>
         <p className="text-xs text-slate-300 tracking-[2px] uppercase">SDGs Match Platform</p>
