@@ -22,7 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             .eq('supporter_user_id', id)
             .order('created_at', { ascending: false }),
         supabaseAdmin.from('supporter_service_areas')
-            .select('region_code, is_nationwide, country, regions(name_local, name_en)')
+            .select('region_code, is_nationwide, country')
             .eq('supporter_user_id', id),
     ])
 
@@ -31,10 +31,28 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         badgeSummary[b.badge_key] = (badgeSummary[b.badge_key] || 0) + 1
     })
 
+    // region_code → name を明示的に引く
+    const regionCodes = (serviceAreas || []).filter((a: any) => a.region_code).map((a: any) => a.region_code as string)
+    let regionMap: Record<string, { name_local: string; name_en: string }> = {}
+    if (regionCodes.length > 0) {
+        const { data: regionRows } = await supabaseAdmin
+            .from('regions')
+            .select('code, name_local, name_en')
+            .in('code', regionCodes)
+        regionMap = Object.fromEntries(
+            (regionRows || []).map((r: any) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
+        )
+    }
+
     const isNationwide = (serviceAreas || []).some((a: any) => a.is_nationwide)
     const regions = (serviceAreas || [])
-        .filter((a: any) => !a.is_nationwide && a.regions)
-        .map((a: any) => ({ ...a.regions, region_code: a.region_code, country: a.country }))
+        .filter((a: any) => !a.is_nationwide && a.region_code)
+        .map((a: any) => ({
+            region_code: a.region_code,
+            country: a.country || 'JP',
+            name_local: regionMap[a.region_code]?.name_local ?? a.region_code,
+            name_en:    regionMap[a.region_code]?.name_en    ?? a.region_code,
+        }))
 
     return NextResponse.json({
         supporter: {

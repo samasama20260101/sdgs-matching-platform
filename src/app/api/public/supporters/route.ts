@@ -18,7 +18,7 @@ export async function GET() {
 
     const ids = supporters.map((s: { id: string }) => s.id)
 
-    const [{ data: resolvedOffers }, { data: badges }, { data: serviceAreas }] = await Promise.all([
+    const [{ data: resolvedOffers }, { data: badges }, { data: rawAreas }] = await Promise.all([
         supabaseAdmin.from('offers')
             .select('supporter_user_id')
             .in('supporter_user_id', ids)
@@ -27,7 +27,7 @@ export async function GET() {
             .select('supporter_user_id')
             .in('supporter_user_id', ids),
         supabaseAdmin.from('supporter_service_areas')
-            .select('supporter_user_id, region_code, is_nationwide, country, regions(name_local, name_en)')
+            .select('supporter_user_id, region_code, is_nationwide, country')
             .in('supporter_user_id', ids),
     ])
 
@@ -40,15 +40,33 @@ export async function GET() {
         badgeMap[b.supporter_user_id] = (badgeMap[b.supporter_user_id] || 0) + 1
     })
 
+    // region_code → name を明示的に引く（FK依存を回避）
+    const regionCodes = [...new Set((rawAreas || []).filter((a: any) => a.region_code).map((a: any) => a.region_code as string))]
+    let regionMap: Record<string, { name_local: string; name_en: string }> = {}
+    if (regionCodes.length > 0) {
+        const { data: regionRows } = await supabaseAdmin
+            .from('regions')
+            .select('code, name_local, name_en')
+            .in('code', regionCodes)
+        regionMap = Object.fromEntries(
+            (regionRows || []).map((r: any) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
+        )
+    }
+
     const areaMap: Record<string, { regions: any[]; is_nationwide: boolean }> = {}
-    ;(serviceAreas || []).forEach((a: any) => {
+    ;(rawAreas || []).forEach((a: any) => {
         if (!areaMap[a.supporter_user_id]) {
             areaMap[a.supporter_user_id] = { regions: [], is_nationwide: false }
         }
         if (a.is_nationwide) {
             areaMap[a.supporter_user_id].is_nationwide = true
-        } else if (a.regions) {
-            areaMap[a.supporter_user_id].regions.push(a.regions)
+        } else if (a.region_code) {
+            areaMap[a.supporter_user_id].regions.push({
+                region_code: a.region_code,
+                country: a.country || 'JP',
+                name_local: regionMap[a.region_code]?.name_local ?? a.region_code,
+                name_en:    regionMap[a.region_code]?.name_en    ?? a.region_code,
+            })
         }
     })
 

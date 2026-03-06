@@ -47,13 +47,18 @@ export async function POST(request: Request) {
                 is_nationwide: true,
             }])
         } else if (Array.isArray(service_areas) && service_areas.length > 0) {
-            await supabaseAdmin.from('supporter_service_areas').insert(
+            const { error: insertError } = await supabaseAdmin.from('supporter_service_areas').insert(
                 service_areas.map((a: any) => ({
                     supporter_user_id: userData.id,
                     region_code: a.region_code,
+                    country: a.country || 'JP',
                     is_nationwide: false,
                 }))
             )
+            if (insertError) {
+                console.error('[profile] supporter_service_areas insert error:', insertError)
+                return NextResponse.json({ error: insertError.message }, { status: 500 })
+            }
         }
     }
 
