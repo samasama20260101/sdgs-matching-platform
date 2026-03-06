@@ -145,10 +145,10 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Logo variant="default" size="sm" showText={true} />
           <div className="flex items-center gap-3">
-            <Link href="/supporters" className="text-sm text-gray-500 hover:text-teal-600 transition-colors">
+            <Link href="/supporters" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               サポーター一覧
             </Link>
-            <Link href="/story" className="text-sm text-gray-500 hover:text-teal-600 transition-colors">
+            <Link href="/story" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               私たちの思い
             </Link>
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
@@ -163,16 +163,16 @@ export default function HomePage() {
       </header>
 
       {/* ── ヒーロー ── */}
-      <section className="bg-gradient-to-br from-teal-50 via-blue-50 to-white pt-20 pb-24 px-6">
+      <section className="bg-gradient-to-br from-teal-50 via-blue-50 to-white pt-14 sm:pt-20 pb-16 sm:pb-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-block bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1 rounded-full mb-6 tracking-wide">
+          <div className="inline-block bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1 rounded-full mb-5 tracking-wide">
             NPO・支援団体と繋がるプラットフォーム
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-gray-900 leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl font-black text-gray-900 leading-tight mb-5">
             ひとりで抱えずに、<br />
             <span className="text-teal-500">誰かと一緒に</span>解決しよう
           </h1>
-          <p className="text-lg text-gray-500 mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg text-gray-500 mb-8 leading-relaxed">
             生活困窮・教育・環境・差別・孤立など、社会的な困りごとを<br className="hidden sm:block" />
             AIが分析し、専門のNPO・支援団体へつなぎます。
           </p>
@@ -269,13 +269,13 @@ export default function HomePage() {
       {previewSupporters.length > 0 && (
         <section className="py-16 px-6 bg-gray-50">
           <div className="max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
               <div>
                 <h2 className="text-2xl font-black text-gray-900">参加サポーター</h2>
-                                <p className="text-gray-500 text-sm mt-1">{featuredSupporters.length > 0 ? 'おすすめ団体をピックアップ' : '事前に確認してから相談できます'}</p>
+                <p className="text-gray-500 text-sm mt-1">{featuredSupporters.length > 0 ? 'おすすめ団体をピックアップ' : '事前に確認してから相談できます'}</p>
               </div>
               <Link href="/supporters"
-                className="text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 px-4 py-2 rounded-full hover:bg-teal-50 transition-colors">
+                className="self-start sm:self-auto text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 px-4 py-2 rounded-full hover:bg-teal-50 transition-colors whitespace-nowrap">
                 全{supporters.length}団体を見る →
               </Link>
             </div>
@@ -350,8 +350,8 @@ export default function HomePage() {
           <div className="flex justify-center mb-4">
             <Logo variant="white" size="md" showText={false} />
           </div>
-          <h2 className="text-3xl font-black mb-4">一歩踏み出してみませんか</h2>
-          <p className="text-teal-100 mb-8 leading-relaxed">
+          <h2 className="text-2xl sm:text-3xl font-black mb-4">一歩踏み出してみませんか</h2>
+          <p className="text-sm sm:text-base text-teal-100 mb-8 leading-relaxed">
             あなたの困りごとを解決できる専門家が、待っています。<br />
             相談は無料。承認するまで個人情報は渡りません。
           </p>
@@ -373,7 +373,7 @@ export default function HomePage() {
         <div className="flex justify-center mb-4">
           <Logo variant="white" size="sm" showText={true} />
         </div>
-        <div className="flex justify-center gap-6 mb-4 text-gray-500">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 text-gray-500">
           <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">私たちの思い</Link>
           <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">サポーター一覧</Link>
           <Link href="/contact" className="hover:text-teal-400 transition-colors tracking-wide">お問い合わせ</Link>
