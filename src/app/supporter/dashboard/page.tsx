@@ -267,10 +267,16 @@ export default function SupporterDashboard() {
               <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
               <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
             </div>
-            <a href="/profile"
-              className="flex-shrink-0 flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
-              ✏️ プロフィール編集
-            </a>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a href="/profile"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                ✏️ プロフィール編集
+              </a>
+              <a href="/contact"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                📩 お問い合わせ
+              </a>
+            </div>
           </div>
           <div className="mt-3 flex items-start gap-2">
             <span className="text-sm text-gray-600 flex-shrink-0">📍 活動地域:</span>
