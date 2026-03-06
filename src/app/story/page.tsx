@@ -165,33 +165,14 @@ export default function StoryPage() {
             </p>
           </Reveal>
 
-          {/* ロゴ大 + サイズプレビュー */}
+          {/* ロゴ大（ヘッダーと同じアイコンを拡大） */}
           <Reveal>
-            <div className="flex flex-col items-center gap-8 mb-14">
+            <div className="flex flex-col items-center gap-10 mb-14">
               <div className="float-anim">
-                <svg width="120" height="136" viewBox="0 0 56 62" fill="none" aria-label="明日もsamasama ロゴマーク">
-                  <defs>
-                    <linearGradient id="td-s" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#0BC5A4" />
-                      <stop offset="100%" stopColor="#0A8FD4" />
-                    </linearGradient>
-                    <filter id="glow-s"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                  </defs>
-                  <path d="M28 4C28 4 6 26 6 40C6 52.1 16.1 57 28 57C39.9 57 50 52.1 50 40C50 26 28 4 28 4Z" fill="url(#td-s)" filter="url(#glow-s)" />
-                  <circle cx="28" cy="43" r="10" fill="white" opacity="0.18" />
-                </svg>
+                <LogoIcon size={120} />
               </div>
-              {/* サイズ比較 */}
-              <div className="flex items-end gap-4">
-                {[48, 32, 20, 14].map(sz => (
-                  <div key={sz} className="flex flex-col items-center gap-2">
-                    <TeardropIcon size={sz} />
-                    <span className="text-[9px] text-slate-400 tracking-widest">{sz}px</span>
-                  </div>
-                ))}
-              </div>
-              {/* ライト／ダーク比較 */}
-              <div className="flex flex-wrap justify-center gap-3">
+              {/* ライト／ダーク背景での見え方 */}
+              <div className="flex flex-wrap justify-center gap-4">
                 <div className="bg-white rounded-xl px-5 py-3 shadow-sm border border-slate-100">
                   <Logo variant="default" size="sm" showText={true} />
                 </div>
