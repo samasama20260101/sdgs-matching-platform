@@ -350,7 +350,7 @@ export default function SOSResultPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
           <p className="text-sm text-gray-400">読み込み中...</p>
         </div>
       </div>
@@ -359,11 +359,11 @@ export default function SOSResultPage() {
 
   if (isAnalyzing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-teal-50">
         <div className="text-center space-y-6">
           <div className="relative w-20 h-20 mx-auto">
             <div className="absolute inset-0 rounded-full bg-blue-100 animate-ping opacity-20" />
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-green-400 opacity-10 animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-teal-400 opacity-10 animate-pulse" />
             <div className="relative w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center">
               <span className="text-3xl animate-bounce">🤖</span>
             </div>
@@ -373,7 +373,7 @@ export default function SOSResultPage() {
             <div className="flex justify-center gap-1">
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <span className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
           </div>
           <p className="text-xs text-gray-400">少々お待ちください</p>
@@ -407,11 +407,11 @@ export default function SOSResultPage() {
                   const isActive = analyzeStep >= s.step;
                   const isCurrent = analyzeStep === s.step && s.step < 4;
                   return (
-                    <div key={s.step} className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'} ${s.step === 4 ? 'bg-green-50 border border-green-200' : ''}`}>
-                      {isActive && !isCurrent ? <span className="text-green-500 text-lg flex-shrink-0">✅</span>
+                    <div key={s.step} className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'} ${s.step === 4 ? 'bg-teal-50 border border-teal-200' : ''}`}>
+                      {isActive && !isCurrent ? <span className="text-teal-500 text-lg flex-shrink-0">✅</span>
                         : isCurrent ? <span className="text-lg flex-shrink-0 animate-pulse">{s.icon}</span>
                           : <span className="text-gray-300 text-lg flex-shrink-0">○</span>}
-                      <span className={`text-sm ${isActive ? (s.step === 4 ? 'text-green-700 font-medium' : 'text-gray-700') : 'text-gray-300'}`}>{s.text}</span>
+                      <span className={`text-sm ${isActive ? (s.step === 4 ? 'text-teal-700 font-medium' : 'text-gray-700') : 'text-gray-300'}`}>{s.text}</span>
                       {isCurrent && (
                         <div className="ml-auto flex gap-1">
                           <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -425,7 +425,7 @@ export default function SOSResultPage() {
               </div>
               <div className="mt-6 mx-auto max-w-md">
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(analyzeStep * 25, 100)}%` }} />
+                  <div className="h-full bg-gradient-to-r from-blue-500 to-teal-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(analyzeStep * 25, 100)}%` }} />
                 </div>
               </div>
             </CardContent>
@@ -439,7 +439,7 @@ export default function SOSResultPage() {
               <p className="text-xs text-gray-500 mt-1">あなたの相談がSDGs（持続可能な開発目標）のどの課題に関わるかをAIが分析しました</p>
             </div>
             {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
-              <Card className="border-none bg-gradient-to-br from-blue-50 to-green-50 shadow-sm">
+              <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
                 <CardContent className="py-4">
                   <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
                 </CardContent>
@@ -496,7 +496,7 @@ export default function SOSResultPage() {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' : caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
                     {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
                     {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
                     {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
@@ -512,7 +512,7 @@ export default function SOSResultPage() {
                     const isCurrent = stepNum === currentStep;
                     return (
                       <div key={step} className="flex-1 flex flex-col items-center">
-                        <div className={`w-full h-2 rounded-full ${isActive ? 'bg-gradient-to-r from-blue-500 to-green-500' : 'bg-gray-200'}`} />
+                        <div className={`w-full h-2 rounded-full ${isActive ? 'bg-gradient-to-r from-blue-500 to-teal-500' : 'bg-gray-200'}`} />
                         <span className={`text-[11px] mt-1 ${isCurrent ? 'font-bold text-gray-800' : isActive ? 'text-gray-600' : 'text-gray-400'}`}>{step}</span>
                       </div>
                     );
@@ -540,28 +540,28 @@ export default function SOSResultPage() {
                           return <p className="text-[11px] text-gray-400 mt-2">⏰ 未確認の場合、{daysLeft}日後に自動で解決済みになります</p>;
                         })()}
                       </div>
-                      <Button onClick={() => setShowResolveModal(true)} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">✅ 解決を確認する</Button>
+                      <Button onClick={() => setShowResolveModal(true)} className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white">✅ 解決を確認する</Button>
                       <Button onClick={handleRejectResolution} variant="outline" className="w-full text-orange-600 border-orange-300 hover:bg-orange-50">❌ まだ解決していない</Button>
                     </div>
                   )}
                   {caseData?.status === 'RESOLVED' && (
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200 text-center">
-                      <p className="text-sm text-green-700 font-medium">✅ この相談は解決済みです</p>
+                    <div className="bg-teal-50 p-3 rounded-lg border border-teal-200 text-center">
+                      <p className="text-sm text-teal-700 font-medium">✅ この相談は解決済みです</p>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-teal-200 bg-teal-50">
               <CardHeader>
-                <CardTitle className="text-base text-green-800">✅ 承認済みのサポーター ({acceptedOffers.length}名)</CardTitle>
+                <CardTitle className="text-base text-teal-800">✅ 承認済みのサポーター ({acceptedOffers.length}名)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {acceptedOffers.map((offer) => {
                   const badges = supporterBadges[offer.supporter.id] || {};
                   return (
-                    <div key={offer.id} className="bg-white p-4 rounded-lg border border-green-200">
+                    <div key={offer.id} className="bg-white p-4 rounded-lg border border-teal-200">
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <a href={`/supporters/${offer.supporter.id}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
@@ -570,11 +570,11 @@ export default function SOSResultPage() {
                           </a>
                           <p className="text-xs text-gray-500">{getSupporterTypeConfig(offer.supporter.supporter_type).label}</p>
                         </div>
-                        <span className="text-xs text-green-600">{formatDate(offer.created_at)}</span>
+                        <span className="text-xs text-teal-600">{formatDate(offer.created_at)}</span>
                       </div>
                       <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700">{offer.message}</p></div>
                       {badges && Object.keys(badges).length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-green-100">
+                        <div className="mt-3 pt-3 border-t border-teal-100">
                           <p className="text-[11px] text-gray-400 mb-1.5">🎁 感謝バッジ（全案件の累計）</p>
                           <div className="flex flex-wrap gap-1.5">
                             {Object.entries(badges).map(([bk, count]) => {
@@ -648,7 +648,7 @@ export default function SOSResultPage() {
                     )}
                     <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700">{offer.message}</p></div>
                     <div className="flex gap-2">
-                      <Button onClick={() => { setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-green-600 hover:bg-green-700">✅ 承認する</Button>
+                      <Button onClick={() => { setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
                       <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">辞退する</Button>
                     </div>
                   </div>
@@ -670,7 +670,7 @@ export default function SOSResultPage() {
 
         <div className="flex gap-3">
           <Button onClick={handleNewConsultation} variant="outline" className="flex-1">別の相談を投稿</Button>
-          <Button onClick={() => router.push('/sos/dashboard')} className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">ダッシュボードへ</Button>
+          <Button onClick={() => router.push('/sos/dashboard')} className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">ダッシュボードへ</Button>
         </div>
       </main>
 
@@ -700,7 +700,7 @@ export default function SOSResultPage() {
           )}
           <div className="flex gap-3">
             <button onClick={() => setShowAcceptModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={handleAcceptOffer} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">承認する</button>
+            <button onClick={handleAcceptOffer} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">承認する</button>
           </div>
         </div>
       </Modal>
@@ -726,13 +726,13 @@ export default function SOSResultPage() {
 
       <Modal isOpen={showResolveModal} onClose={() => setShowResolveModal(false)} title="解決を確認しますか？" type="info">
         <div className="space-y-4">
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <p className="text-sm text-green-700">✅ サポーターが解決を報告しています。問題が解決したことを確認します。</p>
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+            <p className="text-sm text-teal-700">✅ サポーターが解決を報告しています。問題が解決したことを確認します。</p>
           </div>
           <p className="text-sm text-gray-500">確認後、案件は「解決済み」になります。これまでのメッセージ履歴は引き続き閲覧できます。</p>
           <div className="flex gap-3">
             <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">まだ解決していない</button>
-            <button onClick={handleResolveCase} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">解決を確認する</button>
+            <button onClick={handleResolveCase} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">解決を確認する</button>
           </div>
         </div>
       </Modal>

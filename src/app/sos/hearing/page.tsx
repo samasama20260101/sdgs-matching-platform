@@ -398,7 +398,7 @@ export default function SOSHearingPage() {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 py-6 text-base"
+            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 py-6 text-base"
           >
             {isSubmitting ? '送信中...' : '相談内容を送信する'}
           </Button>

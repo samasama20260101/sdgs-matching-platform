@@ -99,7 +99,7 @@ export default function Header() {
             ) : (
               <>
                 <Link href="/login" className="text-sm text-gray-600 hover:text-blue-600">ログイン</Link>
-                <Link href="/signup" className="text-sm bg-gradient-to-r from-blue-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-green-700">
+                <Link href="/signup" className="text-sm bg-gradient-to-r from-blue-600 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-teal-700">
                   新規登録
                 </Link>
               </>

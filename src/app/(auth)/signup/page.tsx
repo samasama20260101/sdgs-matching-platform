@@ -87,7 +87,7 @@ export default function SignupPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="mb-4 text-center">
-          <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-green-600 transition-colors">
+          <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600 transition-colors">
             ← トップページに戻る
           </Link>
         </div>
@@ -109,7 +109,7 @@ export default function SignupPage() {
           {/* ステップインジケーター */}
           <div className="flex items-center mb-8">
             <div className={`flex-1 text-center text-sm font-medium ${step === 'account' ? 'text-blue-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center mb-1 ${step === 'account' ? 'bg-blue-600 text-white' : 'bg-green-500 text-white'}`}>
+              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center mb-1 ${step === 'account' ? 'bg-blue-600 text-white' : 'bg-teal-500 text-white'}`}>
                 {step === 'profile' ? '✓' : '1'}
               </div>
               アカウント情報

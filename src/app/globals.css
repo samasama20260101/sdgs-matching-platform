@@ -114,6 +114,11 @@
   /* Peace Justice */
   --sdgs-17: #19486a;
   /* Partnerships */
+
+  /* ── ブランドカラー（ティール×ブルー） ── */
+  --brand-teal: #0BC5A4;
+  --brand-blue: #0A8FD4;
+  --brand-dark: #0A1628;
 }
 
 .dark {

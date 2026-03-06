@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   OPEN: { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-600' },
   MATCHED: { label: 'マッチ済み', color: 'bg-amber-100 text-amber-600' },
   IN_PROGRESS: { label: '対応中', color: 'bg-purple-100 text-purple-600' },
-  RESOLVED: { label: '解決済み', color: 'bg-green-100 text-green-600' },
+  RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-600' },
   CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-500' },
   CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-500' },
 };
@@ -118,7 +118,7 @@ export default function SOSCasesPage() {
           </div>
           <Button
             onClick={() => router.push('/sos/hearing')}
-            className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+            className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
           >
             ＋ 新しい相談
           </Button>
@@ -139,7 +139,7 @@ export default function SOSCasesPage() {
               <p className="text-gray-500 mb-4">まだ相談がありません</p>
               <Button
                 onClick={() => router.push('/sos/hearing')}
-                className="bg-gradient-to-r from-blue-600 to-green-600"
+                className="bg-gradient-to-r from-blue-600 to-teal-600"
               >
                 最初の相談を投稿する
               </Button>

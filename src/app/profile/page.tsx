@@ -237,7 +237,7 @@ export default function ProfilePage() {
                     <p className="text-gray-500 mt-1">登録情報を更新できます</p>
                     {userData.role === 'SUPPORTER' && (
                         <a href={`/supporters/${userData.id}`} target="_blank"
-                            className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700 mt-2 underline">
+                            className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 mt-2 underline">
                             🌐 公開プロフィールを確認する →
                         </a>
                     )}
@@ -318,7 +318,7 @@ export default function ProfilePage() {
 
                     {/* 公開プロフィール（サポーターのみ） */}
                     {userData.role === 'SUPPORTER' && (
-                        <Card className="border-green-200">
+                        <Card className="border-teal-200">
                             <CardHeader>
                                 <CardTitle className="text-base">公開プロフィール</CardTitle>
                                 <p className="text-xs text-gray-400 mt-1">🌐 ログイン不要のサポーター紹介ページに表示されます</p>
@@ -364,7 +364,7 @@ export default function ProfilePage() {
                     )}
 
                     {success && (
-                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">
+                        <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg text-teal-600 text-sm">
                             ✅ プロフィールを更新しました
                         </div>
                     )}

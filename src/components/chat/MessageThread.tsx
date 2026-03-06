@@ -138,7 +138,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
         if (msg.sender.role === 'SOS') {
             return <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">相談者</span>;
         }
-        return <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-600 font-medium">サポーター</span>;
+        return <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 font-medium">サポーター</span>;
     };
 
     if (isLoading) {
@@ -155,7 +155,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             {/* ヘッダー */}
-            <div className="px-5 py-3 bg-gradient-to-r from-blue-50 to-green-50 border-b border-gray-100">
+            <div className="px-5 py-3 bg-gradient-to-r from-blue-50 to-teal-50 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className="text-base">💬</span>
@@ -249,9 +249,9 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                         <button
                             onClick={handleSend}
                             disabled={!newMessage.trim() || isSending}
-                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-green-600
+                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-teal-600
                 text-white flex items-center justify-center
-                hover:from-blue-700 hover:to-green-700
+                hover:from-blue-700 hover:to-teal-700
                 disabled:opacity-40 disabled:cursor-not-allowed
                 transition-all active:scale-95"
                         >

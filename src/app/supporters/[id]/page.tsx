@@ -104,7 +104,7 @@ export default function SupporterProfilePage() {
           <div className="flex gap-3">
             <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
             <Link href="/signup"
-              className="text-sm bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
               相談する
             </Link>
           </div>
@@ -112,14 +112,14 @@ export default function SupporterProfilePage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-10">
-        <Link href="/supporters" className="text-xs text-gray-400 hover:text-green-500 transition-colors">
+        <Link href="/supporters" className="text-xs text-gray-400 hover:text-teal-500 transition-colors">
           ← サポーター一覧に戻る
         </Link>
 
         {/* ── ヒーローカード ── */}
         <div className="mt-4 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           {/* グラデーションバナー */}
-          <div className="h-28 bg-gradient-to-r from-green-400 via-teal-400 to-blue-400 relative">
+          <div className="h-28 bg-gradient-to-r from-teal-400 via-teal-400 to-blue-400 relative">
             <div className="absolute inset-0 opacity-20"
               style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           </div>
@@ -172,7 +172,7 @@ export default function SupporterProfilePage() {
                   </a>
                 )}
                 {sl.line && (
-                  <span className="flex items-center gap-1.5 text-xs text-white bg-green-500 px-3 py-1.5 rounded-full">
+                  <span className="flex items-center gap-1.5 text-xs text-white bg-teal-500 px-3 py-1.5 rounded-full">
                     💬 LINE: {sl.line}
                   </span>
                 )}
@@ -184,7 +184,7 @@ export default function SupporterProfilePage() {
         {/* ── 実績3点セット ── */}
         <div className="grid grid-cols-3 gap-3 mt-4">
           {[
-            { value: supporter.resolved_count, label: '解決した相談', suffix: '件', color: 'text-green-600' },
+            { value: supporter.resolved_count, label: '解決した相談', suffix: '件', color: 'text-teal-600' },
             { value: totalBadges, label: '獲得バッジ', suffix: '個', color: 'text-amber-500' },
             { value: supporter.service_area_nationwide ? 47 : areas.length, label: '活動エリア', suffix: '都道府県', color: 'text-blue-600' },
           ].map((item, i) => (
@@ -212,7 +212,7 @@ export default function SupporterProfilePage() {
             <span>📍</span> 活動エリア
           </h2>
           {supporter.service_area_nationwide ? (
-            <span className="inline-block bg-green-50 text-green-700 border border-green-200 text-sm font-bold px-4 py-2 rounded-full">
+            <span className="inline-block bg-teal-50 text-teal-700 border border-teal-200 text-sm font-bold px-4 py-2 rounded-full">
               🗾 全国対応
             </span>
           ) : (
@@ -252,14 +252,14 @@ export default function SupporterProfilePage() {
         )}
 
         {/* ── CTA ── */}
-        <div className="mt-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-2xl p-6 text-white text-center">
+        <div className="mt-6 bg-gradient-to-r from-teal-500 to-teal-500 rounded-2xl p-6 text-white text-center">
           <p className="font-bold mb-1">この団体に相談したいですか？</p>
-          <p className="text-green-100 text-xs mb-4">
+          <p className="text-teal-100 text-xs mb-4">
             相談を投稿してサポーターを選ぶ仕組みです。<br />
             承認するまで個人情報は渡りません。
           </p>
           <Link href={ctaHref}
-            className="inline-block bg-white text-green-600 font-bold px-6 py-3 rounded-xl hover:bg-green-50 transition-colors text-sm shadow">
+            className="inline-block bg-white text-teal-600 font-bold px-6 py-3 rounded-xl hover:bg-teal-50 transition-colors text-sm shadow">
             {ctaLabel}
           </Link>
         </div>

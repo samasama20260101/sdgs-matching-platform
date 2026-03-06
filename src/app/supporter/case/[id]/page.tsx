@@ -268,7 +268,7 @@ export default function SupporterCaseDetailPage() {
                   <span className={`text-xs px-2 py-1 rounded-full ${caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
                       caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
                         caseData?.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
-                          caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                          caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' :
                             'bg-gray-100 text-gray-600'
                     }`}>
                     {caseData?.status === 'MATCHED' ? '🤝 マッチ済み' :
@@ -322,7 +322,7 @@ export default function SupporterCaseDetailPage() {
             <CardContent className="py-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'RESOLVED' ? 'bg-green-100 text-green-600' :
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' :
                     caseData?.status === 'IN_PROGRESS' && hasReportedResolution ? 'bg-emerald-100 text-emerald-600' :
                       caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
                         caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
@@ -346,7 +346,7 @@ export default function SupporterCaseDetailPage() {
                   const isCurrent = stepNum === currentStep;
                   return (
                     <div key={step} className="flex-1 flex flex-col items-center">
-                      <div className={`w-full h-2 rounded-full ${isActive ? 'bg-gradient-to-r from-blue-500 to-green-500' : 'bg-gray-200'}`} />
+                      <div className={`w-full h-2 rounded-full ${isActive ? 'bg-gradient-to-r from-blue-500 to-teal-500' : 'bg-gray-200'}`} />
                       <span className={`text-[11px] mt-1 ${isCurrent ? 'font-bold text-gray-800' : isActive ? 'text-gray-600' : 'text-gray-400'}`}>{step}</span>
                     </div>
                   );
@@ -364,7 +364,7 @@ export default function SupporterCaseDetailPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${myOffer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                      myOffer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                      myOffer.status === 'ACCEPTED' ? 'bg-teal-50 text-teal-700' :
                         'bg-gray-100 text-gray-700'
                     }`}>
                     {myOffer.status === 'PENDING' && '⏳ 承認待ち'}
@@ -381,14 +381,14 @@ export default function SupporterCaseDetailPage() {
                   </Button>
                 )}
                 {myOffer.status === 'ACCEPTED' && (
-                  <div className={`p-3 rounded-lg border ${caseData?.status === 'RESOLVED' ? 'bg-green-50 border-green-200' :
+                  <div className={`p-3 rounded-lg border ${caseData?.status === 'RESOLVED' ? 'bg-teal-50 border-teal-200' :
                       hasReportedResolution ? 'bg-emerald-50 border-emerald-200' :
                         caseData?.status === 'IN_PROGRESS' ? 'bg-purple-50 border-purple-200' :
-                          'bg-green-50 border-green-200'
+                          'bg-teal-50 border-teal-200'
                     }`}>
-                    <p className={`text-sm ${caseData?.status === 'RESOLVED' ? 'text-green-700' :
+                    <p className={`text-sm ${caseData?.status === 'RESOLVED' ? 'text-teal-700' :
                         hasReportedResolution ? 'text-emerald-700' :
-                          caseData?.status === 'IN_PROGRESS' ? 'text-purple-700' : 'text-green-700'
+                          caseData?.status === 'IN_PROGRESS' ? 'text-purple-700' : 'text-teal-700'
                       }`}>
                       {caseData?.status === 'RESOLVED' ? '✅ この相談は解決済みです。ご支援ありがとうございました。' :
                         hasReportedResolution ? '📋 解決を報告済みです。相談者の確認をお待ちください。' :
@@ -405,7 +405,7 @@ export default function SupporterCaseDetailPage() {
                 )}
                 {myOffer.status === 'ACCEPTED' && caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && canResolve && (
                   <Button onClick={() => setShowResolveModal(true)}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
+                    className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white">
                     ✅ 解決を報告する
                   </Button>
                 )}
@@ -418,7 +418,7 @@ export default function SupporterCaseDetailPage() {
             </CardContent>
           </Card>
         ) : canSendOffer ? (
-          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-none">
+          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-teal-50 border-none">
             <CardContent className="py-8 text-center">
               <h3 className="text-lg font-bold text-gray-800 mb-2">この方を支援しませんか？</h3>
               <p className="text-sm text-gray-600 mb-4">
@@ -426,7 +426,7 @@ export default function SupporterCaseDetailPage() {
                   ? '再度申し出を送信できます'
                   : 'あなたの組織で支援できる場合は、申し出を送信してください'}
               </p>
-              <Button onClick={() => setShowOfferModal(true)} className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
+              <Button onClick={() => setShowOfferModal(true)} className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
                 💙 支援を申し出る
               </Button>
             </CardContent>
@@ -491,13 +491,13 @@ export default function SupporterCaseDetailPage() {
 
       <Modal isOpen={showResolveModal} onClose={() => setShowResolveModal(false)} title="解決を報告しますか？" type="info">
         <div className="space-y-4">
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <p className="text-sm text-green-700">✅ この相談の問題が解決したことを報告します。</p>
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+            <p className="text-sm text-teal-700">✅ この相談の問題が解決したことを報告します。</p>
           </div>
           <p className="text-sm text-gray-500">報告後、相談者が確認することで案件が「解決済み」になります。</p>
           <div className="flex gap-3">
             <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={handleReportResolution} disabled={isSubmitting} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? '送信中...' : '解決を報告する'}</button>
+            <button onClick={handleReportResolution} disabled={isSubmitting} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? '送信中...' : '解決を報告する'}</button>
           </div>
         </div>
       </Modal>

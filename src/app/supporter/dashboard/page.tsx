@@ -47,14 +47,14 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
     none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
     PENDING: { label: '申し出中', color: 'bg-amber-50 text-amber-600', icon: '⏳', border: 'border-l-amber-400' },
-    ACCEPTED: { label: '承認済み', color: 'bg-green-50 text-green-600', icon: '✅', border: 'border-l-green-500' },
+    ACCEPTED: { label: '承認済み', color: 'bg-teal-50 text-teal-600', icon: '✅', border: 'border-l-teal-500' },
     WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
     DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
   };
   const caseStatusOverride: Record<string, { label: string; color: string; icon: string; border: string }> = {
     MATCHED: { label: 'マッチ済み', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
     IN_PROGRESS: { label: '対応中', color: 'bg-purple-50 text-purple-600', icon: '🔄', border: 'border-l-purple-400' },
-    RESOLVED: { label: '解決済み', color: 'bg-green-50 text-green-700', icon: '✅', border: 'border-l-green-500' },
+    RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-700', icon: '✅', border: 'border-l-teal-500' },
     CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
   };
@@ -235,7 +235,7 @@ export default function SupporterDashboard() {
   const stats = [
     { label: '相談件数', value: cases.length, color: 'text-blue-600' },
     { label: '対応中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-purple-600' },
-    { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-green-600' },
+    { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
   const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); };
@@ -252,7 +252,7 @@ export default function SupporterDashboard() {
               <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
             </div>
             <a href="/profile"
-              className="flex-shrink-0 flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-green-400 hover:text-green-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+              className="flex-shrink-0 flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
               ✏️ プロフィール編集
             </a>
           </div>
@@ -327,7 +327,7 @@ export default function SupporterDashboard() {
               { key: 'none', label: '○ 未対応', color: 'border-slate-300 bg-slate-50 text-slate-600' },
               { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'active', label: '🔄 対応中', color: 'border-purple-300 bg-purple-50 text-purple-600' },
-              { key: 'resolved', label: '✅ 解決済み', color: 'border-green-300 bg-green-50 text-green-600' },
+              { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
             ].map((f) => {
               const count = f.key === null ? cases.length : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
               return <button key={f.key || 'all'} onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>{f.label} ({count})</button>;
