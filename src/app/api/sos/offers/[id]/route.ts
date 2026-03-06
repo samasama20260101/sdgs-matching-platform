@@ -3,6 +3,8 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const MAX_ACCEPTED = 3  // 1案件あたりの承認上限
+
 async function getAuthSOSUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) return null
@@ -38,6 +40,46 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json()
+
+    // ── 承認処理 ──────────────────────────────────────────
+    if (body.status === 'ACCEPTED') {
+        // 現在の承認済み数を確認
+        const { data: acceptedOffers } = await supabaseAdmin
+            .from('offers')
+            .select('id, accepted_order')
+            .eq('case_id', offer.case_id)
+            .eq('status', 'ACCEPTED')
+            .order('accepted_order', { ascending: true })
+
+        const currentCount = acceptedOffers?.length ?? 0
+
+        if (currentCount >= MAX_ACCEPTED) {
+            return NextResponse.json({ error: 'MAX_REACHED', message: '承認上限（3名）に達しています' }, { status: 400 })
+        }
+
+        // accepted_order を付番（1=主、2・3=副）
+        const nextOrder = currentCount + 1
+
+        const { error: updateError } = await supabaseAdmin
+            .from('offers')
+            .update({ status: 'ACCEPTED', accepted_order: nextOrder })
+            .eq('id', id)
+
+        if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+
+        // 3名に達した場合、残りのPENDINGを全て自動DECLINED
+        if (nextOrder >= MAX_ACCEPTED) {
+            await supabaseAdmin
+                .from('offers')
+                .update({ status: 'DECLINED' })
+                .eq('case_id', offer.case_id)
+                .eq('status', 'PENDING')
+        }
+
+        return NextResponse.json({ ok: true, accepted_order: nextOrder, auto_declined: nextOrder >= MAX_ACCEPTED })
+    }
+
+    // ── 辞退処理 ──────────────────────────────────────────
     const { error: updateError } = await supabaseAdmin
         .from('offers').update(body).eq('id', id)
 

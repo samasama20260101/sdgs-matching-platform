@@ -31,7 +31,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json({ error: 'Case not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ case: caseData, supporterUserId: userData.id })
+    // 承認済みオファーのorder一覧を取得（主/副判定用）
+    const { data: acceptedOffers } = await supabaseAdmin
+        .from('offers')
+        .select('supporter_user_id, accepted_order, status')
+        .eq('case_id', id)
+        .eq('status', 'ACCEPTED')
+        .order('accepted_order', { ascending: true })
+
+    return NextResponse.json({ case: caseData, supporterUserId: userData.id, acceptedOffers: acceptedOffers ?? [] })
 }
 
 // PATCH: 案件ステータス更新（サポーターが担当している案件のみ）
