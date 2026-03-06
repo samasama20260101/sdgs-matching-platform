@@ -44,7 +44,8 @@ export default function SignupPage() {
     setError(null)
 
     if (!gender) { setError('性別を選択してください'); return }
-    if (!birthDate) { setError('生年月日を入力してください'); return }
+    const [by, bm, bd] = birthDate.split('-')
+    if (!by || !bm || !bd) { setError('生年月日を選択してください'); return }
 
     setLoading(true)
 
@@ -234,14 +235,50 @@ export default function SignupPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   生年月日 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  required
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="mt-1 flex gap-2 items-center">
+                  <select
+                    value={birthDate.split('-')[0] || ''}
+                    onChange={(e) => {
+                      const [, m, d] = birthDate.split('-')
+                      setBirthDate(`${e.target.value}-${m || ''}-${d || ''}`)
+                    }}
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-28"
+                  >
+                    <option value="">年</option>
+                    {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                  <span className="text-gray-500 text-sm">年</span>
+                  <select
+                    value={birthDate.split('-')[1] || ''}
+                    onChange={(e) => {
+                      const [y, , d] = birthDate.split('-')
+                      setBirthDate(`${y || ''}-${e.target.value}-${d || ''}`)
+                    }}
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-20"
+                  >
+                    <option value="">月</option>
+                    {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(m => (
+                      <option key={m} value={m}>{Number(m)}</option>
+                    ))}
+                  </select>
+                  <span className="text-gray-500 text-sm">月</span>
+                  <select
+                    value={birthDate.split('-')[2] || ''}
+                    onChange={(e) => {
+                      const [y, m] = birthDate.split('-')
+                      setBirthDate(`${y || ''}-${m || ''}-${e.target.value}`)
+                    }}
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-20"
+                  >
+                    <option value="">日</option>
+                    {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => (
+                      <option key={d} value={d}>{Number(d)}</option>
+                    ))}
+                  </select>
+                  <span className="text-gray-500 text-sm">日</span>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
