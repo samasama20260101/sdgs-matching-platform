@@ -77,12 +77,15 @@ export default function AdminDashboardPage() {
             const data = await statsRes.json()
             if (!statsRes.ok) return
             const featuredData = await featuredRes.json()
+            const inquiryData = await inquiryRes.json()
             setSupporters(data.supporters ?? [])
             setSosUsers(data.sosUsers ?? [])
             setAllCases(data.cases ?? [])
             setSosCount(data.sosCount)
             setCaseStats(data.caseStats)
             setFeaturedSupporters(featuredData.supporters ?? [])
+            setInquiries(inquiryData.inquiries ?? [])
+            setInquiryOpenCount(inquiryData.open_count ?? 0)
         } finally {
             setLoading(false)
         }
