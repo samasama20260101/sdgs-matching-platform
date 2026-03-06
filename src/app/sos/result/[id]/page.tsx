@@ -204,7 +204,15 @@ export default function SOSResultPage() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
       body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
     });
-    if (!offerRes.ok) { toast.error('承認に失敗しました'); return; }
+    const offerResult = await offerRes.json();
+    if (!offerRes.ok) {
+      if (offerResult.error === 'MAX_REACHED') {
+        toast.error('すでに3名のサポーターを承認済みです。これ以上承認できません。');
+      } else {
+        toast.error('承認に失敗しました');
+      }
+      return;
+    }
     // ケースをMATCHEDに
     await fetch(`/api/sos/cases/${params.id}`, {
       method: 'PATCH',
@@ -214,7 +222,11 @@ export default function SOSResultPage() {
     setShowAcceptModal(false);
     setSelectedOffer(null);
     await loadData();
-    toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+    if (offerResult.auto_declined) {
+      toast.success('サポーターを承認しました。3名に達したため、残りの申し出は自動的に辞退されました。');
+    } else {
+      toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+    }
   };
 
   const handleDeclineOffer = async () => {
@@ -677,6 +689,12 @@ export default function SOSResultPage() {
               <p className="text-sm text-blue-700">
                 💬 この案件は最大3名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
               </p>
+            </div>
+          )}
+          {acceptedOffers.length === 2 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-orange-800">🔔 上限に達します</p>
+              <p className="text-sm text-orange-700">これを承認すると3名の上限に達し、<span className="font-medium">残りの申し出はすべて自動的に辞退</span>されます。</p>
             </div>
           )}
           <div className="flex gap-3">

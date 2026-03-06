@@ -39,6 +39,7 @@ type OfferData = {
   message: string;
   status: string;
   created_at: string;
+  accepted_order: number | null;
 };
 
 export default function SupporterCaseDetailPage() {
@@ -48,6 +49,7 @@ export default function SupporterCaseDetailPage() {
 
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [myOffer, setMyOffer] = useState<OfferData | null>(null);
+  const [acceptedOfferOrders, setAcceptedOfferOrders] = useState<{ supporter_user_id: string; accepted_order: number }[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,9 +79,10 @@ export default function SupporterCaseDetailPage() {
       router.push('/supporter/dashboard');
       return;
     }
-    const { case: caseResult, supporterUserId } = await caseRes.json();
+    const { case: caseResult, supporterUserId, acceptedOffers: aOffers } = await caseRes.json();
     setCaseData(caseResult);
     setCurrentUserId(supporterUserId);
+    setAcceptedOfferOrders(aOffers ?? []);
 
     // 自分のオファー取得（API経由）
     const offerRes = await fetch(`/api/supporter/cases/${params.id}/offer`, {
@@ -225,6 +228,16 @@ export default function SupporterCaseDetailPage() {
   const shouldShowOffer = myOffer && myOffer.status !== 'WITHDRAWN' && myOffer.status !== 'DECLINED';
   const isAccepted = myOffer?.status === 'ACCEPTED';
   const hasReportedResolution = !!caseData?.supporter_resolved_at;
+
+  // 解決ボタン表示ロジック：
+  // 承認済みの中で最小のaccepted_orderを持つ人が「主」= 解決ボタン押下可
+  // 主が辞退した場合は次のorderの人が自動的に主になる
+  const myOrder = myOffer?.accepted_order ?? null;
+  const minOrder = acceptedOfferOrders.length > 0
+    ? Math.min(...acceptedOfferOrders.map(o => o.accepted_order))
+    : null;
+  const isPrimarySupporter = isAccepted && myOrder !== null && myOrder === minOrder;
+  const canResolve = isPrimarySupporter;
 
   if (isLoading) {
     return (
@@ -390,11 +403,16 @@ export default function SupporterCaseDetailPage() {
                     🚀 支援を開始する
                   </Button>
                 )}
-                {myOffer.status === 'ACCEPTED' && caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && (
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && canResolve && (
                   <Button onClick={() => setShowResolveModal(true)}
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
                     ✅ 解決を報告する
                   </Button>
+                )}
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && !canResolve && (
+                  <div className="w-full text-center text-sm text-gray-400 bg-gray-50 rounded-lg py-3 px-4">
+                    🔒 解決報告はメインサポーターが行います
+                  </div>
                 )}
               </div>
             </CardContent>
