@@ -1,136 +1,109 @@
 // src/components/icons/Logo.tsx
-// 明日もsamasama - DropletMatchロゴコンポーネント
+// 明日もsamasama — 涙型ロゴ 統一コンポーネント
 
 interface LogoProps {
-  variant?: 'default' | 'white'  // default=ダーク文字, white=白文字
-  size?: 'sm' | 'md' | 'lg'     // sm=ヘッダー用, md=ログイン画面, lg=トップhero
-  showText?: boolean              // シンボルのみの場合はfalse
+  variant?: 'default' | 'white'
+  size?: 'sm' | 'md' | 'lg'
+  showText?: boolean
+  className?: string
 }
 
-const sizes = {
-  sm: { symbol: 28, text: 13, sub: 7 },
-  md: { symbol: 40, text: 18, sub: 9 },
-  lg: { symbol: 64, text: 28, sub: 12 },
+const cfg = {
+  sm: { icon: 32, textSize: 13, subSize: 7,  gap: 10, totalW: 185 },
+  md: { icon: 44, textSize: 17, subSize: 9,  gap: 12, totalW: 248 },
+  lg: { icon: 64, textSize: 25, subSize: 12, gap: 16, totalW: 370 },
 }
 
-// 日本語文字込みの横幅係数（「明日もsamasama」が収まる余裕を持たせる）
-const widthMultiplier = {
-  sm: 5.0,
-  md: 4.8,
-  lg: 4.6,
+// アイコン（ダーク背景 + 涙型）単体
+export function LogoIcon({ size = 36 }: { size?: number }) {
+  const id = `li${size}`
+  const r = Math.round(size * 0.23)
+  return (
+    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0BC5A4"/>
+          <stop offset="100%" stopColor="#0A8FD4"/>
+        </linearGradient>
+        <filter id={`g${id}`}><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect width="56" height="56" rx={r} fill="#0A1628"/>
+      <path d="M28 7C28 7 11 24 11 36C11 45.4 18.6 49 28 49C37.4 49 45 45.4 45 36C45 24 28 7 28 7Z" fill={`url(#${id})`} filter={`url(#g${id})`}/>
+      <circle cx="28" cy="38.5" r="7" fill="white" opacity="0.22"/>
+    </svg>
+  )
 }
 
-export function Logo({ variant = 'default', size = 'md', showText = true }: LogoProps) {
-  const s = sizes[size]
-  const textColor = variant === 'white' ? '#ffffff' : '#0F172A'
-  const subColor = '#94A3B8'
-  const d1Start = variant === 'white' ? '#7DD3FC' : '#0EA5E9'
-  const d1End   = variant === 'white' ? '#6EE7B7' : '#10B981'
+// シンボルのみ（背景なし）
+export function LogoMark({ size = 36, white = false }: { size?: number; white?: boolean }) {
+  const id = `lm${size}${white ? 'w' : 'd'}`
+  return (
+    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={white ? '#5EEAD4' : '#0BC5A4'}/>
+          <stop offset="100%" stopColor={white ? '#7DD3FC' : '#0A8FD4'}/>
+        </linearGradient>
+        <filter id={`g${id}`}><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill={`url(#${id})`} filter={`url(#g${id})`}/>
+      <circle cx="28" cy="40" r="8" fill="white" opacity="0.22"/>
+    </svg>
+  )
+}
 
-  const w = showText ? s.symbol * widthMultiplier[size] : s.symbol
-  const h = s.symbol
+// フルロゴ（アイコン + テキスト横組み）
+export function Logo({ variant = 'default', size = 'md', showText = true, className = '' }: LogoProps) {
+  const c = cfg[size]
+  const isWhite = variant === 'white'
+  const textColor   = isWhite ? '#F8FAFC' : '#0F172A'
+  const teal        = isWhite ? '#5EEAD4' : '#0BC5A4'
+  const blue        = isWhite ? '#7DD3FC' : '#0A8FD4'
+  const subColor    = '#94A3B8'
+  const id = `logo${size}${variant}`
+  const w = showText ? c.totalW : c.icon
+  const h = c.icon
+  const tx = c.icon + c.gap
+  const r = Math.round(c.icon * 0.23)
 
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox={`0 0 ${w} ${h}`}
-      width={w}
-      height={h}
-      fill="none"
-      aria-label="明日もsamasama"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${w} ${h}`}
+      width={w} height={h} fill="none" aria-label="明日もsamasama" className={className}>
       <defs>
-        <linearGradient id={`dl1-${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={d1Start}/>
-          <stop offset="100%" stopColor={d1End}/>
+        <linearGradient id={`${id}g`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={teal}/>
+          <stop offset="100%" stopColor={blue}/>
         </linearGradient>
-        <linearGradient id={`dl2-${size}`} x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={d1End}/>
-          <stop offset="100%" stopColor={d1Start}/>
-        </linearGradient>
-        <filter id={`glow-${size}`}>
-          <feGaussianBlur stdDeviation="0.8" result="blur"/>
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
+        <filter id={`${id}f`}><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
 
-      {/* シンボル：2つの雫 */}
-      {/* 左の雫（SOS側・上向き） */}
+      {/* アイコン */}
+      <rect width={c.icon} height={c.icon} rx={r} fill="#0A1628"/>
       <path
-        d={`M${s.symbol*0.34} ${s.symbol*0.72}
-           C${s.symbol*0.34} ${s.symbol*0.72}
-            ${s.symbol*0.18} ${s.symbol*0.52}
-            ${s.symbol*0.18} ${s.symbol*0.38}
-           C${s.symbol*0.18} ${s.symbol*0.22}
-            ${s.symbol*0.27} ${s.symbol*0.12}
-            ${s.symbol*0.34} ${s.symbol*0.12}
-           C${s.symbol*0.41} ${s.symbol*0.12}
-            ${s.symbol*0.50} ${s.symbol*0.22}
-            ${s.symbol*0.50} ${s.symbol*0.38}
-           C${s.symbol*0.50} ${s.symbol*0.52}
-            ${s.symbol*0.34} ${s.symbol*0.72}
-            ${s.symbol*0.34} ${s.symbol*0.72}Z`}
-        fill={`url(#dl1-${size})`}
-        opacity="0.95"
-        filter={`url(#glow-${size})`}
+        d={`M${c.icon*.5} ${c.icon*.12}C${c.icon*.5} ${c.icon*.12} ${c.icon*.2} ${c.icon*.43} ${c.icon*.2} ${c.icon*.64}C${c.icon*.2} ${c.icon*.81} ${c.icon*.33} ${c.icon*.88} ${c.icon*.5} ${c.icon*.88}C${c.icon*.67} ${c.icon*.88} ${c.icon*.8} ${c.icon*.81} ${c.icon*.8} ${c.icon*.64}C${c.icon*.8} ${c.icon*.43} ${c.icon*.5} ${c.icon*.12} ${c.icon*.5} ${c.icon*.12}Z`}
+        fill={`url(#${id}g)`} filter={`url(#${id}f)`}
       />
-      {/* 右の雫（サポーター側・下向き） */}
-      <path
-        d={`M${s.symbol*0.56} ${s.symbol*0.28}
-           C${s.symbol*0.56} ${s.symbol*0.28}
-            ${s.symbol*0.72} ${s.symbol*0.48}
-            ${s.symbol*0.72} ${s.symbol*0.62}
-           C${s.symbol*0.72} ${s.symbol*0.78}
-            ${s.symbol*0.63} ${s.symbol*0.88}
-            ${s.symbol*0.56} ${s.symbol*0.88}
-           C${s.symbol*0.49} ${s.symbol*0.88}
-            ${s.symbol*0.40} ${s.symbol*0.78}
-            ${s.symbol*0.40} ${s.symbol*0.62}
-           C${s.symbol*0.40} ${s.symbol*0.48}
-            ${s.symbol*0.56} ${s.symbol*0.28}
-            ${s.symbol*0.56} ${s.symbol*0.28}Z`}
-        fill={`url(#dl2-${size})`}
-        opacity="0.72"
-      />
-      {/* 交点の光 */}
-      <circle
-        cx={s.symbol * 0.45}
-        cy={s.symbol * 0.50}
-        r={s.symbol * 0.055}
-        fill="white"
-        opacity="0.92"
-        filter={`url(#glow-${size})`}
-      />
+      <circle cx={c.icon*.5} cy={c.icon*.69} r={c.icon*.13} fill="white" opacity="0.22"/>
 
-      {/* テキスト */}
       {showText && (
         <>
+          {/* メインテキスト: 明日もsamasama */}
           <text
-            x={s.symbol * 0.95}
-            y={s.symbol * 0.46}
-            fontFamily="'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif"
-            fontSize={s.text}
-            fontWeight="800"
-            fill={textColor}
-            letterSpacing="-0.3"
+            x={tx} y={c.icon * 0.52}
+            fontFamily="'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', 'Times New Roman', serif"
+            fontSize={c.textSize} fontWeight="700" fill={textColor} letterSpacing="-0.3"
           >
-            明日も
-            <tspan fill={`url(#dl1-${size})`}>sama</tspan>
-            <tspan fill={`url(#dl2-${size})`}>sama</tspan>
+            {'明日も'}
+            <tspan fill={teal}>{'sama'}</tspan>
+            <tspan fill={blue}>{'sama'}</tspan>
           </text>
+          {/* サブテキスト: SDGs MATCH */}
           <text
-            x={s.symbol * 0.95}
-            y={s.symbol * 0.72}
+            x={tx} y={c.icon * 0.76}
             fontFamily="'Helvetica Neue', Arial, sans-serif"
-            fontSize={s.sub}
-            fontWeight="300"
-            fill={subColor}
-            letterSpacing="3"
+            fontSize={c.subSize} fontWeight="300" fill={subColor} letterSpacing="3.5"
           >
-            SDGs MATCH
+            {'SDGs MATCH'}
           </text>
         </>
       )}
@@ -138,24 +111,7 @@ export function Logo({ variant = 'default', size = 'md', showText = true }: Logo
   )
 }
 
-// シンボルのみ（ファビコン代替・小さいスペース用）
+// 後方互換
 export function LogoSymbol({ size = 24 }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={size} height={size} fill="none">
-      <defs>
-        <linearGradient id="ls1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0EA5E9"/>
-          <stop offset="100%" stopColor="#10B981"/>
-        </linearGradient>
-        <linearGradient id="ls2" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#10B981"/>
-          <stop offset="100%" stopColor="#0EA5E9"/>
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="14" fill="#0F172A"/>
-      <path d="M28 44C28 44 14 30 14 22C14 13.2 20.3 8 28 8C35.7 8 42 13.2 42 22C42 30 28 44 28 44Z" fill="url(#ls1)" opacity="0.95"/>
-      <path d="M36 20C36 20 50 34 50 42C50 50.8 43.7 56 36 56C28.3 56 22 50.8 22 42C22 34 36 20 36 20Z" fill="url(#ls2)" opacity="0.75"/>
-      <circle cx="32" cy="32" r="4" fill="white" opacity="0.9"/>
-    </svg>
-  )
+  return <LogoIcon size={size}/>
 }
