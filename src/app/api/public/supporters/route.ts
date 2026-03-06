@@ -8,6 +8,7 @@ export async function GET() {
         .select('id, display_name, organization_name, supporter_type, created_at')
         .eq('role', 'SUPPORTER')
         .order('created_at', { ascending: false })
+        .limit(100)  // 上限100件（将来的にページネーション対応予定）
 
     if (error) {
         console.error('supporters API error:', error)
@@ -78,5 +79,5 @@ export async function GET() {
             service_area_nationwide: areaMap[s.id]?.is_nationwide || false,
             service_areas: areaMap[s.id]?.regions || [],
         }))
-    }, { headers: { 'Cache-Control': 'no-store' } })
+    }, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } })
 }

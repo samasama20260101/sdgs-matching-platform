@@ -322,7 +322,7 @@ export default function SupporterDashboard() {
 
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold text-gray-700">🎯 フィルター</span>
+            <span className="text-sm font-semibold text-gray-700">🎯 SOS案件フィルター</span>
             <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
               {([{ id: 'flat', label: '📋 案件' }, { id: 'grouped', label: '👥 ユーザー' }] as const).map((v) => (
                 <button key={v.id} onClick={() => setViewMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
