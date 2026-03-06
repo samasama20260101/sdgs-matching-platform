@@ -169,7 +169,7 @@ export default function StoryPage() {
           <Reveal>
             <div className="flex flex-col items-center gap-10 mb-14">
               <div className="float-anim">
-                <LogoIcon size={120} />
+                <LogoMark size={120} />
               </div>
               {/* ライト／ダーク背景での見え方 */}
               <div className="flex flex-wrap justify-center gap-4">
