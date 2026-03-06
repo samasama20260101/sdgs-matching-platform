@@ -145,13 +145,14 @@ function RegionFilterDropdown({ allRegions, activityRegions, regionFilter, setRe
       {otherRegions.length > 0 && (
         <>
           <button onClick={() => setOpen(!open)} className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${isOtherSelected || open ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
-            {isOtherSelected ? `📍 ${regionFilter}` : `その他 ${otherRegions.length}地域`}
+            {isOtherSelected ? `📍 ${regionFilter}` : `活動地域外 ${otherRegions.length}地域`}
             {!isOtherSelected && otherCount > 0 && <span className="text-gray-400">({otherCount})</span>}
             <span className={`text-[10px] transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
           </button>
           {open && (
             <div className="absolute top-full left-14 mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-xl p-4 min-w-[300px] max-w-[400px] max-h-[340px] overflow-y-auto">
-              <div className="text-xs font-bold text-gray-700 mb-2">地域を選択</div>
+              <div className="text-xs font-bold text-gray-700 mb-1">活動地域外からの相談</div>
+              <div className="text-[11px] text-gray-400 mb-3">あなたの活動地域（{activityRegions.join("・")}）以外から届いている相談です</div>
               {Object.entries(REGION_BLOCKS).map(([blockName, prefectures]) => {
                 const active = prefectures.filter((p) => otherRegions.includes(p));
                 if (active.length === 0) return null;
