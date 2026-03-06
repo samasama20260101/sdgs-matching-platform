@@ -360,7 +360,7 @@ export default function HomePage() {
           <span className="text-lg">🌍</span>
           <span className="font-bold text-white">明日もsamasama</span><span className="text-xs text-white/60 ml-1">SDGs Match</span>
         </div>
-        <p>© 2024 SDGs Matching Platform. All rights reserved.</p>
+        <p>© 2026 明日もsamasama. All rights reserved.</p>
       </footer>
     </div>
   );
