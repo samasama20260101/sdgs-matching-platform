@@ -86,14 +86,19 @@ function useCountUp(target: number, duration = 1200) {
   return { count, nodeRef };
 }
 
-function StatCard({ value, label, suffix = '' }: { value: number; label: string; suffix?: string }) {
+function StatCard({ value, label, suffix = '', suffixSm }: { value: number; label: string; suffix?: string; suffixSm?: string }) {
   const { count, nodeRef } = useCountUp(value);
   return (
-    <div ref={nodeRef} className="text-center p-6">
-      <div className="text-4xl font-black text-teal-600 mb-1">
-        {count.toLocaleString()}{suffix}
+    <div ref={nodeRef} className="flex flex-col items-center justify-center text-center px-2 py-5 sm:p-8">
+      {/* 数値 */}
+      <div className="text-2xl sm:text-4xl font-black text-teal-600 leading-none whitespace-nowrap">
+        {count.toLocaleString()}
+        {/* スマホ: 短い単位 / デスクトップ: 通常単位 */}
+        <span className="text-base sm:text-2xl ml-0.5 sm:hidden">{suffixSm ?? suffix}</span>
+        <span className="text-2xl ml-0.5 hidden sm:inline">{suffix}</span>
       </div>
-      <div className="text-sm text-gray-500 font-medium">{label}</div>
+      {/* ラベル */}
+      <div className="text-[10px] sm:text-sm text-gray-500 font-medium leading-snug mt-1.5 break-keep">{label}</div>
     </div>
   );
 }
@@ -205,8 +210,8 @@ export default function HomePage() {
         <section className="border-y border-gray-100 bg-white">
           <div className="max-w-3xl mx-auto grid grid-cols-3 divide-x divide-gray-100">
             <StatCard value={stats.resolvedCount} label="解決した相談" suffix="件" />
-            <StatCard value={stats.supporterCount} label="登録サポーター団体" suffix="団体" />
-            <StatCard value={stats.areaCount} label="活動都道府県" suffix="都道府県" />
+            <StatCard value={stats.supporterCount} label="登録サポーター団体" suffix="団体" suffixSm="団体" />
+            <StatCard value={stats.areaCount} label="活動都道府県" suffix="都道府県" suffixSm="県" />
           </div>
         </section>
       )}
