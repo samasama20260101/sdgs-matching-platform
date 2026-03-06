@@ -211,11 +211,11 @@ export default function StoryPage() {
             </Reveal>
             <Reveal delay={100}>
               <div className="rounded-3xl p-10 text-white" style={{ background: 'linear-gradient(135deg,#0BC5A4,#0A8FD4)' }}>
-                <p className="text-white/80 text-sm tracking-wide mb-3">World population in extreme poverty (under $2.15/day)</p>
-                <p className="display text-5xl font-black leading-none mb-2">8.5%</p>
-                <p className="text-white/60 text-[10px] tracking-[3px] uppercase mb-5">World Bank 2024</p>
+                <p className="text-white/80 text-sm tracking-wide mb-3">SDGs Goal 1 — No Poverty</p>
+                <p className="display text-5xl font-black leading-none mb-2">Goal 1</p>
+                <p className="text-white/60 text-[10px] tracking-[3px] uppercase mb-5">United Nations SDGs</p>
                 <p className="text-white/80 text-sm leading-7 tracking-wide">
-                  約6億8,000万人が極度の貧困状態にある。支援の仕組みはあるのに、届かない現実がある。
+                  「あらゆる場所で、あらゆる形の貧困を終わらせる」——SDGsが掲げるこの目標は、遠い話ではなく、今ここにいる一人の支援から始まります。
                 </p>
               </div>
             </Reveal>
@@ -365,11 +365,15 @@ export default function StoryPage() {
               私たちが恐れるのは、<br />
               誰かが<strong className="text-teal-400">「もう明日はいらない」</strong>と<br />
               思ってしまう瞬間です。<br /><br />
+
               このサービスの名前「明日もsamasama」は、<br />
-              特別な明日でなくていい、という意味が込められています。<br /><br />
-              今日と<strong className="text-teal-400">同じくらいの明日が来る</strong>こと。<br />
-              それが、生きていくための最低限の希望だと思うから。<br /><br />
-              その希望を守るために、<br />
+              今どんなに辛くても、<strong className="text-teal-400">明日はきっと今日より少しだけ良くなる</strong>、<br />
+              という祈りが込められています。<br /><br />
+
+              昨日より今日、今日より明日——<br />
+              小さな一歩が、人生を変えることを私たちは信じています。<br /><br />
+
+              その一歩を支えるために、<br />
               私たちは今日も、このプラットフォームを育てています。
             </p>
           </Reveal>

@@ -9,9 +9,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // 無効なRefresh Tokenをサイレントにクリアする
-    // "Invalid Refresh Token: Refresh Token Not Found" エラーを防ぐ
-    onAuthStateChange: undefined,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
