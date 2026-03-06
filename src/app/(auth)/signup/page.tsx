@@ -13,6 +13,9 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 同意チェック
+  const [agreed, setAgreed] = useState(false)
+
   // Step 1: アカウント情報
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,6 +38,10 @@ export default function SignupPage() {
     }
     if (password.length < 8) {
       setError('パスワードは8文字以上で入力してください')
+      return
+    }
+    if (!agreed) {
+      setError('利用規約・プライバシーポリシーへの同意が必要です')
       return
     }
     setStep('profile')
@@ -169,9 +176,35 @@ export default function SignupPage() {
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              {/* 利用規約同意チェックボックス */}
+              <div className="mt-2">
+                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                  agreed ? 'border-teal-400 bg-teal-50' : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-teal-500 flex-shrink-0"
+                  />
+                  <span className="text-sm text-gray-600 leading-6">
+                    <a href="/terms" target="_blank" rel="noopener noreferrer"
+                      className="text-teal-600 font-medium underline underline-offset-2 hover:text-teal-700">
+                      利用規約
+                    </a>
+                    および
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                      className="text-teal-600 font-medium underline underline-offset-2 hover:text-teal-700">
+                      プライバシーポリシー
+                    </a>
+                    を読み、内容に同意します
+                  </span>
+                </label>
+              </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition"
+                disabled={!agreed}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 次へ
               </button>

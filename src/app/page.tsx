@@ -377,6 +377,8 @@ export default function HomePage() {
           <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">私たちの思い</Link>
           <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">サポーター一覧</Link>
           <Link href="/contact" className="hover:text-teal-400 transition-colors tracking-wide">お問い合わせ</Link>
+          <Link href="/terms" className="hover:text-teal-400 transition-colors tracking-wide">利用規約</Link>
+          <Link href="/privacy" className="hover:text-teal-400 transition-colors tracking-wide">プライバシー</Link>
           <Link href="/login" className="hover:text-teal-400 transition-colors tracking-wide">ログイン</Link>
         </div>
         <p>© 2026 明日もsamasama. All rights reserved.</p>
