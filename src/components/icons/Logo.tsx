@@ -13,6 +13,13 @@ const sizes = {
   lg: { symbol: 64, text: 28, sub: 12 },
 }
 
+// 日本語文字込みの横幅係数（「明日もsamasama」が収まる余裕を持たせる）
+const widthMultiplier = {
+  sm: 5.0,
+  md: 4.8,
+  lg: 4.6,
+}
+
 export function Logo({ variant = 'default', size = 'md', showText = true }: LogoProps) {
   const s = sizes[size]
   const textColor = variant === 'white' ? '#ffffff' : '#0F172A'
@@ -20,7 +27,7 @@ export function Logo({ variant = 'default', size = 'md', showText = true }: Logo
   const d1Start = variant === 'white' ? '#7DD3FC' : '#0EA5E9'
   const d1End   = variant === 'white' ? '#6EE7B7' : '#10B981'
 
-  const w = showText ? s.symbol * 3.6 : s.symbol
+  const w = showText ? s.symbol * widthMultiplier[size] : s.symbol
   const h = s.symbol
 
   return (
