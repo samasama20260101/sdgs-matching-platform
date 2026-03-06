@@ -20,14 +20,16 @@ export async function GET(request: Request) {
 
     const supporterUserId = userData.id
 
-    // 1. OPEN状態でAI分析済みの案件を取得
+    // 1. OPEN状態でAI分析済みの案件を取得（必要カラムのみ・上限200件）
     const { data: openCases } = await supabaseAdmin
         .from('cases')
-        .select('*, users!cases_owner_user_id_fkey ( display_name, prefecture )')
+        .select('id, title, description, status, urgency, created_at, ai_sdg_suggestion, ai_keywords, users!cases_owner_user_id_fkey ( display_name, prefecture )')
         .eq('visibility', 'LISTED')
         .eq('status', 'OPEN')
         .not('ai_sdg_suggestion', 'is', null)
+        .order('urgency', { ascending: true })   // High → Medium → Low 優先
         .order('created_at', { ascending: false })
+        .limit(200)
 
     // 2. 自分がPENDING/ACCEPTEDのオファーを持つ案件ID
     const { data: myOfferCases } = await supabaseAdmin
@@ -43,7 +45,7 @@ export async function GET(request: Request) {
     if (myOfferCaseIds.length > 0) {
         const { data: matched } = await supabaseAdmin
             .from('cases')
-            .select('*, users!cases_owner_user_id_fkey ( display_name, prefecture )')
+            .select('id, title, description, status, urgency, created_at, ai_sdg_suggestion, ai_keywords, users!cases_owner_user_id_fkey ( display_name, prefecture )')
             .in('id', myOfferCaseIds)
             .neq('status', 'OPEN')
             .order('created_at', { ascending: false })

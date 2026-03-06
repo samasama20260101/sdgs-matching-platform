@@ -16,9 +16,11 @@ type Supporter = {
 
 export default function SupportersPage() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
+  const [displayCount, setDisplayCount] = useState(20); // 最初は20件表示
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const handleTypeFilter = (v: string | null) => { setTypeFilter(v); setDisplayCount(20); };
   const [userRegionCode, setUserRegionCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -127,13 +129,13 @@ export default function SupportersPage() {
           <div className="text-center py-20 text-gray-400">
             <div className="text-3xl mb-3">😢</div>
             <p>該当するサポーターが見つかりませんでした</p>
-            <button onClick={() => setTypeFilter(null)} className="mt-3 text-sm text-teal-500 hover:text-teal-600">
+            <button onClick={() => handleTypeFilter(null)} className="mt-3 text-sm text-teal-500 hover:text-teal-600">
               フィルターをリセット
             </button>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
-            {filtered.map(s => {
+            {filtered.slice(0, displayCount).map(s => {
               const matched = !!(userRegionCode && isRegionMatch(s));
               return (
                 <Link key={s.id} href={`/supporters/${s.id}`}
@@ -176,6 +178,16 @@ export default function SupportersPage() {
               );
             })}
           </div>
+          {filtered.length > displayCount && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setDisplayCount(c => c + 20)}
+                className="px-6 py-3 bg-white border border-teal-300 text-teal-600 rounded-full text-sm font-medium hover:bg-teal-50 transition-colors shadow-sm"
+              >
+                さらに表示 ({filtered.length - displayCount}団体)
+              </button>
+            </div>
+          )}
         )}
       </main>
     </div>
