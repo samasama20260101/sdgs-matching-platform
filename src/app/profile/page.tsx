@@ -215,6 +215,25 @@ export default function ProfilePage() {
                 setError(`更新エラー: ${result.error}`);
                 setIsSaving(false); return;
             }
+
+            // サポーターの活動地域は専用APIでも保存（確実性のため二重保存）
+            if (userData.role === 'SUPPORTER') {
+                const areaRes = await fetch('/api/supporter/service-areas', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+                    body: JSON.stringify({
+                        service_areas: serviceAreas,
+                        service_area_nationwide: isNationwide,
+                    }),
+                });
+                if (!areaRes.ok) {
+                    const areaResult = await areaRes.json();
+                    console.error('[profile] service-areas save error:', areaResult.error);
+                    setError(`活動地域の保存エラー: ${areaResult.error}`);
+                    setIsSaving(false); return;
+                }
+            }
+
             setSuccess(true);
             setIsSaving(false);
             setTimeout(() => setSuccess(false), 3000);
