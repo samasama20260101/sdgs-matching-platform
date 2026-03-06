@@ -195,12 +195,27 @@ export default function SupporterDashboard() {
       const roleData = await roleRes.json();
       if (roleData.role !== 'SUPPORTER') { router.push('/'); return; }
       if (!roleData.user) { router.push('/'); return; }
-      setUserData(roleData.user);
+
+      // 活動地域は専用APIから直接取得（確実に最新データを得るため）
+      const [dashRes, areaRes] = await Promise.all([
+        fetch('/api/supporter/dashboard', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        }),
+        fetch('/api/supporter/service-areas', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        }),
+      ]);
+
+      // ユーザーデータに活動地域を上書きマージ
+      const userDataWithAreas = { ...roleData.user };
+      if (areaRes.ok) {
+        const areaData = await areaRes.json();
+        userDataWithAreas.service_areas = areaData.service_areas || [];
+        userDataWithAreas.service_area_nationwide = areaData.service_area_nationwide || false;
+      }
+      setUserData(userDataWithAreas);
 
       // API経由で案件・オファー・バッジを一括取得（RLSバイパス）
-      const dashRes = await fetch('/api/supporter/dashboard', {
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-      });
       if (dashRes.ok) {
         const { cases: enriched, badgeCounts } = await dashRes.json();
         setCases(enriched || []);
