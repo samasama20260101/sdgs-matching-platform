@@ -243,6 +243,10 @@ export default function SignupPage() {
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  電話番号（任意）
+                </label>
                 <input
                   type="tel"
                   value={phone}
