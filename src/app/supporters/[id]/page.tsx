@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { getSupporterTypeConfig } from '@/lib/supporterType';
 import Link from 'next/link';
 
 type SocialLinks = {
@@ -128,14 +129,11 @@ export default function SupporterProfilePage() {
             {/* アイコン + タイプバッジ */}
             <div className="relative z-10 flex items-end gap-4 -mt-8 mb-3">
               <div className="w-16 h-16 rounded-2xl bg-white shadow-md border-2 border-white flex items-center justify-center text-3xl flex-shrink-0">
-                {supporter.supporter_type === 'NPO' ? '🌿' : '🏢'}
+                {getSupporterTypeConfig(supporter.supporter_type).emoji}
               </div>
               <div className="pb-1 flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${supporter.supporter_type === 'NPO'
-                    ? 'bg-green-100 text-green-700 border border-green-200'
-                    : 'bg-blue-100 text-blue-700 border border-blue-200'
-                  }`}>
-                  {supporter.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${getSupporterTypeConfig(supporter.supporter_type).badgeClass}`}>
+                  {getSupporterTypeConfig(supporter.supporter_type).label}
                 </span>
                 <span className="text-xs text-gray-400">登録 {yearsActive}年</span>
               </div>

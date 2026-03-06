@@ -25,7 +25,7 @@ type TabKey = 'supporters' | 'sos' | 'open_cases' | 'active_cases'
 type FormData = {
     email: string; password: string; real_name: string
     display_name: string; organization_name: string
-    supporter_type: 'NPO' | 'CORPORATE'; phone: string
+    supporter_type: 'NPO' | 'CORPORATE' | 'GOVERNMENT'; phone: string
 }
 
 const initialForm: FormData = {
@@ -260,7 +260,7 @@ export default function AdminDashboardPage() {
                                                         <td className="px-6 py-4 font-medium text-gray-900">{s.organization_name || '—'}</td>
                                                         <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO' ? 'bg-blue-100 text-blue-700' : s.supporter_type === 'GOVERNMENT' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
                                                                 {s.supporter_type || '—'}
                                                             </span>
                                                         </td>
@@ -419,7 +419,7 @@ export default function AdminDashboardPage() {
                                                 <span className="text-amber-500 font-bold w-5 text-center text-sm">{idx + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-gray-800 truncate">{s.organization_name || s.display_name}</p>
-                                                    <span className={`text-xs ${s.supporter_type === 'NPO' ? 'text-blue-600' : 'text-orange-600'}`}>{s.supporter_type}</span>
+                                                    <span className={`text-xs ${s.supporter_type === 'NPO' ? 'text-blue-600' : s.supporter_type === 'GOVERNMENT' ? 'text-purple-600' : 'text-orange-600'}`}>{s.supporter_type}</span>
                                                 </div>
                                                 <div className="flex gap-1">
                                                     <button onClick={() => moveFeaturedOrder(s.id, 'up')} disabled={idx === 0 || featuredSaving}
@@ -444,7 +444,7 @@ export default function AdminDashboardPage() {
                                             <div key={s.id} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-gray-700 truncate">{s.organization_name || s.display_name}</p>
-                                                    <span className={`text-xs ${s.supporter_type === 'NPO' ? 'text-blue-600' : 'text-orange-600'}`}>{s.supporter_type}</span>
+                                                    <span className={`text-xs ${s.supporter_type === 'NPO' ? 'text-blue-600' : s.supporter_type === 'GOVERNMENT' ? 'text-purple-600' : 'text-orange-600'}`}>{s.supporter_type}</span>
                                                 </div>
                                                 <button onClick={() => toggleFeatured(s.id, false)}
                                                     className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-md hover:bg-amber-600 transition flex-shrink-0">
@@ -478,10 +478,11 @@ export default function AdminDashboardPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">種別 <span className="text-red-500">*</span></label>
-                                    <select value={form.supporter_type} onChange={e => setForm({ ...form, supporter_type: e.target.value as 'NPO' | 'CORPORATE' })}
+                                    <select value={form.supporter_type} onChange={e => setForm({ ...form, supporter_type: e.target.value as 'NPO' | 'CORPORATE' | 'GOVERNMENT' })}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
                                         <option value="NPO">NPO</option>
                                         <option value="CORPORATE">企業</option>
+                                        <option value="GOVERNMENT">行政・公共機関</option>
                                     </select>
                                 </div>
                                 <div>
