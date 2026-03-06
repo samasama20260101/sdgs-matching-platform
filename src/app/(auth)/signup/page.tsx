@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Logo } from '@/components/icons/Logo'
 import { supabase } from '@/lib/supabase/client'
 
 export default function SignupPage() {
@@ -90,9 +91,9 @@ export default function SignupPage() {
             ← トップページに戻る
           </Link>
         </div>
-        <h1 className="text-center text-3xl font-bold text-gray-900">
-          SDGsマッチング
-        </h1>
+        <div className="flex justify-center mb-4">
+          <Logo variant="default" size="md" showText={true} />
+        </div>
         <h2 className="mt-2 text-center text-xl text-gray-600">
           新規登録（相談者）
         </h2>

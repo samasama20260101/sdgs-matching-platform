@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,13 +78,13 @@ export default function LoginPage() {
                     </Link>
                 </div>
             <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold text-center">
+                <CardHeader className="space-y-3">
+                    <div className="flex justify-center pt-2">
+                        <Logo variant="default" size="md" showText={true} />
+                    </div>
+                    <CardTitle className="text-xl font-bold text-center text-gray-700">
                         ログイン
                     </CardTitle>
-                    <CardDescription className="text-center">
-                        SDGsマッチングプラットフォーム
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
