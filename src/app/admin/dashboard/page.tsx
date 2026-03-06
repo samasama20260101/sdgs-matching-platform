@@ -450,7 +450,7 @@ export default function AdminDashboardPage() {
                                                 onChange={async (e) => {
                                                     const newStatus = e.target.value
                                                     setSavingInquiryId(iq.id)
-                                                    const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession()
+                                                    const { data: { session } } = await (await import('@/lib/supabase/client')).supabase.auth.getSession()
                                                     await fetch('/api/admin/inquiries', {
                                                         method: 'PATCH',
                                                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
@@ -491,7 +491,7 @@ export default function AdminDashboardPage() {
                                                 defaultValue={iq.admin_memo || ''}
                                                 onBlur={async (e) => {
                                                     const memo = e.target.value
-                                                    const { data: { session } } = await (await import('@/lib/supabase/client')).createClient().auth.getSession()
+                                                    const { data: { session } } = await (await import('@/lib/supabase/client')).supabase.auth.getSession()
                                                     await fetch('/api/admin/inquiries', {
                                                         method: 'PATCH',
                                                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
