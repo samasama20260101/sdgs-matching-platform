@@ -4,6 +4,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getSupporterTypeConfig } from '@/lib/supporterType';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
 type Supporter = {
@@ -272,14 +273,14 @@ export default function HomePage() {
                   className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-green-100 transition-all block">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-xl flex-shrink-0">
-                      {s.supporter_type === 'NPO' ? '🌿' : '🏢'}
+                      {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-800 text-sm leading-tight">
                         {s.organization_name || s.display_name}
                       </h3>
-                      <span className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 font-medium">
-                        {s.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
+                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
+                        {getSupporterTypeConfig(s.supporter_type).label}
                       </span>
                     </div>
                   </div>

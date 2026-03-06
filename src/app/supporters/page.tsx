@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getSupporterTypeConfig } from '@/lib/supporterType';
 import { supabase } from '@/lib/supabase/client';
 
 type Supporter = {
@@ -103,6 +104,7 @@ export default function SupportersPage() {
             { key: null, label: 'すべて' },
             { key: 'NPO', label: '🌿 NPO・支援団体' },
             { key: 'CORPORATE', label: '🏢 企業' },
+            { key: 'GOVERNMENT', label: '🏛️ 行政・公共機関' },
           ].map(({ key, label }) => (
             <button key={String(key)} onClick={() => setTypeFilter(key)}
               className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
@@ -143,7 +145,7 @@ export default function SupportersPage() {
                   }`}>
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-2xl flex-shrink-0">
-                      {s.supporter_type === 'NPO' ? '🌿' : '🏢'}
+                      {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -156,12 +158,8 @@ export default function SupportersPage() {
                           </span>
                         )}
                       </div>
-                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${
-                        s.supporter_type === 'NPO'
-                          ? 'text-green-600 bg-green-50 border border-green-200'
-                          : 'text-blue-600 bg-blue-50 border border-blue-200'
-                      }`}>
-                        {s.supporter_type === 'NPO' ? 'NPO / 支援団体' : '企業'}
+                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${getSupporterTypeConfig(s.supporter_type).badgeClass} border`}>
+                        {getSupporterTypeConfig(s.supporter_type).label}
                       </span>
                     </div>
                   </div>

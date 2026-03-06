@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { getSupporterTypeConfig } from '@/lib/supporterType';
 
 type CaseData = {
   id: string;
@@ -567,7 +568,7 @@ export default function SOSResultPage() {
                             {offer.supporter.organization_name || offer.supporter.display_name}
                             <span className="text-[10px]">↗</span>
                           </a>
-                          <p className="text-xs text-gray-500">{offer.supporter.supporter_type === 'NPO' ? 'NPO/支援組織' : '企業'}</p>
+                          <p className="text-xs text-gray-500">{getSupporterTypeConfig(offer.supporter.supporter_type).label}</p>
                         </div>
                         <span className="text-xs text-green-600">{formatDate(offer.created_at)}</span>
                       </div>
@@ -624,7 +625,7 @@ export default function SOSResultPage() {
                           {offer.supporter.organization_name || offer.supporter.display_name}
                           <span className="text-xs">↗</span>
                         </a>
-                        <p className="text-xs text-gray-500">{offer.supporter.supporter_type === 'NPO' ? 'NPO/支援組織' : '企業'}</p>
+                        <p className="text-xs text-gray-500">{getSupporterTypeConfig(offer.supporter.supporter_type).label}</p>
                       </div>
                       <span className="text-xs text-gray-500">{formatDate(offer.created_at)}</span>
                     </div>
