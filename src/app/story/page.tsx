@@ -209,6 +209,18 @@ export default function StoryPage() {
           </Reveal>
 
           {/* タイムライン */}
+          {/* 共通グラデーション定義 — IDの重複を防ぐため1箇所のみ */}
+          <svg width="0" height="0" style={{ position:'absolute' }}>
+            <defs>
+              <linearGradient id="tl-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0BC5A4"/><stop offset="100%" stopColor="#0A8FD4"/>
+              </linearGradient>
+              <radialGradient id="tl-glow" cx="50%" cy="72%" r="38%">
+                <stop offset="0%" stopColor="white" stopOpacity=".95"/>
+                <stop offset="100%" stopColor="white" stopOpacity="0"/>
+              </radialGradient>
+            </defs>
+          </svg>
           <div className="relative">
             {/* 縦線: デスクトップ=中央, モバイル=左端 */}
             <div className="absolute top-0 bottom-0 w-px left-[30px] sm:left-1/2 sm:-translate-x-1/2"
@@ -221,9 +233,8 @@ export default function StoryPage() {
                 body: '涙のかたちは、追い詰められた誰かの痛みを表します。その痛みから目を背けないために、まず涙と向き合うことから始めました。',
                 svg: (
                   <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
-                    <defs><linearGradient id="z1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#0BC5A4"/><stop offset="100%" stopColor="#0A8FD4"/></linearGradient></defs>
                     <rect width="56" height="56" fill="#0a1628"/>
-                    <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#z1)" opacity="0.12"/>
+                    <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#tl-grad)" opacity="0.12"/>
                     <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="none" stroke="#0BC5A4" strokeWidth="2" strokeDasharray="4 3" style={{ animation:'mark-dash 6s linear infinite' }}/>
                     <line x1="6" y1="20" x2="6" y2="49" stroke="rgba(11,197,164,.4)" strokeWidth="1"/>
                     <line x1="4" y1="20" x2="8" y2="20" stroke="rgba(11,197,164,.4)" strokeWidth="1"/>
@@ -237,9 +248,8 @@ export default function StoryPage() {
                 body: 'ティールから深いブルーへ。これは「海」の色。どんな川も最後は海につながるように、困難の中にいる人も必ずどこかへつながっていける。',
                 svg: (
                   <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
-                    <defs><linearGradient id="z2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#0BC5A4"/><stop offset="100%" stopColor="#0A8FD4"/></linearGradient></defs>
                     <rect width="56" height="56" fill="#0a1628"/>
-                    <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#z2)"/>
+                    <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#tl-grad)"/>
                     <circle cx="28" cy="40" r="8" fill="white" opacity="0.22"/>
                     <rect x="8" y="49" width="14" height="4" rx="2" fill="#0BC5A4"/>
                     <rect x="25" y="49" width="14" height="4" rx="2" fill="#0A8FD4"/>
@@ -252,13 +262,9 @@ export default function StoryPage() {
                 body: '涙型の底に、うっすらと白い光があります。どんなに暗い状況でも内側に灯は残っている。支援とは、その灯を一緒に育てること。',
                 svg: (
                   <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
-                    <defs>
-                      <linearGradient id="z3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#0BC5A4"/><stop offset="100%" stopColor="#0A8FD4"/></linearGradient>
-                      <radialGradient id="gr3" cx="50%" cy="72%" r="38%"><stop offset="0%" stopColor="white" stopOpacity=".95"/><stop offset="100%" stopColor="white" stopOpacity="0"/></radialGradient>
-                    </defs>
                     <rect width="56" height="56" fill="#0a1628"/>
-                    <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#z3)" opacity="0.45"/>
-                    <circle cx="28" cy="40" r="14" fill="url(#gr3)"/>
+                    <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#tl-grad)" opacity="0.45"/>
+                    <circle cx="28" cy="40" r="14" fill="url(#tl-glow)"/>
                     <circle cx="28" cy="40" r="7" fill="white" opacity=".92"/>
                     <line x1="28" y1="24" x2="28" y2="19" stroke="white" strokeWidth="1.5" strokeLinecap="round" style={{ animation:'mark-ray 2s ease-in-out infinite' }}/>
                     <line x1="17" y1="30" x2="13" y2="26" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity=".5"/>
@@ -272,11 +278,10 @@ export default function StoryPage() {
                 body: '悲しみの涙が感謝の涙に変わる瞬間——それがこのプラットフォームの存在意義です。同じ一滴に、ふたつの意味を込めました。',
                 svg: (
                   <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
-                    <defs><linearGradient id="z4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#0BC5A4"/><stop offset="100%" stopColor="#0A8FD4"/></linearGradient></defs>
                     <rect width="56" height="56" fill="#0a1628"/>
                     <path d="M14 7C14 7 6 16 6 23C6 28.5 9.5 31 14 31C18.5 31 22 28.5 22 23C22 16 14 7 14 7Z" fill="#334155" opacity=".7"/>
                     <path d="M25 19 L31 19 M28.5 16.5 L31 19 L28.5 21.5" stroke="#0BC5A4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M42 7C42 7 34 16 34 23C34 28.5 37.5 31 42 31C46.5 31 50 28.5 50 23C50 16 42 7 42 7Z" fill="url(#z4)"/>
+                    <path d="M42 7C42 7 34 16 34 23C34 28.5 37.5 31 42 31C46.5 31 50 28.5 50 23C50 16 42 7 42 7Z" fill="url(#tl-grad)"/>
                     <circle cx="42" cy="25" r="4" fill="white" opacity=".28"/>
                     <text x="4" y="41" fontFamily="monospace" fontSize="5" fill="#64748b">BEFORE</text>
                     <text x="31" y="41" fontFamily="monospace" fontSize="5" fill="#0BC5A4">AFTER</text>
@@ -325,13 +330,13 @@ export default function StoryPage() {
                       )}
                     </div>
                     {/* ── モバイル (sm未満): ドット左 → カード右 ── */}
-                    <div className="flex sm:hidden w-full items-center gap-3">
+                    <div className="flex sm:hidden w-full items-center gap-3 min-w-0">
                       <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-xl flex-shrink-0 z-10" style={dotStyle}>{item.emoji}</div>
-                      <div style={{ ...cardStyle, flex:1 }}>
+                      <div style={{ ...cardStyle, flex:1, minWidth:0, padding:18 }}>
                         <span className="text-[9px] tracking-[3.5px] text-teal-400 font-mono uppercase mb-2 block">{item.ctag}</span>
                         <div className="inline-block rounded-xl overflow-hidden border border-white/10 mb-3">{item.svg}</div>
                         <h4 className="font-bold text-white/90 text-sm mb-2">{item.title}</h4>
-                        <p className="text-white/40 text-xs leading-[2] font-sans font-light">{item.body}</p>
+                        <p className="text-white/40 text-xs leading-[2] font-sans font-light break-all">{item.body}</p>
                       </div>
                     </div>
                   </div>
