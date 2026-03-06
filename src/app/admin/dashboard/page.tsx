@@ -37,7 +37,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
     OPEN:        { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-700' },
     MATCHED:     { label: 'マッチ済み',     color: 'bg-amber-100 text-amber-700' },
     IN_PROGRESS: { label: '対応中',         color: 'bg-purple-100 text-purple-700' },
-    RESOLVED:    { label: '解決済み',       color: 'bg-green-100 text-green-700' },
+    RESOLVED:    { label: '解決済み',       color: 'bg-teal-50 text-teal-700' },
     CANCELLED:   { label: '取消済み',       color: 'bg-gray-100 text-gray-500' },
     CLOSED:      { label: '終了',           color: 'bg-gray-100 text-gray-500' },
 }
@@ -174,7 +174,7 @@ export default function AdminDashboardPage() {
     }
 
     const TABS: { key: TabKey; label: string; icon: string; count: number; numColor: string; borderColor: string; bgColor: string }[] = [
-        { key: 'supporters', label: 'サポーター',     icon: '🤝', count: supporters.length,                      numColor: 'text-green-600',  borderColor: 'border-green-500',  bgColor: 'bg-green-50' },
+        { key: 'supporters', label: 'サポーター',     icon: '🤝', count: supporters.length,                      numColor: 'text-teal-600',  borderColor: 'border-teal-500',  bgColor: 'bg-teal-50' },
         { key: 'sos',        label: '相談者（SOS）',  icon: '👥', count: sosCount,                               numColor: 'text-blue-600',   borderColor: 'border-blue-500',   bgColor: 'bg-blue-50' },
         { key: 'open_cases', label: '未対応の案件',   icon: '⏳', count: caseStats.open,                         numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
         { key: 'active_cases',label:'対応中・解決済み',icon:'🔄', count: caseStats.in_progress + caseStats.resolved, numColor: 'text-purple-600', borderColor: 'border-purple-500', bgColor: 'bg-purple-50' },
@@ -223,15 +223,15 @@ export default function AdminDashboardPage() {
                     {/* サポーター */}
                     {activeTab === 'supporters' && (
                         <>
-                            <div className="px-6 py-3 flex items-center justify-between bg-green-50 border-y border-green-100">
-                                <p className="text-sm text-green-800 font-medium">{supporters.length}件登録</p>
+                            <div className="px-6 py-3 flex items-center justify-between bg-teal-50 border-y border-teal-100">
+                                <p className="text-sm text-teal-800 font-medium">{supporters.length}件登録</p>
                                 <div className="flex gap-2">
                                     <button onClick={() => { loadFeaturedSupporters(); setShowFeaturedModal(true) }}
                                         className="bg-amber-500 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-amber-600 transition">
                                         ⭐ トップページ掲載設定
                                     </button>
                                     <button onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateSuccess(false) }}
-                                        className="bg-green-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-green-700 transition">
+                                        className="bg-teal-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-teal-700 transition">
                                         ＋ 新規サポーター追加
                                     </button>
                                 </div>
@@ -473,7 +473,7 @@ export default function AdminDashboardPage() {
                             <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
                         </div>
                         <form onSubmit={handleCreate} className="px-6 py-4 space-y-4">
-                            {createSuccess && <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">✓ サポーターを作成しました</div>}
+                            {createSuccess && <div className="p-3 bg-teal-50 border border-teal-200 rounded-md text-sm text-teal-700">✓ サポーターを作成しました</div>}
                             {createError && <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{createError}</div>}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -524,7 +524,7 @@ export default function AdminDashboardPage() {
                                 <button type="button" onClick={() => setShowCreateModal(false)}
                                     className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-50">キャンセル</button>
                                 <button type="submit" disabled={creating}
-                                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                                    className="flex-1 bg-teal-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-teal-700 disabled:opacity-50">
                                     {creating ? '作成中...' : '作成する'}
                                 </button>
                             </div>

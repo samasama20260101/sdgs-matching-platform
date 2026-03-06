@@ -24,7 +24,7 @@ export const CASE_STATUS = {
     OPEN: { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-600', borderColor: 'border-l-blue-400', icon: '⏳', step: 1 },
     MATCHED: { label: 'マッチ済み', color: 'bg-amber-100 text-amber-600', borderColor: 'border-l-amber-400', icon: '🤝', step: 2 },
     IN_PROGRESS: { label: '対応中', color: 'bg-purple-100 text-purple-600', borderColor: 'border-l-purple-400', icon: '🔄', step: 3 },
-    RESOLVED: { label: '解決済み', color: 'bg-green-100 text-green-600', borderColor: 'border-l-green-500', icon: '✅', step: 4 },
+    RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-600', borderColor: 'border-l-green-500', icon: '✅', step: 4 },
     CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-500', borderColor: 'border-l-gray-300', icon: '✕', step: 0 },
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-500', borderColor: 'border-l-gray-300', icon: '📁', step: 0 },
 } as const;
@@ -54,7 +54,7 @@ export const STATUS_TRANSITIONS: Record<string, string[]> = {
 // ─── サポーターのオファーステータス ─────────────────────────
 export const OFFER_STATUS = {
     PENDING: { label: '承認待ち', color: 'bg-amber-50 text-amber-600', icon: '⏳' },
-    ACCEPTED: { label: '承認済み', color: 'bg-green-50 text-green-600', icon: '✅' },
+    ACCEPTED: { label: '承認済み', color: 'bg-teal-50 text-teal-600', icon: '✅' },
     DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-500', icon: '✕' },
     WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-500', icon: '↩' },
 } as const;

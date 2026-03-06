@@ -77,7 +77,7 @@ export default function SupportersPage() {
           </Link>
           <div className="flex gap-3">
             <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
-            <Link href="/signup" className="text-sm bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+            <Link href="/signup" className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
               相談する
             </Link>
           </div>
@@ -85,15 +85,15 @@ export default function SupportersPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <Link href="/" className="text-xs text-gray-400 hover:text-green-500 transition-colors">← トップに戻る</Link>
+        <Link href="/" className="text-xs text-gray-400 hover:text-teal-500 transition-colors">← トップに戻る</Link>
         <h1 className="text-2xl font-black text-gray-800 mt-3">登録サポーター一覧</h1>
         <p className="text-gray-500 text-sm mt-1">
           相談前にどんな団体が参加しているか確認できます
-          {supporters.length > 0 && <span className="ml-2 text-green-600 font-bold">{supporters.length}団体</span>}
+          {supporters.length > 0 && <span className="ml-2 text-teal-600 font-bold">{supporters.length}団体</span>}
         </p>
 
         {userRegionCode && regionMatchCount > 0 && (
-          <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-sm text-green-700">
+          <div className="mt-4 flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-xl px-4 py-2.5 text-sm text-teal-700">
             <span>📍</span>
             <span>あなたの地域をカバーする <strong>{regionMatchCount}団体</strong> を上位に表示しています</span>
           </div>
@@ -108,8 +108,8 @@ export default function SupportersPage() {
           ].map(({ key, label }) => (
             <button key={String(key)} onClick={() => setTypeFilter(key)}
               className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
-                ? 'bg-green-500 text-white border-green-500'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-green-300'}`}>
+                ? 'bg-teal-500 text-white border-teal-500'
+                : 'bg-white text-gray-500 border-gray-200 hover:border-teal-300'}`}>
               {label}
             </button>
           ))}
@@ -130,7 +130,7 @@ export default function SupportersPage() {
           <div className="text-center py-20 text-gray-400">
             <div className="text-3xl mb-3">😢</div>
             <p>該当するサポーターが見つかりませんでした</p>
-            <button onClick={() => setTypeFilter(null)} className="mt-3 text-sm text-green-500 hover:text-green-600">
+            <button onClick={() => setTypeFilter(null)} className="mt-3 text-sm text-teal-500 hover:text-teal-600">
               フィルターをリセット
             </button>
           </div>
@@ -141,10 +141,10 @@ export default function SupportersPage() {
               return (
                 <Link key={s.id} href={`/supporters/${s.id}`}
                   className={`bg-white rounded-2xl p-5 shadow-sm border transition-all block hover:shadow-md ${
-                    matched ? 'border-green-300 hover:border-green-400' : 'border-gray-100 hover:border-green-100'
+                    matched ? 'border-teal-300 hover:border-teal-400' : 'border-gray-100 hover:border-teal-100'
                   }`}>
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-2xl flex-shrink-0">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center text-2xl flex-shrink-0">
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -153,7 +153,7 @@ export default function SupportersPage() {
                           {s.organization_name || s.display_name}
                         </h3>
                         {matched && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium whitespace-nowrap">
+                          <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium whitespace-nowrap">
                             📍 あなたの地域
                           </span>
                         )}
@@ -172,7 +172,7 @@ export default function SupportersPage() {
                   </div>
 
                   <div className="flex gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                    <span>✅ 解決 <strong className="text-green-600">{s.resolved_count}件</strong></span>
+                    <span>✅ 解決 <strong className="text-teal-600">{s.resolved_count}件</strong></span>
                     <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
                   </div>
                 </Link>

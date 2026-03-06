@@ -230,7 +230,7 @@ export default function SOSDashboard() {
                 </div>
                 <Button
                   onClick={handleStartNewCase}
-                  className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                 >
                   ＋ 新しい相談を始める
                 </Button>
@@ -244,7 +244,7 @@ export default function SOSDashboard() {
                   <p className="text-gray-500 mb-4">進行中の相談はありません</p>
                   <Button
                     onClick={() => router.push('/sos/hearing')}
-                    className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                    className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                   >
                     最初の相談を始める
                   </Button>
@@ -347,7 +347,7 @@ export default function SOSDashboard() {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-semibold text-gray-800">{case_.title}</h3>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${case_.status === 'RESOLVED'
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-teal-50 text-teal-700'
                               : 'bg-gray-100 text-gray-600'
                               }`}>
                               {case_.status === 'RESOLVED' ? '✓ 解決済み' : '取消済み'}

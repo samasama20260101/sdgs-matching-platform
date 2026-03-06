@@ -90,7 +90,7 @@ function StatCard({ value, label, suffix = '' }: { value: number; label: string;
   const { count, nodeRef } = useCountUp(value);
   return (
     <div ref={nodeRef} className="text-center p-6">
-      <div className="text-4xl font-black text-green-600 mb-1">
+      <div className="text-4xl font-black text-teal-600 mb-1">
         {count.toLocaleString()}{suffix}
       </div>
       <div className="text-sm text-gray-500 font-medium">{label}</div>
@@ -140,17 +140,17 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Logo variant="default" size="sm" showText={true} />
           <div className="flex items-center gap-3">
-            <Link href="/supporters" className="text-sm text-gray-500 hover:text-green-600 transition-colors">
+            <Link href="/supporters" className="text-sm text-gray-500 hover:text-teal-600 transition-colors">
               サポーター一覧
             </Link>
-            <Link href="/story" className="text-sm text-gray-500 hover:text-green-600 transition-colors">
+            <Link href="/story" className="text-sm text-gray-500 hover:text-teal-600 transition-colors">
               私たちの思い
             </Link>
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
               ログイン
             </Link>
             <Link href="/signup"
-              className="text-sm bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
               相談する
             </Link>
           </div>
@@ -158,14 +158,14 @@ export default function HomePage() {
       </header>
 
       {/* ── ヒーロー ── */}
-      <section className="bg-gradient-to-br from-green-50 via-blue-50 to-white pt-20 pb-24 px-6">
+      <section className="bg-gradient-to-br from-teal-50 via-blue-50 to-white pt-20 pb-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-block bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full mb-6 tracking-wide">
+          <div className="inline-block bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1 rounded-full mb-6 tracking-wide">
             NPO・支援団体と繋がるプラットフォーム
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-gray-900 leading-tight mb-6">
             ひとりで抱えずに、<br />
-            <span className="text-green-500">誰かと一緒に</span>解決しよう
+            <span className="text-teal-500">誰かと一緒に</span>解決しよう
           </h1>
           <p className="text-lg text-gray-500 mb-10 leading-relaxed">
             生活困窮・教育・環境・差別・孤立など、社会的な困りごとを<br className="hidden sm:block" />
@@ -173,7 +173,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup"
-              className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+              className="px-8 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
               無料で相談する →
             </Link>
             <Link href="/supporters"
@@ -184,7 +184,7 @@ export default function HomePage() {
           <p className="text-xs text-gray-400 mt-4">登録無料・承認するまで個人情報は渡りません</p>
           <div className="mt-5 flex items-center justify-center gap-2 text-sm text-gray-400">
             <span>すでにアカウントをお持ちの方は</span>
-            <Link href="/login" className="text-green-600 font-bold hover:text-green-700 border-b border-dashed border-green-400 hover:border-green-600 transition-colors">
+            <Link href="/login" className="text-teal-600 font-bold hover:text-teal-700 border-b border-dashed border-teal-400 hover:border-teal-600 transition-colors">
               こちらからログイン →
             </Link>
           </div>
@@ -221,12 +221,12 @@ export default function HomePage() {
           <div className="space-y-4">
             {STEPS.map((step, i) => (
               <div key={i} className="flex gap-5 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-2xl">
+                <div className="flex-shrink-0 w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-2xl">
                   {step.icon}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-bold text-teal-500 bg-teal-50 px-2 py-0.5 rounded-full">
                       STEP {i + 1}
                     </span>
                     <span className="font-bold text-gray-800">{step.title}</span>
@@ -270,16 +270,16 @@ export default function HomePage() {
                                 <p className="text-gray-500 text-sm mt-1">{featuredSupporters.length > 0 ? 'おすすめ団体をピックアップ' : '事前に確認してから相談できます'}</p>
               </div>
               <Link href="/supporters"
-                className="text-sm text-green-600 hover:text-green-700 font-medium border border-green-200 px-4 py-2 rounded-full hover:bg-green-50 transition-colors">
+                className="text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 px-4 py-2 rounded-full hover:bg-teal-50 transition-colors">
                 全{supporters.length}団体を見る →
               </Link>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               {previewSupporters.map(s => (
                 <Link key={s.id} href={`/supporters/${s.id}`}
-                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-green-100 transition-all block">
+                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-teal-100 transition-all block">
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-xl flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center text-xl flex-shrink-0">
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div>
@@ -303,7 +303,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <div className="flex gap-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                    <span>✅ 解決 <strong className="text-green-600">{s.resolved_count}件</strong></span>
+                    <span>✅ 解決 <strong className="text-teal-600">{s.resolved_count}件</strong></span>
                     <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
                   </div>
                 </Link>
@@ -340,23 +340,23 @@ export default function HomePage() {
       </section>
 
       {/* ── 最終CTA ── */}
-      <section className="py-20 px-6 bg-gradient-to-br from-green-500 to-teal-500 text-white text-center">
+      <section className="py-20 px-6 bg-gradient-to-br from-teal-500 to-teal-500 text-white text-center">
         <div className="max-w-xl mx-auto">
           <div className="flex justify-center mb-4">
             <Logo variant="white" size="md" showText={false} />
           </div>
           <h2 className="text-3xl font-black mb-4">一歩踏み出してみませんか</h2>
-          <p className="text-green-100 mb-8 leading-relaxed">
+          <p className="text-teal-100 mb-8 leading-relaxed">
             あなたの困りごとを解決できる専門家が、待っています。<br />
             相談は無料。承認するまで個人情報は渡りません。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup"
-              className="px-8 py-4 bg-white text-green-600 rounded-2xl font-bold text-lg hover:bg-green-50 transition-all shadow-lg">
+              className="px-8 py-4 bg-white text-teal-600 rounded-2xl font-bold text-lg hover:bg-teal-50 transition-all shadow-lg">
               無料で相談する →
             </Link>
             <Link href="/login"
-              className="px-8 py-4 bg-green-600/40 hover:bg-green-600/60 text-white border border-white/30 rounded-2xl font-bold text-lg transition-all">
+              className="px-8 py-4 bg-teal-600/40 hover:bg-teal-600/60 text-white border border-white/30 rounded-2xl font-bold text-lg transition-all">
               ログインする
             </Link>
           </div>

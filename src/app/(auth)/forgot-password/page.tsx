@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
 
     if (isSent) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center p-4">
                 <Card className="w-full max-w-md">
                     <CardHeader className="space-y-1 text-center">
                         <div className="text-5xl mb-2">📧</div>
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
                     <div className="text-center text-4xl mb-2">🔑</div>
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
                         )}
                         <Button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             disabled={isLoading}>
                             {isLoading ? '送信中...' : '再設定メールを送る'}
                         </Button>
