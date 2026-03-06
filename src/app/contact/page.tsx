@@ -49,7 +49,12 @@ export default function ContactPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // getSession() がnullを返す場合があるため、refreshSession() でフォールバック
+      let { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        session = refreshData.session;
+      }
       if (session) {
         setAuthUser(session.user);
         const res = await fetch('/api/auth/get-role', {
