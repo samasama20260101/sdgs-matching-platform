@@ -215,24 +215,19 @@ export default function ContactPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 お問い合わせの種類 <span className="text-red-500">*</span>
               </label>
-              <div className="space-y-2">
+              <select
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 bg-white appearance-none cursor-pointer"
+              >
+                <option value="">選択してください</option>
                 {categories.map(cat => (
-                  <label key={cat} className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
-                    category === cat
-                      ? 'border-teal-400 bg-teal-50 text-teal-700'
-                      : 'border-gray-200 hover:border-teal-200 hover:bg-gray-50'
-                  } ${cat === '退会希望' ? 'border-red-200 hover:border-red-300' : ''}`}>
-                    <input
-                      type="radio" name="category" value={cat}
-                      checked={category === cat}
-                      onChange={() => setCategory(cat)}
-                      className="accent-teal-500"
-                    />
-                    <span className="text-sm">{cat}</span>
-                    {cat === '退会希望' && <span className="ml-auto text-xs text-red-400">退会をご希望の方</span>}
-                  </label>
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
-              </div>
+              </select>
+              {category === '退会希望' && (
+                <p className="mt-2 text-xs text-red-500">※ 退会をご希望の場合、担当者より手続きのご案内をメールにてお送りします</p>
+              )}
             </div>
 
             {/* 詳細 */}
@@ -240,11 +235,7 @@ export default function ContactPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 詳細 <span className="text-red-500">*</span>
               </label>
-              {isRetirement && (
-                <div className="mb-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-                  退会をご希望の場合、担当者より手続きのご案内をメールにてお送りします。
-                </div>
-              )}
+
               <textarea
                 value={message} onChange={e => setMessage(e.target.value)}
                 placeholder={messagePlaceholder}
