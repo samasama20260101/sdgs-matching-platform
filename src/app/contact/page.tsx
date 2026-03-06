@@ -118,7 +118,7 @@ export default function ContactPage() {
           </Link>
           {userData && (
             <span className="text-xs text-gray-400">
-              {userData.role === 'SOS' ? userData.display_id : userData.display_id} でログイン中
+              {userData.display_id || userData.email} でログイン中
             </span>
           )}
         </div>
@@ -159,7 +159,7 @@ export default function ContactPage() {
             {/* ログイン状態表示 */}
             {userData && (
               <div className="bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 text-sm text-teal-700">
-                <span className="font-medium">{userData.display_id}</span> としてログイン中 — メールアドレスは自動的に使用されます
+                <span className="font-medium">{userData.display_id || userData.email}</span> としてログイン中 — メールアドレスは自動的に使用されます
               </div>
             )}
 

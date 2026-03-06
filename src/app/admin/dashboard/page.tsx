@@ -434,7 +434,7 @@ export default function AdminDashboardPage() {
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{iq.display_id}</span>
                                                     {iq.role && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">{iq.role}</span>}
-                                                    {iq.users?.display_id && <span className="text-xs text-gray-400">{iq.users.display_id}</span>}
+                                                    {iq.users?.organization_name && <span className="text-xs text-gray-400">{iq.users.organization_name}</span>}
                                                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                                                         iq.status === 'OPEN' ? 'bg-rose-50 text-rose-600 border border-rose-200' :
                                                         iq.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-600 border border-yellow-200' :

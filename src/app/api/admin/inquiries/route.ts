@@ -23,13 +23,16 @@ export async function GET(request: Request) {
 
     let query = supabaseAdmin
         .from('inquiries')
-        .select('*, users(display_id, display_name, organization_name)')
+        .select('*, users(display_name, organization_name)')
         .order('created_at', { ascending: false })
 
     if (status) query = query.eq('status', status)
 
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+        console.error('[admin/inquiries GET] error:', error)
+        return NextResponse.json({ error: error.message, detail: error }, { status: 500 })
+    }
 
     // 未対応件数
     const { count: openCount } = await supabaseAdmin
