@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Logo } from '@/components/icons/Logo';
 
-const supabase = createClient();
+
 
 const CATEGORIES = {
   guest: [
