@@ -143,6 +143,9 @@ export default function HomePage() {
             <Link href="/supporters" className="text-sm text-gray-500 hover:text-green-600 transition-colors">
               サポーター一覧
             </Link>
+            <Link href="/story" className="text-sm text-gray-500 hover:text-green-600 transition-colors">
+              私たちの思い
+            </Link>
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
               ログイン
             </Link>
@@ -183,6 +186,15 @@ export default function HomePage() {
             <span>すでにアカウントをお持ちの方は</span>
             <Link href="/login" className="text-green-600 font-bold hover:text-green-700 border-b border-dashed border-green-400 hover:border-green-600 transition-colors">
               こちらからログイン →
+            </Link>
+          </div>
+          <div className="mt-6">
+            <Link href="/story" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-teal-600 transition-colors group">
+              <svg width="14" height="14" viewBox="0 0 56 56" fill="none">
+                <path d="M28 4C28 4 8 24 8 38C8 49.5 17.1 54 28 54C38.9 54 48 49.5 48 38C48 24 28 4 28 4Z" fill="#0BC5A4"/>
+              </svg>
+              <span className="border-b border-dashed border-gray-300 group-hover:border-teal-400 transition-colors">私たちの思いを読む</span>
+              <span>→</span>
             </Link>
           </div>
         </div>
@@ -352,9 +364,14 @@ export default function HomePage() {
       </section>
 
       {/* ── フッター ── */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-6 text-center text-xs">
-        <div className="flex justify-center mb-2">
+      <footer className="bg-gray-900 text-gray-400 py-10 px-6 text-center text-xs">
+        <div className="flex justify-center mb-4">
           <Logo variant="white" size="sm" showText={true} />
+        </div>
+        <div className="flex justify-center gap-6 mb-4 text-gray-500">
+          <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">私たちの思い</Link>
+          <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">サポーター一覧</Link>
+          <Link href="/login" className="hover:text-teal-400 transition-colors tracking-wide">ログイン</Link>
         </div>
         <p>© 2026 明日もsamasama. All rights reserved.</p>
       </footer>
