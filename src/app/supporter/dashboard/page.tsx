@@ -183,6 +183,7 @@ export default function SupporterDashboard() {
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
+  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -218,9 +219,14 @@ export default function SupporterDashboard() {
 
       // API経由で案件・オファー・バッジを一括取得（RLSバイパス）
       if (dashRes.ok) {
-        const { cases: enriched, badgeCounts } = await dashRes.json();
+        const json = await dashRes.json();
+        const { cases: enriched, badgeCounts, _debug } = json;
         setCases(enriched || []);
         setBadgeCounts(badgeCounts || {});
+        setDebugInfo(_debug || null);
+      } else {
+        const errText = await dashRes.text();
+        setDebugInfo({ error: dashRes.status, body: errText });
       }
 
       setIsLoading(false);
