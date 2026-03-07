@@ -85,5 +85,24 @@ export async function GET(request: Request) {
         badgeCounts[b.badge_key] = (badgeCounts[b.badge_key] || 0) + 1
     })
 
-    return NextResponse.json({ cases: enriched, badgeCounts })
+    // デバッグ情報（確認後削除）
+    const { data: allCases } = await supabaseAdmin
+        .from('cases')
+        .select('id, status, visibility, ai_sdg_suggestion')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+    return NextResponse.json({ 
+        cases: enriched, 
+        badgeCounts,
+        _debug: {
+            total_cases_in_db: allCases?.length ?? 0,
+            cases_by_status: allCases?.reduce((acc: Record<string,number>, c) => { acc[c.status] = (acc[c.status]||0)+1; return acc }, {}),
+            cases_by_visibility: allCases?.reduce((acc: Record<string,number>, c) => { const v = c.visibility ?? 'null'; acc[v] = (acc[v]||0)+1; return acc }, {}),
+            ai_analyzed: allCases?.filter(c => c.ai_sdg_suggestion !== null).length ?? 0,
+            open_listed: openCases?.length ?? 0,
+            my_offer_case_ids: myOfferCaseIds,
+            my_cases_count: myCases?.length ?? 0,
+        }
+    })
 }
