@@ -183,7 +183,6 @@ export default function SupporterDashboard() {
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
-  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -219,14 +218,9 @@ export default function SupporterDashboard() {
 
       // API経由で案件・オファー・バッジを一括取得（RLSバイパス）
       if (dashRes.ok) {
-        const json = await dashRes.json();
-        const { cases: enriched, badgeCounts, _debug } = json;
+        const { cases: enriched, badgeCounts } = await dashRes.json();
         setCases(enriched || []);
         setBadgeCounts(badgeCounts || {});
-        setDebugInfo(_debug || null);
-      } else {
-        const errText = await dashRes.text();
-        setDebugInfo({ error: dashRes.status, body: errText });
       }
 
       setIsLoading(false);
@@ -266,18 +260,7 @@ export default function SupporterDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      {/* デバッグパネル */}
-      {debugInfo && (
-        <div style={{background:'#fef9c3',border:'2px solid #ca8a04',padding:'16px',margin:'8px',borderRadius:'8px',fontSize:'12px',fontFamily:'monospace'}}>
-          <strong>🔍 DEBUG:</strong>
-          <pre style={{whiteSpace:'pre-wrap',marginTop:'8px'}}>{JSON.stringify(debugInfo, null, 2)}</pre>
-        </div>
-      )}
-      {!debugInfo && (
-        <div style={{background:'#fee2e2',border:'2px solid #dc2626',padding:'8px',margin:'8px',borderRadius:'8px',fontSize:'12px'}}>
-          ⚠️ debugInfo is null — API returned no _debug field or dashRes failed
-        </div>
-      )}
+
       <main className="max-w-4xl mx-auto px-6 py-8">
         <div className="mb-6">
           <div className="flex items-start justify-between gap-4">
