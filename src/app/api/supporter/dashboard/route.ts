@@ -2,7 +2,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, ai_keywords, owner_user_id'
+const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id'
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get('Authorization')
