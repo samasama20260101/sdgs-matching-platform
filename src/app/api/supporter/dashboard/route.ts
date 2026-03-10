@@ -96,15 +96,5 @@ export async function GET(request: Request) {
         badgeCounts[b.badge_key] = (badgeCounts[b.badge_key] || 0) + 1
     })
 
-    return NextResponse.json({
-        cases: enriched,
-        badgeCounts,
-        _debug: {
-            open_listed: openCases?.length ?? 0,
-            my_offer_case_ids_count: myOfferCaseIds.length,
-            my_cases_count: myCases?.length ?? 0,
-            merged: mergedCases.length,
-            enriched_count: enriched.length,
-        }
-    })
+    return NextResponse.json({ cases: enriched, badgeCounts })
 }
