@@ -1,9 +1,8 @@
 // src/app/api/supporter/dashboard/route.ts
-// サポーターダッシュボード用：案件一覧・オファー状況・バッジ取得（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, ai_keywords, users!cases_owner_user_id_fkey ( display_name, prefecture )'
+const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, ai_keywords, owner_user_id'
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
 
     const supporterUserId = userData.id
 
-    // 1. 公開中のOPEN案件（visibility=LISTEDのみ・AI分析済み問わず）
+    // 1. OPEN+LISTED案件（JOINなし）
     const { data: openCases, error: openErr } = await supabaseAdmin
         .from('cases')
         .select(CASE_SELECT)
@@ -30,16 +29,14 @@ export async function GET(request: Request) {
         .eq('status', 'OPEN')
         .order('created_at', { ascending: false })
         .limit(200)
+    if (openErr) console.error('openCases error:', JSON.stringify(openErr))
 
-    if (openErr) console.error('openCases error:', openErr)
-
-    // 2. 自分がオファーしたことがある全案件ID（ステータス問わず）
+    // 2. 自分のオファー全件
     const { data: myAllOffers, error: offerErr } = await supabaseAdmin
         .from('offers')
         .select('case_id, status')
         .eq('supporter_user_id', supporterUserId)
-
-    if (offerErr) console.error('myAllOffers error:', offerErr)
+    if (offerErr) console.error('myAllOffers error:', JSON.stringify(offerErr))
 
     const offerMap: Record<string, string> = {}
     ;(myAllOffers || []).forEach((o: { case_id: string; status: string }) => {
@@ -47,7 +44,7 @@ export async function GET(request: Request) {
     })
     const myOfferCaseIds = Object.keys(offerMap)
 
-    // 3. 自分がオファーした案件を全件取得（OPEN含む全ステータス）
+    // 3. 自分がオファーした案件（JOINなし）
     let myCases: typeof openCases = []
     if (myOfferCaseIds.length > 0) {
         const { data: myC, error: myCErr } = await supabaseAdmin
@@ -55,26 +52,40 @@ export async function GET(request: Request) {
             .select(CASE_SELECT)
             .in('id', myOfferCaseIds)
             .order('created_at', { ascending: false })
-        if (myCErr) console.error('myCases error:', myCErr)
+        if (myCErr) console.error('myCases error:', JSON.stringify(myCErr))
         myCases = myC || []
     }
 
-    // 重複排除・マージ（自分のオファー案件優先）
-    const caseMap = new Map<string, (typeof openCases extends (infer T)[] | null ? T : never)>()
-    // まずOPEN案件を入れる
+    // 重複排除マージ
+    const caseMap = new Map<string, NonNullable<typeof openCases>[number]>()
     ;(openCases || []).forEach(c => { if (!caseMap.has(c.id)) caseMap.set(c.id, c) })
-    // 自分のオファー案件で上書き（より詳しい状態が入っている）
     ;(myCases || []).forEach(c => { caseMap.set(c.id, c) })
+    const mergedCases = Array.from(caseMap.values())
 
-    const casesData = Array.from(caseMap.values())
+    // 4. owner_user_idを収集して users を2ステップで取得
+    const ownerIds = [...new Set(mergedCases.map(c => c.owner_user_id).filter(Boolean))]
+    const userMap: Record<string, { display_name: string; prefecture?: string | null }> = {}
+    if (ownerIds.length > 0) {
+        const { data: owners, error: ownerErr } = await supabaseAdmin
+            .from('users')
+            .select('id, display_name, prefecture')
+            .in('id', ownerIds)
+        if (ownerErr) console.error('owners error:', JSON.stringify(ownerErr))
+        ;(owners || []).forEach((u: { id: string; display_name: string; prefecture?: string | null }) => {
+            userMap[u.id] = { display_name: u.display_name, prefecture: u.prefecture }
+        })
+    }
+
+    // 5. enriched（my_offer_status + users 付与）
+    const enriched = mergedCases
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .map(c => ({
+            ...c,
+            my_offer_status: offerMap[c.id] || null,
+            users: userMap[c.owner_user_id] || null,
+        }))
 
-    const enriched = casesData.map(c => ({
-        ...c,
-        my_offer_status: offerMap[c.id] || null,
-    }))
-
-    // 4. バッジ集計
+    // 6. バッジ集計
     const { data: badges } = await supabaseAdmin
         .from('supporter_badges')
         .select('badge_key')
@@ -85,24 +96,15 @@ export async function GET(request: Request) {
         badgeCounts[b.badge_key] = (badgeCounts[b.badge_key] || 0) + 1
     })
 
-    // デバッグ情報（確認後削除）
-    const { data: allCases } = await supabaseAdmin
-        .from('cases')
-        .select('id, status, visibility, ai_sdg_suggestion')
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-    return NextResponse.json({ 
-        cases: enriched, 
+    return NextResponse.json({
+        cases: enriched,
         badgeCounts,
         _debug: {
-            total_cases_in_db: allCases?.length ?? 0,
-            cases_by_status: allCases?.reduce((acc: Record<string,number>, c) => { acc[c.status] = (acc[c.status]||0)+1; return acc }, {}),
-            cases_by_visibility: allCases?.reduce((acc: Record<string,number>, c) => { const v = c.visibility ?? 'null'; acc[v] = (acc[v]||0)+1; return acc }, {}),
-            ai_analyzed: allCases?.filter(c => c.ai_sdg_suggestion !== null).length ?? 0,
             open_listed: openCases?.length ?? 0,
-            my_offer_case_ids: myOfferCaseIds,
+            my_offer_case_ids_count: myOfferCaseIds.length,
             my_cases_count: myCases?.length ?? 0,
+            merged: mergedCases.length,
+            enriched_count: enriched.length,
         }
     })
 }
