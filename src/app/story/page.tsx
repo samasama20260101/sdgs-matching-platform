@@ -395,15 +395,16 @@ export default function StoryPage() {
           </Reveal>
           <Reveal delay={100}>
             <p className="serif text-white/85 text-base sm:text-lg leading-[2.8] tracking-widest mb-12">
-              私たちが恐れるのは、<br />
-              誰かが<strong className="text-teal-400">「もう明日はいらない」</strong>と<br />
-              思ってしまう瞬間です。<br /><br />
-              「明日もsamasama」は、<br />
-              今どんなに辛くても、<strong className="text-teal-400">明日はきっと今日より少しだけ良くなる</strong>、<br />
-              という祈りが込められています。<br /><br />
-              昨日より今日、今日より明日——<br />
-              小さな一歩が、人生を変えることを<br />
-              私たちは信じています。
+              ひとりで抱えきれない問題に向き合うとき、<br />
+              答えがわからないままでは、<br />
+              <strong className="text-teal-400">明日が来ることが困難だと思う人</strong>が<br />
+              きっといるとしたら。<br /><br />
+              情報がその答えならば、<br />
+              <strong className="text-white">知りたいときに手が届く場所</strong>になければならない。<br /><br />
+              答えがあるならば、<br />
+              <strong className="text-white">必要とする人のもとに伝わら</strong>なければならない。<br /><br />
+              今日も、明日も、変わらずその先も。<br /><br />
+              それでは、また明日も、<strong className="text-teal-400">samasama</strong>。
             </p>
           </Reveal>
           <Reveal delay={200}>
