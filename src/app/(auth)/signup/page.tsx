@@ -67,19 +67,25 @@ export default function SignupPage() {
       if (authError) throw authError
       if (!authData.user) throw new Error('アカウント作成に失敗しました')
 
-      // 2. users テーブルにレコード作成
-      const { error: profileError } = await supabase.from('users').insert({
-        auth_user_id: authData.user.id,
-        role: 'SOS',
-        real_name: realName,
-        display_name: displayName || realName,
-        email,
-        phone: phone || null,
-        gender,
-        birth_date: birthDate,
+      // 2. users テーブルにレコード作成（APIルート経由 / supabaseAdmin使用）
+      const profileRes = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth_user_id: authData.user.id,
+          email,
+          real_name: realName,
+          display_name: displayName || realName,
+          phone: phone || null,
+          gender,
+          birth_date: birthDate,
+        }),
       })
 
-      if (profileError) throw profileError
+      if (!profileRes.ok) {
+        const { error: profileError } = await profileRes.json()
+        throw new Error(profileError || 'プロフィールの保存に失敗しました')
+      }
 
       router.push('/sos/dashboard')
     } catch (err: unknown) {
