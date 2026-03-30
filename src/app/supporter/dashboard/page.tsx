@@ -1,6 +1,6 @@
 // src/app/supporter/dashboard/page.tsx
-import { isMinor } from '@/lib/utils/age'
 'use client';
+import { isMinor } from '@/lib/utils/age'
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
