@@ -108,7 +108,6 @@ export default function SOSHearingPage() {
     { icon: '📝', label: '相談内容を読み取っています...' },
     { icon: '🤖', label: 'AIが状況を分析しています...' },
     { icon: '🌍', label: 'SDGsの視点で課題を分類しています...' },
-    { icon: '🔍', label: '最適なサポーターを探しています...' },
     { icon: '✨', label: 'マッチングの準備をしています...' },
   ];
 
@@ -205,7 +204,7 @@ export default function SOSHearingPage() {
 
     // AIステップを1秒ごとに進める
     const stepInterval = setInterval(() => {
-      setAiStep(prev => (prev < 4 ? prev + 1 : prev));
+      setAiStep(prev => (prev < 3 ? prev + 1 : prev));
     }, 1200);
 
     // 30秒でタイムアウト
