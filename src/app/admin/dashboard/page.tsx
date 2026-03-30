@@ -1,4 +1,5 @@
 'use client'
+import { isMinor } from '@/lib/utils/age'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -16,6 +17,7 @@ type FeaturedSupporter = {
 type SosUser = {
     id: string; display_name: string; real_name: string
     email: string; created_at: string; sos_region_code: string | null
+    birth_date: string | null
     is_suspended: boolean | null
 }
 type Case = {
@@ -351,6 +353,7 @@ export default function AdminDashboardPage() {
                                                 <th className="px-6 py-3 text-left">本名</th>
                                                 <th className="px-6 py-3 text-left">メール</th>
                                                 <th className="px-6 py-3 text-left">地域コード</th>
+                                                <th className="px-6 py-3 text-center">未成年</th>
                                                 <th className="px-6 py-3 text-left">登録日</th>
                                                 <th className="px-6 py-3 text-center">操作</th>
                                             </tr>
@@ -362,6 +365,13 @@ export default function AdminDashboardPage() {
                                                     <td className="px-6 py-4 text-gray-700">{u.real_name || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-500">{u.email}</td>
                                                     <td className="px-6 py-4 text-gray-500">{u.sos_region_code || '—'}</td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        {isMinor(u.birth_date) && (
+                                                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                                                🔰 未成年
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 text-gray-400">{new Date(u.created_at).toLocaleDateString('ja-JP')}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center justify-center gap-1">

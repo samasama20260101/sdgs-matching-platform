@@ -64,15 +64,15 @@ export async function GET(request: Request) {
 
     // 4. owner_user_idを収集して users を2ステップで取得
     const ownerIds = [...new Set(mergedCases.map(c => c.owner_user_id).filter(Boolean))]
-    const userMap: Record<string, { display_name: string; prefecture?: string | null }> = {}
+    const userMap: Record<string, { display_name: string; prefecture?: string | null; birth_date?: string | null }> = {}
     if (ownerIds.length > 0) {
         const { data: owners, error: ownerErr } = await supabaseAdmin
             .from('users')
-            .select('id, display_name, prefecture')
+            .select('id, display_name, prefecture, birth_date')
             .in('id', ownerIds)
         if (ownerErr) console.error('owners error:', JSON.stringify(ownerErr))
-        ;(owners || []).forEach((u: { id: string; display_name: string; prefecture?: string | null }) => {
-            userMap[u.id] = { display_name: u.display_name, prefecture: u.prefecture }
+        ;(owners || []).forEach((u: { id: string; display_name: string; prefecture?: string | null; birth_date?: string | null }) => {
+            userMap[u.id] = { display_name: u.display_name, prefecture: u.prefecture, birth_date: u.birth_date }
         })
     }
 
