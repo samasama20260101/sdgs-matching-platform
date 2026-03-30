@@ -16,12 +16,12 @@ async function checkAdmin(request: Request) {
 }
 
 // PATCH: アカウント停止 / 停止解除
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const admin = await checkAdmin(request)
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
 
     const { action } = await request.json() // action: 'suspend' | 'unsuspend'
-    const userId = params.id
+    const { id: userId } = await params
 
     // public.users から auth_user_id を取得
     const { data: userData, error: userError } = await supabaseAdmin
@@ -58,11 +58,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // DELETE: アカウント削除
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const admin = await checkAdmin(request)
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
 
-    const userId = params.id
+    const { id: userId } = await params
 
     // public.users から auth_user_id を取得
     const { data: userData, error: userError } = await supabaseAdmin
