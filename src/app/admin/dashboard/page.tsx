@@ -610,38 +610,44 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">組織名 <span className="text-red-500">*</span></label>
-                                    <input type="text" required value={form.organization_name} onChange={e => setForm({ ...form, organization_name: e.target.value })}
+                                    <input type="text" required maxLength={64} value={form.organization_name} onChange={e => setForm({ ...form, organization_name: e.target.value })}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">担当者名 <span className="text-red-500">*</span></label>
-                                    <input type="text" required value={form.real_name} onChange={e => setForm({ ...form, real_name: e.target.value })}
+                                    <input type="text" required maxLength={64} value={form.real_name} onChange={e => setForm({ ...form, real_name: e.target.value })}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">表示名</label>
-                                    <input type="text" value={form.display_name} onChange={e => setForm({ ...form, display_name: e.target.value })}
+                                    <input type="text" maxLength={64} value={form.display_name} onChange={e => setForm({ ...form, display_name: e.target.value })}
                                         placeholder={form.organization_name || form.real_name}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">メールアドレス <span className="text-red-500">*</span></label>
-                                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                                <input type="email" required maxLength={254} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">初期パスワード <span className="text-red-500">*</span></label>
-                                <input type="text" required minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                                <input type="text" required minLength={8} maxLength={64} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                                     placeholder="8文字以上（サポーターに別途通知してください）"
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">電話番号</label>
-                                <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+                                <input type="tel" value={form.phone}
+                                    onChange={e => {
+                                        const sanitized = e.target.value.replace(/[-\s().+]/g, '');
+                                        if (sanitized.length <= 15) setForm({ ...form, phone: e.target.value });
+                                    }}
+                                    placeholder="例：090-1234-5678（ハイフンあり可）"
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                                <p className="mt-1 text-xs text-gray-400">ハイフンは自動的に除去されDBに保存されます（最大15桁）</p>
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setShowCreateModal(false)}

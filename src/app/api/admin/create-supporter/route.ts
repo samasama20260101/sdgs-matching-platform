@@ -39,6 +39,9 @@ export async function POST(request: Request) {
         phone,
     } = body
 
+    // 電話番号のハイフン・スペース・括弧を除去
+    const sanitizedPhone = phone ? phone.replace(/[-\s().+]/g, '') : null
+
     if (!email || !password || !real_name || !organization_name || !supporter_type) {
         return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
     }
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
             real_name,
             display_name: display_name || real_name,
             email,
-            phone: phone || null,
+            phone: sanitizedPhone || null,
             organization_name,
             supporter_type,
             must_change_password: true,
