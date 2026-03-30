@@ -27,6 +27,7 @@ type Case = {
 type UserData = {
   display_name: string;
   role: string;
+  sos_region_code: string | null;
 };
 
 // SDGsゴールの色
@@ -172,6 +173,27 @@ export default function SOSDashboard() {
             困りごとを相談して、支援につながりましょう
           </p>
         </div>
+
+        {/* 地域未設定バナー */}
+        {!userData?.sos_region_code && (
+          <div className="mb-6 flex items-start gap-4 bg-amber-50 border border-amber-300 rounded-xl px-5 py-4">
+            <span className="text-2xl flex-shrink-0">📍</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-800 mb-1">
+                お住まいの地域が登録されていません
+              </p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                地域情報はサポーターがあなたに合った支援を見つけるために必要です。プロフィールから地域を登録してください。
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/profile')}
+              className="flex-shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors"
+            >
+              地域を登録する
+            </button>
+          </div>
+        )}
 
         {/* タブ */}
         <div className="flex gap-1 mb-6 border-b border-gray-200">
