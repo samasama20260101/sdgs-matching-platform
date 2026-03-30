@@ -208,6 +208,14 @@ export default function SOSHearingPage() {
       setAiStep(prev => (prev < 4 ? prev + 1 : prev));
     }, 1200);
 
+    // 30秒でタイムアウト
+    const timeoutId = setTimeout(() => {
+      clearInterval(stepInterval);
+      setIsSubmitting(false);
+      setAiStep(0);
+      setError('処理に時間がかかりすぎています。しばらくしてから再度お試しください。');
+    }, 30000);
+
     try {
       // 回答データ整形
       const qaData: Record<number, string[]> = {};
@@ -266,10 +274,12 @@ export default function SOSHearingPage() {
       }
 
       clearInterval(stepInterval);
+      clearTimeout(timeoutId);
       router.push(`/sos/result/${caseData.id}`);
     } catch (err) {
       console.error('Submit error:', err);
       clearInterval(stepInterval);
+      clearTimeout(timeoutId);
       setError('送信中にエラーが発生しました');
       setIsSubmitting(false);
     }
