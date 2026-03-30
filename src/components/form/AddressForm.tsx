@@ -148,7 +148,7 @@ export default function AddressForm({
                     value={formData.prefecture}
                     onChange={(e) => updateField('prefecture', e.target.value)}
                     required={fieldRequired.prefecture}
-                    maxLength={20}
+                    maxLength={50}
                 />
             </div>
 
