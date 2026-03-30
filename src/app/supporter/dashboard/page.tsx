@@ -1,4 +1,5 @@
 // src/app/supporter/dashboard/page.tsx
+import { isMinor } from '@/lib/utils/age'
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -27,6 +28,7 @@ type Case = {
   users?: {
     display_name: string;
     prefecture?: string | null;
+    birth_date?: string | null;
   };
   my_offer_status?: string | null;
 };
@@ -71,6 +73,11 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${eng.color}`}>{eng.icon} {eng.label}</span>
             {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
+            {isMinor(case_.users?.birth_date) && (
+              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                🔰 未成年
+              </span>
+            )}
           </div>
         </div>
         <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
