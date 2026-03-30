@@ -269,10 +269,6 @@ export default function SOSHearingPage() {
       const caseData = caseResult.case;
 
 
-      if (isUrgent) {
-        alert('⚠️ あなたのことが心配です。\n今すぐ話を聞いてもらえる場所があります。\n\nよりそいホットライン: 0120-279-338（24時間）');
-      }
-
       clearInterval(stepInterval);
       clearTimeout(timeoutId);
       router.push(`/sos/result/${caseData.id}`);
