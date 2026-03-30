@@ -55,6 +55,7 @@ export default function SOSDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isCancelling, setIsCancelling] = useState(false);
   const [cancelModal, setCancelModal] = useState<{
     isOpen: boolean;
     caseId: string;
@@ -105,23 +106,28 @@ export default function SOSDashboard() {
   };
 
   const confirmCancel = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch(`/api/sos/cases/${cancelModal.caseId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify({ status: 'CANCELLED' }),
-    });
-    if (!res.ok) {
-      toast.error('取消に失敗しました');
-      return;
+    if (isCancelling) return;
+    setIsCancelling(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/sos/cases/${cancelModal.caseId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+      if (!res.ok) {
+        toast.error('取消に失敗しました');
+        return;
+      }
+      toast.success('相談を取り消しました');
+      setCancelModal({ isOpen: false, caseId: '', title: '' });
+      loadData();
+    } finally {
+      setIsCancelling(false);
     }
-
-    toast.success('相談を取り消しました');
-    setCancelModal({ isOpen: false, caseId: '', title: '' });
-    loadData();
   };
 
   const handleStartNewCase = () => {
@@ -421,7 +427,8 @@ export default function SOSDashboard() {
           </button>
           <button
             onClick={confirmCancel}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            disabled={isCancelling}
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
           >
             取り消す
           </button>
