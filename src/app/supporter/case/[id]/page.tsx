@@ -54,6 +54,7 @@ export default function SupporterCaseDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [ownerBirthDate, setOwnerBirthDate] = useState<string | null>(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -163,32 +164,43 @@ export default function SupporterCaseDetailPage() {
   };
 
   const confirmWithdraw = async () => {
-    if (!myOffer) return;
-    const token = await getToken();
-    if (!token) return;
-    const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
-    });
-    if (!res.ok) { toast.error('取り下げに失敗しました'); return; }
-    setShowWithdrawModal(false);
-    await loadData();
-    toast.success('申し出を取り下げました');
+    if (!myOffer || isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
+      });
+      if (!res.ok) { toast.error('取り下げに失敗しました'); return; }
+      setShowWithdrawModal(false);
+      await loadData();
+      toast.success('申し出を取り下げました');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleStartProgress = async () => {
-    const token = await getToken();
-    if (!token) return;
-    const res = await fetch(`/api/supporter/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ status: 'IN_PROGRESS', started_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-    setShowStartProgressModal(false);
-    await loadData();
-    toast.success('支援を開始しました！相談者と連携を進めましょう');
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`/api/supporter/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: 'IN_PROGRESS', started_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      setShowStartProgressModal(false);
+      await loadData();
+      toast.success('支援を開始しました！相談者と連携を進めましょう');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleReportResolution = async () => {
