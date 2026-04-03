@@ -39,7 +39,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         .eq('status', 'ACCEPTED')
         .order('accepted_order', { ascending: true })
 
-    return NextResponse.json({ case: caseData, supporterUserId: userData.id, acceptedOffers: acceptedOffers ?? [] })
+    // オーナーの birth_date を取得（未成年判定用）
+    const { data: ownerData } = await supabaseAdmin
+        .from('users')
+        .select('birth_date')
+        .eq('id', caseData.owner_user_id)
+        .single()
+
+    return NextResponse.json({
+        case: caseData,
+        supporterUserId: userData.id,
+        acceptedOffers: acceptedOffers ?? [],
+        ownerBirthDate: ownerData?.birth_date ?? null,
+    })
 }
 
 // PATCH: 案件ステータス更新（サポーターが担当している案件のみ）

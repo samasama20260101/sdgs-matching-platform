@@ -1,0 +1,23 @@
+<svg width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="t" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1FFFD4"/>
+      <stop offset="100%" stop-color="#0878A0"/>
+    </linearGradient>
+    <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0FC8F0"/>
+      <stop offset="100%" stop-color="#0448A8"/>
+    </linearGradient>
+    <radialGradient id="l" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="320" height="320" rx="56" fill="#ffffff"/>
+  <path d="M118,260 Q50,200 50,125 A70,70 0 1,1 190,125 Q190,200 118,260Z" fill="url(#t)" opacity="0.95"/>
+  <path d="M202,60 Q130,140 130,215 A70,70 0 1,0 270,215 Q270,140 202,60Z" fill="url(#b)" opacity="0.90"/>
+  <circle cx="158" cy="210" r="32" fill="url(#l)"/>
+  <circle cx="158" cy="210" r="13" fill="#0f172a" opacity="0.5"/>
+  <circle cx="158" cy="210" r="6"  fill="#0f172a" opacity="0.7"/>
+</svg>

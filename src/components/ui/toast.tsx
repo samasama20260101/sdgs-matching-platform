@@ -51,11 +51,13 @@ export function useToast() {
     const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: ToastType }>>([]);
 
     const showToast = (message: string, type: ToastType = 'info') => {
-        const id = Date.now(); // より確実なID生成
-        setToasts((prev) => [...prev, { id, message, type }]);
-
-        // デバッグ用
-        console.log('[Toast] Showing:', type, message);
+        // 同じメッセージが既に表示中なら追加しない（重複防止）
+        setToasts((prev) => {
+            const isDuplicate = prev.some(t => t.message === message && t.type === type);
+            if (isDuplicate) return prev;
+            const id = Date.now();
+            return [...prev, { id, message, type }];
+        });
     };
 
     const removeToast = (id: number) => {

@@ -1,4 +1,5 @@
 'use client'
+import { isMinor } from '@/lib/utils/age'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -7,7 +8,7 @@ import { supabase } from '@/lib/supabase/client'
 type Supporter = {
     id: string; real_name: string; display_name: string; email: string
     organization_name: string | null; supporter_type: string | null
-    phone: string | null; created_at: string
+    phone: string | null; created_at: string; is_suspended: boolean | null
 }
 type FeaturedSupporter = {
     id: string; display_name: string; organization_name: string | null
@@ -16,6 +17,8 @@ type FeaturedSupporter = {
 type SosUser = {
     id: string; display_name: string; real_name: string
     email: string; created_at: string; sos_region_code: string | null
+    birth_date: string | null
+    is_suspended: boolean | null
 }
 type Case = {
     id: string; title: string; status: string; created_at: string
@@ -44,6 +47,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function AdminDashboardPage() {
     const router = useRouter()
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean; type: 'suspend' | 'unsuspend' | 'delete' | null
+        userId: string; userName: string
+    }>({ isOpen: false, type: null, userId: '', userName: '' })
+    const [actionLoading, setActionLoading] = useState(false)
     const [supporters, setSupporters] = useState<Supporter[]>([])
     const [sosUsers, setSosUsers] = useState<SosUser[]>([])
     const [allCases, setAllCases] = useState<Case[]>([])
@@ -102,6 +110,28 @@ export default function AdminDashboardPage() {
         }
         checkAdmin()
     }, [router, loadData])
+
+    const handleUserAction = async () => {
+        if (actionLoading || !confirmModal.type) return
+        setActionLoading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` }
+            const url = `/api/admin/users/${confirmModal.userId}`
+
+            if (confirmModal.type === 'delete') {
+                await fetch(url, { method: 'DELETE', headers })
+            } else {
+                await fetch(url, { method: 'PATCH', headers, body: JSON.stringify({ action: confirmModal.type }) })
+            }
+            setConfirmModal({ isOpen: false, type: null, userId: '', userName: '' })
+            loadData()
+        } catch {
+            alert('操作に失敗しました')
+        } finally {
+            setActionLoading(false)
+        }
+    }
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -258,6 +288,7 @@ export default function AdminDashboardPage() {
                                                 <th className="px-6 py-3 text-left">メール</th>
                                                 <th className="px-6 py-3 text-left">登録日</th>
                                                 <th className="px-6 py-3 text-center">トップ掲載</th>
+                                                <th className="px-6 py-3 text-center">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -265,8 +296,8 @@ export default function AdminDashboardPage() {
                                                 const featured = featuredSupporters.find(f => f.id === s.id)
                                                 const isFeatured = featured?.is_featured ?? false
                                                 return (
-                                                    <tr key={s.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-4 font-medium text-gray-900">{s.organization_name || '—'}</td>
+                                                    <tr key={s.id} className={`hover:bg-gray-50 ${s.is_suspended ? 'bg-red-50' : ''}`}>
+                                                        <td className="px-6 py-4 font-medium text-gray-900">{s.organization_name || '—'}{s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
                                                         <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
                                                         <td className="px-6 py-4">
                                                             <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO' ? 'bg-blue-100 text-blue-700' : s.supporter_type === 'GOVERNMENT' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -281,6 +312,19 @@ export default function AdminDashboardPage() {
                                                                 className={`text-xl transition-all hover:scale-125 ${isFeatured ? 'opacity-100' : 'opacity-20 hover:opacity-50'}`}>
                                                                 ⭐
                                                             </button>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                {s.is_suspended ? (
+                                                                    <button onClick={() => setConfirmModal({ isOpen: true, type: 'unsuspend', userId: s.id, userName: s.organization_name || s.real_name })}
+                                                                        className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 whitespace-nowrap">停止解除</button>
+                                                                ) : (
+                                                                    <button onClick={() => setConfirmModal({ isOpen: true, type: 'suspend', userId: s.id, userName: s.organization_name || s.real_name })}
+                                                                        className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200">停止</button>
+                                                                )}
+                                                                <button onClick={() => setConfirmModal({ isOpen: true, type: 'delete', userId: s.id, userName: s.organization_name || s.real_name })}
+                                                                    className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">削除</button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 )
@@ -309,17 +353,39 @@ export default function AdminDashboardPage() {
                                                 <th className="px-6 py-3 text-left">本名</th>
                                                 <th className="px-6 py-3 text-left">メール</th>
                                                 <th className="px-6 py-3 text-left">地域コード</th>
+                                                <th className="px-6 py-3 text-center">未成年</th>
                                                 <th className="px-6 py-3 text-left">登録日</th>
+                                                <th className="px-6 py-3 text-center">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {sosUsers.map(u => (
-                                                <tr key={u.id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 font-medium text-gray-900">{u.display_name || '—'}</td>
+                                                <tr key={u.id} className={`hover:bg-gray-50 ${u.is_suspended ? 'bg-red-50' : ''}`}>
+                                                    <td className="px-6 py-4 font-medium text-gray-900">{u.display_name || '—'}{u.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
                                                     <td className="px-6 py-4 text-gray-700">{u.real_name || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-500">{u.email}</td>
                                                     <td className="px-6 py-4 text-gray-500">{u.sos_region_code || '—'}</td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        {isMinor(u.birth_date) && (
+                                                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                                                🔰 未成年
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 text-gray-400">{new Date(u.created_at).toLocaleDateString('ja-JP')}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            {u.is_suspended ? (
+                                                                <button onClick={() => setConfirmModal({ isOpen: true, type: 'unsuspend', userId: u.id, userName: u.display_name || u.real_name })}
+                                                                    className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 whitespace-nowrap">停止解除</button>
+                                                            ) : (
+                                                                <button onClick={() => setConfirmModal({ isOpen: true, type: 'suspend', userId: u.id, userName: u.display_name || u.real_name })}
+                                                                    className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200">停止</button>
+                                                            )}
+                                                            <button onClick={() => setConfirmModal({ isOpen: true, type: 'delete', userId: u.id, userName: u.display_name || u.real_name })}
+                                                                className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">削除</button>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -610,38 +676,44 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">組織名 <span className="text-red-500">*</span></label>
-                                    <input type="text" required value={form.organization_name} onChange={e => setForm({ ...form, organization_name: e.target.value })}
+                                    <input type="text" required maxLength={64} value={form.organization_name} onChange={e => setForm({ ...form, organization_name: e.target.value })}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">担当者名 <span className="text-red-500">*</span></label>
-                                    <input type="text" required value={form.real_name} onChange={e => setForm({ ...form, real_name: e.target.value })}
+                                    <input type="text" required maxLength={64} value={form.real_name} onChange={e => setForm({ ...form, real_name: e.target.value })}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">表示名</label>
-                                    <input type="text" value={form.display_name} onChange={e => setForm({ ...form, display_name: e.target.value })}
+                                    <input type="text" maxLength={64} value={form.display_name} onChange={e => setForm({ ...form, display_name: e.target.value })}
                                         placeholder={form.organization_name || form.real_name}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">メールアドレス <span className="text-red-500">*</span></label>
-                                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                                <input type="email" required maxLength={254} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">初期パスワード <span className="text-red-500">*</span></label>
-                                <input type="text" required minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                                <input type="text" required minLength={8} maxLength={64} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                                     placeholder="8文字以上（サポーターに別途通知してください）"
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">電話番号</label>
-                                <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+                                <input type="tel" value={form.phone}
+                                    onChange={e => {
+                                        const sanitized = e.target.value.replace(/[-\s().+]/g, '');
+                                        if (sanitized.length <= 15) setForm({ ...form, phone: e.target.value });
+                                    }}
+                                    placeholder="例：090-1234-5678（ハイフンあり可）"
                                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                                <p className="mt-1 text-xs text-gray-400">ハイフンは自動的に除去されDBに保存されます（最大15桁）</p>
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setShowCreateModal(false)}
@@ -652,6 +724,56 @@ export default function AdminDashboardPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── ユーザー操作確認モーダル ── */}
+            {confirmModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-xl shadow-2xl p-6 mx-4 max-w-sm w-full">
+                        <div className="text-center mb-4">
+                            <div className="text-4xl mb-3">
+                                {confirmModal.type === 'delete' ? '🗑️' : confirmModal.type === 'suspend' ? '🚫' : '✅'}
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                {confirmModal.type === 'delete' ? 'アカウントを削除しますか？' :
+                                 confirmModal.type === 'suspend' ? 'アカウントを停止しますか？' :
+                                 'アカウント停止を解除しますか？'}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                <span className="font-medium">{confirmModal.userName}</span>
+                            </p>
+                            {confirmModal.type === 'delete' && (
+                                <p className="text-xs text-red-600 mt-2 bg-red-50 rounded-lg p-2">
+                                    ⚠️ この操作は取り消せません。関連データもすべて削除されます。
+                                </p>
+                            )}
+                            {confirmModal.type === 'suspend' && (
+                                <p className="text-xs text-orange-600 mt-2 bg-orange-50 rounded-lg p-2">
+                                    停止するとこのユーザーはログインできなくなります。
+                                </p>
+                            )}
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmModal({ isOpen: false, type: null, userId: '', userName: '' })}
+                                className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-50">
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={handleUserAction}
+                                disabled={actionLoading}
+                                className={`flex-1 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 ${
+                                    confirmModal.type === 'delete' ? 'bg-red-600 hover:bg-red-700' :
+                                    confirmModal.type === 'suspend' ? 'bg-orange-500 hover:bg-orange-600' :
+                                    'bg-green-600 hover:bg-green-700'
+                                }`}>
+                                {actionLoading ? '処理中...' :
+                                 confirmModal.type === 'delete' ? '削除する' :
+                                 confirmModal.type === 'suspend' ? '停止する' : '停止解除する'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
