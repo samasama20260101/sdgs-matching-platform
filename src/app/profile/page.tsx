@@ -373,6 +373,7 @@ export default function ProfilePage() {
                                                     onChange={e => setter(e.target.value)}
                                                     placeholder={placeholder}
                                                     type={type}
+                                                    maxLength={500}
                                                 />
                                             </div>
                                         ))}

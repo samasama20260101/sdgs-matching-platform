@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SDG_NAMES } from '@/lib/constants/sdgs';
+import { isMinor } from '@/lib/utils/age';
 
 type CaseData = {
   id: string;
@@ -53,6 +54,8 @@ export default function SupporterCaseDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [ownerBirthDate, setOwnerBirthDate] = useState<string | null>(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showStartProgressModal, setShowStartProgressModal] = useState(false);
@@ -79,10 +82,11 @@ export default function SupporterCaseDetailPage() {
       router.push('/supporter/dashboard');
       return;
     }
-    const { case: caseResult, supporterUserId, acceptedOffers: aOffers } = await caseRes.json();
+    const { case: caseResult, supporterUserId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
     setCaseData(caseResult);
     setCurrentUserId(supporterUserId);
     setAcceptedOfferOrders(aOffers ?? []);
+    setOwnerBirthDate(birthDate ?? null);
 
     // 自分のオファー取得（API経由）
     const offerRes = await fetch(`/api/supporter/cases/${params.id}/offer`, {
@@ -160,32 +164,43 @@ export default function SupporterCaseDetailPage() {
   };
 
   const confirmWithdraw = async () => {
-    if (!myOffer) return;
-    const token = await getToken();
-    if (!token) return;
-    const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
-    });
-    if (!res.ok) { toast.error('取り下げに失敗しました'); return; }
-    setShowWithdrawModal(false);
-    await loadData();
-    toast.success('申し出を取り下げました');
+    if (!myOffer || isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
+      });
+      if (!res.ok) { toast.error('取り下げに失敗しました'); return; }
+      setShowWithdrawModal(false);
+      await loadData();
+      toast.success('申し出を取り下げました');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleStartProgress = async () => {
-    const token = await getToken();
-    if (!token) return;
-    const res = await fetch(`/api/supporter/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ status: 'IN_PROGRESS', started_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-    setShowStartProgressModal(false);
-    await loadData();
-    toast.success('支援を開始しました！相談者と連携を進めましょう');
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`/api/supporter/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: 'IN_PROGRESS', started_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      setShowStartProgressModal(false);
+      await loadData();
+      toast.success('支援を開始しました！相談者と連携を進めましょう');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleReportResolution = async () => {
@@ -264,6 +279,11 @@ export default function SupporterCaseDetailPage() {
                 <div className="flex gap-2 flex-wrap">
                   {caseData?.urgency === 'High' && (
                     <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>
+                  )}
+                  {isMinor(ownerBirthDate) && (
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
+                      🔰 未成年
+                    </span>
                   )}
                   <span className={`text-xs px-2 py-1 rounded-full ${caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
                       caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :

@@ -28,14 +28,14 @@ export async function GET(request: Request) {
     // サポーター一覧
     const { data: supporters } = await supabaseAdmin
         .from('users')
-        .select('id, real_name, display_name, email, organization_name, supporter_type, phone, created_at')
+        .select('id, real_name, display_name, email, organization_name, supporter_type, phone, created_at, is_suspended')
         .eq('role', 'SUPPORTER')
         .order('created_at', { ascending: false })
 
     // SOSユーザー一覧
     const { data: sosUsers } = await supabaseAdmin
         .from('users')
-        .select('id, display_name, real_name, email, created_at, sos_region_code')
+        .select('id, display_name, real_name, email, created_at, sos_region_code, birth_date, is_suspended')
         .eq('role', 'SOS')
         .order('created_at', { ascending: false })
 

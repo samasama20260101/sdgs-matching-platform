@@ -85,6 +85,7 @@ export default function ContactPage() {
     if (role === 'guest' && !guestEmail.trim()) { setError('メールアドレスを入力してください'); return; }
     if (!category) { setError('お問い合わせの種類を選択してください'); return; }
     if (!message.trim()) { setError('詳細を入力してください'); return; }
+    if (message.length > 1000) { setError('詳細は1000文字以内で入力してください'); return; }
 
     setIsSending(true);
     const res = await fetch('/api/contact', {
@@ -245,8 +246,12 @@ export default function ContactPage() {
                 value={message} onChange={e => setMessage(e.target.value)}
                 placeholder={messagePlaceholder}
                 rows={5}
+                maxLength={1000}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 resize-none"
               />
+              <div className={'text-right text-xs mt-1 ' + (message.length >= 900 ? 'text-orange-500' : 'text-gray-400')}>
+                {message.length} / 1000
+              </div>
             </div>
 
             {error && (
