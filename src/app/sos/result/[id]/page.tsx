@@ -88,6 +88,7 @@ export default function SOSResultPage() {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [selectedBadges, setSelectedBadges] = useState<Set<BadgeKey>>(new Set());
   const [isSubmittingBadges, setIsSubmittingBadges] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [supporterBadges, setSupporterBadges] = useState<Record<string, Record<string, number>>>({});
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
@@ -196,6 +197,8 @@ export default function SOSResultPage() {
   };
 
   const handleAcceptOffer = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
     if (!selectedOffer) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
@@ -231,6 +234,8 @@ export default function SOSResultPage() {
   };
 
   const handleDeclineOffer = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
     if (!selectedOffer) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
@@ -247,6 +252,8 @@ export default function SOSResultPage() {
   };
 
   const handleResolveCase = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const res = await fetch(`/api/sos/cases/${params.id}`, {
@@ -275,6 +282,8 @@ export default function SOSResultPage() {
   };
 
   const handleRejectResolution = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     // supporter_resolved_atをリセット
@@ -332,6 +341,8 @@ export default function SOSResultPage() {
   };
 
   const handleNewConsultation = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login'); return; }
     const casesRes = await fetch('/api/sos/cases', {

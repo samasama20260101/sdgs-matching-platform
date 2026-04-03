@@ -148,6 +148,7 @@ export default function AddressForm({
                     value={formData.prefecture}
                     onChange={(e) => updateField('prefecture', e.target.value)}
                     required={fieldRequired.prefecture}
+                    maxLength={50}
                 />
             </div>
 
@@ -165,6 +166,7 @@ export default function AddressForm({
                     value={formData.city}
                     onChange={(e) => updateField('city', e.target.value)}
                     required={fieldRequired.city}
+                    maxLength={50}
                 />
             </div>
 
@@ -186,6 +188,7 @@ export default function AddressForm({
                     value={formData.addressLine1}
                     onChange={(e) => updateField('addressLine1', e.target.value)}
                     required={fieldRequired.addressLine1}
+                    maxLength={100}
                 />
                 {!fieldRequired.addressLine1 && (
                     <p className="text-xs text-gray-500">
@@ -206,6 +209,7 @@ export default function AddressForm({
                     className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                     value={formData.addressLine2}
                     onChange={(e) => updateField('addressLine2', e.target.value)}
+                    maxLength={100}
                 />
             </div>
         </div>

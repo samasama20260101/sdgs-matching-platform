@@ -32,12 +32,16 @@ export default function SignupPage() {
     e.preventDefault()
     setError(null)
 
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません')
-      return
-    }
     if (password.length < 8) {
       setError('パスワードは8文字以上で入力してください')
+      return
+    }
+    if (password.length > 64) {
+      setError('パスワードは64文字以内で入力してください')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('パスワードが一致しません')
       return
     }
     if (!agreed) {
@@ -54,6 +58,15 @@ export default function SignupPage() {
     if (!gender) { setError('性別を選択してください'); return }
     const [by, bm, bd] = birthDate.split('-')
     if (!by || !bm || !bd) { setError('生年月日を選択してください'); return }
+    if (realName.length > 64) { setError('お名前は64文字以内で入力してください'); return }
+    if (displayName.length > 64) { setError('表示名は64文字以内で入力してください'); return }
+
+    // 電話番号：ハイフン・スペース・括弧を除去して数字のみに
+    const sanitizedPhone = phone.replace(/[-\s().+]/g, '')
+    if (sanitizedPhone && sanitizedPhone.length > 15) {
+      setError('電話番号は15桁以内で入力してください')
+      return
+    }
 
     setLoading(true)
 
@@ -67,19 +80,25 @@ export default function SignupPage() {
       if (authError) throw authError
       if (!authData.user) throw new Error('アカウント作成に失敗しました')
 
-      // 2. users テーブルにレコード作成
-      const { error: profileError } = await supabase.from('users').insert({
-        auth_user_id: authData.user.id,
-        role: 'SOS',
-        real_name: realName,
-        display_name: displayName || realName,
-        email,
-        phone: phone || null,
-        gender,
-        birth_date: birthDate,
+      // 2. users テーブルにレコード作成（APIルート経由 / supabaseAdmin使用）
+      const profileRes = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth_user_id: authData.user.id,
+          email,
+          real_name: realName,
+          display_name: displayName || realName,
+          phone: sanitizedPhone || null,
+          gender,
+          birth_date: birthDate,
+        }),
       })
 
-      if (profileError) throw profileError
+      if (!profileRes.ok) {
+        const { error: profileError } = await profileRes.json()
+        throw new Error(profileError || 'プロフィールの保存に失敗しました')
+      }
 
       router.push('/sos/dashboard')
     } catch (err: unknown) {
@@ -146,6 +165,7 @@ export default function SignupPage() {
                 <input
                   type="email"
                   required
+                  maxLength={254}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -159,10 +179,12 @@ export default function SignupPage() {
                   type="password"
                   required
                   minLength={8}
+                  maxLength={64}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-400 text-right">{password.length} / 64文字</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -171,6 +193,7 @@ export default function SignupPage() {
                 <input
                   type="password"
                   required
+                  maxLength={64}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -221,12 +244,16 @@ export default function SignupPage() {
                 <input
                   type="text"
                   required
+                  maxLength={64}
                   value={realName}
                   onChange={(e) => setRealName(e.target.value)}
                   placeholder="ニックネームでもOKです"
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="mt-1 text-xs text-gray-500">※ニックネームでもOKです。マッチ後にサポーターへ共有されます（公開されません）</p>
+                <div className="mt-1 flex justify-between">
+                  <p className="text-xs text-gray-500">※ニックネームでもOKです。マッチ後にサポーターへ共有されます（公開されません）</p>
+                  <p className={`text-xs flex-shrink-0 ml-2 ${realName.length >= 60 ? 'text-orange-500' : 'text-gray-400'}`}>{realName.length} / 64</p>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -234,11 +261,13 @@ export default function SignupPage() {
                 </label>
                 <input
                   type="text"
+                  maxLength={64}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder={realName}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className={`mt-1 text-xs text-right ${displayName.length >= 60 ? 'text-orange-500' : 'text-gray-400'}`}>{displayName.length} / 64</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -322,8 +351,10 @@ export default function SignupPage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  placeholder="例：090-1234-5678"
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-400">ハイフンありでも登録できます（最大15桁）</p>
               </div>
               <div className="flex gap-3">
                 <button
