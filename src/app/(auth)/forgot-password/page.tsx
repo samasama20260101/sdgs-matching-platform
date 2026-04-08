@@ -98,6 +98,7 @@ export default function ForgotPasswordPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                maxLength={254}
                             />
                         </div>
                         {error && (
