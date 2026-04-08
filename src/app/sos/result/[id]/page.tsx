@@ -24,6 +24,7 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
+  intake_qna: { qa: Record<string, string[]> } | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning?: string;
@@ -167,10 +168,18 @@ export default function SOSResultPage() {
     const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
     const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
     try {
+      // Q1〜Q5のチェック内容と自由記述を結合してAIに渡す
+      const qaText = cd.intake_qna?.qa
+        ? Object.entries(cd.intake_qna.qa)
+            .map(([q, answers]) => `Q${q}: ${(answers as string[]).join('、')}`)
+            .join('\n')
+        : '';
+      const fullDescription = [qaText, cd.description_free].filter(Boolean).join('\n\n');
+
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caseId: cd.id, description: cd.description_free }),
+        body: JSON.stringify({ caseId: cd.id, description: fullDescription }),
       });
       if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
       const result = await response.json();
