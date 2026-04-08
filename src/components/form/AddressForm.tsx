@@ -78,7 +78,7 @@ export default function AddressForm({
                 const cleanZip = formData.postalCode.replace(/[^0-9]/g, '');
                 const res = await fetch(`/api/zipcode?zipcode=${cleanZip}`);
                 if (!res.ok) {
-                    setSearchError('郵便番号が見つかりませんでした');
+                    setSearchError('この郵便番号は自動入力に対応していません。手動で住所を入力してください。');
                     return;
                 }
                 const addressData = await res.json();
@@ -104,7 +104,7 @@ export default function AddressForm({
                     setFormData(newData);
                     onChange(newData);
                 } else {
-                    setSearchError('郵便番号が見つかりませんでした');
+                    setSearchError('この郵便番号は自動入力に対応していません。手動で住所を入力してください。');
                 }
             }
         } catch (error) {
