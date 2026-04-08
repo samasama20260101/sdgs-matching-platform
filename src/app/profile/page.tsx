@@ -292,7 +292,7 @@ export default function ProfilePage() {
                             )}
                             <div className="space-y-2">
                                 <Label htmlFor="phone">電話番号 {userData.role === 'SUPPORTER' && <span className="text-red-500">*</span>}</Label>
-                                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" />
+                                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
                             </div>
                         </CardContent>
                     </Card>
