@@ -108,11 +108,41 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
     }
 
-    const { error: updateError } = await supabaseAdmin
-        .from('offers').update(updateData).eq('id', offerId)
+    // WITHDRAWNへの変更（ACCEPTED状態からの離脱）の場合、案件ステータスを巻き戻す
+    if (updateData.status === 'WITHDRAWN') {
+        // まず現在のオファーのステータスを確認
+        const { data: currentOffer } = await supabaseAdmin
+            .from('offers').select('status').eq('id', offerId).single()
 
-    if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 })
+        const { error: updateError } = await supabaseAdmin
+            .from('offers').update(updateData).eq('id', offerId)
+        if (updateError) {
+            return NextResponse.json({ error: updateError.message }, { status: 500 })
+        }
+
+        // ACCEPTED から離脱した場合、残りのACCEPTED数に応じて案件ステータスを調整
+        if (currentOffer?.status === 'ACCEPTED') {
+            const { data: remainingAccepted } = await supabaseAdmin
+                .from('offers')
+                .select('id')
+                .eq('case_id', id)
+                .eq('status', 'ACCEPTED')
+
+            const remainingCount = remainingAccepted?.length ?? 0
+
+            if (remainingCount === 0) {
+                // 誰もいなくなったら OPEN に戻す
+                await supabaseAdmin
+                    .from('cases')
+                    .update({ status: 'OPEN' })
+                    .eq('id', id)
+                    .in('status', ['MATCHED', 'IN_PROGRESS'])
+            }
+            // 1名以上残っている場合はステータス変更不要（主が繰り上がるのみ）
+        }
+
+        return NextResponse.json({ ok: true })
+    }
     }
 
     return NextResponse.json({ ok: true })
