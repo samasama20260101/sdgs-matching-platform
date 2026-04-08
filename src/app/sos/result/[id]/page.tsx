@@ -278,7 +278,10 @@ export default function SOSResultPage() {
     setShowResolveModal(false);
     await loadData();
     // 自動バッジ付与（API経由）
-    const accepted = offers.filter(o => o.status === 'ACCEPTED');
+    // accepted_order 昇順でソート → 最小order(主)が金メダル、以降が銀メダル
+    const accepted = offers
+      .filter(o => o.status === 'ACCEPTED')
+      .sort((a, b) => (a.accepted_order ?? 999) - (b.accepted_order ?? 999))
     if (accepted.length > 0 && currentUserId) {
       const autoBadges = accepted.map((offer, i) => ({
         case_id: params.id as string,
