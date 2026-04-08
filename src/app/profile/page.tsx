@@ -272,12 +272,18 @@ export default function ProfilePage() {
                             <div className="space-y-2">
                                 <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前' : '代表者名'} <span className="text-red-500">*</span></Label>
                                 <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
-                                {userData.role === 'SOS' && <p className="text-xs text-gray-500">※ニックネームでもOKです。サポーターとマッチ後に共有されます（公開されません）</p>}
+                                <div className="flex justify-between items-start mt-1">
+                                    {userData.role === 'SOS' && <p className="text-xs text-gray-500">※ニックネームでもOKです。サポーターとマッチ後に共有されます（公開されません）</p>}
+                                    <p className={`text-xs ml-auto flex-shrink-0 ${realName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{realName.length} / 64</p>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="displayName">{userData.role === 'SOS' ? 'ニックネーム' : '表示名'} <span className="text-red-500">*</span></Label>
                                 <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={userData.role === 'SOS' ? 'たろう' : '山田太郎'} maxLength={64} />
-                                {userData.role === 'SOS' && <p className="text-xs text-gray-500">※サポーター側に表示される名前です</p>}
+                                <div className="flex justify-between items-start mt-1">
+                                    {userData.role === 'SOS' && <p className="text-xs text-gray-500">※サポーター側に表示される名前です</p>}
+                                    <p className={`text-xs ml-auto flex-shrink-0 ${displayName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{displayName.length} / 64</p>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">メールアドレス</Label>
@@ -288,11 +294,13 @@ export default function ProfilePage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="organizationName">組織名</Label>
                                     <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
+                                    <p className={`text-xs text-right mt-1 ${organizationName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{organizationName.length} / 64</p>
                                 </div>
                             )}
                             <div className="space-y-2">
                                 <Label htmlFor="phone">電話番号 {userData.role === 'SUPPORTER' && <span className="text-red-500">*</span>}</Label>
                                 <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
+                                <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
                             </div>
                         </CardContent>
                     </Card>
