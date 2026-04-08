@@ -190,7 +190,7 @@ export default function AddressForm({
             {/* 番地・建物名 */}
             <div className="space-y-2">
                 <Label htmlFor="addressLine1">
-                    番地・建物名
+                    番地・ビル名
                     {fieldRequired.addressLine1 ? (
                         <span className="text-red-500">*</span>
                     ) : (
@@ -217,7 +217,7 @@ export default function AddressForm({
             {/* 建物名・部屋番号（常に任意） */}
             <div className="space-y-2">
                 <Label htmlFor="addressLine2">
-                    建物名・部屋番号 <span className="text-gray-400 text-sm">（任意）</span>
+                    部屋番号 <span className="text-gray-400 text-sm">（任意）</span>
                 </Label>
                 <input
                     id="addressLine2"
