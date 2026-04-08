@@ -352,6 +352,7 @@ export default function SignupPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="例：090-1234-5678"
+                  maxLength={20}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="mt-1 text-xs text-gray-400">ハイフンありでも登録できます（最大15桁）</p>

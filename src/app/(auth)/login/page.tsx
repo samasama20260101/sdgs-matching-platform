@@ -98,6 +98,7 @@ export default function LoginPage() {
                                 id="email"
                                 type="email"
                                 placeholder="example@email.com"
+                                maxLength={254}
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 required
