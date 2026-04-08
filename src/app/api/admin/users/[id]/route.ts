@@ -41,6 +41,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         })
         if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+        // 既存セッションを即時無効化（ログイン中でも即反映）
+        await supabaseAdmin.auth.admin.signOut(userData.auth_user_id, 'global')
+
         // public.users に停止フラグを記録
         await supabaseAdmin.from('users').update({ is_suspended: true }).eq('id', userId)
 
@@ -74,6 +77,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     if (userError || !userData) {
         return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 })
     }
+
+    // 既存セッションを即時無効化（削除前に実行）
+    await supabaseAdmin.auth.admin.signOut(userData.auth_user_id, 'global')
 
     // public.users を削除（CASCADE で関連データも削除）
     const { error: deleteError } = await supabaseAdmin
