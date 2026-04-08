@@ -43,6 +43,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     // ── 承認処理 ──────────────────────────────────────────
     if (body.status === 'ACCEPTED') {
+        // オファーがPENDING状態か確認（取り下げ済みは承認不可）
+        if (offer.status !== 'PENDING') {
+            return NextResponse.json(
+                { error: 'OFFER_NOT_PENDING', message: 'この申し出はすでに取り下げられているか、無効な状態です' },
+                { status: 400 }
+            )
+        }
+
         // 現在の承認済み数を確認
         const { data: acceptedOffers } = await supabaseAdmin
             .from('offers')

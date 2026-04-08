@@ -221,9 +221,13 @@ export default function SOSResultPage() {
     if (!offerRes.ok) {
       if (offerResult.error === 'MAX_REACHED') {
         toast.error('すでに3名のサポーターを承認済みです。これ以上承認できません。');
+      } else if (offerResult.error === 'OFFER_NOT_PENDING') {
+        toast.error('この申し出はすでに取り下げられています。ページを更新してご確認ください。');
+        await loadData(); // 最新状態に更新
       } else {
         toast.error('承認に失敗しました');
       }
+      setShowAcceptModal(false);
       return;
     }
     // ケースをMATCHEDに
@@ -668,7 +672,7 @@ export default function SOSResultPage() {
                     )}
                     <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                     <div className="flex gap-2">
-                      <Button onClick={() => { setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
+                      <Button onClick={async () => { await loadOffers(); setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
                       <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">辞退する</Button>
                     </div>
                   </div>
