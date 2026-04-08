@@ -58,6 +58,7 @@ export default function SupporterCaseDetailPage() {
   const [ownerBirthDate, setOwnerBirthDate] = useState<string | null>(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [showStartProgressModal, setShowStartProgressModal] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [offerMessage, setOfferMessage] = useState('');
@@ -184,6 +185,26 @@ export default function SupporterCaseDetailPage() {
       setShowWithdrawModal(false);
       await loadData();
       toast.success('申し出を取り下げました');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const confirmCancel = async () => {
+    if (!myOffer || isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
+      });
+      if (!res.ok) { toast.error('対応のキャンセルに失敗しました'); return; }
+      setShowCancelModal(false);
+      toast.success('対応をキャンセルしました');
+      router.push('/supporter/dashboard');
     } finally {
       setIsActionLoading(false);
     }
@@ -409,6 +430,11 @@ export default function SupporterCaseDetailPage() {
                     申し出を取り下げる
                   </Button>
                 )}
+                {myOffer.status === 'ACCEPTED' && (caseData?.status === 'MATCHED' || caseData?.status === 'IN_PROGRESS') && (
+                  <Button variant="outline" size="sm" onClick={() => setShowCancelModal(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full mt-1">
+                    🚫 対応をキャンセルする
+                  </Button>
+                )}
                 {myOffer.status === 'ACCEPTED' && (
                   <div className={`p-3 rounded-lg border ${caseData?.status === 'RESOLVED' ? 'bg-teal-50 border-teal-200' :
                       hasReportedResolution ? 'bg-emerald-50 border-emerald-200' :
@@ -510,7 +536,23 @@ export default function SupporterCaseDetailPage() {
           <p className="text-sm text-gray-500">※ 取り下げ後、再度申し出を送ることができます</p>
           <div className="flex gap-3">
             <button onClick={() => setShowWithdrawModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={confirmWithdraw} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">取り下げる</button>
+            <button onClick={confirmWithdraw} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" disabled={isActionLoading}>取り下げる</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="対応をキャンセルしますか？" type="warning">
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-sm font-medium text-red-800">⚠️ この操作は取り消せません</p>
+            <p className="text-sm text-red-700 mt-1">あなたの対応をキャンセルすると、この案件から外れます。次の副サポーターが自動的に主になります。</p>
+          </div>
+          <p className="text-sm text-gray-500">やむを得ない事情がある場合のみ使用してください。</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowCancelModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">戻る</button>
+            <button onClick={confirmCancel} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" disabled={isActionLoading}>
+              {isActionLoading ? '処理中...' : 'キャンセルする'}
+            </button>
           </div>
         </div>
       </Modal>
