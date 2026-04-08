@@ -239,7 +239,10 @@ export default function SupporterCaseDetailPage() {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const canSendOffer = !myOffer || myOffer.status === 'WITHDRAWN' || myOffer.status === 'DECLINED';
+  const MAX_ACCEPTED = 3
+  const caseIsFull = acceptedOfferOrders.length >= MAX_ACCEPTED
+  // DECLINED の場合でも、案件が満員なら再申し出不可
+  const canSendOffer = (!myOffer || myOffer.status === 'WITHDRAWN' || myOffer.status === 'DECLINED') && !caseIsFull;
   const shouldShowOffer = myOffer && myOffer.status !== 'WITHDRAWN' && myOffer.status !== 'DECLINED';
   const isAccepted = myOffer?.status === 'ACCEPTED';
   const hasReportedResolution = !!caseData?.supporter_resolved_at;
@@ -449,6 +452,14 @@ export default function SupporterCaseDetailPage() {
               <Button onClick={() => setShowOfferModal(true)} className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
                 💙 支援を申し出る
               </Button>
+            </CardContent>
+          </Card>
+        ) : caseIsFull && myOffer?.status === 'DECLINED' ? (
+          <Card className="mb-6 border-gray-200">
+            <CardContent className="py-6 text-center">
+              <p className="text-2xl mb-2">🔒</p>
+              <p className="text-sm font-medium text-gray-600">この案件はすでに3名のサポーターが承認されています</p>
+              <p className="text-xs text-gray-400 mt-1">新たな申し出はできません</p>
             </CardContent>
           </Card>
         ) : null}

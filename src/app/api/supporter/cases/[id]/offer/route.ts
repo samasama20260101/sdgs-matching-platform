@@ -80,6 +80,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Not your offer' }, { status: 403 })
     }
 
+    // PENDINGへの再申し出の場合、承認上限（3名）チェック
+    if (updateData.status === 'PENDING') {
+        const { data: acceptedOffers } = await supabaseAdmin
+            .from('offers')
+            .select('id')
+            .eq('case_id', id)
+            .eq('status', 'ACCEPTED')
+        if ((acceptedOffers?.length ?? 0) >= 3) {
+            return NextResponse.json(
+                { error: 'MAX_REACHED', message: 'この案件はすでに3名のサポーターが承認されているため、申し出できません' },
+                { status: 400 }
+            )
+        }
+    }
+
     const { error: updateError } = await supabaseAdmin
         .from('offers').update(updateData).eq('id', offerId)
 
