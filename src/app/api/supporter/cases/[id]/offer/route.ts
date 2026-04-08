@@ -143,6 +143,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
         return NextResponse.json({ ok: true })
     }
+
+    const { error: updateError } = await supabaseAdmin
+        .from('offers').update(updateData).eq('id', offerId)
+
+    if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true })
