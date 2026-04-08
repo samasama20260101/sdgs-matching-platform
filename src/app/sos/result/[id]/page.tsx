@@ -43,6 +43,7 @@ type OfferData = {
   message: string;
   status: string;
   created_at: string;
+  accepted_order: number | null;
   supporter: {
     id: string;
     display_name: string;
