@@ -103,8 +103,13 @@ export async function GET(request: Request) {
             accepted_count: acceptedCountMap[c.id] || 0,
         }))
         .filter(c => {
-            // 自分がオファー済みの案件は常に表示（進捗確認のため）
-            if (offerMap[c.id]) return true
+            // 自分がオファー済みの案件の表示ルール
+            if (offerMap[c.id]) {
+                // ACCEPTED/PENDING/WITHDRAWN は常に表示（進捗確認のため）
+                if (offerMap[c.id] !== 'DECLINED') return true
+                // DECLINED の場合：承認上限未満なら再申し出可能なので表示、上限済みなら非表示
+                return (acceptedCountMap[c.id] || 0) < MAX_ACCEPTED
+            }
             // 未オファーの場合：承認が上限未満の案件のみ表示
             return (acceptedCountMap[c.id] || 0) < MAX_ACCEPTED
         })
