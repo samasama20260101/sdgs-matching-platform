@@ -209,118 +209,134 @@ export default function SOSResultPage() {
   const handleAcceptOffer = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    if (!selectedOffer) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    // オファーを承認
-    const offerRes = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
-    });
-    const offerResult = await offerRes.json();
-    if (!offerRes.ok) {
-      if (offerResult.error === 'MAX_REACHED') {
-        toast.error('すでに3名のサポーターを承認済みです。これ以上承認できません。');
-      } else if (offerResult.error === 'OFFER_NOT_PENDING') {
-        toast.error('この申し出はすでに取り下げられています。ページを更新してご確認ください。');
-        await loadData(); // 最新状態に更新
-      } else {
-        toast.error('承認に失敗しました');
+    try {
+      if (!selectedOffer) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // オファーを承認
+      const offerRes = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
+      });
+      const offerResult = await offerRes.json();
+      if (!offerRes.ok) {
+        if (offerResult.error === 'MAX_REACHED') {
+          toast.error('すでに3名のサポーターを承認済みです。これ以上承認できません。');
+        } else if (offerResult.error === 'OFFER_NOT_PENDING') {
+          toast.error('この申し出はすでに取り下げられています。ページを更新してご確認ください。');
+          await loadData();
+        } else {
+          toast.error('承認に失敗しました');
+        }
+        setShowAcceptModal(false);
+        return;
       }
+      // ケースをMATCHEDに
+      await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'MATCHED' }),
+      });
       setShowAcceptModal(false);
-      return;
-    }
-    // ケースをMATCHEDに
-    await fetch(`/api/sos/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'MATCHED' }),
-    });
-    setShowAcceptModal(false);
-    setSelectedOffer(null);
-    await loadData();
-    if (offerResult.auto_declined) {
-      toast.success('サポーターを承認しました。3名に達したため、残りの申し出は自動的に辞退されました。');
-    } else {
-      toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+      setSelectedOffer(null);
+      await loadData();
+      if (offerResult.auto_declined) {
+        toast.success('サポーターを承認しました。3名に達したため、残りの申し出は自動的に辞退されました。');
+      } else {
+        toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+      }
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleDeclineOffer = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    if (!selectedOffer) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('辞退に失敗しました'); return; }
-    setShowDeclineModal(false);
-    setSelectedOffer(null);
-    await loadOffers();
-    toast.success('申し出を辞退しました');
+    try {
+      if (!selectedOffer) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error('辞退に失敗しました'); return; }
+      setShowDeclineModal(false);
+      setSelectedOffer(null);
+      await loadOffers();
+      toast.success('申し出を辞退しました');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleResolveCase = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await fetch(`/api/sos/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-    setShowResolveModal(false);
-    await loadData();
-    // 自動バッジ付与（API経由）
-    // accepted_order 昇順でソート → 最小order(主)が金メダル、以降が銀メダル
-    const accepted = offers
-      .filter(o => o.status === 'ACCEPTED')
-      .sort((a, b) => (a.accepted_order ?? 999) - (b.accepted_order ?? 999))
-    if (accepted.length > 0 && currentUserId) {
-      const autoBadges = accepted.map((offer, i) => ({
-        case_id: params.id as string,
-        supporter_user_id: offer.supporter.id,
-        badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
-      }));
-      await fetch('/api/sos/badges', {
-        method: 'POST',
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ badges: autoBadges }),
+        body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
       });
+      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      setShowResolveModal(false);
+      await loadData();
+      // 自動バッジ付与（API経由）
+      // accepted_order 昇順でソート → 最小order(主)が金メダル、以降が銀メダル
+      const accepted = offers
+        .filter(o => o.status === 'ACCEPTED')
+        .sort((a, b) => (a.accepted_order ?? 999) - (b.accepted_order ?? 999))
+      if (accepted.length > 0 && currentUserId) {
+        const autoBadges = accepted.map((offer, i) => ({
+          case_id: params.id as string,
+          supporter_user_id: offer.supporter.id,
+          badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
+        }));
+        await fetch('/api/sos/badges', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ badges: autoBadges }),
+        });
+      }
+      setShowEvalModal(true);
+    } finally {
+      setIsActionLoading(false);
     }
-    setShowEvalModal(true);
   };
 
   const handleRejectResolution = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    // supporter_resolved_atをリセット
-    const res = await fetch(`/api/sos/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ supporter_resolved_at: null }),
-    });
-    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-    // システムメッセージをAPIで投稿
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({
-        case_id: params.id,
-        content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
-      }),
-    });
-    toast.success('サポーターに対応継続を依頼しました');
-    await loadData();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // supporter_resolved_atをリセット
+      const res = await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ supporter_resolved_at: null }),
+      });
+      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      // システムメッセージをAPIで投稿
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          case_id: params.id,
+          content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
+        }),
+      });
+      toast.success('サポーターに対応継続を依頼しました');
+      await loadData();
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleSubmitBadges = async () => {
