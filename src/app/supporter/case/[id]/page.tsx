@@ -146,7 +146,13 @@ export default function SupporterCaseDetailPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error === 'DUPLICATE' ? '既に申し出を送信済みです' : '申し出の送信に失敗しました');
+        if (data.error === 'MAX_REACHED') {
+          toast.error('この案件はすでに3名のサポーターが承認されています。申し出はできません。');
+          setShowOfferModal(false);
+          await loadData(); // 表示を最新化
+        } else {
+          toast.error(data.error === 'DUPLICATE' ? '既に申し出を送信済みです' : '申し出の送信に失敗しました');
+        }
         setIsSubmitting(false);
         return;
       }

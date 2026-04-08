@@ -42,6 +42,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
+    // 承認上限（3名）チェック
+    const { data: acceptedOffers } = await supabaseAdmin
+        .from('offers')
+        .select('id')
+        .eq('case_id', id)
+        .eq('status', 'ACCEPTED')
+    if ((acceptedOffers?.length ?? 0) >= 3) {
+        return NextResponse.json(
+            { error: 'MAX_REACHED', message: 'この案件はすでに3名のサポーターが承認されているため、申し出できません' },
+            { status: 400 }
+        )
+    }
+
     const { data, error } = await supabaseAdmin
         .from('offers')
         .insert([{ case_id: id, supporter_user_id: userData.id, message, status: 'PENDING' }])
