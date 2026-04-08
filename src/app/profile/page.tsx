@@ -149,7 +149,10 @@ export default function ProfilePage() {
         try {
             if (!userData) { setError('ユーザー情報がありません'); setIsSaving(false); return; }
             if (!realName.trim()) { setError(userData.role === 'SOS' ? 'お名前（本名）は必須です' : '代表者名は必須です'); setIsSaving(false); return; }
+            if (realName.length > 64) { setError('担当者名は64文字以内で入力してください'); setIsSaving(false); return; }
             if (!displayName.trim()) { setError(userData.role === 'SOS' ? 'ニックネームは必須です' : '表示名は必須です'); setIsSaving(false); return; }
+            if (displayName.length > 64) { setError('表示名は64文字以内で入力してください'); setIsSaving(false); return; }
+            if (organizationName.length > 64) { setError('組織名は64文字以内で入力してください'); setIsSaving(false); return; }
 
             if (userData.role === 'SUPPORTER') {
                 if (!addressData.prefecture || !addressData.city || !addressData.addressLine1) {
@@ -268,12 +271,12 @@ export default function ProfilePage() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前' : '代表者名'} <span className="text-red-500">*</span></Label>
-                                <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" />
+                                <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
                                 {userData.role === 'SOS' && <p className="text-xs text-gray-500">※ニックネームでもOKです。サポーターとマッチ後に共有されます（公開されません）</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="displayName">{userData.role === 'SOS' ? 'ニックネーム' : '表示名'} <span className="text-red-500">*</span></Label>
-                                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={userData.role === 'SOS' ? 'たろう' : '山田太郎'} />
+                                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={userData.role === 'SOS' ? 'たろう' : '山田太郎'} maxLength={64} />
                                 {userData.role === 'SOS' && <p className="text-xs text-gray-500">※サポーター側に表示される名前です</p>}
                             </div>
                             <div className="space-y-2">
@@ -284,7 +287,7 @@ export default function ProfilePage() {
                             {userData.role === 'SUPPORTER' && (
                                 <div className="space-y-2">
                                     <Label htmlFor="organizationName">組織名</Label>
-                                    <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" />
+                                    <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
                                 </div>
                             )}
                             <div className="space-y-2">
