@@ -474,7 +474,9 @@ export default function SupporterCaseDetailPage() {
             <textarea id="offerMessage" rows={5}
               className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
               placeholder="例：私たちの団体では、〇〇の支援を行っています。詳しくお話を伺わせていただけますか？"
+              maxLength={1000}
               value={offerMessage} onChange={(e) => setOfferMessage(e.target.value)} />
+            <p className={`text-xs text-right mt-1 ${offerMessage.length >= 900 ? 'text-orange-500' : 'text-gray-400'}`}>{offerMessage.length} / 1000</p>
           </div>
           <div className="flex gap-3">
             <button onClick={() => setShowOfferModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" disabled={isSubmitting}>キャンセル</button>

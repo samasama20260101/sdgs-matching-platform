@@ -569,6 +569,7 @@ export default function AdminDashboardPage() {
                                                 }}
                                                 placeholder="対応内容をメモ（フォーカスが外れると自動保存）"
                                                 rows={2}
+                                                maxLength={2000}
                                                 className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-300 resize-none"
                                             />
                                         </div>

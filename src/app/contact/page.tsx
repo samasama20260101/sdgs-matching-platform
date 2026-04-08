@@ -179,6 +179,7 @@ export default function ContactPage() {
                   <input
                     type="text" value={name} onChange={e => setName(e.target.value)}
                     placeholder="山田 太郎"
+                    maxLength={64}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>
@@ -190,6 +191,7 @@ export default function ContactPage() {
                     type="email" value={guestEmail}
                     onChange={e => setGuestEmail(e.target.value)}
                     placeholder="example@email.com"
+                    maxLength={254}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>
@@ -200,6 +202,7 @@ export default function ContactPage() {
                   <input
                     type="text" value={organization} onChange={e => setOrganization(e.target.value)}
                     placeholder="〇〇株式会社"
+                    maxLength={64}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>
@@ -210,6 +213,7 @@ export default function ContactPage() {
                   <input
                     type="tel" value={phone} onChange={e => setPhone(e.target.value)}
                     placeholder="03-0000-0000"
+                    maxLength={20}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>

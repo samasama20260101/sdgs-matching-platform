@@ -86,12 +86,12 @@ export default function ResetPasswordPage() {
                         <div className="space-y-2">
                             <Label htmlFor="password">新しいパスワード <span className="text-red-500">*</span></Label>
                             <Input id="password" type="password" placeholder="8文字以上"
-                                value={password} onChange={(e) => setPassword(e.target.value)} required />
+                                value={password} onChange={(e) => setPassword(e.target.value)} required maxLength={64} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="confirm">パスワード（確認） <span className="text-red-500">*</span></Label>
                             <Input id="confirm" type="password" placeholder="もう一度入力してください"
-                                value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+                                value={confirm} onChange={(e) => setConfirm(e.target.value)} required maxLength={64} />
                         </div>
                         {error && (
                             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
