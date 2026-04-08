@@ -124,7 +124,7 @@ export default function SignupPage() {
           新規登録（相談者）
         </h2>
         <p className="mt-2 text-center text-sm text-gray-500">
-          サポーター（NPO・企業）としての登録は
+          サポーター（NPO・企業などの支援団体）としての登録は
           <br />
           管理者にお問い合わせください
         </p>
