@@ -73,12 +73,15 @@ export default function AddressForm({
         setIsSearching(true);
 
         try {
-            const addressData = await fetchAddressFromZipcode(
-                formData.postalCode,
-                countryCode
-            );
-
-            if (addressData) {
+            if (countryCode === 'JP') {
+                // サーバーサイドプロキシ経由でCORSを回避
+                const cleanZip = formData.postalCode.replace(/[^0-9]/g, '');
+                const res = await fetch(`/api/zipcode?zipcode=${cleanZip}`);
+                if (!res.ok) {
+                    setSearchError('郵便番号が見つかりませんでした');
+                    return;
+                }
+                const addressData = await res.json();
                 const newData = {
                     ...formData,
                     postalCode: formatZipcode(formData.postalCode),
@@ -88,7 +91,21 @@ export default function AddressForm({
                 setFormData(newData);
                 onChange(newData);
             } else {
-                setSearchError('郵便番号が見つかりませんでした');
+                const addressData = await fetchAddressFromZipcode(
+                    formData.postalCode,
+                    countryCode
+                );
+                if (addressData) {
+                    const newData = {
+                        ...formData,
+                        prefecture: addressData.prefecture,
+                        city: addressData.city,
+                    };
+                    setFormData(newData);
+                    onChange(newData);
+                } else {
+                    setSearchError('郵便番号が見つかりませんでした');
+                }
             }
         } catch (error) {
             setSearchError('住所の取得に失敗しました');
