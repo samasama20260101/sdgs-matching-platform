@@ -103,15 +103,19 @@ export async function GET(request: Request) {
             accepted_count: acceptedCountMap[c.id] || 0,
         }))
         .filter(c => {
-            // 自分がオファー済みの案件の表示ルール
-            if (offerMap[c.id]) {
-                // ACCEPTED/PENDING/WITHDRAWN は常に表示（進捗確認のため）
-                if (offerMap[c.id] !== 'DECLINED') return true
-                // DECLINED の場合：承認上限未満なら再申し出可能なので表示、上限済みなら非表示
-                return (acceptedCountMap[c.id] || 0) < MAX_ACCEPTED
+            const myStatus = offerMap[c.id]
+            const isFull = (acceptedCountMap[c.id] || 0) >= MAX_ACCEPTED
+
+            if (myStatus === 'ACCEPTED' || myStatus === 'PENDING') {
+                // 担当中・承認待ちは常に表示
+                return true
             }
-            // 未オファーの場合：承認が上限未満の案件のみ表示
-            return (acceptedCountMap[c.id] || 0) < MAX_ACCEPTED
+            if (myStatus === 'WITHDRAWN' || myStatus === 'DECLINED') {
+                // 取り下げ・辞退済みは、満員なら非表示（再申し出不可）、空きあれば表示
+                return !isFull
+            }
+            // 未オファーの場合：空きがあれば表示
+            return !isFull
         })
 
     // 7. バッジ集計
