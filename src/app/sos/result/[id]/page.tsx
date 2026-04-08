@@ -592,7 +592,7 @@ export default function SOSResultPage() {
                         </div>
                         <span className="text-xs text-teal-600">{formatDate(offer.created_at)}</span>
                       </div>
-                      <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700">{offer.message}</p></div>
+                      <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                       {badges && Object.keys(badges).length > 0 && (
                         <div className="mt-3 pt-3 border-t border-teal-100">
                           <p className="text-[11px] text-gray-400 mb-1.5">🎁 感謝バッジ（全案件の累計）</p>
@@ -666,7 +666,7 @@ export default function SOSResultPage() {
                         </div>
                       </div>
                     )}
-                    <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700">{offer.message}</p></div>
+                    <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                     <div className="flex gap-2">
                       <Button onClick={() => { setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
                       <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">辞退する</Button>
