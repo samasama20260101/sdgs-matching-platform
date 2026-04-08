@@ -393,7 +393,7 @@ export default function SupporterCaseDetailPage() {
                   <span className="text-xs text-gray-500">{formatDate(myOffer.created_at)}</span>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">{myOffer.message}</p>
+                  <p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{myOffer.message}</p>
                 </div>
                 {myOffer.status === 'PENDING' && (
                   <Button variant="outline" size="sm" onClick={() => setShowWithdrawModal(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
