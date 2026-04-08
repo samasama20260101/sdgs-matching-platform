@@ -122,9 +122,9 @@ export default function SOSDashboard() {
         toast.error('取消に失敗しました');
         return;
       }
-      toast.success('相談を取り消しました');
       setCancelModal({ isOpen: false, caseId: '', title: '' });
-      loadData();
+      await loadData();
+      toast.success('相談を取り消しました');
     } finally {
       setIsCancelling(false);
     }
