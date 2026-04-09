@@ -249,7 +249,7 @@ export default function AdminDashboardPage() {
         { key: 'supporters', label: 'サポーター',     icon: '🤝', count: supporters.length,                      numColor: 'text-teal-600',  borderColor: 'border-teal-500',  bgColor: 'bg-teal-50' },
         { key: 'sos',        label: '相談者（SOS）',  icon: '👥', count: sosCount,                               numColor: 'text-blue-600',   borderColor: 'border-blue-500',   bgColor: 'bg-blue-50' },
         { key: 'open_cases', label: '未対応の案件',   icon: '⏳', count: caseStats.open,                         numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
-        { key: 'active_cases',label:'対応中・解決済み',icon:'🔄', count: caseStats.in_progress + caseStats.resolved, numColor: 'text-purple-600', borderColor: 'border-purple-500', bgColor: 'bg-purple-50' },
+        { key: 'active_cases',label:'マッチ済み・解決済み',icon:'🤝', count: caseStats.in_progress + caseStats.resolved, numColor: 'text-amber-600', borderColor: 'border-amber-500', bgColor: 'bg-amber-50' },
         { key: 'inquiries',  label: 'お問い合わせ',   icon: '📩', count: inquiryOpenCount, numColor: 'text-rose-600', borderColor: 'border-rose-500', bgColor: 'bg-rose-50' },
     ]
 
@@ -468,11 +468,11 @@ export default function AdminDashboardPage() {
                         </>
                     )}
 
-                    {/* 対応中・解決済み */}
+                    {/* マッチ済み・解決済み */}
                     {activeTab === 'active_cases' && (
                         <>
-                            <div className="px-6 py-3 bg-purple-50 border-y border-purple-100">
-                                <p className="text-sm text-purple-800 font-medium">{activeCases.length}件が対応中または解決済みです</p>
+                            <div className="px-6 py-3 bg-amber-50 border-y border-amber-100">
+                                <p className="text-sm text-amber-800 font-medium">{activeCases.length}件がマッチ済みまたは解決済みです</p>
                             </div>
                             {activeCases.length === 0 ? (
                                 <div className="px-6 py-12 text-center text-gray-400">該当する案件はありません</div>
