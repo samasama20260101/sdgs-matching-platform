@@ -39,6 +39,29 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         .eq('status', 'ACCEPTED')
         .order('accepted_order', { ascending: true })
 
+    // 承認済みサポーターのプロフィールを2ステップで取得（協業用）
+    const supporterIds = (acceptedOffers ?? []).map((o: { supporter_user_id: string }) => o.supporter_user_id)
+    let supporterProfiles: Record<string, { display_name: string; organization_name: string | null; supporter_type: string }> = {}
+    if (supporterIds.length > 0) {
+        const { data: profiles } = await supabaseAdmin
+            .from('users')
+            .select('id, display_name, organization_name, supporter_type')
+            .in('id', supporterIds)
+        ;(profiles ?? []).forEach((p: { id: string; display_name: string; organization_name: string | null; supporter_type: string }) => {
+            supporterProfiles[p.id] = {
+                display_name: p.display_name,
+                organization_name: p.organization_name,
+                supporter_type: p.supporter_type,
+            }
+        })
+    }
+
+    // acceptedOffers にプロフィール情報を付加
+    const acceptedOffersWithProfile = (acceptedOffers ?? []).map((o: { supporter_user_id: string; accepted_order: number; status: string }) => ({
+        ...o,
+        profile: supporterProfiles[o.supporter_user_id] ?? null,
+    }))
+
     // オーナーの birth_date を取得（未成年判定用）
     const { data: ownerData } = await supabaseAdmin
         .from('users')
@@ -49,7 +72,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({
         case: caseData,
         supporterUserId: userData.id,
-        acceptedOffers: acceptedOffers ?? [],
+        acceptedOffers: acceptedOffersWithProfile,
         ownerBirthDate: ownerData?.birth_date ?? null,
     })
 }

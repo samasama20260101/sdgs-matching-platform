@@ -50,7 +50,11 @@ export default function SupporterCaseDetailPage() {
 
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [myOffer, setMyOffer] = useState<OfferData | null>(null);
-  const [acceptedOfferOrders, setAcceptedOfferOrders] = useState<{ supporter_user_id: string; accepted_order: number }[]>([]);
+  const [acceptedOfferOrders, setAcceptedOfferOrders] = useState<{
+    supporter_user_id: string;
+    accepted_order: number;
+    profile: { display_name: string; organization_name: string | null; supporter_type: string } | null;
+  }[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -374,6 +378,59 @@ export default function SupporterCaseDetailPage() {
                       <span className={`text-[11px] mt-1 ${isCurrent ? 'font-bold text-gray-800' : isActive ? 'text-gray-600' : 'text-gray-400'}`}>{step}</span>
                     </div>
                   );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 担当サポーター一覧（承認済みが2名以上のとき表示） */}
+        {isAccepted && acceptedOfferOrders.length > 1 && (
+          <Card className="mb-6">
+            <CardHeader><CardTitle className="text-base">担当サポーター</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {acceptedOfferOrders.map((o, i) => {
+                  const isMe = o.supporter_user_id === currentUserId
+                  const label = i === 0 ? '主' : '副'
+                  const labelColor = i === 0
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-gray-100 text-gray-500 border border-gray-200'
+                  const name = o.profile?.organization_name || o.profile?.display_name || '不明'
+                  const initial = name.charAt(name.length - 1)
+                  const avatarColor = isMe
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-blue-100 text-blue-700'
+                  return (
+                    <div key={o.supporter_user_id} className={`flex items-center gap-3 p-3 rounded-lg border ${isMe ? 'bg-amber-50 border-amber-100' : 'bg-white border-gray-100'}`}>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${avatarColor}`}>
+                        {initial}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-800 truncate">{name}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${labelColor}`}>{label}</span>
+                          {isMe && <span className="text-[10px] text-gray-400">あなた</span>}
+                        </div>
+                        {o.profile?.supporter_type && (
+                          <p className="text-xs text-gray-400 mt-0.5">{
+                            o.profile.supporter_type === 'NPO' ? 'NPO' :
+                            o.profile.supporter_type === 'CORPORATE' ? '企業' : '行政・公共機関'
+                          }</p>
+                        )}
+                      </div>
+                      {!isMe && (
+                        <a
+                          href={`/supporters/${o.supporter_user_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 flex-shrink-0"
+                        >
+                          公開ページ
+                        </a>
+                      )}
+                    </div>
+                  )
                 })}
               </div>
             </CardContent>
