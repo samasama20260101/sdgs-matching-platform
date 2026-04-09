@@ -21,13 +21,13 @@ export async function GET(request: Request) {
 
     const supporterUserId = userData.id
 
-    // 1. アクティブ案件（OPEN / MATCHED / IN_PROGRESS）+ LISTED
-    //    承認が3名未満なら引き続き申し出可能なため、OPENだけでなく全アクティブ状態を取得
+    // 1. アクティブ案件（OPEN / MATCHED）+ LISTED
+    //    承認が3名未満なら引き続き申し出可能なため、全アクティブ状態を取得
     const { data: activeCases, error: openErr } = await supabaseAdmin
         .from('cases')
         .select(CASE_SELECT)
         .eq('visibility', 'LISTED')
-        .in('status', ['OPEN', 'MATCHED', 'IN_PROGRESS'])
+        .in('status', ['OPEN', 'MATCHED'])
         .order('created_at', { ascending: false })
         .limit(200)
     if (openErr) console.error('activeCases error:', JSON.stringify(openErr))

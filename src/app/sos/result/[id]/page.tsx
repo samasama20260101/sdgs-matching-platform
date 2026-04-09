@@ -540,18 +540,17 @@ export default function SOSResultPage() {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
-                    {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
-                    {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
-                    {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && '🤝 マッチ済み・支援中'}
+                    {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
                     {caseData?.status === 'RESOLVED' && '✅ 解決済み'}
                     {caseData?.status === 'OPEN' && '⏳ サポーター待ち'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  {['マッチ', '対応中', '解決報告', '完了'].map((step, i) => {
+                  {['マッチ・支援中', '解決報告', '完了'].map((step, i) => {
                     const stepNum = i + 1;
-                    const currentStep = caseData?.status === 'MATCHED' ? 1 : caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at ? 2 : caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 3 : caseData?.status === 'RESOLVED' ? 4 : 0;
+                    const currentStep = caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at ? 1 : caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at ? 2 : caseData?.status === 'RESOLVED' ? 3 : 0;
                     const isActive = stepNum <= currentStep;
                     const isCurrent = stepNum === currentStep;
                     return (
@@ -563,17 +562,12 @@ export default function SOSResultPage() {
                   })}
                 </div>
                 <div className="mt-4">
-                  {caseData?.status === 'MATCHED' && (
+                  {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && (
                     <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-center">
-                      <p className="text-sm text-amber-700">⏳ サポーターが支援を開始するのをお待ちください</p>
+                      <p className="text-sm text-amber-700">🤝 サポーターが支援中です。メッセージで連携してください</p>
                     </div>
                   )}
-                  {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && (
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 text-center">
-                      <p className="text-sm text-purple-700">🔄 サポーターが対応中です</p>
-                    </div>
-                  )}
-                  {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && (
+                  {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && (
                     <div className="space-y-3">
                       <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-center">
                         <p className="text-sm text-emerald-700 font-medium">📋 サポーターが解決を報告しました</p>

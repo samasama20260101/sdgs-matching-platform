@@ -59,7 +59,6 @@ export default function SupporterCaseDetailPage() {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showStartProgressModal, setShowStartProgressModal] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [offerMessage, setOfferMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -210,26 +209,6 @@ export default function SupporterCaseDetailPage() {
     }
   };
 
-  const handleStartProgress = async () => {
-    if (isActionLoading) return;
-    setIsActionLoading(true);
-    try {
-      const token = await getToken();
-      if (!token) return;
-      const res = await fetch(`/api/supporter/cases/${params.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ status: 'IN_PROGRESS', started_at: new Date().toISOString() }),
-      });
-      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-      setShowStartProgressModal(false);
-      await loadData();
-      toast.success('支援を開始しました！相談者と連携を進めましょう');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
   const handleReportResolution = async () => {
     if (isSubmitting) return;
     const token = await getToken();
@@ -316,13 +295,11 @@ export default function SupporterCaseDetailPage() {
                     </span>
                   )}
                   <span className={`text-xs px-2 py-1 rounded-full ${caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
                         caseData?.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
                           caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' :
                             'bg-gray-100 text-gray-600'
                     }`}>
-                    {caseData?.status === 'MATCHED' ? '🤝 マッチ済み' :
-                      caseData?.status === 'IN_PROGRESS' ? '🔄 対応中' :
+                    {caseData?.status === 'MATCHED' ? '🤝 マッチ済み・支援中' :
                         caseData?.status === 'OPEN' ? '⏳ サポーター待ち' :
                           caseData?.status === 'RESOLVED' ? '✅ 解決済み' : caseData?.status}
                   </span>
@@ -373,25 +350,22 @@ export default function SupporterCaseDetailPage() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' :
-                    caseData?.status === 'IN_PROGRESS' && hasReportedResolution ? 'bg-emerald-100 text-emerald-600' :
-                      caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
-                        caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                          'bg-blue-100 text-blue-600'
+                    hasReportedResolution ? 'bg-emerald-100 text-emerald-600' :
+                      caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
+                        'bg-blue-100 text-blue-600'
                   }`}>
-                  {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
-                  {caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && '🔄 対応中'}
-                  {caseData?.status === 'IN_PROGRESS' && hasReportedResolution && '📋 解決報告あり'}
+                  {caseData?.status === 'MATCHED' && !hasReportedResolution && '🤝 マッチ済み・支援中'}
+                  {caseData?.status === 'MATCHED' && hasReportedResolution && '📋 解決報告あり'}
                   {caseData?.status === 'RESOLVED' && '✅ 解決済み'}
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                {['マッチ', '対応中', '解決報告', '完了'].map((step, i) => {
+                {['マッチ・支援中', '解決報告', '完了'].map((step, i) => {
                   const stepNum = i + 1;
                   const currentStep =
-                    caseData?.status === 'MATCHED' ? 1 :
-                      caseData?.status === 'IN_PROGRESS' && !hasReportedResolution ? 2 :
-                        caseData?.status === 'IN_PROGRESS' && hasReportedResolution ? 3 :
-                          caseData?.status === 'RESOLVED' ? 4 : 0;
+                    caseData?.status === 'MATCHED' && !hasReportedResolution ? 1 :
+                      caseData?.status === 'MATCHED' && hasReportedResolution ? 2 :
+                        caseData?.status === 'RESOLVED' ? 3 : 0;
                   const isActive = stepNum <= currentStep;
                   const isCurrent = stepNum === currentStep;
                   return (
@@ -430,7 +404,7 @@ export default function SupporterCaseDetailPage() {
                     申し出を取り下げる
                   </Button>
                 )}
-                {myOffer.status === 'ACCEPTED' && (caseData?.status === 'MATCHED' || caseData?.status === 'IN_PROGRESS') && (
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && (
                   <Button variant="outline" size="sm" onClick={() => setShowCancelModal(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full mt-1">
                     🚫 対応をキャンセルする
                   </Button>
@@ -438,33 +412,24 @@ export default function SupporterCaseDetailPage() {
                 {myOffer.status === 'ACCEPTED' && (
                   <div className={`p-3 rounded-lg border ${caseData?.status === 'RESOLVED' ? 'bg-teal-50 border-teal-200' :
                       hasReportedResolution ? 'bg-emerald-50 border-emerald-200' :
-                        caseData?.status === 'IN_PROGRESS' ? 'bg-purple-50 border-purple-200' :
-                          'bg-teal-50 border-teal-200'
+                        'bg-amber-50 border-amber-200'
                     }`}>
                     <p className={`text-sm ${caseData?.status === 'RESOLVED' ? 'text-teal-700' :
-                        hasReportedResolution ? 'text-emerald-700' :
-                          caseData?.status === 'IN_PROGRESS' ? 'text-purple-700' : 'text-teal-700'
+                        hasReportedResolution ? 'text-emerald-700' : 'text-amber-700'
                       }`}>
                       {caseData?.status === 'RESOLVED' ? '✅ この相談は解決済みです。ご支援ありがとうございました。' :
                         hasReportedResolution ? '📋 解決を報告済みです。相談者の確認をお待ちください。' :
-                          caseData?.status === 'IN_PROGRESS' ? '🔄 支援が進行中です。解決したら報告してください。' :
-                            '💚 相談者があなたの支援を承認しました。支援を開始してください。'}
+                          '🤝 相談者があなたの支援を承認しました。メッセージで連携を進めてください。'}
                     </p>
                   </div>
                 )}
-                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && (
-                  <Button onClick={() => setShowStartProgressModal(true)}
-                    className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white">
-                    🚀 支援を開始する
-                  </Button>
-                )}
-                {myOffer.status === 'ACCEPTED' && caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && canResolve && (
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && !hasReportedResolution && canResolve && (
                   <Button onClick={() => setShowResolveModal(true)}
                     className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white">
                     ✅ 解決を報告する
                   </Button>
                 )}
-                {myOffer.status === 'ACCEPTED' && caseData?.status === 'IN_PROGRESS' && !hasReportedResolution && !canResolve && (
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && !hasReportedResolution && !canResolve && (
                   <div className="w-full text-center text-sm text-gray-400 bg-gray-50 rounded-lg py-3 px-4">
                     🔒 解決報告はメインサポーターが行います
                   </div>
@@ -553,19 +518,6 @@ export default function SupporterCaseDetailPage() {
             <button onClick={confirmCancel} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" disabled={isActionLoading}>
               {isActionLoading ? '処理中...' : 'キャンセルする'}
             </button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal isOpen={showStartProgressModal} onClose={() => setShowStartProgressModal(false)} title="支援を開始しますか？" type="info">
-        <div className="space-y-4">
-          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <p className="text-sm text-purple-700">🚀 この相談への支援を正式に開始します。ステータスが「対応中」に変わります。</p>
-          </div>
-          <p className="text-sm text-gray-500">相談者にも支援が進行中であることが共有されます。メッセージで連携を続けてください。</p>
-          <div className="flex gap-3">
-            <button onClick={() => setShowStartProgressModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={handleStartProgress} className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">支援を開始する</button>
           </div>
         </div>
       </Modal>

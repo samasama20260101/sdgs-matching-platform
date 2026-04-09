@@ -54,8 +54,7 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
     DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
   };
   const caseStatusOverride: Record<string, { label: string; color: string; icon: string; border: string }> = {
-    MATCHED: { label: 'マッチ済み', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
-    IN_PROGRESS: { label: '対応中', color: 'bg-purple-50 text-purple-600', icon: '🔄', border: 'border-l-purple-400' },
+    MATCHED: { label: 'マッチ済み・支援中', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
     RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-700', icon: '✅', border: 'border-l-teal-500' },
     CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
