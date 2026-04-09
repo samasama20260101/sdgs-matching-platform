@@ -14,7 +14,7 @@ type Case = {
   title: string;
   description_free: string;
   urgency: string;
-  status: 'OPEN' | 'MATCHED' | 'IN_PROGRESS' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
+  status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
   pending_offer_count?: number;
   created_at: string;
   ai_sdg_suggestion: {
@@ -131,7 +131,7 @@ export default function SOSDashboard() {
   };
 
   const handleStartNewCase = () => {
-    const openCases = cases.filter(c => ['OPEN', 'MATCHED', 'IN_PROGRESS'].includes(c.status));
+    const openCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
 
     if (openCases.length >= 3) {
       toast.warning('進行中の相談は最大3件までです。既存の相談を取り消してから新規登録してください。');
@@ -154,7 +154,7 @@ export default function SOSDashboard() {
     return `${Math.floor(diffDays / 30)}ヶ月前`;
   };
 
-  const activeCases = cases.filter(c => ['OPEN', 'MATCHED', 'IN_PROGRESS'].includes(c.status));
+  const activeCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
   const pastCases = cases.filter(c => ['RESOLVED', 'CANCELLED', 'CLOSED'].includes(c.status));
 
   if (isLoading) {
@@ -189,7 +189,7 @@ export default function SOSDashboard() {
                 お住まいの地域が登録されていません
               </p>
               <p className="text-xs text-amber-700 leading-relaxed">
-                地域情報はサポーターがあなたに合った支援を見つけるために必要です。プロフィールから地域を登録してください。
+                地域情報はサポーターがあなたに合った支援を見つけるために必要です。右上のお名前、またはボタンから地域を登録できます。
               </p>
             </div>
             <button
@@ -294,12 +294,10 @@ export default function SOSDashboard() {
                       {/* ステータスバッジ */}
                       <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full w-fit ${case_.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
                         case_.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :
-                          case_.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' :
                             'bg-gray-100 text-gray-600'
                         }`}>
                         {case_.status === 'OPEN' && '⏳ サポーター待ち'}
-                        {case_.status === 'MATCHED' && '🤝 マッチ済み'}
-                        {case_.status === 'IN_PROGRESS' && '🔄 対応中'}
+                        {case_.status === 'MATCHED' && '🤝 マッチ済み・支援中'}
                       </span>
                       {case_.status === 'OPEN' && (case_.pending_offer_count ?? 0) > 0 && (
                         <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">
