@@ -57,7 +57,15 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
-    // 4. users テーブルにレコード作成
+    // 4. display_id を採番（DBのシーケンス関数を使用・競合なし）
+    const { data: displayIdRow, error: seqError } = await supabaseAdmin
+        .rpc('generate_display_id', { p_role: 'SUPPORTER' })
+    if (seqError) {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+        return NextResponse.json({ error: 'ID採番に失敗しました' }, { status: 500 })
+    }
+
+    // 5. users テーブルにレコード作成
     const { data: newUser, error: profileError } = await supabaseAdmin
         .from('users')
         .insert({
@@ -65,6 +73,7 @@ export async function POST(request: Request) {
             role: 'SUPPORTER',
             real_name,
             display_name: display_name || real_name,
+            display_id: displayIdRow,
             email,
             phone: sanitizedPhone || null,
             organization_name,
