@@ -298,7 +298,7 @@ export default function ProfilePage() {
                                 </div>
                             )}
                             <div className="space-y-2">
-                                <Label htmlFor="phone">電話番号 {userData.role === 'SUPPORTER' && <span className="text-red-500">*</span>}</Label>
+                                <Label htmlFor="phone">電話番号 {userData.role === 'SUPPORTER' ? <span className="text-red-500">*</span> : <span className="text-xs font-normal text-gray-400">（任意）</span>}</Label>
                                 <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
                                 <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
                             </div>
@@ -307,7 +307,7 @@ export default function ProfilePage() {
 
                     {userData.role === 'SOS' && (
                         <Card>
-                            <CardHeader><CardTitle className="text-base">お住まいの地域 <span className="text-xs font-normal text-gray-400">（任意）</span></CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-base">お住まいの地域 <span className="text-xs font-normal text-teal-600">（推奨）</span></CardTitle></CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-sm text-gray-600">💡 お近くのサポーターが優先的に表示されます。住所の詳細は公開されません。</p>
                                 <SosRegionSelect value={sosRegionCode} onChange={setSosRegionCode} />
@@ -316,7 +316,7 @@ export default function ProfilePage() {
                     )}
 
                     <Card>
-                        <CardHeader><CardTitle className="text-base">住所 {userData.role === 'SUPPORTER' && <span className="text-red-500">*</span>}</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-base">住所 {userData.role === 'SUPPORTER' ? <span className="text-red-500">*</span> : <span className="text-xs font-normal text-gray-400">（任意）</span>}</CardTitle></CardHeader>
                         <CardContent>
                             {userData.role === 'SOS' ? (
                                 <>
