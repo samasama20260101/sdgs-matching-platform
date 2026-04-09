@@ -339,16 +339,17 @@ export default function SupporterCaseDetailPage() {
                   <span>{showQna ? '▲' : '▼'}</span>
                   <span>アンケート回答を{showQna ? '閉じる' : '見る'}（Q1〜Q5）</span>
                 </button>
-                {showQna && (
+                  {showQna && (
                   <div className="mt-3 space-y-3">
                     {QA_QUESTIONS.map((q) => {
-                      const key = `q${q.id}`
-                      const answer = caseData.intake_qna?.qa?.[key]
-                      if (!answer) return null
+                      // 保存時のキーは数値（1,2,3...）または文字列（"q1","q2"...）の両方に対応
+                      const answer = caseData.intake_qna?.qa?.[q.id] ?? caseData.intake_qna?.qa?.[`q${q.id}`]
+                      if (!answer || (Array.isArray(answer) && answer.length === 0)) return null
+                      const answerText = Array.isArray(answer) ? answer.join('\n') : answer
                       return (
                         <div key={q.id} className="bg-gray-50 rounded-lg p-3">
                           <p className="text-xs font-medium text-gray-500 mb-1">Q{q.id}. {q.question}</p>
-                          <p className="text-sm text-gray-700 whitespace-pre-line">{answer}</p>
+                          <p className="text-sm text-gray-700 whitespace-pre-line">{answerText}</p>
                         </div>
                       )
                     })}
