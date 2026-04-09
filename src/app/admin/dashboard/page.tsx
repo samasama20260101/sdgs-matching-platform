@@ -30,16 +30,21 @@ type FormData = {
     display_name: string; organization_name: string
     supporter_type: 'NPO' | 'CORPORATE' | 'GOVERNMENT'; phone: string
 }
+type AdminFormData = {
+    email: string; password: string; real_name: string; display_name: string
+}
 
 const initialForm: FormData = {
     email: '', password: '', real_name: '', display_name: '',
     organization_name: '', supporter_type: 'NPO', phone: '',
 }
+const initialAdminForm: AdminFormData = {
+    email: '', password: '', real_name: '', display_name: '',
+}
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
     OPEN:        { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-700' },
-    MATCHED:     { label: 'マッチ済み',     color: 'bg-amber-100 text-amber-700' },
-    IN_PROGRESS: { label: '対応中',         color: 'bg-purple-100 text-purple-700' },
+    MATCHED:     { label: 'マッチ済み・支援中', color: 'bg-amber-100 text-amber-700' },
     RESOLVED:    { label: '解決済み',       color: 'bg-teal-50 text-teal-700' },
     CANCELLED:   { label: '取消済み',       color: 'bg-gray-100 text-gray-500' },
     CLOSED:      { label: '終了',           color: 'bg-gray-100 text-gray-500' },
@@ -71,6 +76,11 @@ export default function AdminDashboardPage() {
     const [creating, setCreating] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
     const [createSuccess, setCreateSuccess] = useState(false)
+    const [showCreateAdminModal, setShowCreateAdminModal] = useState(false)
+    const [adminForm, setAdminForm] = useState<AdminFormData>(initialAdminForm)
+    const [creatingAdmin, setCreatingAdmin] = useState(false)
+    const [createAdminError, setCreateAdminError] = useState<string | null>(null)
+    const [createAdminSuccess, setCreateAdminSuccess] = useState(false)
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -158,6 +168,30 @@ export default function AdminDashboardPage() {
         }
     }
 
+    const handleCreateAdmin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setCreateAdminError(null)
+        setCreatingAdmin(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('セッションが切れました。再ログインしてください。')
+            const res = await fetch('/api/admin/create-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify(adminForm),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+            setCreateAdminSuccess(true)
+            setAdminForm(initialAdminForm)
+            setTimeout(() => { setCreateAdminSuccess(false); setShowCreateAdminModal(false) }, 2000)
+        } catch (err: unknown) {
+            setCreateAdminError(err instanceof Error ? err.message : 'エラーが発生しました')
+        } finally {
+            setCreatingAdmin(false)
+        }
+    }
+
     const loadFeaturedSupporters = async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
@@ -220,7 +254,7 @@ export default function AdminDashboardPage() {
     ]
 
     const openCases = allCases.filter(c => c.status === 'OPEN')
-    const activeCases = allCases.filter(c => ['MATCHED', 'IN_PROGRESS', 'RESOLVED'].includes(c.status))
+    const activeCases = allCases.filter(c => ['MATCHED', 'RESOLVED'].includes(c.status))
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -272,6 +306,10 @@ export default function AdminDashboardPage() {
                                     <button onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateSuccess(false) }}
                                         className="bg-teal-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-teal-700 transition">
                                         ＋ 新規サポーター追加
+                                    </button>
+                                    <button onClick={() => { setShowCreateAdminModal(true); setCreateAdminError(null); setCreateAdminSuccess(false) }}
+                                        className="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-indigo-700 transition">
+                                        ＋ 管理者追加
                                     </button>
                                 </div>
                             </div>
@@ -722,6 +760,60 @@ export default function AdminDashboardPage() {
                                 <button type="submit" disabled={creating}
                                     className="flex-1 bg-teal-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-teal-700 disabled:opacity-50">
                                     {creating ? '作成中...' : '作成する'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── 管理者作成モーダル ── */}
+            {showCreateAdminModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+                        <div className="px-6 py-4 border-b flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">管理者アカウント追加</h3>
+                            <button onClick={() => setShowCreateAdminModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+                        </div>
+                        <form onSubmit={handleCreateAdmin} className="px-6 py-4 space-y-4">
+                            {createAdminSuccess && <div className="p-3 bg-teal-50 border border-teal-200 rounded-md text-sm text-teal-700">✓ 管理者アカウントを作成しました</div>}
+                            {createAdminError && <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{createAdminError}</div>}
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-md p-3">
+                                <p className="text-xs text-indigo-700">⚠️ 管理者アカウントはすべての管理機能にアクセスできます。信頼できる担当者のみに付与してください。</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">氏名 <span className="text-red-500">*</span></label>
+                                <input type="text" required maxLength={64} value={adminForm.real_name}
+                                    onChange={e => setAdminForm({ ...adminForm, real_name: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">表示名</label>
+                                <input type="text" maxLength={64} value={adminForm.display_name}
+                                    onChange={e => setAdminForm({ ...adminForm, display_name: e.target.value })}
+                                    placeholder={adminForm.real_name || '省略時は氏名が使用されます'}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">メールアドレス <span className="text-red-500">*</span></label>
+                                <input type="email" required maxLength={254} value={adminForm.email}
+                                    onChange={e => setAdminForm({ ...adminForm, email: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">初期パスワード <span className="text-red-500">*</span></label>
+                                <input type="text" required minLength={8} maxLength={64} value={adminForm.password}
+                                    onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}
+                                    placeholder="8文字以上（本人に別途通知してください）"
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                                <p className="mt-1 text-xs text-gray-400">初回ログイン時にパスワード変更が求められます</p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setShowCreateAdminModal(false)}
+                                    className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-50">キャンセル</button>
+                                <button type="submit" disabled={creatingAdmin}
+                                    className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+                                    {creatingAdmin ? '作成中...' : '作成する'}
                                 </button>
                             </div>
                         </form>
