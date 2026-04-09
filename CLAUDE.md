@@ -350,3 +350,5 @@ curl -X GET \
 
 - スマホ向けアプリ化（将来対応予定）
 - サポーター承認上限を 2名 → 3名に拡張（`MAX_SUPPORTERS_PER_CASE = 3` 1行変更のみ）
+- サポーター公開ページの写真・ロゴ掲載機能（Supabase Storage使用、設計済み）
+- favicon・apple-touch-icon・OGP画像の差し替え（`public/brand/` に素材あり）
