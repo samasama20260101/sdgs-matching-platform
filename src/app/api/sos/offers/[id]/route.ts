@@ -52,7 +52,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             )
         }
 
-        // 現在の承認済み数を確認
+        // 現在の承認済み数を確認（ACCEPTED + WITHDRAWNも含めた全履歴の最大orderを取得）
         const { data: acceptedOffers } = await supabaseAdmin
             .from('offers')
             .select('id, accepted_order')
@@ -66,8 +66,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             return NextResponse.json({ error: 'MAX_REACHED', message: `承認上限（${MAX_ACCEPTED}名）に達しています` }, { status: 400 })
         }
 
-        // accepted_order を付番（1=主、2・3=副）
-        const nextOrder = currentCount + 1
+        // accepted_order を付番（欠番が生じても重複しないようMAXを取得して+1）
+        // COUNT+1ではなくMAX+1を使う理由：
+        // 離脱者が出た後に新規承認されると同じorderが付番される問題を防ぐ
+        const { data: maxOrderRow } = await supabaseAdmin
+            .from('offers')
+            .select('accepted_order')
+            .eq('case_id', offer.case_id)
+            .not('accepted_order', 'is', null)
+            .order('accepted_order', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        const nextOrder = (maxOrderRow?.accepted_order ?? 0) + 1
 
         const { error: updateError } = await supabaseAdmin
             .from('offers')
