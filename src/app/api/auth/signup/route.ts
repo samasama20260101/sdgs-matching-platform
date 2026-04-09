@@ -10,11 +10,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
     }
 
+    // display_id を採番（DBのシーケンス関数を使用・競合なし）
+    const { data: displayIdRow, error: seqError } = await supabaseAdmin
+      .rpc('generate_display_id', { p_role: 'SOS' })
+    if (seqError) {
+      console.error('[api/auth/signup] generate_display_id error:', seqError)
+      return NextResponse.json({ error: 'ID採番に失敗しました' }, { status: 500 })
+    }
+
     const { error } = await supabaseAdmin.from('users').insert({
       auth_user_id,
       role: 'SOS',
       real_name,
       display_name: display_name || real_name,
+      display_id: displayIdRow,
       email,
       phone: phone || null,
       gender: gender || null,
