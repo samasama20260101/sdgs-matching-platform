@@ -43,6 +43,14 @@ type OfferData = {
   accepted_order: number | null;
 };
 
+const QA_QUESTIONS = [
+  { id: 1, question: '生活に必要なものが不足していますか？' },
+  { id: 2, question: '人間関係や権利について困っていますか？' },
+  { id: 3, question: '仕事や将来について困っていますか？' },
+  { id: 4, question: '健康や心について困っていますか？' },
+  { id: 5, question: 'どんな支援を求めていますか？' },
+]
+
 export default function SupporterCaseDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -64,6 +72,7 @@ export default function SupporterCaseDetailPage() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
+  const [showQna, setShowQna] = useState(false);
   const [offerMessage, setOfferMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -319,6 +328,34 @@ export default function SupporterCaseDetailPage() {
               <h3 className="text-sm font-medium text-gray-500 mb-2">詳細</h3>
               <p className="text-gray-700 whitespace-pre-line">{caseData?.description_free}</p>
             </div>
+
+            {/* Q1〜Q5 アンケート回答（折りたたみ） */}
+            {caseData?.intake_qna?.qa && Object.keys(caseData.intake_qna.qa).length > 0 && (
+              <div className="border-t pt-4">
+                <button
+                  onClick={() => setShowQna(v => !v)}
+                  className="flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700 w-full text-left"
+                >
+                  <span>{showQna ? '▲' : '▼'}</span>
+                  <span>アンケート回答を{showQna ? '閉じる' : '見る'}（Q1〜Q5）</span>
+                </button>
+                {showQna && (
+                  <div className="mt-3 space-y-3">
+                    {QA_QUESTIONS.map((q) => {
+                      const key = `q${q.id}`
+                      const answer = caseData.intake_qna?.qa?.[key]
+                      if (!answer) return null
+                      return (
+                        <div key={q.id} className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs font-medium text-gray-500 mb-1">Q{q.id}. {q.question}</p>
+                          <p className="text-sm text-gray-700 whitespace-pre-line">{answer}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
             {caseData?.ai_sdg_suggestion && (
               <div className="border-t pt-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-3">🤖 AI分析結果</h3>
