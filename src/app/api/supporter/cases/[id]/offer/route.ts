@@ -2,6 +2,7 @@
 // サポーター用：特定案件へのオファー取得・送信（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
 async function getAuthSupporterUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -42,15 +43,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
-    // 承認上限（3名）チェック
+    // 承認上限チェック
     const { data: acceptedOffers } = await supabaseAdmin
         .from('offers')
         .select('id')
         .eq('case_id', id)
         .eq('status', 'ACCEPTED')
-    if ((acceptedOffers?.length ?? 0) >= 3) {
+    if ((acceptedOffers?.length ?? 0) >= MAX_SUPPORTERS_PER_CASE) {
         return NextResponse.json(
-            { error: 'MAX_REACHED', message: 'この案件はすでに3名のサポーターが承認されているため、申し出できません' },
+            { error: 'MAX_REACHED', message: `この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されているため、申し出できません` },
             { status: 400 }
         )
     }
@@ -93,16 +94,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Not your offer' }, { status: 403 })
     }
 
-    // PENDINGへの再申し出の場合、承認上限（3名）チェック
+    // PENDINGへの再申し出の場合、承認上限チェック
     if (updateData.status === 'PENDING') {
         const { data: acceptedOffers } = await supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', id)
             .eq('status', 'ACCEPTED')
-        if ((acceptedOffers?.length ?? 0) >= 3) {
+        if ((acceptedOffers?.length ?? 0) >= MAX_SUPPORTERS_PER_CASE) {
             return NextResponse.json(
-                { error: 'MAX_REACHED', message: 'この案件はすでに3名のサポーターが承認されているため、申し出できません' },
+                { error: 'MAX_REACHED', message: `この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されているため、申し出できません` },
                 { status: 400 }
             )
         }
@@ -136,7 +137,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
                     .from('cases')
                     .update({ status: 'OPEN' })
                     .eq('id', id)
-                    .in('status', ['MATCHED', 'IN_PROGRESS'])
+                    .in('status', ['MATCHED'])
             }
             // 1名以上残っている場合はステータス変更不要（主が繰り上がるのみ）
         }

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
 
 type CaseData = {
@@ -222,7 +222,7 @@ export default function SOSResultPage() {
       const offerResult = await offerRes.json();
       if (!offerRes.ok) {
         if (offerResult.error === 'MAX_REACHED') {
-          toast.error('すでに3名のサポーターを承認済みです。これ以上承認できません。');
+          toast.error(`すでに${MAX_SUPPORTERS_PER_CASE}名のサポーターを承認済みです。これ以上承認できません。`);
         } else if (offerResult.error === 'OFFER_NOT_PENDING') {
           toast.error('この申し出はすでに取り下げられています。ページを更新してご確認ください。');
           await loadData();
@@ -242,7 +242,7 @@ export default function SOSResultPage() {
       setSelectedOffer(null);
       await loadData();
       if (offerResult.auto_declined) {
-        toast.success('サポーターを承認しました。3名に達したため、残りの申し出は自動的に辞退されました。');
+        toast.success(`サポーターを承認しました。${MAX_SUPPORTERS_PER_CASE}名に達したため、残りの申し出は自動的に辞退されました。`);
       } else {
         toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
       }
@@ -726,14 +726,14 @@ export default function SOSResultPage() {
           ) : (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
               <p className="text-sm text-blue-700">
-                💬 この案件は最大3名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
+                💬 この案件は最大{MAX_SUPPORTERS_PER_CASE}名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
               </p>
             </div>
           )}
-          {acceptedOffers.length === 2 && (
+          {acceptedOffers.length === MAX_SUPPORTERS_PER_CASE - 1 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
               <p className="text-sm font-medium text-orange-800">🔔 上限に達します</p>
-              <p className="text-sm text-orange-700">これを承認すると3名の上限に達し、<span className="font-medium">残りの申し出はすべて自動的に辞退</span>されます。</p>
+              <p className="text-sm text-orange-700">これを承認すると{MAX_SUPPORTERS_PER_CASE}名の上限に達し、<span className="font-medium">残りの申し出はすべて自動的に辞退</span>されます。</p>
             </div>
           )}
           <div className="flex gap-3">

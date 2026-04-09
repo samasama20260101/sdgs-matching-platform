@@ -2,8 +2,9 @@
 // SOS側：オファーの承認・辞退（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
-const MAX_ACCEPTED = 3  // 1案件あたりの承認上限
+const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE  // 1案件あたりの承認上限
 
 async function getAuthSOSUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -62,7 +63,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         const currentCount = acceptedOffers?.length ?? 0
 
         if (currentCount >= MAX_ACCEPTED) {
-            return NextResponse.json({ error: 'MAX_REACHED', message: '承認上限（3名）に達しています' }, { status: 400 })
+            return NextResponse.json({ error: 'MAX_REACHED', message: `承認上限（${MAX_ACCEPTED}名）に達しています` }, { status: 400 })
         }
 
         // accepted_order を付番（1=主、2・3=副）
@@ -75,7 +76,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
         if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
-        // 3名に達した場合、残りのPENDINGを全て自動DECLINED
+        // 上限に達した場合、残りのPENDINGを全て自動DECLINED
         if (nextOrder >= MAX_ACCEPTED) {
             await supabaseAdmin
                 .from('offers')

@@ -1,6 +1,7 @@
 // src/app/api/supporter/dashboard/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id'
 
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     const supporterUserId = userData.id
 
     // 1. アクティブ案件（OPEN / MATCHED）+ LISTED
-    //    承認が3名未満なら引き続き申し出可能なため、全アクティブ状態を取得
+    //    承認が上限未満なら引き続き申し出可能なため、全アクティブ状態を取得
     const { data: activeCases, error: openErr } = await supabaseAdmin
         .from('cases')
         .select(CASE_SELECT)
@@ -92,8 +93,8 @@ export async function GET(request: Request) {
     }
 
     // 6. enriched（my_offer_status + users + accepted_count 付与）
-    //    未オファーのサポーターには承認上限(3名)に達した案件を除外する
-    const MAX_ACCEPTED = 3
+    //    未オファーのサポーターには承認上限に達した案件を除外する
+    const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE
     const enriched = mergedCases
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .map(c => ({

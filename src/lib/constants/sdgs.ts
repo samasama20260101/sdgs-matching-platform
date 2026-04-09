@@ -19,12 +19,14 @@ export const SDG_NAMES: Record<number, string> = {
     16: '平和と公正をすべての人に', 17: 'パートナーシップで目標を達成しよう',
 };
 
+// ─── サポーター上限（この値を変えるだけで全体に反映される） ──────
+export const MAX_SUPPORTERS_PER_CASE = 2
+
 // ─── ケースのステータス ─────────────────────────────────────
 export const CASE_STATUS = {
     OPEN: { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-600', borderColor: 'border-l-blue-400', icon: '⏳', step: 1 },
-    MATCHED: { label: 'マッチ済み', color: 'bg-amber-100 text-amber-600', borderColor: 'border-l-amber-400', icon: '🤝', step: 2 },
-    IN_PROGRESS: { label: '対応中', color: 'bg-purple-100 text-purple-600', borderColor: 'border-l-purple-400', icon: '🔄', step: 3 },
-    RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-600', borderColor: 'border-l-green-500', icon: '✅', step: 4 },
+    MATCHED: { label: 'マッチ済み・支援中', color: 'bg-amber-100 text-amber-600', borderColor: 'border-l-amber-400', icon: '🤝', step: 2 },
+    RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-600', borderColor: 'border-l-green-500', icon: '✅', step: 3 },
     CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-500', borderColor: 'border-l-gray-300', icon: '✕', step: 0 },
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-500', borderColor: 'border-l-gray-300', icon: '📁', step: 0 },
 } as const;
@@ -33,19 +35,18 @@ export const CASE_STATUS = {
 export type CaseStatusKey = keyof typeof CASE_STATUS;
 
 // アクティブなステータス（進行中のケースとして扱うもの）
-export const ACTIVE_STATUSES: CaseStatusKey[] = ['OPEN', 'MATCHED', 'IN_PROGRESS'];
+export const ACTIVE_STATUSES: CaseStatusKey[] = ['OPEN', 'MATCHED'];
 
 // 終了済みステータス
 export const PAST_STATUSES: CaseStatusKey[] = ['RESOLVED', 'CANCELLED', 'CLOSED'];
 
 // ステータスパイプラインのステップ名
-export const STATUS_STEPS = ['待ち', '確認中', '対応中', '解決'] as const;
+export const STATUS_STEPS = ['待ち', 'マッチ済み', '解決報告', '解決'] as const;
 
 // ステータス遷移の許可マップ
 export const STATUS_TRANSITIONS: Record<string, string[]> = {
     OPEN: ['MATCHED', 'CANCELLED'],
-    MATCHED: ['IN_PROGRESS', 'CANCELLED'],
-    IN_PROGRESS: ['RESOLVED', 'CANCELLED'],
+    MATCHED: ['RESOLVED', 'CANCELLED'],
     RESOLVED: ['CLOSED'],
     CANCELLED: [],
     CLOSED: [],
