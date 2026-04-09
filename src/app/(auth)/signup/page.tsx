@@ -96,8 +96,9 @@ export default function SignupPage() {
       })
 
       if (!profileRes.ok) {
-        const { error: profileError } = await profileRes.json()
-        throw new Error(profileError || 'プロフィールの保存に失敗しました')
+        const profileData = await profileRes.json()
+        // 登録上限エラーは専用メッセージを使用
+        throw new Error(profileData.message || profileData.error || 'プロフィールの保存に失敗しました')
       }
 
       router.push('/sos/dashboard')
