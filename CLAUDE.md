@@ -168,6 +168,7 @@ ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 | src/lib/utils/age.ts | 未成年判定（18歳未満、SDGs基準） |
 | src/lib/supabase/server.ts | supabaseAdmin（service_role） |
 | src/lib/supabase/client.ts | supabase（anon key、シングルトン） |
+| src/lib/constants/sdgs.ts | 定数一元管理（MAX_SUPPORTERS_PER_CASE など） |
 | src/components/form/AddressForm.tsx | 住所フォーム共通コンポーネント |
 | src/components/layout/Header.tsx | ヘッダー（スマホ用ハンバーガーメニュー実装済み） |
 | src/components/ui/toast.tsx | トースト通知（重複防止済み） |
@@ -177,15 +178,72 @@ ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 
 ---
 
+## ケースのステータス遷移（重要）
+
+```
+OPEN → MATCHED → RESOLVED
+         ↓
+      CANCELLED（取り消し）
+```
+
+- **OPEN**: サポーター待ち（申し出受付中）
+- **MATCHED**: 1名以上のサポーターが承認された = 支援進行中（マッチ＝支援開始）
+- **RESOLVED**: SOS ユーザーが解決を確認した
+- **CANCELLED / CLOSED**: 取り消し・自動クローズ
+
+⚠️ **IN_PROGRESS は廃止済み**。過去の DB データに IN_PROGRESS が残っていても画面には表示されない（OPEN/MATCHED/RESOLVED 以外は else 扱い）。
+
+---
+
+## サポーター承認上限（重要）
+
+**上限数の定義は1箇所のみ**:
+
+```typescript
+// src/lib/constants/sdgs.ts
+export const MAX_SUPPORTERS_PER_CASE = 2  // ← ここだけ変えれば全体に反映
+```
+
+現在は **2名**。将来3名に拡張する場合はこの数値を変えるだけでよい。
+この定数を import しているファイル: `api/sos/offers/[id]/route.ts`、`api/supporter/cases/[id]/offer/route.ts`、`api/supporter/dashboard/route.ts`、`supporter/case/[id]/page.tsx`、`sos/result/[id]/page.tsx`
+
+### サポーターの主/副ロール
+
+- `offers.accepted_order`（承認時に付番）の昇順で主/副が決まる
+- 最小 `accepted_order` を持つサポーター = **主**（解決報告ボタンが表示される）
+- 主が離脱（WITHDRAWN）すると次の `accepted_order` が自動的に主になる
+- accepted_order は欠番が生じても問題なし（絶対値でなく相対順位で判定）
+
+### 評価バッジ（解決時に自動付与）
+
+- 主（最小 accepted_order）→ 🥇 金メダル
+- 副（それ以降）→ 🥈 銀メダル
+- `sos/result/[id]/page.tsx` の `handleResolveCase` 内で `accepted_order` 昇順ソート後に付与
+
+### サポーターのオファー状態とダッシュボード表示ルール
+
+| オファー状態 | 満員（上限到達） | 空きあり |
+|---|---|---|
+| ACCEPTED / PENDING | 常に表示 | 常に表示 |
+| WITHDRAWN / DECLINED | **非表示** | 表示（再申し出可） |
+| 未オファー | **非表示** | 表示 |
+
+---
+
 ## 実装済み機能一覧
 
 - SOSユーザー新規登録・ログイン
 - 相談登録（Q1〜Q5 + 自由記述）
 - AI分析（Google Gemini）でSDGsタグ付け（Q1〜Q5 + 自由記述を統合して送信）
 - AIローディング演出（ステップ表示・30秒タイムアウト）
-- サポーターマッチング・申し出・承認
+- サポーターマッチング・申し出・承認（上限 MAX_SUPPORTERS_PER_CASE 名）
+- 承認上限到達時に残りのPENDINGを自動DECLINED
 - 取り下げ済みオファーの承認防止
-- メッセージ機能
+- サポーターが承認後に対応をキャンセル可能（WITHDRAWN → 残数0ならOPENに巻き戻し）
+- 主/副サポーター制（accepted_order 昇順）・主離脱時の自動繰り上がり
+- 解決報告は主サポーターのみ可能、SOS側で確認してRESOLVED
+- 解決時の自動バッジ付与（主→金メダル、副→銀メダル、accepted_order 昇順で判定）
+- メッセージ機能（承認済みサポーター全員と共有）
 - 未成年バッジ（サポーター案件一覧・詳細・管理画面）
 - SOSダッシュボード地域未登録バナー
 - 管理画面ユーザー停止・削除（signOut globalでセッション即時無効化）
