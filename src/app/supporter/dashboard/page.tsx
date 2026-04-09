@@ -256,7 +256,7 @@ export default function SupporterDashboard() {
   const getCaseCount = (r: string) => cases.filter((c) => c.users?.prefecture === r).length;
   const stats = [
     { label: '相談件数', value: cases.length, color: 'text-blue-600' },
-    { label: '対応中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-purple-600' },
+    { label: 'マッチ済み・支援中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
     { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
@@ -355,7 +355,7 @@ export default function SupporterDashboard() {
               { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
               { key: 'none', label: '○ 未対応', color: 'border-slate-300 bg-slate-50 text-slate-600' },
               { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
-              { key: 'active', label: '🔄 対応中', color: 'border-purple-300 bg-purple-50 text-purple-600' },
+              { key: 'active', label: '🤝 マッチ済み・支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
             ].map((f) => {
               const count = f.key === null ? cases.length : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
