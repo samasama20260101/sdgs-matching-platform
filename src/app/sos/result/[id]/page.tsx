@@ -177,6 +177,35 @@ export default function SOSResultPage() {
         : '';
       const fullDescription = [qaText, cd.description_free].filter(Boolean).join('\n\n');
 
+      // 情報が不十分かチェック（全問「該当なし」のみ＆自由記述が5文字以下）
+      const allNone = cd.intake_qna?.qa
+        ? Object.values(cd.intake_qna.qa).every(
+            (answers) => (answers as string[]).every(a => a === '該当なし') ||
+                         (answers as string[]).length === 0
+          )
+        : true;
+      const freeTextTooShort = (cd.description_free || '').trim().length <= 5;
+
+      if (allNone && freeTextTooShort) {
+        // 分類不能として空結果をセット（AI呼び出しなし）
+        const emptyResult = {
+          sdgs_goals: [],
+          summary: 'もう少し詳しく教えてもらえると、より適切な支援者につなぐことができます。「何が起きているか」の欄に、困っていることをもう少し詳しく書いてみてください。',
+          per_goal: [],
+          keywords: [],
+        };
+        clearTimeout(step2);
+        clearTimeout(step3);
+        const { data: { session: sess } } = await supabase.auth.getSession();
+        await fetch(`/api/sos/cases/${cd.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
+          body: JSON.stringify({ ai_sdg_suggestion: emptyResult, visibility: 'LISTED' }),
+        });
+        setCaseData({ ...cd, ai_sdg_suggestion: emptyResult });
+        return;
+      }
+
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -482,54 +511,74 @@ export default function SOSResultPage() {
               <h2 className="text-lg font-bold text-gray-800">🌍 あなたの声と世界のつながり</h2>
               <p className="text-xs text-gray-500 mt-1">あなたの相談がSDGs（持続可能な開発目標）のどの課題に関わるかをAIが分析しました</p>
             </div>
-            {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
-              <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
-                <CardContent className="py-4">
-                  <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
+
+            {/* SDGsが分類できなかった場合 */}
+            {(!caseData.ai_sdg_suggestion.sdgs_goals || caseData.ai_sdg_suggestion.sdgs_goals.length === 0) ? (
+              <Card className="border-none bg-amber-50 shadow-sm">
+                <CardContent className="py-5">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">💬</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 mb-1">もう少し詳しく教えてください</p>
+                      <p className="text-sm text-amber-700 leading-relaxed">
+                        {caseData.ai_sdg_suggestion.summary || 'もう少し詳しく教えてもらえると、より適切な支援者につなぐことができます。「何が起きているか」の欄に、困っていることをもう少し詳しく書いてみてください。'}
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-            {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
-              <div className="space-y-3">
-                {caseData.ai_sdg_suggestion.per_goal.map((pg) => (
-                  <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
-                    <div className="flex">
-                      <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
-                      <div className="flex-1 p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
-                          <span className="text-xs text-gray-500">{SDG_NAMES[pg.goal]}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
             ) : (
-              <div className="space-y-3">
-                {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
-                  <Card key={goalId} className="border-none shadow-sm overflow-hidden">
-                    <div className="flex">
-                      <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
-                      <div className="flex-1 p-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
-                          <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
-                        </div>
-                      </div>
-                    </div>
+              <>
+                {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
+                  <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
+                    <CardContent className="py-4">
+                      <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
+                    </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
-            {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-1">
-                {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
-                  <span key={i} className="text-xs px-2.5 py-1 bg-white border border-gray-200 rounded-full text-gray-600 shadow-sm">#{kw}</span>
-                ))}
-              </div>
+                )}
+                {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
+                  <div className="space-y-3">
+                    {caseData.ai_sdg_suggestion.per_goal.map((pg) => (
+                      <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
+                        <div className="flex">
+                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
+                          <div className="flex-1 p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
+                              <span className="text-xs text-gray-500">{SDG_NAMES[pg.goal]}</span>
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
+                      <Card key={goalId} className="border-none shadow-sm overflow-hidden">
+                        <div className="flex">
+                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
+                          <div className="flex-1 p-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
+                              <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-1">
+                    {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                      <span key={i} className="text-xs px-2.5 py-1 bg-white border border-gray-200 rounded-full text-gray-600 shadow-sm">#{kw}</span>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : null}
