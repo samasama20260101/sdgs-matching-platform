@@ -22,7 +22,7 @@ type SosUser = {
 }
 type Case = {
     id: string; title: string; status: string; created_at: string
-    region_code: string | null; users?: { display_name: string } | null
+    users?: { display_name: string } | null
 }
 type TabKey = 'supporters' | 'sos' | 'open_cases' | 'matched_cases' | 'resolved_cases' | 'inquiries'
 type FormData = {
@@ -485,21 +485,19 @@ export default function AdminDashboardPage() {
                                 <div className="px-6 py-12 text-center text-gray-400">未対応の案件はありません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">タイトル</th>
-                                                <th className="px-6 py-3 text-left">相談者</th>
-                                                <th className="px-6 py-3 text-left">地域</th>
-                                                <th className="px-6 py-3 text-left">投稿日</th>
+                                                <th className="px-6 py-3 text-left w-1/2">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/4">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/4">投稿日</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {openCases.map(c => (
                                                 <tr key={c.id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 font-medium text-gray-900 max-w-xs truncate">{c.title}</td>
-                                                    <td className="px-6 py-4 text-gray-700">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
                                                 </tr>
                                             ))}
@@ -523,10 +521,9 @@ export default function AdminDashboardPage() {
                                     <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left w-2/5">タイトル</th>
-                                                <th className="px-6 py-3 text-left w-1/5">相談者</th>
-                                                <th className="px-6 py-3 text-left w-1/5">地域</th>
-                                                <th className="px-6 py-3 text-left w-1/5">投稿日</th>
+                                                <th className="px-6 py-3 text-left w-1/2">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/4">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/4">投稿日</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -534,7 +531,6 @@ export default function AdminDashboardPage() {
                                                 <tr key={c.id} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
                                                     <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
                                                 </tr>
                                             ))}
@@ -558,10 +554,9 @@ export default function AdminDashboardPage() {
                                     <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left w-2/5">タイトル</th>
-                                                <th className="px-6 py-3 text-left w-1/5">相談者</th>
-                                                <th className="px-6 py-3 text-left w-1/5">地域</th>
-                                                <th className="px-6 py-3 text-left w-1/5">投稿日</th>
+                                                <th className="px-6 py-3 text-left w-1/2">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/4">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/4">投稿日</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -569,7 +564,6 @@ export default function AdminDashboardPage() {
                                                 <tr key={c.id} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
                                                     <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
                                                 </tr>
                                             ))}
