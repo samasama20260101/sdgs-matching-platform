@@ -335,7 +335,13 @@ export default function AdminDashboardPage() {
                                                 const isFeatured = featured?.is_featured ?? false
                                                 return (
                                                     <tr key={s.id} className={`hover:bg-gray-50 ${s.is_suspended ? 'bg-red-50' : ''}`}>
-                                                        <td className="px-6 py-4 font-medium text-gray-900 break-words">{s.organization_name || '—'}{s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
+                                                        <td className="px-6 py-4 font-medium text-gray-900 break-words">
+                                                            <a href={`/supporters/${s.id}`} target="_blank" rel="noopener noreferrer"
+                                                                className="text-teal-600 hover:text-teal-800 hover:underline">
+                                                                {s.organization_name || s.display_name || '—'}
+                                                            </a>
+                                                            {s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}
+                                                        </td>
                                                         <td className="px-6 py-4 text-gray-700 break-words">{s.real_name}</td>
                                                         <td className="px-6 py-4">
                                                             <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO' ? 'bg-blue-100 text-blue-700' : s.supporter_type === 'GOVERNMENT' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
