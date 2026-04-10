@@ -152,16 +152,16 @@ export default function SupporterProfilePage() {
                 )}
                 {sl.twitter && (
                   <a href={sl.twitter.startsWith('http') ? sl.twitter : `https://twitter.com/${sl.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-white bg-black hover:bg-gray-800 px-3 py-1.5 rounded-full transition-colors max-w-[200px]">
+                    className="inline-flex items-center gap-1.5 text-xs text-white bg-black hover:bg-gray-800 px-3 py-1.5 rounded-full transition-colors max-w-[240px] overflow-hidden">
                     <span className="flex-shrink-0">𝕏</span>
-                    <span className="truncate">{sl.twitter.startsWith('http') ? 'X (Twitter)' : `@${sl.twitter.replace('@', '')}`}</span>
+                    <span className="truncate min-w-0">{sl.twitter.startsWith('http') ? 'X (Twitter)' : `@${sl.twitter.replace('@', '')}`}</span>
                   </a>
                 )}
                 {sl.instagram && (
                   <a href={sl.instagram.startsWith('http') ? sl.instagram : `https://instagram.com/${sl.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-3 py-1.5 rounded-full transition-colors max-w-[200px]">
+                    className="inline-flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-3 py-1.5 rounded-full transition-colors max-w-[240px] overflow-hidden">
                     <span className="flex-shrink-0">IG</span>
-                    <span className="truncate">{sl.instagram.startsWith('http') ? 'Instagram' : `@${sl.instagram.replace('@', '')}`}</span>
+                    <span className="truncate min-w-0">{sl.instagram.startsWith('http') ? 'Instagram' : `@${sl.instagram.replace('@', '')}`}</span>
                   </a>
                 )}
                 {sl.facebook && (
@@ -171,9 +171,9 @@ export default function SupporterProfilePage() {
                   </a>
                 )}
                 {sl.line && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-white bg-teal-500 px-3 py-1.5 rounded-full max-w-[200px]">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-white bg-teal-500 px-3 py-1.5 rounded-full max-w-[240px] overflow-hidden">
                     <span className="flex-shrink-0">💬 LINE:</span>
-                    <span className="truncate">{sl.line}</span>
+                    <span className="truncate min-w-0">{sl.line}</span>
                   </span>
                 )}
               </div>
@@ -202,7 +202,7 @@ export default function SupporterProfilePage() {
             <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
               <span>✍️</span> 自己紹介
             </h2>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{supporter.bio}</p>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-all">{supporter.bio}</p>
           </div>
         )}
 
