@@ -38,7 +38,12 @@ export default function LoginPage() {
             });
 
             if (authError) {
-                setError('メールアドレスまたはパスワードが正しくありません');
+                // BANされたユーザーはSupabaseが "User is banned" を返す
+                if (authError.message?.toLowerCase().includes('banned') || authError.message?.toLowerCase().includes('ban')) {
+                    setError('このアカウントは停止されています。管理者にお問い合わせください。');
+                } else {
+                    setError('メールアドレスまたはパスワードが正しくありません');
+                }
                 return;
             }
 
@@ -48,6 +53,14 @@ export default function LoginPage() {
                     'Authorization': `Bearer ${data.session.access_token}`,
                 },
             });
+
+            // ログイン成功後でも停止されている場合（フラグのみ停止）
+            if (res.status === 403) {
+                await supabase.auth.signOut();
+                setError('このアカウントは停止されています。管理者にお問い合わせください。');
+                return;
+            }
+
             const result = await res.json();
 
             if (!result.role) {
