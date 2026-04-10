@@ -2,6 +2,7 @@
 // サポーター用：特定案件へのオファー取得・送信（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
 async function getAuthSupporterUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -42,6 +43,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
+    // 承認上限チェック
+    const { data: acceptedOffers } = await supabaseAdmin
+        .from('offers')
+        .select('id')
+        .eq('case_id', id)
+        .eq('status', 'ACCEPTED')
+    if ((acceptedOffers?.length ?? 0) >= MAX_SUPPORTERS_PER_CASE) {
+        return NextResponse.json(
+            { error: 'MAX_REACHED', message: `この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されているため、申し出できません` },
+            { status: 400 }
+        )
+    }
+
     const { data, error } = await supabaseAdmin
         .from('offers')
         .insert([{ case_id: id, supporter_user_id: userData.id, message, status: 'PENDING' }])
@@ -78,6 +92,57 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (!offer || offer.supporter_user_id !== userData.id) {
         return NextResponse.json({ error: 'Not your offer' }, { status: 403 })
+    }
+
+    // PENDINGへの再申し出の場合、承認上限チェック
+    if (updateData.status === 'PENDING') {
+        const { data: acceptedOffers } = await supabaseAdmin
+            .from('offers')
+            .select('id')
+            .eq('case_id', id)
+            .eq('status', 'ACCEPTED')
+        if ((acceptedOffers?.length ?? 0) >= MAX_SUPPORTERS_PER_CASE) {
+            return NextResponse.json(
+                { error: 'MAX_REACHED', message: `この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されているため、申し出できません` },
+                { status: 400 }
+            )
+        }
+    }
+
+    // WITHDRAWNへの変更（ACCEPTED状態からの離脱）の場合、案件ステータスを巻き戻す
+    if (updateData.status === 'WITHDRAWN') {
+        // まず現在のオファーのステータスを確認
+        const { data: currentOffer } = await supabaseAdmin
+            .from('offers').select('status').eq('id', offerId).single()
+
+        const { error: updateError } = await supabaseAdmin
+            .from('offers').update(updateData).eq('id', offerId)
+        if (updateError) {
+            return NextResponse.json({ error: updateError.message }, { status: 500 })
+        }
+
+        // ACCEPTED から離脱した場合、残りのACCEPTED数に応じて案件ステータスを調整
+        if (currentOffer?.status === 'ACCEPTED') {
+            const { data: remainingAccepted } = await supabaseAdmin
+                .from('offers')
+                .select('id')
+                .eq('case_id', id)
+                .eq('status', 'ACCEPTED')
+
+            const remainingCount = remainingAccepted?.length ?? 0
+
+            if (remainingCount === 0) {
+                // 誰もいなくなったら OPEN に戻す
+                await supabaseAdmin
+                    .from('cases')
+                    .update({ status: 'OPEN' })
+                    .eq('id', id)
+                    .in('status', ['MATCHED'])
+            }
+            // 1名以上残っている場合はステータス変更不要（主が繰り上がるのみ）
+        }
+
+        return NextResponse.json({ ok: true })
     }
 
     const { error: updateError } = await supabaseAdmin

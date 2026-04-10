@@ -22,24 +22,29 @@ type SosUser = {
 }
 type Case = {
     id: string; title: string; status: string; created_at: string
-    region_code: string | null; users?: { display_name: string } | null
+    users?: { display_name: string } | null
 }
-type TabKey = 'supporters' | 'sos' | 'open_cases' | 'active_cases' | 'inquiries'
+type TabKey = 'supporters' | 'sos' | 'open_cases' | 'matched_cases' | 'resolved_cases' | 'inquiries'
 type FormData = {
     email: string; password: string; real_name: string
     display_name: string; organization_name: string
     supporter_type: 'NPO' | 'CORPORATE' | 'GOVERNMENT'; phone: string
+}
+type AdminFormData = {
+    email: string; password: string; real_name: string; display_name: string
 }
 
 const initialForm: FormData = {
     email: '', password: '', real_name: '', display_name: '',
     organization_name: '', supporter_type: 'NPO', phone: '',
 }
+const initialAdminForm: AdminFormData = {
+    email: '', password: '', real_name: '', display_name: '',
+}
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
     OPEN:        { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-700' },
-    MATCHED:     { label: 'マッチ済み',     color: 'bg-amber-100 text-amber-700' },
-    IN_PROGRESS: { label: '対応中',         color: 'bg-purple-100 text-purple-700' },
+    MATCHED:     { label: 'マッチ済み・支援中', color: 'bg-amber-100 text-amber-700' },
     RESOLVED:    { label: '解決済み',       color: 'bg-teal-50 text-teal-700' },
     CANCELLED:   { label: '取消済み',       color: 'bg-gray-100 text-gray-500' },
     CLOSED:      { label: '終了',           color: 'bg-gray-100 text-gray-500' },
@@ -71,29 +76,68 @@ export default function AdminDashboardPage() {
     const [creating, setCreating] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
     const [createSuccess, setCreateSuccess] = useState(false)
+    const [showCreateAdminModal, setShowCreateAdminModal] = useState(false)
+    const [adminForm, setAdminForm] = useState<AdminFormData>(initialAdminForm)
+    const [creatingAdmin, setCreatingAdmin] = useState(false)
+    const [createAdminError, setCreateAdminError] = useState<string | null>(null)
+    const [createAdminSuccess, setCreateAdminSuccess] = useState(false)
 
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const [statsRes, featuredRes, inquiryRes] = await Promise.all([
-                fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
-                fetch('/api/admin/featured-supporters', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
-                fetch('/api/admin/inquiries', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
+
+            const authHeader = { 'Authorization': `Bearer ${session.access_token}` }
+
+            // 全APIを並列で呼び出し（各自独立して処理）
+            const [statsRes, featuredRes, inquiryRes, countsRes, casesRes] = await Promise.all([
+                fetch('/api/admin/stats',             { headers: authHeader }),
+                fetch('/api/admin/featured-supporters',{ headers: authHeader }),
+                fetch('/api/admin/inquiries',          { headers: authHeader }),
+                fetch('/api/admin/case-counts',        { headers: authHeader }),
+                fetch('/api/admin/cases-list',         { headers: authHeader }),
             ])
-            const data = await statsRes.json()
-            if (!statsRes.ok) return
-            const featuredData = await featuredRes.json()
-            const inquiryData = await inquiryRes.json()
-            setSupporters(data.supporters ?? [])
-            setSosUsers(data.sosUsers ?? [])
-            setAllCases(data.cases ?? [])
-            setSosCount(data.sosCount)
-            setCaseStats(data.caseStats)
-            setFeaturedSupporters(featuredData.supporters ?? [])
-            setInquiries(inquiryData.inquiries ?? [])
-            setInquiryOpenCount(inquiryData.open_count ?? 0)
+
+            // stats（サポーター・SOSユーザー）
+            if (statsRes.ok) {
+                const data = await statsRes.json()
+                setSupporters(data.supporters ?? [])
+                setSosUsers(data.sosUsers ?? [])
+                setSosCount(data.sosCount ?? 0)
+            }
+
+            // 案件カウント（専用API優先）
+            if (countsRes.ok) {
+                const countsData = await countsRes.json()
+                setCaseStats({
+                    open:        countsData.open    ?? 0,
+                    in_progress: countsData.matched ?? 0,
+                    resolved:    countsData.resolved ?? 0,
+                })
+            }
+
+            // 案件リスト（専用API）
+            if (casesRes.ok) {
+                const casesData = await casesRes.json()
+                console.log('[admin] casesData:', casesData)
+                setAllCases(casesData.cases ?? [])
+            } else {
+                console.error('[admin] cases-list API failed:', casesRes.status)
+            }
+
+            // トップ掲載サポーター
+            if (featuredRes.ok) {
+                const featuredData = await featuredRes.json()
+                setFeaturedSupporters(featuredData.supporters ?? [])
+            }
+
+            // お問い合わせ
+            if (inquiryRes.ok) {
+                const inquiryData = await inquiryRes.json()
+                setInquiries(inquiryData.inquiries ?? [])
+                setInquiryOpenCount(inquiryData.open_count ?? 0)
+            }
         } finally {
             setLoading(false)
         }
@@ -158,6 +202,30 @@ export default function AdminDashboardPage() {
         }
     }
 
+    const handleCreateAdmin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setCreateAdminError(null)
+        setCreatingAdmin(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error('セッションが切れました。再ログインしてください。')
+            const res = await fetch('/api/admin/create-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify(adminForm),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+            setCreateAdminSuccess(true)
+            setAdminForm(initialAdminForm)
+            setTimeout(() => { setCreateAdminSuccess(false); setShowCreateAdminModal(false) }, 2000)
+        } catch (err: unknown) {
+            setCreateAdminError(err instanceof Error ? err.message : 'エラーが発生しました')
+        } finally {
+            setCreatingAdmin(false)
+        }
+    }
+
     const loadFeaturedSupporters = async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
@@ -214,13 +282,15 @@ export default function AdminDashboardPage() {
     const TABS: { key: TabKey; label: string; icon: string; count: number; numColor: string; borderColor: string; bgColor: string }[] = [
         { key: 'supporters', label: 'サポーター',     icon: '🤝', count: supporters.length,                      numColor: 'text-teal-600',  borderColor: 'border-teal-500',  bgColor: 'bg-teal-50' },
         { key: 'sos',        label: '相談者（SOS）',  icon: '👥', count: sosCount,                               numColor: 'text-blue-600',   borderColor: 'border-blue-500',   bgColor: 'bg-blue-50' },
-        { key: 'open_cases', label: '未対応の案件',   icon: '⏳', count: caseStats.open,                         numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
-        { key: 'active_cases',label:'対応中・解決済み',icon:'🔄', count: caseStats.in_progress + caseStats.resolved, numColor: 'text-purple-600', borderColor: 'border-purple-500', bgColor: 'bg-purple-50' },
+        { key: 'open_cases',    label: '未対応の案件',     icon: '⏳', count: caseStats.open,          numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
+        { key: 'matched_cases', label: 'マッチ済み・支援中', icon: '🤝', count: caseStats.in_progress,  numColor: 'text-amber-600',  borderColor: 'border-amber-500',  bgColor: 'bg-amber-50' },
+        { key: 'resolved_cases',label: '解決済み',          icon: '✅', count: caseStats.resolved,      numColor: 'text-teal-600',   borderColor: 'border-teal-500',   bgColor: 'bg-teal-50' },
         { key: 'inquiries',  label: 'お問い合わせ',   icon: '📩', count: inquiryOpenCount, numColor: 'text-rose-600', borderColor: 'border-rose-500', bgColor: 'bg-rose-50' },
     ]
 
-    const openCases = allCases.filter(c => c.status === 'OPEN')
-    const activeCases = allCases.filter(c => ['MATCHED', 'IN_PROGRESS', 'RESOLVED'].includes(c.status))
+    const openCases    = allCases.filter(c => c.status === 'OPEN')
+    const matchedCases = allCases.filter(c => c.status === 'MATCHED')
+    const resolvedCases= allCases.filter(c => c.status === 'RESOLVED')
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -273,22 +343,26 @@ export default function AdminDashboardPage() {
                                         className="bg-teal-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-teal-700 transition">
                                         ＋ 新規サポーター追加
                                     </button>
+                                    <button onClick={() => { setShowCreateAdminModal(true); setCreateAdminError(null); setCreateAdminSuccess(false) }}
+                                        className="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-indigo-700 transition">
+                                        ＋ 管理者追加
+                                    </button>
                                 </div>
                             </div>
                             {supporters.length === 0 ? (
                                 <div className="px-6 py-12 text-center text-gray-400">サポーターがまだ登録されていません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">組織名</th>
-                                                <th className="px-6 py-3 text-left">担当者</th>
-                                                <th className="px-6 py-3 text-left">種別</th>
-                                                <th className="px-6 py-3 text-left">メール</th>
-                                                <th className="px-6 py-3 text-left">登録日</th>
-                                                <th className="px-6 py-3 text-center">トップ掲載</th>
-                                                <th className="px-6 py-3 text-center">操作</th>
+                                                <th className="px-6 py-3 text-left w-1/5">組織名</th>
+                                                <th className="px-6 py-3 text-left w-1/8">担当者</th>
+                                                <th className="px-6 py-3 text-left w-1/8">種別</th>
+                                                <th className="px-6 py-3 text-left w-1/5">メール</th>
+                                                <th className="px-6 py-3 text-left w-1/8">登録日</th>
+                                                <th className="px-6 py-3 text-center w-1/8">トップ掲載</th>
+                                                <th className="px-6 py-3 text-center w-1/8">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -297,14 +371,20 @@ export default function AdminDashboardPage() {
                                                 const isFeatured = featured?.is_featured ?? false
                                                 return (
                                                     <tr key={s.id} className={`hover:bg-gray-50 ${s.is_suspended ? 'bg-red-50' : ''}`}>
-                                                        <td className="px-6 py-4 font-medium text-gray-900">{s.organization_name || '—'}{s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
-                                                        <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
+                                                        <td className="px-6 py-4 font-medium text-gray-900 break-words">
+                                                            <a href={`/supporters/${s.id}`} target="_blank" rel="noopener noreferrer"
+                                                                className="text-teal-600 hover:text-teal-800 hover:underline">
+                                                                {s.organization_name || s.display_name || '—'}
+                                                            </a>
+                                                            {s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-gray-700 break-words">{s.real_name}</td>
                                                         <td className="px-6 py-4">
                                                             <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO' ? 'bg-blue-100 text-blue-700' : s.supporter_type === 'GOVERNMENT' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
                                                                 {s.supporter_type || '—'}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-gray-500">{s.email}</td>
+                                                        <td className="px-6 py-4 text-gray-500 break-all">{s.email}</td>
                                                         <td className="px-6 py-4 text-gray-400">{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
                                                         <td className="px-6 py-4 text-center">
                                                             <button onClick={() => toggleFeatured(s.id, isFeatured)}
@@ -346,24 +426,24 @@ export default function AdminDashboardPage() {
                                 <div className="px-6 py-12 text-center text-gray-400">相談者がいません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">表示名</th>
-                                                <th className="px-6 py-3 text-left">本名</th>
-                                                <th className="px-6 py-3 text-left">メール</th>
-                                                <th className="px-6 py-3 text-left">地域コード</th>
-                                                <th className="px-6 py-3 text-center">未成年</th>
-                                                <th className="px-6 py-3 text-left">登録日</th>
-                                                <th className="px-6 py-3 text-center">操作</th>
+                                                <th className="px-6 py-3 text-left w-1/6">表示名</th>
+                                                <th className="px-6 py-3 text-left w-1/6">本名</th>
+                                                <th className="px-6 py-3 text-left w-1/5">メール</th>
+                                                <th className="px-6 py-3 text-left w-1/8">地域コード</th>
+                                                <th className="px-6 py-3 text-center w-1/8">未成年</th>
+                                                <th className="px-6 py-3 text-left w-1/8">登録日</th>
+                                                <th className="px-6 py-3 text-center w-1/8">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {sosUsers.map(u => (
                                                 <tr key={u.id} className={`hover:bg-gray-50 ${u.is_suspended ? 'bg-red-50' : ''}`}>
-                                                    <td className="px-6 py-4 font-medium text-gray-900">{u.display_name || '—'}{u.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
-                                                    <td className="px-6 py-4 text-gray-700">{u.real_name || '—'}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{u.email}</td>
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{u.display_name || '—'}{u.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{u.real_name || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-500 break-all">{u.email}</td>
                                                     <td className="px-6 py-4 text-gray-500">{u.sos_region_code || '—'}</td>
                                                     <td className="px-6 py-4 text-center">
                                                         {isMinor(u.birth_date) && (
@@ -405,21 +485,19 @@ export default function AdminDashboardPage() {
                                 <div className="px-6 py-12 text-center text-gray-400">未対応の案件はありません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">タイトル</th>
-                                                <th className="px-6 py-3 text-left">相談者</th>
-                                                <th className="px-6 py-3 text-left">地域</th>
-                                                <th className="px-6 py-3 text-left">投稿日</th>
+                                                <th className="px-6 py-3 text-left w-1/2">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/4">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/4">投稿日</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {openCases.map(c => (
                                                 <tr key={c.id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 font-medium text-gray-900 max-w-xs truncate">{c.title}</td>
-                                                    <td className="px-6 py-4 text-gray-700">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
                                                 </tr>
                                             ))}
@@ -430,39 +508,65 @@ export default function AdminDashboardPage() {
                         </>
                     )}
 
-                    {/* 対応中・解決済み */}
-                    {activeTab === 'active_cases' && (
+                    {/* マッチ済み・支援中 */}
+                    {activeTab === 'matched_cases' && (
                         <>
-                            <div className="px-6 py-3 bg-purple-50 border-y border-purple-100">
-                                <p className="text-sm text-purple-800 font-medium">{activeCases.length}件が対応中または解決済みです</p>
+                            <div className="px-6 py-3 bg-amber-50 border-y border-amber-100">
+                                <p className="text-sm text-amber-800 font-medium">{matchedCases.length}件が現在マッチ済み・支援中です</p>
                             </div>
-                            {activeCases.length === 0 ? (
-                                <div className="px-6 py-12 text-center text-gray-400">該当する案件はありません</div>
+                            {matchedCases.length === 0 ? (
+                                <div className="px-6 py-12 text-center text-gray-400">現在マッチ済みの案件はありません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">タイトル</th>
-                                                <th className="px-6 py-3 text-left">相談者</th>
-                                                <th className="px-6 py-3 text-left">ステータス</th>
-                                                <th className="px-6 py-3 text-left">地域</th>
-                                                <th className="px-6 py-3 text-left">投稿日</th>
+                                                <th className="px-6 py-3 text-left w-1/2">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/4">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/4">投稿日</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
-                                            {activeCases.map(c => {
-                                                const st = STATUS_LABELS[c.status] ?? { label: c.status, color: 'bg-gray-100 text-gray-500' }
-                                                return (
-                                                    <tr key={c.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-4 font-medium text-gray-900 max-w-xs truncate">{c.title}</td>
-                                                        <td className="px-6 py-4 text-gray-700">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
-                                                        <td className="px-6 py-4"><span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>{st.label}</span></td>
-                                                        <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
-                                                        <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
-                                                    </tr>
-                                                )
-                                            })}
+                                            {matchedCases.map(c => (
+                                                <tr key={c.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* 解決済み */}
+                    {activeTab === 'resolved_cases' && (
+                        <>
+                            <div className="px-6 py-3 bg-teal-50 border-y border-teal-100">
+                                <p className="text-sm text-teal-800 font-medium">{resolvedCases.length}件が解決済みです</p>
+                            </div>
+                            {resolvedCases.length === 0 ? (
+                                <div className="px-6 py-12 text-center text-gray-400">解決済みの案件はまだありません</div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm table-fixed">
+                                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left w-1/2">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/4">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/4">投稿日</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {resolvedCases.map(c => (
+                                                <tr key={c.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -569,6 +673,7 @@ export default function AdminDashboardPage() {
                                                 }}
                                                 placeholder="対応内容をメモ（フォーカスが外れると自動保存）"
                                                 rows={2}
+                                                maxLength={2000}
                                                 className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-300 resize-none"
                                             />
                                         </div>
@@ -721,6 +826,60 @@ export default function AdminDashboardPage() {
                                 <button type="submit" disabled={creating}
                                     className="flex-1 bg-teal-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-teal-700 disabled:opacity-50">
                                     {creating ? '作成中...' : '作成する'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── 管理者作成モーダル ── */}
+            {showCreateAdminModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+                        <div className="px-6 py-4 border-b flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">管理者アカウント追加</h3>
+                            <button onClick={() => setShowCreateAdminModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+                        </div>
+                        <form onSubmit={handleCreateAdmin} className="px-6 py-4 space-y-4">
+                            {createAdminSuccess && <div className="p-3 bg-teal-50 border border-teal-200 rounded-md text-sm text-teal-700">✓ 管理者アカウントを作成しました</div>}
+                            {createAdminError && <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{createAdminError}</div>}
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-md p-3">
+                                <p className="text-xs text-indigo-700">⚠️ 管理者アカウントはすべての管理機能にアクセスできます。信頼できる担当者のみに付与してください。</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">氏名 <span className="text-red-500">*</span></label>
+                                <input type="text" required maxLength={64} value={adminForm.real_name}
+                                    onChange={e => setAdminForm({ ...adminForm, real_name: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">表示名</label>
+                                <input type="text" maxLength={64} value={adminForm.display_name}
+                                    onChange={e => setAdminForm({ ...adminForm, display_name: e.target.value })}
+                                    placeholder={adminForm.real_name || '省略時は氏名が使用されます'}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">メールアドレス <span className="text-red-500">*</span></label>
+                                <input type="email" required maxLength={254} value={adminForm.email}
+                                    onChange={e => setAdminForm({ ...adminForm, email: e.target.value })}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">初期パスワード <span className="text-red-500">*</span></label>
+                                <input type="text" required minLength={8} maxLength={64} value={adminForm.password}
+                                    onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}
+                                    placeholder="8文字以上（本人に別途通知してください）"
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                                <p className="mt-1 text-xs text-gray-400">初回ログイン時にパスワード変更が求められます</p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setShowCreateAdminModal(false)}
+                                    className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-50">キャンセル</button>
+                                <button type="submit" disabled={creatingAdmin}
+                                    className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+                                    {creatingAdmin ? '作成中...' : '作成する'}
                                 </button>
                             </div>
                         </form>
