@@ -87,31 +87,57 @@ export default function AdminDashboardPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
+
+            const authHeader = { 'Authorization': `Bearer ${session.access_token}` }
+
+            // 全APIを並列で呼び出し（各自独立して処理）
             const [statsRes, featuredRes, inquiryRes, countsRes, casesRes] = await Promise.all([
-                fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
-                fetch('/api/admin/featured-supporters', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
-                fetch('/api/admin/inquiries', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
-                fetch('/api/admin/case-counts', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
-                fetch('/api/admin/cases-list', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
+                fetch('/api/admin/stats',             { headers: authHeader }),
+                fetch('/api/admin/featured-supporters',{ headers: authHeader }),
+                fetch('/api/admin/inquiries',          { headers: authHeader }),
+                fetch('/api/admin/case-counts',        { headers: authHeader }),
+                fetch('/api/admin/cases-list',         { headers: authHeader }),
             ])
-            const data = await statsRes.json()
-            if (!statsRes.ok) return
-            const countsData = countsRes.ok ? await countsRes.json() : null
-            const casesData = casesRes.ok ? await casesRes.json() : null
-            const featuredData = await featuredRes.json()
-            const inquiryData = await inquiryRes.json()
-            setSupporters(data.supporters ?? [])
-            setSosUsers(data.sosUsers ?? [])
-            // cases-list APIを優先、なければstats APIのcasesを使用
-            setAllCases(casesData?.cases ?? data.cases ?? [])
-            setSosCount(data.sosCount)
-            setCaseStats(countsData
-                ? { open: countsData.open, in_progress: countsData.matched, resolved: countsData.resolved }
-                : data.caseStats
-            )
-            setFeaturedSupporters(featuredData.supporters ?? [])
-            setInquiries(inquiryData.inquiries ?? [])
-            setInquiryOpenCount(inquiryData.open_count ?? 0)
+
+            // stats（サポーター・SOSユーザー）
+            if (statsRes.ok) {
+                const data = await statsRes.json()
+                setSupporters(data.supporters ?? [])
+                setSosUsers(data.sosUsers ?? [])
+                setSosCount(data.sosCount ?? 0)
+            }
+
+            // 案件カウント（専用API優先）
+            if (countsRes.ok) {
+                const countsData = await countsRes.json()
+                setCaseStats({
+                    open:        countsData.open    ?? 0,
+                    in_progress: countsData.matched ?? 0,
+                    resolved:    countsData.resolved ?? 0,
+                })
+            }
+
+            // 案件リスト（専用API）
+            if (casesRes.ok) {
+                const casesData = await casesRes.json()
+                console.log('[admin] casesData:', casesData)
+                setAllCases(casesData.cases ?? [])
+            } else {
+                console.error('[admin] cases-list API failed:', casesRes.status)
+            }
+
+            // トップ掲載サポーター
+            if (featuredRes.ok) {
+                const featuredData = await featuredRes.json()
+                setFeaturedSupporters(featuredData.supporters ?? [])
+            }
+
+            // お問い合わせ
+            if (inquiryRes.ok) {
+                const inquiryData = await inquiryRes.json()
+                setInquiries(inquiryData.inquiries ?? [])
+                setInquiryOpenCount(inquiryData.open_count ?? 0)
+            }
         } finally {
             setLoading(false)
         }
