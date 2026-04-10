@@ -12,10 +12,10 @@ export async function GET(request: Request) {
     const { data: adminUser } = await supabaseAdmin.from('users').select('role').eq('auth_user_id', user.id).single()
     if (!adminUser || adminUser.role !== 'ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    // ステップ1: 案件を全件取得（JOIN不使用）
+    // ステップ1: 案件を全件取得（JOIN不使用・region_codeはcasesテーブルに存在しない可能性あり）
     const { data: cases, error: casesError } = await supabaseAdmin
         .from('cases')
-        .select('id, title, status, created_at, region_code, owner_user_id')
+        .select('id, title, status, created_at, owner_user_id')
         .order('created_at', { ascending: false })
 
     if (casesError) {
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ cases: [] })
     }
 
-    // ステップ2: owner_user_id → display_name を別クエリで取得
-    const ownerIds = [...new Set(cases.map(c => c.owner_user_id))]
+    // ステップ2: owner_user_id → display_name を別クエリで取得（null除外）
+    const ownerIds = [...new Set(cases.map((c: { owner_user_id: string }) => c.owner_user_id).filter(Boolean))]
     const { data: owners } = await supabaseAdmin
         .from('users')
         .select('id, display_name')
