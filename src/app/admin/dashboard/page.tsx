@@ -24,7 +24,7 @@ type Case = {
     id: string; title: string; status: string; created_at: string
     region_code: string | null; users?: { display_name: string } | null
 }
-type TabKey = 'supporters' | 'sos' | 'open_cases' | 'active_cases' | 'inquiries'
+type TabKey = 'supporters' | 'sos' | 'open_cases' | 'matched_cases' | 'resolved_cases' | 'inquiries'
 type FormData = {
     email: string; password: string; real_name: string
     display_name: string; organization_name: string
@@ -248,13 +248,15 @@ export default function AdminDashboardPage() {
     const TABS: { key: TabKey; label: string; icon: string; count: number; numColor: string; borderColor: string; bgColor: string }[] = [
         { key: 'supporters', label: 'サポーター',     icon: '🤝', count: supporters.length,                      numColor: 'text-teal-600',  borderColor: 'border-teal-500',  bgColor: 'bg-teal-50' },
         { key: 'sos',        label: '相談者（SOS）',  icon: '👥', count: sosCount,                               numColor: 'text-blue-600',   borderColor: 'border-blue-500',   bgColor: 'bg-blue-50' },
-        { key: 'open_cases', label: '未対応の案件',   icon: '⏳', count: caseStats.open,                         numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
-        { key: 'active_cases',label:'マッチ済み・解決済み',icon:'🤝', count: caseStats.in_progress + caseStats.resolved, numColor: 'text-amber-600', borderColor: 'border-amber-500', bgColor: 'bg-amber-50' },
+        { key: 'open_cases',    label: '未対応の案件',     icon: '⏳', count: caseStats.open,          numColor: 'text-yellow-600', borderColor: 'border-yellow-500', bgColor: 'bg-yellow-50' },
+        { key: 'matched_cases', label: 'マッチ済み・支援中', icon: '🤝', count: caseStats.in_progress,  numColor: 'text-amber-600',  borderColor: 'border-amber-500',  bgColor: 'bg-amber-50' },
+        { key: 'resolved_cases',label: '解決済み',          icon: '✅', count: caseStats.resolved,      numColor: 'text-teal-600',   borderColor: 'border-teal-500',   bgColor: 'bg-teal-50' },
         { key: 'inquiries',  label: 'お問い合わせ',   icon: '📩', count: inquiryOpenCount, numColor: 'text-rose-600', borderColor: 'border-rose-500', bgColor: 'bg-rose-50' },
     ]
 
-    const openCases = allCases.filter(c => c.status === 'OPEN')
-    const activeCases = allCases.filter(c => ['MATCHED', 'RESOLVED'].includes(c.status))
+    const openCases    = allCases.filter(c => c.status === 'OPEN')
+    const matchedCases = allCases.filter(c => c.status === 'MATCHED')
+    const resolvedCases= allCases.filter(c => c.status === 'RESOLVED')
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -474,39 +476,69 @@ export default function AdminDashboardPage() {
                         </>
                     )}
 
-                    {/* マッチ済み・解決済み */}
-                    {activeTab === 'active_cases' && (
+                    {/* マッチ済み・支援中 */}
+                    {activeTab === 'matched_cases' && (
                         <>
                             <div className="px-6 py-3 bg-amber-50 border-y border-amber-100">
-                                <p className="text-sm text-amber-800 font-medium">{activeCases.length}件がマッチ済みまたは解決済みです</p>
+                                <p className="text-sm text-amber-800 font-medium">{matchedCases.length}件が現在マッチ済み・支援中です</p>
                             </div>
-                            {activeCases.length === 0 ? (
-                                <div className="px-6 py-12 text-center text-gray-400">該当する案件はありません</div>
+                            {matchedCases.length === 0 ? (
+                                <div className="px-6 py-12 text-center text-gray-400">現在マッチ済みの案件はありません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">タイトル</th>
-                                                <th className="px-6 py-3 text-left">相談者</th>
-                                                <th className="px-6 py-3 text-left">ステータス</th>
-                                                <th className="px-6 py-3 text-left">地域</th>
-                                                <th className="px-6 py-3 text-left">投稿日</th>
+                                                <th className="px-6 py-3 text-left w-2/5">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/5">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/5">地域</th>
+                                                <th className="px-6 py-3 text-left w-1/5">投稿日</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
-                                            {activeCases.map(c => {
-                                                const st = STATUS_LABELS[c.status] ?? { label: c.status, color: 'bg-gray-100 text-gray-500' }
-                                                return (
-                                                    <tr key={c.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-4 font-medium text-gray-900 max-w-xs truncate">{c.title}</td>
-                                                        <td className="px-6 py-4 text-gray-700">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
-                                                        <td className="px-6 py-4"><span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>{st.label}</span></td>
-                                                        <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
-                                                        <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
-                                                    </tr>
-                                                )
-                                            })}
+                                            {matchedCases.map(c => (
+                                                <tr key={c.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* 解決済み */}
+                    {activeTab === 'resolved_cases' && (
+                        <>
+                            <div className="px-6 py-3 bg-teal-50 border-y border-teal-100">
+                                <p className="text-sm text-teal-800 font-medium">{resolvedCases.length}件が解決済みです</p>
+                            </div>
+                            {resolvedCases.length === 0 ? (
+                                <div className="px-6 py-12 text-center text-gray-400">解決済みの案件はまだありません</div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm table-fixed">
+                                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left w-2/5">タイトル</th>
+                                                <th className="px-6 py-3 text-left w-1/5">相談者</th>
+                                                <th className="px-6 py-3 text-left w-1/5">地域</th>
+                                                <th className="px-6 py-3 text-left w-1/5">投稿日</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {resolvedCases.map(c => (
+                                                <tr key={c.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{c.title}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{(c.users as { display_name: string } | null)?.display_name || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-500">{c.region_code || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ja-JP')}</td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
