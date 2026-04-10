@@ -193,14 +193,24 @@ export default function SOSResultPage() {
       clearTimeout(step3);
       setAnalyzeStep(4);
       const { data: { session: sess } } = await supabase.auth.getSession();
+
+      // AIが生成したtitle、分類できない場合は固定文言
+      const aiTitle = result.analysis?.sdgs_goals?.length > 0
+        ? (result.analysis?.title || cd.description_free?.slice(0, 20) || '相談')
+        : '再度見直してください';
+
       const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
-        body: JSON.stringify({ ai_sdg_suggestion: result.analysis, visibility: 'LISTED' }),
+        body: JSON.stringify({
+          ai_sdg_suggestion: result.analysis,
+          visibility: 'LISTED',
+          title: aiTitle,
+        }),
       });
       if (updateRes.ok) {
         await new Promise(r => setTimeout(r, 800));
-        setCaseData({ ...cd, ai_sdg_suggestion: result.analysis });
+        setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: result.analysis });
       }
     } catch (err) {
       console.error('AI analysis error:', err);
