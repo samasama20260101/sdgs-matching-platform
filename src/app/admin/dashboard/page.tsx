@@ -87,20 +87,26 @@ export default function AdminDashboardPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const [statsRes, featuredRes, inquiryRes] = await Promise.all([
+            const [statsRes, featuredRes, inquiryRes, countsRes] = await Promise.all([
                 fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
                 fetch('/api/admin/featured-supporters', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
                 fetch('/api/admin/inquiries', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
+                fetch('/api/admin/case-counts', { headers: { 'Authorization': `Bearer ${session.access_token}` } }),
             ])
             const data = await statsRes.json()
             if (!statsRes.ok) return
+            const countsData = countsRes.ok ? await countsRes.json() : null
             const featuredData = await featuredRes.json()
             const inquiryData = await inquiryRes.json()
             setSupporters(data.supporters ?? [])
             setSosUsers(data.sosUsers ?? [])
             setAllCases(data.cases ?? [])
             setSosCount(data.sosCount)
-            setCaseStats(data.caseStats)
+            // 専用APIのカウントを優先、なければstatsのカウントを使用
+            setCaseStats(countsData
+                ? { open: countsData.open, in_progress: countsData.matched, resolved: countsData.resolved }
+                : data.caseStats
+            )
             setFeaturedSupporters(featuredData.supporters ?? [])
             setInquiries(inquiryData.inquiries ?? [])
             setInquiryOpenCount(inquiryData.open_count ?? 0)
