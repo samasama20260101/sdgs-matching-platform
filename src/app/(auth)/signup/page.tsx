@@ -101,7 +101,15 @@ export default function SignupPage() {
         throw new Error(profileData.message || profileData.error || 'プロフィールの保存に失敗しました')
       }
 
-      router.push('/sos/dashboard')
+      // Email Confirm がONの場合（本番）は session が null になる
+      // → メール確認待ち画面へ
+      // Email Confirm がOFFの場合（開発）は session がある
+      // → そのままダッシュボードへ
+      if (!authData.session) {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      } else {
+        router.push('/sos/dashboard')
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'エラーが発生しました'
       setError(message)
