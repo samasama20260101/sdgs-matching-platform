@@ -25,13 +25,13 @@ const CHAR_LIMITS = {
 const QA_QUESTIONS = [
   {
     id: 1,
-    question: '生活に必要なものが不足していますか？',
+    question: '生活に必要なものについて、困っていることはありますか？',
     options: [
-      { id: 'q1_1', text: '飲食物が足りていない/買うお金がない' },
-      { id: 'q1_2', text: '住む場所がない/不安定/無くなりそう/奪われそう' },
-      { id: 'q1_3', text: 'トイレがない/野外で排泄しなければならない環境にある' },
-      { id: 'q1_4', text: '電気/インターネットが使えない' },
-      { id: 'q1_5', text: '出生登録がないため身分証明ができない' },
+      { id: 'q1_1', text: '食べ物や飲み物が足りない、または購入するお金がない' },
+      { id: 'q1_2', text: '安全に暮らせる住まいがない' },
+      { id: 'q1_3', text: '電気が使えない' },
+      { id: 'q1_4', text: 'インターネットが使えない' },
+      { id: 'q1_5', text: '該当なし' },
     ],
     otherPlaceholder: '例：清潔な飲み水が手に入らない、冬に暖房がない',
   },
@@ -39,47 +39,48 @@ const QA_QUESTIONS = [
     id: 2,
     question: '人間関係や権利について困っていますか？',
     options: [
-      { id: 'q2_1', text: '戦争・紛争・内乱に巻き込まれている' },
-      { id: 'q2_2', text: '差別(性別/障害/国籍など)・ハラスメント(身体的/性的)・いじめ・嫌がらせを受けている' },
-      { id: 'q2_3', text: '暴力(身体的/精神的/性的)・児童虐待を受けている' },
-      { id: 'q2_4', text: '人身取引の被害にあっている' },
-      { id: 'q2_5', text: '希望しない結婚/婚姻(未成年/強制)をさせられた/させられようとしている' },
+      { id: 'q2_1', text: '性別・障害・国籍などを理由に差別を受けている' },
+      { id: 'q2_2', text: 'いじめや嫌がらせを受けている' },
+      { id: 'q2_3', text: '身体的・精神的・性的な暴力やハラスメントを受けている' },
+      { id: 'q2_4', text: '最低賃金より低い賃金で働いている、またはサービス残業がある' },
+      { id: 'q2_5', text: '該当なし' },
     ],
     otherPlaceholder: '例：宗教的な理由で自由を奪われている、難民として差別を受けている',
   },
   {
     id: 3,
-    question: '仕事や将来について困っていますか？',
+    question: '仕事や将来について、不安に感じていることや困っていることはありますか？',
     options: [
-      { id: 'q3_1', text: '仕事がなく職業訓練も受けていない' },
-      { id: 'q3_2', text: '最低限の生活をするにも収入が少なすぎてできない' },
-      { id: 'q3_3', text: '学校へ行けない' },
-      { id: 'q3_4', text: '未成年だが働かされている' },
-      { id: 'q3_5', text: '銀行口座を持っていない' },
+      { id: 'q3_1', text: '仕事がなく、職業訓練も受けていない' },
+      { id: 'q3_2', text: '収入が少なく、最低限の生活を送ることができない' },
+      { id: 'q3_3', text: '学校に通うことができない' },
+      { id: 'q3_4', text: '15歳未満で働いている' },
+      { id: 'q3_5', text: '該当なし' },
     ],
     otherPlaceholder: '例：障害があり就職活動ができない、借金を返すために働き続けている',
   },
   {
     id: 4,
-    question: '健康や心について困っていますか？',
+    question: '健康や心のことについて、現在困っていることはありますか？',
     options: [
-      { id: 'q4_1', text: '体の調子が悪いが金銭面などの理由から病院に行けない' },
-      { id: 'q4_2', text: 'HIV/結核/マラリア/B型肝炎/心血管疾患/糖尿病/慢性の呼吸器疾患/デング熱など顧みられない熱帯病/貧血を患っている' },
-      { id: 'q4_3', text: '死にたいと思ったことがある' },
-      { id: 'q4_4', text: '煙(調理のための裸火/たばこの受動喫煙)を吸わなければならない環境である' },
-      { id: 'q4_5', text: '新生児/5歳未満児が生命の危機に瀕している' },
+      { id: 'q4_1', text: '体調が悪いが、金銭的な理由などで病院に行けない' },
+      { id: 'q4_2', text: '死にたいと思うことがある' },
+      { id: 'q4_3', text: 'たばこの煙による受動喫煙がつらい' },
+      { id: 'q4_4', text: 'けがをしそうな危険な環境で働いていて不安がある' },
+      { id: 'q4_5', text: '該当なし' },
     ],
     otherPlaceholder: '例：精神的なケアが必要だが相談先がわからない、薬が手に入らない',
   },
   {
     id: 5,
-    question: 'どんな支援を求めていますか？',
+    question: 'どのような支援を希望していますか？',
     options: [
-      { id: 'q5_1', text: '公的な支援制度を知りたい' },
-      { id: 'q5_2', text: '専門家（弁護士・医師等）に相談したい' },
+      { id: 'q5_1', text: 'まずは相談に乗ってほしい' },
+      { id: 'q5_2', text: '公的な支援制度について知りたい' },
       { id: 'q5_3', text: 'NPOや支援団体につながりたい' },
-      { id: 'q5_4', text: 'まずは相談に乗ってほしい' },
-      { id: 'q5_5', text: '具体的にわからないがとにかく助けてほしい' },
+      { id: 'q5_4', text: '弁護士や医師などの専門家に相談したい' },
+      { id: 'q5_5', text: '有料でもよいのでサポートを受けたい' },
+      { id: 'q5_6', text: '該当なし' },
     ],
     otherPlaceholder: '例：子どもの保護が必要、避難場所を探している',
   },
@@ -144,12 +145,26 @@ export default function SOSHearingPage() {
     checkAuth();
   }, [router]);
 
-  // チェックボックスの変更
+  // チェックボックスの変更（「該当なし」は排他制御）
   const handleToggleOption = (questionId: number, optionText: string) => {
     setSelectedAnswers(prev => {
       const current = new Set(prev[questionId] || []);
-      if (current.has(optionText)) current.delete(optionText);
-      else current.add(optionText);
+      if (optionText === '該当なし') {
+        // 「該当なし」を選んだら他をすべて外し、その他もリセット
+        if (current.has('該当なし')) {
+          current.delete('該当なし');
+        } else {
+          current.clear();
+          current.add('該当なし');
+          setOtherChecked(p => ({ ...p, [questionId]: false }));
+          setOtherTexts(p => ({ ...p, [questionId]: '' }));
+        }
+      } else {
+        // 他の選択肢を選んだら「該当なし」を外す
+        current.delete('該当なし');
+        if (current.has(optionText)) current.delete(optionText);
+        else current.add(optionText);
+      }
       return { ...prev, [questionId]: current };
     });
   };
@@ -158,7 +173,16 @@ export default function SOSHearingPage() {
   const handleToggleOther = (questionId: number) => {
     setOtherChecked(prev => {
       const next = { ...prev, [questionId]: !prev[questionId] };
-      if (!next[questionId]) setOtherTexts(p => ({ ...p, [questionId]: '' }));
+      if (!next[questionId]) {
+        setOtherTexts(p => ({ ...p, [questionId]: '' }));
+      } else {
+        // その他を選んだら「該当なし」を外す
+        setSelectedAnswers(p => {
+          const current = new Set(p[questionId] || []);
+          current.delete('該当なし');
+          return { ...p, [questionId]: current };
+        });
+      }
       return next;
     });
   };
@@ -228,7 +252,7 @@ export default function SOSHearingPage() {
 
       // 緊急度判定
       const allText = Object.values(qaData).flat().join(' ') + ' ' + Object.values(freeText).join(' ') + ' ' + Object.values(otherTexts).join(' ');
-      const isUrgent = detectUrgency(allText) || (selectedAnswers[4]?.has('死にたいと思ったことがある'));
+      const isUrgent = detectUrgency(allText) || (selectedAnswers[4]?.has('死にたいと思うことがある'));
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -304,11 +328,15 @@ export default function SOSHearingPage() {
                 <div className="space-y-2">
                   {question.options.map((option) => {
                     const isChecked = selectedAnswers[question.id]?.has(option.text) || false;
+                    const isNone = option.text === '該当なし';
                     return (
                       <label
                         key={option.id}
-                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isChecked ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
-                          }`}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          isChecked
+                            ? isNone ? 'bg-gray-100 border-gray-400' : 'bg-blue-50 border-blue-300'
+                            : isNone ? 'hover:bg-gray-50 border-dashed border-gray-200' : 'hover:bg-gray-50 border-gray-200'
+                        }`}
                       >
                         <input
                           type="checkbox"
@@ -316,7 +344,7 @@ export default function SOSHearingPage() {
                           onChange={() => handleToggleOption(question.id, option.text)}
                           className="mt-0.5 text-blue-600 rounded"
                         />
-                        <span className="text-sm leading-relaxed">{option.text}</span>
+                        <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{option.text}</span>
                       </label>
                     );
                   })}
