@@ -194,10 +194,8 @@ export default function SOSResultPage() {
       setAnalyzeStep(4);
       const { data: { session: sess } } = await supabase.auth.getSession();
 
-      // AIが生成したtitle、分類できない場合は固定文言
-      const aiTitle = result.analysis?.sdgs_goals?.length > 0
-        ? (result.analysis?.title || cd.description_free?.slice(0, 20) || '相談')
-        : '再度見直してください';
+      // AIが返したtitleをそのまま使う（AIがsdgs_goals=[]のとき「再度見直してください」を返す）
+      const aiTitle = result.analysis?.title || '再度見直してください';
 
       const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
         method: 'PATCH',
