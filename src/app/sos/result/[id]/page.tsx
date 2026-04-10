@@ -26,6 +26,7 @@ type CaseData = {
   supporter_resolved_at: string | null;
   intake_qna: { qa: Record<string, string[]> } | null;
   ai_sdg_suggestion: {
+    title?: string;
     sdgs_goals: number[];
     reasoning?: string;
     summary?: string;
@@ -135,7 +136,10 @@ export default function SOSResultPage() {
     setCurrentUserId(roleData.user.id);
     setCaseData(caseResult);
 
-    if (!caseResult.ai_sdg_suggestion) {
+    // ai_sdg_suggestion自体がない、またはai_sdg_suggestion内にtitleが未生成の場合は分析実行
+    const needsAnalysis = !caseResult.ai_sdg_suggestion
+      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>));
+    if (needsAnalysis) {
       await runAIAnalysis(caseResult);
     }
 
@@ -196,19 +200,21 @@ export default function SOSResultPage() {
 
       // AIが返したtitleをそのまま使う（AIがsdgs_goals=[]のとき「再度見直してください」を返す）
       const aiTitle = result.analysis?.title || '再度見直してください';
+      // ai_sdg_suggestion内にもtitleを保持（再分析要否の判定に使用）
+      const analysisWithTitle = { ...result.analysis, title: aiTitle };
 
       const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
         body: JSON.stringify({
-          ai_sdg_suggestion: result.analysis,
+          ai_sdg_suggestion: analysisWithTitle,
           visibility: 'LISTED',
           title: aiTitle,
         }),
       });
       if (updateRes.ok) {
         await new Promise(r => setTimeout(r, 800));
-        setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: result.analysis });
+        setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
       }
     } catch (err) {
       console.error('AI analysis error:', err);
