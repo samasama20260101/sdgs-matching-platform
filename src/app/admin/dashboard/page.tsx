@@ -317,16 +317,16 @@ export default function AdminDashboardPage() {
                                 <div className="px-6 py-12 text-center text-gray-400">サポーターがまだ登録されていません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">組織名</th>
-                                                <th className="px-6 py-3 text-left">担当者</th>
-                                                <th className="px-6 py-3 text-left">種別</th>
-                                                <th className="px-6 py-3 text-left">メール</th>
-                                                <th className="px-6 py-3 text-left">登録日</th>
-                                                <th className="px-6 py-3 text-center">トップ掲載</th>
-                                                <th className="px-6 py-3 text-center">操作</th>
+                                                <th className="px-6 py-3 text-left w-1/5">組織名</th>
+                                                <th className="px-6 py-3 text-left w-1/8">担当者</th>
+                                                <th className="px-6 py-3 text-left w-1/8">種別</th>
+                                                <th className="px-6 py-3 text-left w-1/5">メール</th>
+                                                <th className="px-6 py-3 text-left w-1/8">登録日</th>
+                                                <th className="px-6 py-3 text-center w-1/8">トップ掲載</th>
+                                                <th className="px-6 py-3 text-center w-1/8">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -335,14 +335,14 @@ export default function AdminDashboardPage() {
                                                 const isFeatured = featured?.is_featured ?? false
                                                 return (
                                                     <tr key={s.id} className={`hover:bg-gray-50 ${s.is_suspended ? 'bg-red-50' : ''}`}>
-                                                        <td className="px-6 py-4 font-medium text-gray-900">{s.organization_name || '—'}{s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
-                                                        <td className="px-6 py-4 text-gray-700">{s.real_name}</td>
+                                                        <td className="px-6 py-4 font-medium text-gray-900 break-words">{s.organization_name || '—'}{s.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
+                                                        <td className="px-6 py-4 text-gray-700 break-words">{s.real_name}</td>
                                                         <td className="px-6 py-4">
                                                             <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${s.supporter_type === 'NPO' ? 'bg-blue-100 text-blue-700' : s.supporter_type === 'GOVERNMENT' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
                                                                 {s.supporter_type || '—'}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-gray-500">{s.email}</td>
+                                                        <td className="px-6 py-4 text-gray-500 break-all">{s.email}</td>
                                                         <td className="px-6 py-4 text-gray-400">{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
                                                         <td className="px-6 py-4 text-center">
                                                             <button onClick={() => toggleFeatured(s.id, isFeatured)}
@@ -384,24 +384,24 @@ export default function AdminDashboardPage() {
                                 <div className="px-6 py-12 text-center text-gray-400">相談者がいません</div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm table-fixed">
                                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">表示名</th>
-                                                <th className="px-6 py-3 text-left">本名</th>
-                                                <th className="px-6 py-3 text-left">メール</th>
-                                                <th className="px-6 py-3 text-left">地域コード</th>
-                                                <th className="px-6 py-3 text-center">未成年</th>
-                                                <th className="px-6 py-3 text-left">登録日</th>
-                                                <th className="px-6 py-3 text-center">操作</th>
+                                                <th className="px-6 py-3 text-left w-1/6">表示名</th>
+                                                <th className="px-6 py-3 text-left w-1/6">本名</th>
+                                                <th className="px-6 py-3 text-left w-1/5">メール</th>
+                                                <th className="px-6 py-3 text-left w-1/8">地域コード</th>
+                                                <th className="px-6 py-3 text-center w-1/8">未成年</th>
+                                                <th className="px-6 py-3 text-left w-1/8">登録日</th>
+                                                <th className="px-6 py-3 text-center w-1/8">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {sosUsers.map(u => (
                                                 <tr key={u.id} className={`hover:bg-gray-50 ${u.is_suspended ? 'bg-red-50' : ''}`}>
-                                                    <td className="px-6 py-4 font-medium text-gray-900">{u.display_name || '—'}{u.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
-                                                    <td className="px-6 py-4 text-gray-700">{u.real_name || '—'}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{u.email}</td>
+                                                    <td className="px-6 py-4 font-medium text-gray-900 break-words">{u.display_name || '—'}{u.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
+                                                    <td className="px-6 py-4 text-gray-700 break-words">{u.real_name || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-500 break-all">{u.email}</td>
                                                     <td className="px-6 py-4 text-gray-500">{u.sos_region_code || '—'}</td>
                                                     <td className="px-6 py-4 text-center">
                                                         {isMinor(u.birth_date) && (
