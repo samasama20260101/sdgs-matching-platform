@@ -169,42 +169,18 @@ export default function SOSResultPage() {
     const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
     const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
     try {
-      // Q1〜Q5のチェック内容と自由記述を結合してAIに渡す
+      // Q1〜Q5のチェック内容を整形（「該当なし」のみのQは除外してAIに渡す）
       const qaText = cd.intake_qna?.qa
         ? Object.entries(cd.intake_qna.qa)
+            .filter(([, answers]) => {
+              const ans = answers as string[];
+              // 「該当なし」のみ、または空の場合は除外
+              return ans.length > 0 && !(ans.length === 1 && ans[0] === '該当なし');
+            })
             .map(([q, answers]) => `Q${q}: ${(answers as string[]).join('、')}`)
             .join('\n')
         : '';
       const fullDescription = [qaText, cd.description_free].filter(Boolean).join('\n\n');
-
-      // 情報が不十分かチェック（全問「該当なし」のみ＆自由記述が5文字以下）
-      const allNone = cd.intake_qna?.qa
-        ? Object.values(cd.intake_qna.qa).every(
-            (answers) => (answers as string[]).every(a => a === '該当なし') ||
-                         (answers as string[]).length === 0
-          )
-        : true;
-      const freeTextTooShort = (cd.description_free || '').trim().length <= 5;
-
-      if (allNone && freeTextTooShort) {
-        // 分類不能として空結果をセット（AI呼び出しなし）
-        const emptyResult = {
-          sdgs_goals: [],
-          summary: 'もう少し詳しく教えてもらえると、より適切な支援者につなぐことができます。「何が起きているか」の欄に、困っていることをもう少し詳しく書いてみてください。',
-          per_goal: [],
-          keywords: [],
-        };
-        clearTimeout(step2);
-        clearTimeout(step3);
-        const { data: { session: sess } } = await supabase.auth.getSession();
-        await fetch(`/api/sos/cases/${cd.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
-          body: JSON.stringify({ ai_sdg_suggestion: emptyResult, visibility: 'LISTED' }),
-        });
-        setCaseData({ ...cd, ai_sdg_suggestion: emptyResult });
-        return;
-      }
 
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
