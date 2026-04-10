@@ -287,7 +287,7 @@ export default function HomePage() {
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center text-xl flex-shrink-0">
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
                         {s.organization_name || s.display_name}
                       </h3>
