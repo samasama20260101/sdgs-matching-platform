@@ -149,7 +149,7 @@ export default function SupportersPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="font-bold text-gray-800 text-sm leading-tight truncate">
+                        <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
                           {s.organization_name || s.display_name}
                         </h3>
                         {matched && (
