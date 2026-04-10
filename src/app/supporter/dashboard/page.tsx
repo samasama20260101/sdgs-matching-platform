@@ -199,6 +199,14 @@ export default function SupporterDashboard() {
       const roleRes = await fetch('/api/auth/get-role', {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
+
+      // 停止済みアカウントは強制ログアウト
+      if (roleRes.status === 403) {
+        await supabase.auth.signOut();
+        router.push('/login?reason=suspended');
+        return;
+      }
+
       const roleData = await roleRes.json();
       if (roleData.role !== 'SUPPORTER') { router.push('/'); return; }
       if (!roleData.user) { router.push('/'); return; }

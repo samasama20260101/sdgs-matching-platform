@@ -16,9 +16,14 @@ export async function GET(request: Request) {
 
     const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, role, real_name, display_name, display_id, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code')
+        .select('id, role, real_name, display_name, display_id, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code, is_suspended')
         .eq('auth_user_id', user.id)
         .single()
+
+    // 停止済みユーザーは即時拒否
+    if (userData?.is_suspended) {
+        return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
+    }
 
     // サポーターの活動地域を取得
     let serviceAreas: any[] = []

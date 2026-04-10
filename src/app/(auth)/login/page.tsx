@@ -19,6 +19,12 @@ export default function LoginPage() {
         password: '',
     });
 
+    // URLパラメータで停止メッセージを表示
+    const searchParams = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search) : null;
+    const suspendedMsg = searchParams?.get('reason') === 'suspended'
+      ? 'このアカウントは停止されています。管理者にお問い合わせください。' : null;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -140,6 +146,12 @@ export default function LoginPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {suspendedMsg && (
+                            <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm font-medium">
+                                🚫 {suspendedMsg}
+                            </div>
+                        )}
 
                         {error && (
                             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
