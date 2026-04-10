@@ -288,7 +288,7 @@ export default function HomePage() {
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800 text-sm leading-tight">
+                      <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
                         {s.organization_name || s.display_name}
                       </h3>
                       <span className={`text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
