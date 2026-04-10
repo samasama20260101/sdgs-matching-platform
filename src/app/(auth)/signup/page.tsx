@@ -96,8 +96,9 @@ export default function SignupPage() {
       })
 
       if (!profileRes.ok) {
-        const { error: profileError } = await profileRes.json()
-        throw new Error(profileError || 'プロフィールの保存に失敗しました')
+        const profileData = await profileRes.json()
+        // 登録上限エラーは専用メッセージを使用
+        throw new Error(profileData.message || profileData.error || 'プロフィールの保存に失敗しました')
       }
 
       router.push('/sos/dashboard')
@@ -124,7 +125,7 @@ export default function SignupPage() {
           新規登録（相談者）
         </h2>
         <p className="mt-2 text-center text-sm text-gray-500">
-          サポーター（NPO・企業）としての登録は
+          サポーター（NPO・企業などの支援団体）としての登録は
           <br />
           管理者にお問い合わせください
         </p>
@@ -352,6 +353,7 @@ export default function SignupPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="例：090-1234-5678"
+                  maxLength={20}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="mt-1 text-xs text-gray-400">ハイフンありでも登録できます（最大15桁）</p>

@@ -39,23 +39,45 @@ export async function GET(request: Request) {
         .eq('role', 'SOS')
         .order('created_at', { ascending: false })
 
-    // 案件一覧（全件）
-    const { data: cases } = await supabaseAdmin
+    // 案件一覧（全件）── FK JOIN を使わず2ステップで取得
+    const { data: cases, error: casesError } = await supabaseAdmin
         .from('cases')
-        .select('id, title, status, created_at, region_code, owner_user_id, users!cases_owner_user_id_fkey(display_name)')
+        .select('id, title, status, created_at, region_code, owner_user_id')
         .order('created_at', { ascending: false })
 
+    if (casesError) {
+        console.error('[admin/stats] cases fetch error:', casesError)
+    }
+
+    // オーナーのdisplay_nameを2ステップで取得
+    const ownerIds = [...new Set((cases ?? []).map((c: { owner_user_id: string }) => c.owner_user_id))]
+    let ownerMap: Record<string, string> = {}
+    if (ownerIds.length > 0) {
+        const { data: owners } = await supabaseAdmin
+            .from('users')
+            .select('id, display_name')
+            .in('id', ownerIds)
+        ;(owners ?? []).forEach((u: { id: string; display_name: string }) => {
+            ownerMap[u.id] = u.display_name
+        })
+    }
+
+    const casesWithOwner = (cases ?? []).map((c: { owner_user_id: string; [key: string]: unknown }) => ({
+        ...c,
+        users: { display_name: ownerMap[c.owner_user_id] ?? null },
+    }))
+
     const caseStats = {
-        open: cases?.filter((c: { status: string }) => c.status === 'OPEN').length ?? 0,
-        in_progress: cases?.filter((c: { status: string }) => ['MATCHED', 'IN_PROGRESS'].includes(c.status)).length ?? 0,
-        resolved: cases?.filter((c: { status: string }) => c.status === 'RESOLVED').length ?? 0,
+        open: (cases ?? []).filter((c: { status: string }) => c.status === 'OPEN').length,
+        in_progress: (cases ?? []).filter((c: { status: string }) => c.status === 'MATCHED').length,
+        resolved: (cases ?? []).filter((c: { status: string }) => c.status === 'RESOLVED').length,
     }
 
     return NextResponse.json({
         supporters: supporters ?? [],
         sosUsers: sosUsers ?? [],
         sosCount: (sosUsers ?? []).length,
-        cases: cases ?? [],
+        cases: casesWithOwner,
         caseStats,
     })
 }

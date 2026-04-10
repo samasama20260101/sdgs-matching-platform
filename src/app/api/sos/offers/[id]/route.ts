@@ -2,8 +2,9 @@
 // SOS側：オファーの承認・辞退（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
-const MAX_ACCEPTED = 3  // 1案件あたりの承認上限
+const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE  // 1案件あたりの承認上限
 
 async function getAuthSOSUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -43,7 +44,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     // ── 承認処理 ──────────────────────────────────────────
     if (body.status === 'ACCEPTED') {
-        // 現在の承認済み数を確認
+        // オファーがPENDING状態か確認（取り下げ済みは承認不可）
+        if (offer.status !== 'PENDING') {
+            return NextResponse.json(
+                { error: 'OFFER_NOT_PENDING', message: 'この申し出はすでに取り下げられているか、無効な状態です' },
+                { status: 400 }
+            )
+        }
+
+        // 現在の承認済み数を確認（ACCEPTED + WITHDRAWNも含めた全履歴の最大orderを取得）
         const { data: acceptedOffers } = await supabaseAdmin
             .from('offers')
             .select('id, accepted_order')
@@ -54,11 +63,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         const currentCount = acceptedOffers?.length ?? 0
 
         if (currentCount >= MAX_ACCEPTED) {
-            return NextResponse.json({ error: 'MAX_REACHED', message: '承認上限（3名）に達しています' }, { status: 400 })
+            return NextResponse.json({ error: 'MAX_REACHED', message: `承認上限（${MAX_ACCEPTED}名）に達しています` }, { status: 400 })
         }
 
-        // accepted_order を付番（1=主、2・3=副）
-        const nextOrder = currentCount + 1
+        // accepted_order を付番（欠番が生じても重複しないようMAXを取得して+1）
+        // COUNT+1ではなくMAX+1を使う理由：
+        // 離脱者が出た後に新規承認されると同じorderが付番される問題を防ぐ
+        const { data: maxOrderRow } = await supabaseAdmin
+            .from('offers')
+            .select('accepted_order')
+            .eq('case_id', offer.case_id)
+            .not('accepted_order', 'is', null)
+            .order('accepted_order', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        const nextOrder = (maxOrderRow?.accepted_order ?? 0) + 1
 
         const { error: updateError } = await supabaseAdmin
             .from('offers')
@@ -67,7 +87,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
         if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
-        // 3名に達した場合、残りのPENDINGを全て自動DECLINED
+        // 上限に達した場合、残りのPENDINGを全て自動DECLINED
         if (nextOrder >= MAX_ACCEPTED) {
             await supabaseAdmin
                 .from('offers')

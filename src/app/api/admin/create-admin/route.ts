@@ -1,83 +1,58 @@
-// src/app/api/admin/create-supporter/route.ts
+// src/app/api/admin/create-admin/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
-    // 1. Authorizationヘッダーからトークンを取得してADMIN確認
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
     const token = authHeader.replace('Bearer ', '')
-
-    // service_role keyでトークンを検証
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
     if (userError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // 操作者がADMINであることを確認
     const { data: adminUser } = await supabaseAdmin
-        .from('users')
-        .select('role')
-        .eq('auth_user_id', user.id)
-        .single()
-
+        .from('users').select('role').eq('auth_user_id', user.id).single()
     if (!adminUser || adminUser.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // 2. リクエストボディを取得
-    const body = await request.json()
-    const {
-        email,
-        password,
-        real_name,
-        display_name,
-        organization_name,
-        supporter_type,
-        phone,
-    } = body
-
-    // 電話番号のハイフン・スペース・括弧を除去
-    const sanitizedPhone = phone ? phone.replace(/[-\s().+]/g, '') : null
-
-    if (!email || !password || !real_name || !organization_name || !supporter_type) {
+    const { email, password, real_name, display_name } = await request.json()
+    if (!email || !password || !real_name) {
         return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
     }
 
-    // 3. Supabase Auth にユーザーを作成
+    // Supabase Auth にユーザーを作成
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
     })
-
     if (authError) {
         return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
-    // 4. display_id を採番（DBのシーケンス関数を使用・競合なし）
+    // display_id を採番
     const { data: displayIdRow, error: seqError } = await supabaseAdmin
-        .rpc('generate_display_id', { p_role: 'SUPPORTER' })
+        .rpc('generate_display_id', { p_role: 'ADMIN' })
     if (seqError) {
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
         return NextResponse.json({ error: 'ID採番に失敗しました' }, { status: 500 })
     }
 
-    // 5. users テーブルにレコード作成
+    // users テーブルにレコード作成
     const { data: newUser, error: profileError } = await supabaseAdmin
         .from('users')
         .insert({
             auth_user_id: authData.user.id,
-            role: 'SUPPORTER',
+            role: 'ADMIN',
             real_name,
             display_name: display_name || real_name,
             display_id: displayIdRow,
             email,
-            phone: sanitizedPhone || null,
-            organization_name,
-            supporter_type,
             must_change_password: true,
         })
         .select()

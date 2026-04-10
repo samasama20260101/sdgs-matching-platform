@@ -73,6 +73,7 @@ export default function AdminLoginPage() {
                             <input
                                 type="email"
                                 required
+                                maxLength={254}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
@@ -85,6 +86,7 @@ export default function AdminLoginPage() {
                             <input
                                 type="password"
                                 required
+                                maxLength={64}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"

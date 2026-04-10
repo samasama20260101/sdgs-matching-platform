@@ -19,6 +19,12 @@ export default function LoginPage() {
         password: '',
     });
 
+    // URLパラメータで停止メッセージを表示
+    const searchParams = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search) : null;
+    const suspendedMsg = searchParams?.get('reason') === 'suspended'
+      ? 'このアカウントは停止されています。管理者にお問い合わせください。' : null;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -32,7 +38,12 @@ export default function LoginPage() {
             });
 
             if (authError) {
-                setError('メールアドレスまたはパスワードが正しくありません');
+                // BANされたユーザーはSupabaseが "User is banned" を返す
+                if (authError.message?.toLowerCase().includes('banned') || authError.message?.toLowerCase().includes('ban')) {
+                    setError('このアカウントは停止されています。管理者にお問い合わせください。');
+                } else {
+                    setError('メールアドレスまたはパスワードが正しくありません');
+                }
                 return;
             }
 
@@ -42,6 +53,14 @@ export default function LoginPage() {
                     'Authorization': `Bearer ${data.session.access_token}`,
                 },
             });
+
+            // ログイン成功後でも停止されている場合（フラグのみ停止）
+            if (res.status === 403) {
+                await supabase.auth.signOut();
+                setError('このアカウントは停止されています。管理者にお問い合わせください。');
+                return;
+            }
+
             const result = await res.json();
 
             if (!result.role) {
@@ -98,6 +117,7 @@ export default function LoginPage() {
                                 id="email"
                                 type="email"
                                 placeholder="example@email.com"
+                                maxLength={254}
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 required
@@ -139,6 +159,12 @@ export default function LoginPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {suspendedMsg && (
+                            <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm font-medium">
+                                🚫 {suspendedMsg}
+                            </div>
+                        )}
 
                         {error && (
                             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">

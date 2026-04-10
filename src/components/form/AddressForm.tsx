@@ -73,12 +73,15 @@ export default function AddressForm({
         setIsSearching(true);
 
         try {
-            const addressData = await fetchAddressFromZipcode(
-                formData.postalCode,
-                countryCode
-            );
-
-            if (addressData) {
+            if (countryCode === 'JP') {
+                // サーバーサイドプロキシ経由でCORSを回避
+                const cleanZip = formData.postalCode.replace(/[^0-9]/g, '');
+                const res = await fetch(`/api/zipcode?zipcode=${cleanZip}`);
+                if (!res.ok) {
+                    setSearchError('この郵便番号は自動入力に対応していません。手動で住所を入力してください。');
+                    return;
+                }
+                const addressData = await res.json();
                 const newData = {
                     ...formData,
                     postalCode: formatZipcode(formData.postalCode),
@@ -88,7 +91,21 @@ export default function AddressForm({
                 setFormData(newData);
                 onChange(newData);
             } else {
-                setSearchError('郵便番号が見つかりませんでした');
+                const addressData = await fetchAddressFromZipcode(
+                    formData.postalCode,
+                    countryCode
+                );
+                if (addressData) {
+                    const newData = {
+                        ...formData,
+                        prefecture: addressData.prefecture,
+                        city: addressData.city,
+                    };
+                    setFormData(newData);
+                    onChange(newData);
+                } else {
+                    setSearchError('この郵便番号は自動入力に対応していません。手動で住所を入力してください。');
+                }
             }
         } catch (error) {
             setSearchError('住所の取得に失敗しました');
@@ -173,11 +190,9 @@ export default function AddressForm({
             {/* 番地・建物名 */}
             <div className="space-y-2">
                 <Label htmlFor="addressLine1">
-                    番地・建物名
-                    {fieldRequired.addressLine1 ? (
+                    番地・ビル名
+                    {fieldRequired.addressLine1 && (
                         <span className="text-red-500">*</span>
-                    ) : (
-                        <span className="text-gray-400 text-sm ml-1">（任意）</span>
                     )}
                 </Label>
                 <input
@@ -200,7 +215,7 @@ export default function AddressForm({
             {/* 建物名・部屋番号（常に任意） */}
             <div className="space-y-2">
                 <Label htmlFor="addressLine2">
-                    建物名・部屋番号 <span className="text-gray-400 text-sm">（任意）</span>
+                    部屋番号
                 </Label>
                 <input
                     id="addressLine2"

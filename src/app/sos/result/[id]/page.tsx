@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
 
 type CaseData = {
@@ -24,7 +24,9 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
+  intake_qna: { qa: Record<string, string[]> } | null;
   ai_sdg_suggestion: {
+    title?: string;
     sdgs_goals: number[];
     reasoning?: string;
     summary?: string;
@@ -42,6 +44,7 @@ type OfferData = {
   message: string;
   status: string;
   created_at: string;
+  accepted_order: number | null;
   supporter: {
     id: string;
     display_name: string;
@@ -133,7 +136,10 @@ export default function SOSResultPage() {
     setCurrentUserId(roleData.user.id);
     setCaseData(caseResult);
 
-    if (!caseResult.ai_sdg_suggestion) {
+    // ai_sdg_suggestion自体がない、またはai_sdg_suggestion内にtitleが未生成の場合は分析実行
+    const needsAnalysis = !caseResult.ai_sdg_suggestion
+      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>));
+    if (needsAnalysis) {
       await runAIAnalysis(caseResult);
     }
 
@@ -167,10 +173,23 @@ export default function SOSResultPage() {
     const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
     const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
     try {
+      // Q1〜Q5のチェック内容を整形（「該当なし」のみのQは除外してAIに渡す）
+      const qaText = cd.intake_qna?.qa
+        ? Object.entries(cd.intake_qna.qa)
+            .filter(([, answers]) => {
+              const ans = answers as string[];
+              // 「該当なし」のみ、または空の場合は除外
+              return ans.length > 0 && !(ans.length === 1 && ans[0] === '該当なし');
+            })
+            .map(([q, answers]) => `Q${q}: ${(answers as string[]).join('、')}`)
+            .join('\n')
+        : '';
+      const fullDescription = [qaText, cd.description_free].filter(Boolean).join('\n\n');
+
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caseId: cd.id, description: cd.description_free }),
+        body: JSON.stringify({ caseId: cd.id, description: fullDescription }),
       });
       if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
       const result = await response.json();
@@ -178,14 +197,24 @@ export default function SOSResultPage() {
       clearTimeout(step3);
       setAnalyzeStep(4);
       const { data: { session: sess } } = await supabase.auth.getSession();
+
+      // AIが返したtitleをそのまま使う（AIがsdgs_goals=[]のとき「再度見直してください」を返す）
+      const aiTitle = result.analysis?.title || '再度見直してください';
+      // ai_sdg_suggestion内にもtitleを保持（再分析要否の判定に使用）
+      const analysisWithTitle = { ...result.analysis, title: aiTitle };
+
       const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
-        body: JSON.stringify({ ai_sdg_suggestion: result.analysis, visibility: 'LISTED' }),
+        body: JSON.stringify({
+          ai_sdg_suggestion: analysisWithTitle,
+          visibility: 'LISTED',
+          title: aiTitle,
+        }),
       });
       if (updateRes.ok) {
         await new Promise(r => setTimeout(r, 800));
-        setCaseData({ ...cd, ai_sdg_suggestion: result.analysis });
+        setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
       }
     } catch (err) {
       console.error('AI analysis error:', err);
@@ -199,111 +228,134 @@ export default function SOSResultPage() {
   const handleAcceptOffer = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    if (!selectedOffer) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    // オファーを承認
-    const offerRes = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
-    });
-    const offerResult = await offerRes.json();
-    if (!offerRes.ok) {
-      if (offerResult.error === 'MAX_REACHED') {
-        toast.error('すでに3名のサポーターを承認済みです。これ以上承認できません。');
-      } else {
-        toast.error('承認に失敗しました');
+    try {
+      if (!selectedOffer) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // オファーを承認
+      const offerRes = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
+      });
+      const offerResult = await offerRes.json();
+      if (!offerRes.ok) {
+        if (offerResult.error === 'MAX_REACHED') {
+          toast.error(`すでに${MAX_SUPPORTERS_PER_CASE}名のサポーターを承認済みです。これ以上承認できません。`);
+        } else if (offerResult.error === 'OFFER_NOT_PENDING') {
+          toast.error('この申し出はすでに取り下げられています。ページを更新してご確認ください。');
+          await loadData();
+        } else {
+          toast.error('承認に失敗しました');
+        }
+        setShowAcceptModal(false);
+        return;
       }
-      return;
-    }
-    // ケースをMATCHEDに
-    await fetch(`/api/sos/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'MATCHED' }),
-    });
-    setShowAcceptModal(false);
-    setSelectedOffer(null);
-    await loadData();
-    if (offerResult.auto_declined) {
-      toast.success('サポーターを承認しました。3名に達したため、残りの申し出は自動的に辞退されました。');
-    } else {
-      toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+      // ケースをMATCHEDに
+      await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'MATCHED' }),
+      });
+      setShowAcceptModal(false);
+      setSelectedOffer(null);
+      await loadData();
+      if (offerResult.auto_declined) {
+        toast.success(`サポーターを承認しました。${MAX_SUPPORTERS_PER_CASE}名に達したため、残りの申し出は自動的に辞退されました。`);
+      } else {
+        toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+      }
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const handleDeclineOffer = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    if (!selectedOffer) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('辞退に失敗しました'); return; }
-    setShowDeclineModal(false);
-    setSelectedOffer(null);
-    await loadOffers();
-    toast.success('申し出を辞退しました');
+    try {
+      if (!selectedOffer) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error('辞退に失敗しました'); return; }
+      setShowDeclineModal(false);
+      setSelectedOffer(null);
+      await loadOffers();
+      toast.success('申し出を辞退しました');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleResolveCase = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await fetch(`/api/sos/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
-    });
-    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-    setShowResolveModal(false);
-    await loadData();
-    // 自動バッジ付与（API経由）
-    const accepted = offers.filter(o => o.status === 'ACCEPTED');
-    if (accepted.length > 0 && currentUserId) {
-      const autoBadges = accepted.map((offer, i) => ({
-        case_id: params.id as string,
-        supporter_user_id: offer.supporter.id,
-        badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
-      }));
-      await fetch('/api/sos/badges', {
-        method: 'POST',
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ badges: autoBadges }),
+        body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
       });
+      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      setShowResolveModal(false);
+      await loadData();
+      // 自動バッジ付与（API経由）
+      // accepted_order 昇順でソート → 最小order(主)が金メダル、以降が銀メダル
+      const accepted = offers
+        .filter(o => o.status === 'ACCEPTED')
+        .sort((a, b) => (a.accepted_order ?? 999) - (b.accepted_order ?? 999))
+      if (accepted.length > 0 && currentUserId) {
+        const autoBadges = accepted.map((offer, i) => ({
+          case_id: params.id as string,
+          supporter_user_id: offer.supporter.id,
+          badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
+        }));
+        await fetch('/api/sos/badges', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ badges: autoBadges }),
+        });
+      }
+      setShowEvalModal(true);
+    } finally {
+      setIsActionLoading(false);
     }
-    setShowEvalModal(true);
   };
 
   const handleRejectResolution = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    // supporter_resolved_atをリセット
-    const res = await fetch(`/api/sos/cases/${params.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ supporter_resolved_at: null }),
-    });
-    if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-    // システムメッセージをAPIで投稿
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({
-        case_id: params.id,
-        content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
-      }),
-    });
-    toast.success('サポーターに対応継続を依頼しました');
-    await loadData();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // supporter_resolved_atをリセット
+      const res = await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ supporter_resolved_at: null }),
+      });
+      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      // システムメッセージをAPIで投稿
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          case_id: params.id,
+          content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
+        }),
+      });
+      toast.success('サポーターに対応継続を依頼しました');
+      await loadData();
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleSubmitBadges = async () => {
@@ -449,54 +501,74 @@ export default function SOSResultPage() {
               <h2 className="text-lg font-bold text-gray-800">🌍 あなたの声と世界のつながり</h2>
               <p className="text-xs text-gray-500 mt-1">あなたの相談がSDGs（持続可能な開発目標）のどの課題に関わるかをAIが分析しました</p>
             </div>
-            {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
-              <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
-                <CardContent className="py-4">
-                  <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
+
+            {/* SDGsが分類できなかった場合 */}
+            {(!caseData.ai_sdg_suggestion.sdgs_goals || caseData.ai_sdg_suggestion.sdgs_goals.length === 0) ? (
+              <Card className="border-none bg-amber-50 shadow-sm">
+                <CardContent className="py-5">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">💬</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 mb-1">もう少し詳しく教えてください</p>
+                      <p className="text-sm text-amber-700 leading-relaxed">
+                        {caseData.ai_sdg_suggestion.summary || 'もう少し詳しく教えてもらえると、より適切な支援者につなぐことができます。「何が起きているか」の欄に、困っていることをもう少し詳しく書いてみてください。'}
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-            {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
-              <div className="space-y-3">
-                {caseData.ai_sdg_suggestion.per_goal.map((pg) => (
-                  <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
-                    <div className="flex">
-                      <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
-                      <div className="flex-1 p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
-                          <span className="text-xs text-gray-500">{SDG_NAMES[pg.goal]}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
             ) : (
-              <div className="space-y-3">
-                {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
-                  <Card key={goalId} className="border-none shadow-sm overflow-hidden">
-                    <div className="flex">
-                      <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
-                      <div className="flex-1 p-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
-                          <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
-                        </div>
-                      </div>
-                    </div>
+              <>
+                {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
+                  <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
+                    <CardContent className="py-4">
+                      <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
+                    </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
-            {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-1">
-                {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
-                  <span key={i} className="text-xs px-2.5 py-1 bg-white border border-gray-200 rounded-full text-gray-600 shadow-sm">#{kw}</span>
-                ))}
-              </div>
+                )}
+                {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
+                  <div className="space-y-3">
+                    {caseData.ai_sdg_suggestion.per_goal.map((pg) => (
+                      <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
+                        <div className="flex">
+                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
+                          <div className="flex-1 p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
+                              <span className="text-xs text-gray-500">{SDG_NAMES[pg.goal]}</span>
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
+                      <Card key={goalId} className="border-none shadow-sm overflow-hidden">
+                        <div className="flex">
+                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
+                          <div className="flex-1 p-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
+                              <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-1">
+                    {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                      <span key={i} className="text-xs px-2.5 py-1 bg-white border border-gray-200 rounded-full text-gray-600 shadow-sm">#{kw}</span>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : null}
@@ -507,18 +579,17 @@ export default function SOSResultPage() {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
-                    {caseData?.status === 'MATCHED' && '🤝 マッチ済み'}
-                    {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && '🔄 対応中'}
-                    {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && '🤝 マッチ済み・支援中'}
+                    {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
                     {caseData?.status === 'RESOLVED' && '✅ 解決済み'}
                     {caseData?.status === 'OPEN' && '⏳ サポーター待ち'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  {['マッチ', '対応中', '解決報告', '完了'].map((step, i) => {
+                  {['マッチ・支援中', '解決報告', '完了'].map((step, i) => {
                     const stepNum = i + 1;
-                    const currentStep = caseData?.status === 'MATCHED' ? 1 : caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at ? 2 : caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at ? 3 : caseData?.status === 'RESOLVED' ? 4 : 0;
+                    const currentStep = caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at ? 1 : caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at ? 2 : caseData?.status === 'RESOLVED' ? 3 : 0;
                     const isActive = stepNum <= currentStep;
                     const isCurrent = stepNum === currentStep;
                     return (
@@ -530,17 +601,12 @@ export default function SOSResultPage() {
                   })}
                 </div>
                 <div className="mt-4">
-                  {caseData?.status === 'MATCHED' && (
+                  {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && (
                     <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-center">
-                      <p className="text-sm text-amber-700">⏳ サポーターが支援を開始するのをお待ちください</p>
+                      <p className="text-sm text-amber-700">🤝 サポーターが支援中です。メッセージで連携してください</p>
                     </div>
                   )}
-                  {caseData?.status === 'IN_PROGRESS' && !caseData?.supporter_resolved_at && (
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 text-center">
-                      <p className="text-sm text-purple-700">🔄 サポーターが対応中です</p>
-                    </div>
-                  )}
-                  {caseData?.status === 'IN_PROGRESS' && caseData?.supporter_resolved_at && (
+                  {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && (
                     <div className="space-y-3">
                       <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-center">
                         <p className="text-sm text-emerald-700 font-medium">📋 サポーターが解決を報告しました</p>
@@ -583,7 +649,7 @@ export default function SOSResultPage() {
                         </div>
                         <span className="text-xs text-teal-600">{formatDate(offer.created_at)}</span>
                       </div>
-                      <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700">{offer.message}</p></div>
+                      <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                       {badges && Object.keys(badges).length > 0 && (
                         <div className="mt-3 pt-3 border-t border-teal-100">
                           <p className="text-[11px] text-gray-400 mb-1.5">🎁 感謝バッジ（全案件の累計）</p>
@@ -657,9 +723,9 @@ export default function SOSResultPage() {
                         </div>
                       </div>
                     )}
-                    <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700">{offer.message}</p></div>
+                    <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                     <div className="flex gap-2">
-                      <Button onClick={() => { setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
+                      <Button onClick={async () => { await loadOffers(); setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
                       <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">辞退する</Button>
                     </div>
                   </div>
@@ -699,14 +765,14 @@ export default function SOSResultPage() {
           ) : (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
               <p className="text-sm text-blue-700">
-                💬 この案件は最大3名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
+                💬 この案件は最大{MAX_SUPPORTERS_PER_CASE}名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
               </p>
             </div>
           )}
-          {acceptedOffers.length === 2 && (
+          {acceptedOffers.length === MAX_SUPPORTERS_PER_CASE - 1 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
               <p className="text-sm font-medium text-orange-800">🔔 上限に達します</p>
-              <p className="text-sm text-orange-700">これを承認すると3名の上限に達し、<span className="font-medium">残りの申し出はすべて自動的に辞退</span>されます。</p>
+              <p className="text-sm text-orange-700">これを承認すると{MAX_SUPPORTERS_PER_CASE}名の上限に達し、<span className="font-medium">残りの申し出はすべて自動的に辞退</span>されます。</p>
             </div>
           )}
           <div className="flex gap-3">
