@@ -16,13 +16,33 @@ export async function GET(request: Request) {
 
     const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, role, real_name, display_name, display_id, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code, is_suspended')
+        .select('id, role, real_name, display_name, display_id, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code, is_suspended, parent_supporter_id')
         .eq('auth_user_id', user.id)
         .single()
 
     // 停止済みユーザーは即時拒否
     if (userData?.is_suspended) {
         return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
+    }
+
+    // サブアカウントの場合は親団体として完全に振る舞う
+    // id を親のIDに差し替えることで、dashboard/offers/chat等すべてのAPIが親名義で動作する
+    let effectiveUserData = userData
+    if (userData?.parent_supporter_id) {
+        const { data: parentData } = await supabaseAdmin
+            .from('users')
+            .select('id, real_name, display_name, display_id, organization_name, supporter_type, bio, social_links, postal_code, prefecture, city, address_structured, phone, email, sos_region_code, is_suspended, must_change_password')
+            .eq('id', userData.parent_supporter_id)
+            .single()
+        if (parentData) {
+            effectiveUserData = {
+                ...parentData,
+                auth_user_id: userData.auth_user_id,
+                parent_supporter_id: userData.parent_supporter_id,
+                is_sub_account: true,
+                sub_real_name: userData.real_name,
+            } as typeof userData & { is_sub_account: boolean; sub_real_name: string }
+        }
     }
 
     // サポーターの活動地域を取得
@@ -67,7 +87,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-        role: userData?.role ?? null,
-        user: userData ? { ...userData, service_areas: serviceAreas, service_area_nationwide: serviceAreaNationwide } : null,
+        role: effectiveUserData?.role ?? null,
+        user: effectiveUserData ? { ...effectiveUserData, service_areas: serviceAreas, service_area_nationwide: serviceAreaNationwide } : null,
     })
 }
