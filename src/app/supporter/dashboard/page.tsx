@@ -473,7 +473,7 @@ export default function SupporterDashboard() {
           </div>
         )}
 
-
+        <div className="grid grid-cols-4 gap-3 mb-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
               <div className="text-[11px] text-gray-400 mb-1">{s.label}</div>
