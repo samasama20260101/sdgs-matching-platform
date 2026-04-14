@@ -286,7 +286,10 @@ export default function SupporterDashboard() {
       setMembers(prev => [...prev, data.member]);
       setMemberForm({ email: '', real_name: '' });
       if (data.tempPassword) setNewMemberPassword(data.tempPassword);
-    } catch { setMemberError('エラーが発生しました'); }
+    } catch (err) {
+      console.error('[handleAddMember] error:', err);
+      setMemberError('エラーが発生しました: ' + (err instanceof Error ? err.message : String(err)));
+    }
     finally { setMemberLoading(false); }
   };
 
