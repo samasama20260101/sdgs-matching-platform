@@ -40,6 +40,8 @@ type UserData = {
   role: string;
   service_area_nationwide?: boolean;
   service_areas?: Array<{ region_code: string; name_local: string; name_en: string }>;
+  parent_supporter_id?: string | null;
+  is_sub_account?: boolean;
 };
 
 function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
@@ -189,6 +191,15 @@ export default function SupporterDashboard() {
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
+  // メンバー管理
+  const [members, setMembers] = useState<Array<{ id: string; real_name: string; email: string; display_id: string; member_approved_at: string }>>([]);
+  const [memberMax, setMemberMax] = useState(5);
+  const [showMemberPanel, setShowMemberPanel] = useState(false);
+  const [memberForm, setMemberForm] = useState({ email: '', real_name: '' });
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [newMemberPassword, setNewMemberPassword] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -229,6 +240,19 @@ export default function SupporterDashboard() {
         userDataWithAreas.service_area_nationwide = areaData.service_area_nationwide || false;
       }
       setUserData(userDataWithAreas);
+      setAccessToken(session.access_token);
+
+      // 親アカウントの場合はメンバー一覧も取得
+      if (!roleData.user.parent_supporter_id) {
+        const memberRes = await fetch('/api/supporter/members', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          setMembers(memberData.members ?? []);
+          setMemberMax(memberData.max ?? 5);
+        }
+      }
 
       // API経由で案件・オファー・バッジを一括取得（RLSバイパス）
       if (dashRes.ok) {
@@ -241,6 +265,46 @@ export default function SupporterDashboard() {
     };
     loadData();
   }, [router]);
+
+  // ── メンバー追加 ──
+  const handleAddMember = async () => {
+    if (!memberForm.email || !memberForm.real_name) {
+      setMemberError('メールアドレスと氏名を入力してください');
+      return;
+    }
+    setMemberLoading(true);
+    setMemberError(null);
+    setNewMemberPassword(null);
+    try {
+      const res = await fetch('/api/supporter/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+        body: JSON.stringify(memberForm),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMemberError(data.error ?? '追加に失敗しました'); return; }
+      setMembers(prev => [...prev, data.member]);
+      setMemberForm({ email: '', real_name: '' });
+      if (data.tempPassword) setNewMemberPassword(data.tempPassword);
+    } catch { setMemberError('エラーが発生しました'); }
+    finally { setMemberLoading(false); }
+  };
+
+  // ── メンバー削除 ──
+  const handleDeleteMember = async (memberId: string) => {
+    if (!confirm('このメンバーを削除しますか？')) return;
+    try {
+      const res = await fetch('/api/supporter/members', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+        body: JSON.stringify({ memberId }),
+      });
+      if (!res.ok) { alert('削除に失敗しました'); return; }
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+    } catch { alert('エラーが発生しました'); }
+  };
+
+
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">読み込み中...</p></div>;
 
@@ -310,7 +374,106 @@ export default function SupporterDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        {/* ── メンバー管理パネル（親アカウントのみ表示） ── */}
+        {!userData?.is_sub_account && (
+          <div className="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <button
+              onClick={() => setShowMemberPanel(p => !p)}
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-base">👥</span>
+                <span className="font-medium text-gray-800 text-sm">所属メンバー管理</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  members.length >= memberMax ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-700'
+                }`}>{members.length} / {memberMax}名</span>
+              </div>
+              <span className="text-gray-400 text-xs">{showMemberPanel ? '▲ 閉じる' : '▼ 開く'}</span>
+            </button>
+
+            {showMemberPanel && (
+              <div className="px-5 pb-5">
+                {/* メンバー一覧 */}
+                {members.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    {members.map(m => (
+                      <div key={m.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{m.real_name}</p>
+                          <p className="text-xs text-gray-400">{m.email}　<span className="text-gray-300">|</span>　{m.display_id}</p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteMember(m.id)}
+                          className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          削除
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {members.length === 0 && (
+                  <p className="text-sm text-gray-400 mb-4">まだメンバーがいません</p>
+                )}
+
+                {/* 追加フォーム */}
+                {members.length < memberMax ? (
+                  <div className="border border-dashed border-gray-200 rounded-xl p-4">
+                    <p className="text-xs font-medium text-gray-600 mb-3">メンバーを追加</p>
+                    <div className="space-y-2 mb-3">
+                      <input
+                        type="text"
+                        placeholder="氏名"
+                        value={memberForm.real_name}
+                        onChange={e => setMemberForm(p => ({ ...p, real_name: e.target.value }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                      />
+                      <input
+                        type="email"
+                        placeholder="メールアドレス"
+                        value={memberForm.email}
+                        onChange={e => setMemberForm(p => ({ ...p, email: e.target.value }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                      />
+                    </div>
+                    {memberError && (
+                      <p className="text-xs text-red-600 mb-2">{memberError}</p>
+                    )}
+                    <button
+                      onClick={handleAddMember}
+                      disabled={memberLoading}
+                      className="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {memberLoading ? '追加中...' : '＋ 追加する'}
+                    </button>
+                    <p className="text-xs text-gray-400 mt-2">※ 新規メンバーには初期パスワードが発行されます（初回ログイン時に変更必須）</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-red-500 text-center py-2">上限（{memberMax}名）に達しています</p>
+                )}
+
+                {/* 初期パスワード表示 */}
+                {newMemberPassword && (
+                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <p className="text-xs font-medium text-amber-800 mb-1">⚠️ 初期パスワード（一度のみ表示）</p>
+                    <p className="font-mono text-sm text-amber-900 bg-white px-3 py-2 rounded-lg border border-amber-200 break-all">{newMemberPassword}</p>
+                    <p className="text-xs text-amber-600 mt-2">このパスワードをメンバーに安全な方法で伝えてください。初回ログイン後に変更が必要です。</p>
+                    <button onClick={() => setNewMemberPassword(null)} className="text-xs text-amber-600 hover:text-amber-800 mt-2 underline">閉じる</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* サブアカウントの場合：所属団体を表示 */}
+        {userData?.is_sub_account && (
+          <div className="mb-6 bg-teal-50 border border-teal-200 rounded-xl px-5 py-3 text-sm text-teal-800">
+            👥 あなたは <span className="font-medium">{userData.organization_name}</span> のメンバーとしてログインしています
+          </div>
+        )}
+
+
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
               <div className="text-[11px] text-gray-400 mb-1">{s.label}</div>
