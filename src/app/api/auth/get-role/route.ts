@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     if (userData?.parent_supporter_id) {
         const { data: parentData } = await supabaseAdmin
             .from('users')
-            .select('id, real_name, display_name, display_id, organization_name, supporter_type, bio, social_links, postal_code, prefecture, city, address_structured, phone, email, sos_region_code, is_suspended, must_change_password')
+            .select('id, role, real_name, display_name, display_id, organization_name, supporter_type, bio, social_links, postal_code, prefecture, city, address_structured, phone, email, sos_region_code, is_suspended, must_change_password')
             .eq('id', userData.parent_supporter_id)
             .single()
         if (parentData) {
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
                 parent_supporter_id: userData.parent_supporter_id,
                 is_sub_account: true,
                 sub_real_name: userData.real_name,
-            } as typeof userData & { is_sub_account: boolean; sub_real_name: string }
+            } as any
         }
     }
 
