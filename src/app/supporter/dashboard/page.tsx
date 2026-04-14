@@ -282,7 +282,6 @@ export default function SupporterDashboard() {
     }
     setMemberLoading(true);
     setMemberError(null);
-    setNewMemberPassword(null);
     try {
       const res = await fetch('/api/supporter/members', {
         method: 'POST',
