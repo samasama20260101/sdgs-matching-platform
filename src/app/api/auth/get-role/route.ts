@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
     const { data: userData } = await supabaseAdmin
         .from('users')
-        .select('id, role, real_name, display_name, display_id, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code, is_suspended, parent_supporter_id')
+        .select('id, role, real_name, display_name, display_id, email, phone, organization_name, supporter_type, postal_code, prefecture, city, address_structured, must_change_password, bio, social_links, sos_region_code, is_suspended, parent_supporter_id, auth_user_id')
         .eq('auth_user_id', user.id)
         .single()
 
