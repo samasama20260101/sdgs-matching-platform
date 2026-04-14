@@ -195,10 +195,10 @@ export default function SupporterDashboard() {
   const [members, setMembers] = useState<Array<{ id: string; real_name: string; email: string; display_id: string; member_approved_at: string }>>([]);
   const [memberMax, setMemberMax] = useState(5);
   const [showMemberPanel, setShowMemberPanel] = useState(false);
-  const [memberForm, setMemberForm] = useState({ email: '', real_name: '' });
+  const [memberForm, setMemberForm] = useState({ email: '', real_name: '', password: '', passwordConfirm: '' });
   const [memberLoading, setMemberLoading] = useState(false);
   const [memberError, setMemberError] = useState<string | null>(null);
-  const [newMemberPassword, setNewMemberPassword] = useState<string | null>(null);
+
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -268,8 +268,16 @@ export default function SupporterDashboard() {
 
   // ── メンバー追加 ──
   const handleAddMember = async () => {
-    if (!memberForm.email || !memberForm.real_name) {
-      setMemberError('メールアドレスと氏名を入力してください');
+    if (!memberForm.email || !memberForm.real_name || !memberForm.password) {
+      setMemberError('すべての項目を入力してください');
+      return;
+    }
+    if (memberForm.password.length < 8) {
+      setMemberError('パスワードは8文字以上で入力してください');
+      return;
+    }
+    if (memberForm.password !== memberForm.passwordConfirm) {
+      setMemberError('パスワードが一致しません');
       return;
     }
     setMemberLoading(true);
@@ -279,13 +287,12 @@ export default function SupporterDashboard() {
       const res = await fetch('/api/supporter/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-        body: JSON.stringify(memberForm),
+        body: JSON.stringify({ email: memberForm.email, real_name: memberForm.real_name, password: memberForm.password }),
       });
       const data = await res.json();
       if (!res.ok) { setMemberError(data.error ?? '追加に失敗しました'); return; }
       setMembers(prev => [...prev, data.member]);
-      setMemberForm({ email: '', real_name: '' });
-      if (data.tempPassword) setNewMemberPassword(data.tempPassword);
+      setMemberForm({ email: '', real_name: '', password: '', passwordConfirm: '' });
     } catch (err) {
       console.error('[handleAddMember] error:', err);
       setMemberError('エラーが発生しました: ' + (err instanceof Error ? err.message : String(err)));
@@ -438,6 +445,20 @@ export default function SupporterDashboard() {
                         onChange={e => setMemberForm(p => ({ ...p, email: e.target.value }))}
                         className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
                       />
+                      <input
+                        type="password"
+                        placeholder="初期パスワード（8文字以上）"
+                        value={memberForm.password}
+                        onChange={e => setMemberForm(p => ({ ...p, password: e.target.value }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                      />
+                      <input
+                        type="password"
+                        placeholder="初期パスワード（確認）"
+                        value={memberForm.passwordConfirm}
+                        onChange={e => setMemberForm(p => ({ ...p, passwordConfirm: e.target.value }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                      />
                     </div>
                     {memberError && (
                       <p className="text-xs text-red-600 mb-2">{memberError}</p>
@@ -449,21 +470,12 @@ export default function SupporterDashboard() {
                     >
                       {memberLoading ? '追加中...' : '＋ 追加する'}
                     </button>
-                    <p className="text-xs text-gray-400 mt-2">※ 新規メンバーには初期パスワードが発行されます（初回ログイン時に変更必須）</p>
+                    <p className="text-xs text-gray-400 mt-2">※ 設定したパスワードをメンバーに安全な方法で伝えてください</p>
                   </div>
                 ) : (
                   <p className="text-xs text-red-500 text-center py-2">上限（{memberMax}名）に達しています</p>
                 )}
 
-                {/* 初期パスワード表示 */}
-                {newMemberPassword && (
-                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p className="text-xs font-medium text-amber-800 mb-1">⚠️ 初期パスワード（一度のみ表示）</p>
-                    <p className="font-mono text-sm text-amber-900 bg-white px-3 py-2 rounded-lg border border-amber-200 break-all">{newMemberPassword}</p>
-                    <p className="text-xs text-amber-600 mt-2">このパスワードをメンバーに安全な方法で伝えてください。初回ログイン後に変更が必要です。</p>
-                    <button onClick={() => setNewMemberPassword(null)} className="text-xs text-amber-600 hover:text-amber-800 mt-2 underline">閉じる</button>
-                  </div>
-                )}
               </div>
             )}
           </div>

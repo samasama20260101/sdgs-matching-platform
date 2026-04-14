@@ -52,9 +52,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `メンバーは最大${MAX_MEMBERS}名までです` }, { status: 400 })
   }
 
-  const { email, real_name } = await request.json()
-  if (!email || !real_name) {
-    return NextResponse.json({ error: 'メールアドレスと氏名は必須です' }, { status: 400 })
+  const { email, real_name, password } = await request.json()
+  if (!email || !real_name || !password) {
+    return NextResponse.json({ error: 'メールアドレス・氏名・パスワードは必須です' }, { status: 400 })
+  }
+  if (password.length < 8) {
+    return NextResponse.json({ error: 'パスワードは8文字以上で入力してください' }, { status: 400 })
   }
 
   // すでにアプリのユーザーとして存在するか確認
@@ -85,11 +88,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ member: updated })
   }
 
-  // 新規: Supabase Auth にユーザーを作成（仮パスワード）
-  const tempPassword = Math.random().toString(36).slice(-10) + 'Aa1!'
+  // 新規: Supabase Auth にユーザーを作成（親が設定したパスワード）
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
-    password: tempPassword,
+    password,
     email_confirm: true,
   })
   if (authError || !authData.user) {
@@ -118,7 +120,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ member: newUser, tempPassword })
+  return NextResponse.json({ member: newUser })
 }
 
 // DELETE: メンバー削除
