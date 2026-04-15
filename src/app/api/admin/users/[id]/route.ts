@@ -47,6 +47,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         // public.users に停止フラグを記録
         await supabaseAdmin.from('users').update({ is_suspended: true }).eq('id', userId)
 
+        // 子アカウントも同時に停止
+        const { data: children } = await supabaseAdmin
+            .from('users')
+            .select('id, auth_user_id')
+            .eq('parent_supporter_id', userId)
+        for (const child of children ?? []) {
+            await supabaseAdmin.auth.admin.updateUserById(child.auth_user_id, { ban_duration: '876600h' })
+            await supabaseAdmin.auth.admin.signOut(child.auth_user_id, 'global')
+            await supabaseAdmin.from('users').update({ is_suspended: true }).eq('id', child.id)
+        }
+
     } else if (action === 'unsuspend') {
         // バン解除
         const { error } = await supabaseAdmin.auth.admin.updateUserById(userData.auth_user_id, {
@@ -55,6 +66,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
         await supabaseAdmin.from('users').update({ is_suspended: false }).eq('id', userId)
+
+        // 子アカウントも同時に解除
+        const { data: children } = await supabaseAdmin
+            .from('users')
+            .select('id, auth_user_id')
+            .eq('parent_supporter_id', userId)
+        for (const child of children ?? []) {
+            await supabaseAdmin.auth.admin.updateUserById(child.auth_user_id, { ban_duration: 'none' })
+            await supabaseAdmin.from('users').update({ is_suspended: false }).eq('id', child.id)
+        }
     }
 
     return NextResponse.json({ success: true })
