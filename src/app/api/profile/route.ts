@@ -19,11 +19,25 @@ export async function POST(request: Request) {
     // service_areas（活動地域）を分離して別テーブルに保存
     const { service_areas, service_area_nationwide, ...updateData } = body
 
+    // ログインユーザーのレコードを取得
+    const { data: loginUser } = await supabaseAdmin
+        .from('users')
+        .select('id, parent_supporter_id')
+        .eq('auth_user_id', user.id)
+        .single()
+
+    if (!loginUser) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // 子アカウントの場合は親のレコードを更新する
+    const targetId = loginUser.parent_supporter_id ?? loginUser.id
+
     // usersテーブル更新
     const { data: userData, error: updateError } = await supabaseAdmin
         .from('users')
         .update(updateData)
-        .eq('auth_user_id', user.id)
+        .eq('id', targetId)
         .select('id')
         .single()
 
