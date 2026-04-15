@@ -142,11 +142,19 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'メンバーが見つかりません' }, { status: 404 })
   }
 
-  // parent_supporter_id を null に戻す（アカウント自体は残す）
-  await supabaseAdmin.from('users').update({
-    parent_supporter_id: null,
-    member_approved_at: null,
-  }).eq('id', memberId)
+  // セッション無効化 → public.users 削除 → auth.users 削除
+  await supabaseAdmin.auth.admin.signOut(member.auth_user_id, 'global')
+
+  const { error: deleteError } = await supabaseAdmin
+    .from('users')
+    .delete()
+    .eq('id', memberId)
+
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 500 })
+  }
+
+  await supabaseAdmin.auth.admin.deleteUser(member.auth_user_id)
 
   return NextResponse.json({ success: true })
 }
