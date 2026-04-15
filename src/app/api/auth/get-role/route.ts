@@ -41,6 +41,8 @@ export async function GET(request: Request) {
                 parent_supporter_id: userData.parent_supporter_id,
                 is_sub_account: true,
                 sub_real_name: userData.real_name,
+                // must_change_password は子自身の値を使う（初回ログイン時の変更強制）
+                must_change_password: userData.must_change_password,
             } as any
         }
     }
