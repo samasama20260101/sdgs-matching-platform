@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     // サポーター一覧
     const { data: supporters } = await supabaseAdmin
         .from('users')
-        .select('id, real_name, display_name, email, organization_name, supporter_type, phone, created_at, is_suspended')
+        .select('id, real_name, display_name, email, organization_name, supporter_type, phone, created_at, is_suspended, parent_supporter_id')
         .eq('role', 'SUPPORTER')
         .order('created_at', { ascending: false })
 

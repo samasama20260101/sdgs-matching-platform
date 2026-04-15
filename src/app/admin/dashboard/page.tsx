@@ -9,6 +9,7 @@ type Supporter = {
     id: string; real_name: string; display_name: string; email: string
     organization_name: string | null; supporter_type: string | null
     phone: string | null; created_at: string; is_suspended: boolean | null
+    parent_supporter_id: string | null
 }
 type FeaturedSupporter = {
     id: string; display_name: string; organization_name: string | null
@@ -395,9 +396,16 @@ export default function AdminDashboardPage() {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center justify-center gap-1">
-                                                                {s.is_suspended ? (
-                                                                    <button onClick={() => setConfirmModal({ isOpen: true, type: 'unsuspend', userId: s.id, userName: s.organization_name || s.real_name })}
-                                                                        className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 whitespace-nowrap">停止解除</button>
+                                                                {s.is_suspended ? (() => {
+                                                                    // 子アカウントの場合、親が停止中なら解除不可
+                                                                    const parentSuspended = s.parent_supporter_id
+                                                                        ? supporters.find(p => p.id === s.parent_supporter_id)?.is_suspended
+                                                                        : false;
+                                                                    return parentSuspended
+                                                                        ? <span className="text-xs px-2 py-1 bg-gray-100 text-gray-400 rounded cursor-not-allowed" title="親アカウントが停止中のため解除できません">停止解除</span>
+                                                                        : <button onClick={() => setConfirmModal({ isOpen: true, type: 'unsuspend', userId: s.id, userName: s.organization_name || s.real_name })}
+                                                                            className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 whitespace-nowrap">停止解除</button>
+                                                                })()
                                                                 ) : (
                                                                     <button onClick={() => setConfirmModal({ isOpen: true, type: 'suspend', userId: s.id, userName: s.organization_name || s.real_name })}
                                                                         className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200">停止</button>

@@ -35,6 +35,10 @@ export async function GET(request: Request) {
             .eq('id', userData.parent_supporter_id)
             .single()
         if (parentData) {
+            // 親が停止中なら子もアクセス不可
+            if (parentData.is_suspended) {
+                return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
+            }
             effectiveUserData = {
                 ...parentData,
                 auth_user_id: userData.auth_user_id,
