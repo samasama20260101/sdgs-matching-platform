@@ -354,3 +354,125 @@ curl -X GET \
 - サポーター承認上限を 2名 → 3名に拡張（`MAX_SUPPORTERS_PER_CASE = 3` 1行変更のみ）
 - サポーター公開ページの写真・ロゴ掲載機能（Supabase Storage使用、設計済み）
 - favicon・apple-touch-icon・OGP画像の差し替え（`public/brand/` に素材あり）
+
+---
+
+## 🗓 2025年7月末 エンハンス予定：サポーター団体アカウント設計の刷新（D案）
+
+### 背景・課題
+
+現状の設計では「親アカウント = 1人のユーザー」に団体が紐付いている。  
+この設計では以下の問題が起きる：
+
+- 親アカウントのユーザーが退職・離脱した場合、誰が団体を引き継ぐか解決できない
+- 親アカウントのメールアドレス・パスワードを使いまわすしかなくなる
+- SNS認証との相性が悪い
+
+### 暫定対応（現在の実装）
+
+- 親アカウントがサブ（子）アカウントを最大5名作成できる
+- サブはログインすると親の ID で動作し、親と完全に同じ画面・機能を使える
+- 緊急時は管理者が手動で対応（管理画面から親の変更は未実装）
+
+### 目指すべき姿（D案）：団体エンティティの分離
+
+```
+【現状】
+users テーブル
+  id = 親アカウントのID ← これが「団体」を表している
+
+【D案後】
+organizations テーブル（団体エンティティ）
+  id, name, supporter_type, bio, sdgs_goals, service_areas ...
+
+users テーブル
+  id, organization_id（FK → organizations.id）, role（owner / member）...
+```
+
+#### 変更のポイント
+
+| 項目 | 現状 | D案後 |
+|---|---|---|
+| 団体の実体 | users テーブルの親レコード | organizations テーブル |
+| メンバー管理 | parent_supporter_id で紐付け | organization_id + role で紐付け |
+| オーナー引き継ぎ | 不可（管理者対応のみ） | role を owner → member / member → owner で変更 |
+| SNS認証 | 相性が悪い | 自然に対応可能 |
+| 将来的な権限分離 | 困難 | role カラムで自然に実現 |
+
+#### 移行時の考慮点
+
+- 既存の `cases`・`offers`・`messages` は現在 `user_id` で紐付いているため、`organization_id` への移行が必要
+- `get-role` API の `id` 差し替えロジックを `organization_id` ベースに変更
+- `parent_supporter_id` / `member_approved_at` カラムは廃止し `organization_id` + `role` に統合
+- 移行スクリプトが必要（既存の親アカウントを organizations に変換、子アカウントを organization_id に紐付け）
+
+#### 優先して議論すべき論点
+
+1. オーナーは1人か複数か（複数オーナーを許すか）
+2. メンバーの役割（role）をどこまで細分化するか（owner / admin / member など）
+3. 団体が削除されたときのデータ扱い（cases/messages をどうするか）
+
+
+---
+
+## 【7月末エンハンス予定】サポーター団体アカウントの設計刷新
+
+### 背景と課題
+
+現在のサブアカウント設計（`parent_supporter_id` による自己参照）では、
+**親アカウントのユーザーが団体を退職した場合**に以下の問題が発生する：
+
+- 子アカウントが孤立する
+- 管理者が手動で対応しなければならない
+- 「アカウント＝人」と「アカウント＝団体」が混在していて設計上不自然
+
+### 検討した案
+
+| 案 | 内容 | 評価 |
+|---|---|---|
+| A | 管理者が親を変更する | シンプルだが団体側で自己完結できない |
+| B | 親が退職前に後継者を指名 | 急な退職に対応できない |
+| C | 子が引き継ぎ申請→管理者承認 | 急な退職に対応できるが期間中に団体が宙ぶらりん |
+| **D** | **「団体エンティティ」を独立させる** | **根本解決・将来拡張性も高い** |
+
+### あるべき姿：D案
+
+「ログインID（人）」と「団体（組織）」を分離する。
+
+```
+organizations テーブル（新設）
+  ├ id
+  ├ name（団体名）
+  ├ supporter_type
+  ├ bio / social_links / service_areas
+  └ ...団体に紐付くプロフィール情報
+
+users テーブル（変更）
+  ├ id
+  ├ organization_id → organizations.id（FK）
+  ├ role: SUPPORTER_ADMIN（団体管理者）/ SUPPORTER_MEMBER（メンバー）
+  └ ...個人のログイン情報のみ
+```
+
+**メリット：**
+- 退職者が出ても団体エンティティは残る
+- SUPPORTER_ADMIN を別のメンバーに変更するだけで引き継ぎ完了
+- SNS認証との相性が良い（個人認証と団体情報が分離している）
+- 複数人が同じ団体として自然に振る舞える（現在の `get-role` のハック不要）
+
+**現在との互換性：**
+- `get-role` の `id差し替え` ロジックは organization_id 参照に置き換え
+- `parent_supporter_id` カラムは廃止
+- 既存データはマイグレーションスクリプトで移行
+
+### 実装時の注意点
+
+- Staging → Production の両Supabaseにマイグレーションが必要
+- `cases`・`offers`・`messages`・`supporter_service_areas`・`ratings` など
+  supporter を参照しているテーブルの外部キーを `organization_id` に変更する
+- フロント全体で `userData.id` を使っている箇所の見直しが必要
+- SNS認証（Google / LINE）の導入も同タイミングで検討する
+
+### 目標時期
+
+**2025年7月末** をめどにエンハンス実装予定
