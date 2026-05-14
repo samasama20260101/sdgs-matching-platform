@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
@@ -56,6 +57,52 @@ const FAQS = [
   {
     q: '何でも相談していいですか？',
     a: 'SDGsに関連する社会的な困りごとが対象です。生活困窮、教育、環境、差別、孤立など幅広く対応できます。',
+  },
+];
+
+const CONCEPT_POINTS = [
+  {
+    title: 'SOSはそのまま投稿',
+    desc: 'SDGsを意識しなくても、困っていることを普段の言葉で相談できます。',
+  },
+  {
+    title: 'AIが裏側で整理',
+    desc: '相談内容を分類し、地域や課題に合う支援につながりやすくします。',
+  },
+  {
+    title: '支援者と運営につながる',
+    desc: 'NPO・行政・企業とのマッチングに加え、困った時の運営導線も残します。',
+  },
+];
+
+const MOBILE_CONCEPT_STEPS = [
+  {
+    label: 'SOSユーザー',
+    title: '助けてほしい気持ちを投稿',
+    desc: '生活、教育、孤立、差別など、困っていることを普段の言葉で書けます。',
+    icon: '👤',
+    tone: 'teal',
+  },
+  {
+    label: '明日もsamasama',
+    title: 'AIが裏側で整理',
+    desc: '相談者にSDGsを意識させず、課題・地域・支援領域を整理します。',
+    icon: '💧',
+    tone: 'navy',
+  },
+  {
+    label: 'サポーター',
+    title: 'NPO・行政・企業へつなぐ',
+    desc: '支援できる団体が相談を見つけ、承認後にやり取りが始まります。',
+    icon: '🤝',
+    tone: 'blue',
+  },
+  {
+    label: '安心導線',
+    title: '運営にもつながれる',
+    desc: 'マッチングがうまくいかない時も、最後のセーフティネットを残します。',
+    icon: '🛟',
+    tone: 'amber',
   },
 ];
 
@@ -215,6 +262,87 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ── サービス概念図モック ── */}
+      <section className="bg-white px-4 py-14 sm:px-6 sm:py-18">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="mb-3 text-xs font-bold tracking-[0.18em] text-teal-600">HOW IT WORKS</p>
+            <h2 className="text-2xl font-black leading-tight text-gray-900 sm:text-3xl">
+              助けてほしい声を、支援につなげる仕組み
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-gray-500 sm:text-base">
+              相談者にはむずかしい分類を求めず、AIと運営の仕組みで必要な支援に届きやすくします。
+            </p>
+          </div>
+
+          <div className="mt-8 hidden overflow-hidden rounded-[28px] border border-teal-100 bg-gradient-to-br from-teal-50/70 via-white to-blue-50/70 p-4 shadow-sm md:block">
+            <div className="rounded-3xl bg-white">
+              <Image
+                src="/concepts/top-concept-flow-v1.png"
+                alt="明日もsamasama SDGs MATCHの仕組み。SOSユーザーの相談をAIが整理し、NPO・行政・企業などのサポーターへつなぐ流れ。"
+                width={1672}
+                height={941}
+                className="block h-auto w-full"
+              />
+            </div>
+          </div>
+
+          <div className="mt-8 md:hidden">
+            <div className="rounded-[28px] border border-teal-100 bg-gradient-to-b from-teal-50/80 via-white to-blue-50/80 p-4 shadow-sm">
+              <div className="space-y-3">
+                {MOBILE_CONCEPT_STEPS.map((step, index) => {
+                  const toneClass = {
+                    teal: 'bg-teal-50 text-teal-700 border-teal-100',
+                    navy: 'bg-slate-900 text-white border-slate-900',
+                    blue: 'bg-blue-50 text-blue-700 border-blue-100',
+                    amber: 'bg-amber-50 text-amber-700 border-amber-100',
+                  }[step.tone];
+
+                  return (
+                    <div key={step.title}>
+                      <div className={`rounded-2xl border p-4 ${toneClass}`}>
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <span className="text-xs font-bold opacity-80">{step.label}</span>
+                          <span className="text-2xl" aria-hidden="true">{step.icon}</span>
+                        </div>
+                        <h3 className="text-base font-black leading-snug">{step.title}</h3>
+                        <p className={`mt-2 text-sm leading-relaxed ${step.tone === 'navy' ? 'text-slate-200' : 'text-gray-600'}`}>
+                          {step.desc}
+                        </p>
+                      </div>
+                      {index < MOBILE_CONCEPT_STEPS.length - 1 && (
+                        <div className="flex h-7 items-center justify-center text-teal-500" aria-hidden="true">
+                          ↓
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-5 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
+                <p className="text-sm font-black text-gray-900">
+                  困っている人が、支援者を見つけやすい世界へ
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 hidden gap-3 sm:mt-6 md:grid md:grid-cols-3">
+            {CONCEPT_POINTS.map((point, index) => (
+              <div key={point.title} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-500 text-xs font-black text-white">
+                    {index + 1}
+                  </span>
+                  <h3 className="text-sm font-bold text-gray-900">{point.title}</h3>
+                </div>
+                <p className="text-xs leading-relaxed text-gray-500">{point.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── 仕組みフロー ── */}
       <section className="py-20 px-6 bg-gray-50">
