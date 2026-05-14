@@ -339,21 +339,21 @@ export default function HomePage() {
             <div className="grid sm:grid-cols-2 gap-4">
               {previewSupporters.map(s => (
                 <Link key={s.id} href={`/supporters/${s.id}`}
-                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-teal-100 transition-all block">
+                  className="block min-w-0 overflow-hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-teal-100 transition-all">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center text-xl flex-shrink-0">
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
+                      <h3 className="font-bold text-gray-800 text-sm leading-tight break-all">
                         {s.organization_name || s.display_name}
                       </h3>
-                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
+                      <span className={`mt-1 inline-flex max-w-full whitespace-normal break-all text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
                         {getSupporterTypeConfig(s.supporter_type).label}
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-400 mb-3">
+                  <div className="text-xs text-gray-400 mb-3 break-all">
                     📍 {s.service_area_nationwide ? '全国対応' : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')}
                   </div>
                   <div className="flex flex-wrap gap-1 mb-3">
@@ -364,7 +364,7 @@ export default function HomePage() {
                       </span>
                     ))}
                   </div>
-                  <div className="flex gap-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 pt-3 border-t border-gray-100 text-xs text-gray-400">
                     <span>✅ 解決 <strong className="text-teal-600">{s.resolved_count}件</strong></span>
                     <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
                   </div>
