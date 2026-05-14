@@ -75,37 +75,6 @@ const CONCEPT_POINTS = [
   },
 ];
 
-const MOBILE_CONCEPT_STEPS = [
-  {
-    label: 'SOSユーザー',
-    title: '助けてほしい気持ちを投稿',
-    desc: '生活、教育、孤立、差別など、困っていることを普段の言葉で書けます。',
-    icon: '👤',
-    tone: 'teal',
-  },
-  {
-    label: '明日もsamasama',
-    title: 'AIが裏側で整理',
-    desc: '相談者にSDGsを意識させず、課題・地域・支援領域を整理します。',
-    icon: '💧',
-    tone: 'navy',
-  },
-  {
-    label: 'サポーター',
-    title: 'NPO・行政・企業へつなぐ',
-    desc: '支援できる団体が相談を見つけ、承認後にやり取りが始まります。',
-    icon: '🤝',
-    tone: 'blue',
-  },
-  {
-    label: '安心導線',
-    title: '運営にもつながれる',
-    desc: 'マッチングがうまくいかない時も、最後のセーフティネットを残します。',
-    icon: '🛟',
-    tone: 'amber',
-  },
-];
-
 function useCountUp(target: number, duration = 1200) {
   const [count, setCount] = useState(0);
   const ref = useRef(false);
@@ -276,55 +245,15 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-8 hidden overflow-hidden rounded-[28px] border border-teal-100 bg-gradient-to-br from-teal-50/70 via-white to-blue-50/70 p-4 shadow-sm md:block">
+          <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-[28px] border border-teal-100 bg-gradient-to-br from-teal-50/70 via-white to-blue-50/70 p-3 shadow-sm sm:p-4">
             <div className="rounded-3xl bg-white">
               <Image
-                src="/concepts/top-concept-flow-v1.png"
-                alt="明日もsamasama SDGs MATCHの仕組み。SOSユーザーの相談をAIが整理し、NPO・行政・企業などのサポーターへつなぐ流れ。"
-                width={1672}
-                height={941}
+                src="/concepts/top-concept-flow-v3.jpg"
+                alt="明日もsamasama SDGs MATCHの概要。相談者がSOSを送り、明日もsamasamaが相談・マッチング・情報提供・可視化を通じて支援したい団体へつなぐ流れ。"
+                width={1024}
+                height={1536}
                 className="block h-auto w-full"
               />
-            </div>
-          </div>
-
-          <div className="mt-8 md:hidden">
-            <div className="rounded-[28px] border border-teal-100 bg-gradient-to-b from-teal-50/80 via-white to-blue-50/80 p-4 shadow-sm">
-              <div className="space-y-3">
-                {MOBILE_CONCEPT_STEPS.map((step, index) => {
-                  const toneClass = {
-                    teal: 'bg-teal-50 text-teal-700 border-teal-100',
-                    navy: 'bg-slate-900 text-white border-slate-900',
-                    blue: 'bg-blue-50 text-blue-700 border-blue-100',
-                    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-                  }[step.tone];
-
-                  return (
-                    <div key={step.title}>
-                      <div className={`rounded-2xl border p-4 ${toneClass}`}>
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <span className="text-xs font-bold opacity-80">{step.label}</span>
-                          <span className="text-2xl" aria-hidden="true">{step.icon}</span>
-                        </div>
-                        <h3 className="text-base font-black leading-snug">{step.title}</h3>
-                        <p className={`mt-2 text-sm leading-relaxed ${step.tone === 'navy' ? 'text-slate-200' : 'text-gray-600'}`}>
-                          {step.desc}
-                        </p>
-                      </div>
-                      {index < MOBILE_CONCEPT_STEPS.length - 1 && (
-                        <div className="flex h-7 items-center justify-center text-teal-500" aria-hidden="true">
-                          ↓
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-5 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
-                <p className="text-sm font-black text-gray-900">
-                  困っている人が、支援者を見つけやすい世界へ
-                </p>
-              </div>
             </div>
           </div>
 
