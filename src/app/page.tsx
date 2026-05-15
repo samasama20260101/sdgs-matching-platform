@@ -245,16 +245,24 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-[28px] border border-teal-100 bg-gradient-to-br from-teal-50/70 via-white to-blue-50/70 p-3 shadow-sm sm:p-4">
-            <div className="rounded-3xl bg-white">
-              <Image
-                src="/concepts/top-concept-flow-v3.jpg"
-                alt="明日もsamasama SDGs MATCHの概要。相談者がSOSを送り、明日もsamasamaが相談・マッチング・情報提供・可視化を通じて支援したい団体へつなぐ流れ。"
-                width={1024}
-                height={1536}
-                className="block h-auto w-full"
-              />
-            </div>
+          <div className="relative mx-auto mt-8 max-w-[430px] md:max-w-5xl">
+            <Image
+              src="/concepts/top-concept-mobile-sample-b.png"
+              alt="明日もsamasama SDGs MATCHのスマートフォン向け概要。相談者がSOSを送り、明日もsamasamaを通じて支援したい団体へつながる流れ。"
+              width={864}
+              height={1821}
+              className="block h-auto w-full md:hidden"
+            />
+            <Image
+              src="/concepts/top-concept-flow-v1-transparent-no-bottom.png"
+              alt="明日もsamasama SDGs MATCHの概要。相談者がSOSを送り、明日もsamasamaが相談・マッチング・情報提供・可視化を通じて支援したい団体へつなぐ流れ。"
+              width={1672}
+              height={941}
+              className="hidden h-auto w-full md:block"
+            />
+            <p className="mx-auto mt-7 max-w-3xl text-center text-2xl font-black leading-tight text-gray-900 sm:mt-8 sm:text-3xl md:absolute md:inset-x-0 md:bottom-[5%] md:mt-0 md:text-4xl">
+              一人で抱え込まないための<span className="text-teal-600">支援の入口</span>
+            </p>
           </div>
 
           <div className="mt-5 hidden gap-3 sm:mt-6 md:grid md:grid-cols-3">
