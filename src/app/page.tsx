@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
@@ -59,6 +60,21 @@ const FAQS = [
   },
 ];
 
+const CONCEPT_POINTS = [
+  {
+    title: 'SOSはそのまま投稿',
+    desc: 'SDGsを意識しなくても、困っていることを普段の言葉で相談できます。',
+  },
+  {
+    title: 'AIが裏側で整理',
+    desc: '相談内容を分類し、地域や課題に合う支援につながりやすくします。',
+  },
+  {
+    title: '支援者と運営につながる',
+    desc: 'NPO・行政・企業とのマッチングに加え、困った時の運営導線も残します。',
+  },
+];
+
 function useCountUp(target: number, duration = 1200) {
   const [count, setCount] = useState(0);
   const ref = useRef(false);
@@ -108,7 +124,6 @@ export default function HomePage() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [featuredSupporters, setFeaturedSupporters] = useState<Supporter[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -120,7 +135,6 @@ export default function HomePage() {
     import('@/lib/supabase/client').then(({ supabase }) => {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) return;
-        setIsLoggedIn(true);
         fetch('/api/auth/get-role', {
           headers: { 'Authorization': `Bearer ${session.access_token}` },
         })
@@ -216,6 +230,55 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* ── サービス概念図モック ── */}
+      <section className="bg-white px-4 py-14 sm:px-6 sm:py-18">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="mb-3 text-xs font-bold tracking-[0.18em] text-teal-600">HOW IT WORKS</p>
+            <h2 className="text-2xl font-black leading-tight text-gray-900 sm:text-3xl">
+              助けてほしい声を、支援につなげる仕組み
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-gray-500 sm:text-base">
+              相談者にはむずかしい分類を求めず、AIと運営の仕組みで必要な支援に届きやすくします。
+            </p>
+          </div>
+
+          <div className="relative mx-auto mt-8 max-w-[430px] md:max-w-5xl">
+            <Image
+              src="/concepts/top-concept-mobile-sample-b.png"
+              alt="明日もsamasama SDGs MATCHのスマートフォン向け概要。相談者がSOSを送り、明日もsamasamaを通じて支援したい団体へつながる流れ。"
+              width={864}
+              height={1821}
+              className="block h-auto w-full md:hidden"
+            />
+            <Image
+              src="/concepts/top-concept-flow-v1-transparent-no-bottom.png"
+              alt="明日もsamasama SDGs MATCHの概要。相談者がSOSを送り、明日もsamasamaが相談・マッチング・情報提供・可視化を通じて支援したい団体へつなぐ流れ。"
+              width={1672}
+              height={941}
+              className="hidden h-auto w-full md:block"
+            />
+            <p className="mx-auto mt-7 max-w-3xl text-center text-2xl font-black leading-tight text-gray-900 sm:mt-8 sm:text-3xl md:absolute md:inset-x-0 md:bottom-[5%] md:mt-0 md:text-4xl">
+              一人で抱え込まないための<span className="text-teal-600">支援の入口</span>
+            </p>
+          </div>
+
+          <div className="mt-5 hidden gap-3 sm:mt-6 md:grid md:grid-cols-3">
+            {CONCEPT_POINTS.map((point, index) => (
+              <div key={point.title} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-500 text-xs font-black text-white">
+                    {index + 1}
+                  </span>
+                  <h3 className="text-sm font-bold text-gray-900">{point.title}</h3>
+                </div>
+                <p className="text-xs leading-relaxed text-gray-500">{point.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 仕組みフロー ── */}
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-3xl mx-auto">
@@ -282,21 +345,21 @@ export default function HomePage() {
             <div className="grid sm:grid-cols-2 gap-4">
               {previewSupporters.map(s => (
                 <Link key={s.id} href={`/supporters/${s.id}`}
-                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-teal-100 transition-all block">
+                  className="block min-w-0 overflow-hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-teal-100 transition-all">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-blue-100 flex items-center justify-center text-xl flex-shrink-0">
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
+                      <h3 className="font-bold text-gray-800 text-sm leading-tight break-all">
                         {s.organization_name || s.display_name}
                       </h3>
-                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
+                      <span className={`mt-1 inline-flex max-w-full whitespace-normal break-all text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
                         {getSupporterTypeConfig(s.supporter_type).label}
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-400 mb-3">
+                  <div className="text-xs text-gray-400 mb-3 break-all">
                     📍 {s.service_area_nationwide ? '全国対応' : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')}
                   </div>
                   <div className="flex flex-wrap gap-1 mb-3">
@@ -307,7 +370,7 @@ export default function HomePage() {
                       </span>
                     ))}
                   </div>
-                  <div className="flex gap-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 pt-3 border-t border-gray-100 text-xs text-gray-400">
                     <span>✅ 解決 <strong className="text-teal-600">{s.resolved_count}件</strong></span>
                     <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
                   </div>
