@@ -1,6 +1,7 @@
 // src/app/api/messages/route.ts
 // メッセージ取得・送信（SOS・サポーター共通、RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { NextResponse } from 'next/server'
 
 async function getAuthUser(request: Request) {
@@ -10,9 +11,16 @@ async function getAuthUser(request: Request) {
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
     if (error || !user) return null
     const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role').eq('auth_user_id', user.id).single()
+        .from('users').select('id, role, display_name, organization_name').eq('auth_user_id', user.id).single()
     if (!userData) return null
-    return userData
+    const organizationContext = userData.role === 'SUPPORTER'
+        ? await getActiveOrganizationForUser(userData.id)
+        : null
+    return {
+        ...userData,
+        organization_id: organizationContext?.organizationId ?? null,
+        organization_name: organizationContext?.organization.name ?? userData.organization_name ?? null,
+    }
 }
 
 // GET: メッセージ一覧取得（case_id クエリパラメータ必須）
@@ -32,12 +40,17 @@ export async function GET(request: Request) {
     // SOS所有者またはACCEPTEDサポーターのみアクセス許可
     let canAccess = caseData.owner_user_id === userData.id
     if (!canAccess) {
-        const { data: offer } = await supabaseAdmin
+        let offerQuery = supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', caseId)
-            .eq('supporter_user_id', userData.id)
             .eq('status', 'ACCEPTED')
+        if (userData.organization_id) {
+            offerQuery = offerQuery.or(`supporter_organization_id.eq.${userData.organization_id},supporter_user_id.eq.${userData.id}`)
+        } else {
+            offerQuery = offerQuery.eq('supporter_user_id', userData.id)
+        }
+        const { data: offer } = await offerQuery
             .maybeSingle()
         canAccess = !!offer
     }
@@ -65,14 +78,18 @@ export async function GET(request: Request) {
         .in('id', senderIds)
 
     const senderMap = new Map((senders || []).map(s => [s.id, s]))
-    const enriched = messagesData.map(m => ({
-        ...m,
-        sender: senderMap.get(m.sender_user_id) || {
-            display_name: '不明',
-            role: 'UNKNOWN',
-            organization_name: null,
-        },
-    }))
+    const enriched = messagesData.map(m => {
+        const sender = senderMap.get(m.sender_user_id)
+        return {
+            ...m,
+            sender: {
+                ...(sender || {}),
+                display_name: m.sender_display_name_snapshot || sender?.display_name || '不明',
+                role: m.sender_role_snapshot || sender?.role || 'UNKNOWN',
+                organization_name: m.sender_organization_name_snapshot || sender?.organization_name || null,
+            },
+        }
+    })
 
     return NextResponse.json({ messages: enriched })
 }
@@ -94,12 +111,17 @@ export async function POST(request: Request) {
 
     let canAccess = caseData.owner_user_id === userData.id
     if (!canAccess) {
-        const { data: offer } = await supabaseAdmin
+        let offerQuery = supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', case_id)
-            .eq('supporter_user_id', userData.id)
             .eq('status', 'ACCEPTED')
+        if (userData.organization_id) {
+            offerQuery = offerQuery.or(`supporter_organization_id.eq.${userData.organization_id},supporter_user_id.eq.${userData.id}`)
+        } else {
+            offerQuery = offerQuery.eq('supporter_user_id', userData.id)
+        }
+        const { data: offer } = await offerQuery
             .maybeSingle()
         canAccess = !!offer
     }
@@ -108,7 +130,17 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabaseAdmin
         .from('messages')
-        .insert([{ case_id, sender_user_id: userData.id, content }])
+        .insert([{
+            case_id,
+            sender_user_id: userData.id,
+            sender_organization_id: userData.organization_id,
+            sender_display_name_snapshot: userData.role === 'SUPPORTER'
+                ? userData.organization_name
+                : userData.display_name,
+            sender_role_snapshot: userData.role,
+            sender_organization_name_snapshot: userData.organization_name,
+            content,
+        }])
         .select()
         .single()
 

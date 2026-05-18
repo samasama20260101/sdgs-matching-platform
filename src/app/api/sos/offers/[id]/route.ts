@@ -82,7 +82,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
         const { error: updateError } = await supabaseAdmin
             .from('offers')
-            .update({ status: 'ACCEPTED', accepted_order: nextOrder })
+            .update({ status: 'ACCEPTED', accepted_order: nextOrder, accepted_by_user_id: userData.id })
             .eq('id', id)
 
         if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
@@ -91,7 +91,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (nextOrder >= MAX_ACCEPTED) {
             await supabaseAdmin
                 .from('offers')
-                .update({ status: 'DECLINED' })
+                .update({ status: 'DECLINED', declined_by_user_id: userData.id })
                 .eq('case_id', offer.case_id)
                 .eq('status', 'PENDING')
         }
@@ -100,8 +100,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     // ── 辞退処理 ──────────────────────────────────────────
+    const updateData = body.status === 'DECLINED'
+        ? { ...body, declined_by_user_id: userData.id }
+        : body
     const { error: updateError } = await supabaseAdmin
-        .from('offers').update(body).eq('id', id)
+        .from('offers').update(updateData).eq('id', id)
 
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 

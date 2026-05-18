@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   const [{ count: resolvedCount }, { count: supporterCount }, { data: areas }] = await Promise.all([
     supabaseAdmin.from('cases').select('*', { count: 'exact', head: true }).eq('status', 'RESOLVED'),
-    supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('role', 'SUPPORTER'),
+    supabaseAdmin.from('organizations').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
     supabaseAdmin.from('supporter_service_areas').select('region_code, is_nationwide, country'),
   ])
 

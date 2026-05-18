@@ -65,7 +65,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'ID採番に失敗しました' }, { status: 500 })
     }
 
-    // 5. users テーブルにレコード作成
+    // 5. organizations テーブルに団体レコード作成
+    const { data: organization, error: organizationError } = await supabaseAdmin
+        .from('organizations')
+        .insert({
+            name: organization_name,
+            supporter_type,
+            phone: sanitizedPhone || null,
+        })
+        .select('id')
+        .single()
+
+    if (organizationError) {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+        return NextResponse.json({ error: organizationError.message }, { status: 500 })
+    }
+
+    // 6. users テーブルに担当者レコード作成
     const { data: newUser, error: profileError } = await supabaseAdmin
         .from('users')
         .insert({
@@ -85,7 +101,26 @@ export async function POST(request: Request) {
 
     if (profileError) {
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+        await supabaseAdmin.from('organizations').delete().eq('id', organization.id)
         return NextResponse.json({ error: profileError.message }, { status: 500 })
+    }
+
+    // 7. 団体OWNERとして所属レコードを作成
+    const { error: membershipError } = await supabaseAdmin
+        .from('organization_memberships')
+        .insert({
+            organization_id: organization.id,
+            user_id: newUser.id,
+            role: 'OWNER',
+            status: 'ACTIVE',
+            joined_at: new Date().toISOString(),
+        })
+
+    if (membershipError) {
+        await supabaseAdmin.from('users').delete().eq('id', newUser.id)
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+        await supabaseAdmin.from('organizations').delete().eq('id', organization.id)
+        return NextResponse.json({ error: membershipError.message }, { status: 500 })
     }
 
     return NextResponse.json({ user: newUser })

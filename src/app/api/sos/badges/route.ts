@@ -34,9 +34,23 @@ export async function POST(request: Request) {
         (cases || []).filter(c => c.owner_user_id === userData.id).map(c => c.id)
     )
 
+    const supporterIds = [...new Set(badges.map(b => b.supporter_user_id))]
+    const { data: memberships } = await supabaseAdmin
+        .from('organization_memberships')
+        .select('user_id, organization_id')
+        .in('user_id', supporterIds)
+        .eq('status', 'ACTIVE')
+    const organizationMap = Object.fromEntries(
+        (memberships || []).map((m: { user_id: string; organization_id: string }) => [m.user_id, m.organization_id])
+    )
+
     const validBadges = badges
         .filter(b => ownedCaseIds.has(b.case_id))
-        .map(b => ({ ...b, given_by_user_id: userData.id }))
+        .map(b => ({
+            ...b,
+            supporter_organization_id: organizationMap[b.supporter_user_id] ?? null,
+            given_by_user_id: userData.id,
+        }))
 
     if (validBadges.length === 0) {
         return NextResponse.json({ error: 'No valid badges to insert' }, { status: 400 })
