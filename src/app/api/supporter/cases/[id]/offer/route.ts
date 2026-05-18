@@ -1,6 +1,7 @@
 // src/app/api/supporter/cases/[id]/offer/route.ts
 // サポーター用：特定案件へのオファー取得・送信（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
@@ -13,7 +14,13 @@ async function getAuthSupporterUser(request: Request) {
     const { data: userData } = await supabaseAdmin
         .from('users').select('id, role').eq('auth_user_id', user.id).single()
     if (!userData || userData.role !== 'SUPPORTER') return null
-    return userData
+    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) return null
+    return {
+        ...userData,
+        organization_id: organizationContext.organizationId,
+        organization_role: organizationContext.organizationRole,
+    }
 }
 
 // GET: 自分のオファーを取得
@@ -26,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         .from('offers')
         .select('*')
         .eq('case_id', id)
-        .eq('supporter_user_id', userData.id)
+        .or(`supporter_organization_id.eq.${userData.organization_id},supporter_user_id.eq.${userData.id}`)
         .maybeSingle()
 
     return NextResponse.json({ offer: offer ?? null })
@@ -41,6 +48,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { message } = await request.json()
     if (!message?.trim()) {
         return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    }
+
+    const { data: existingOffer } = await supabaseAdmin
+        .from('offers')
+        .select('id')
+        .eq('case_id', id)
+        .eq('supporter_organization_id', userData.organization_id)
+        .maybeSingle()
+    if (existingOffer) {
+        return NextResponse.json({ error: 'DUPLICATE' }, { status: 409 })
     }
 
     // 承認上限チェック
@@ -58,7 +75,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const { data, error } = await supabaseAdmin
         .from('offers')
-        .insert([{ case_id: id, supporter_user_id: userData.id, message, status: 'PENDING' }])
+        .insert([{
+            case_id: id,
+            supporter_user_id: userData.id,
+            supporter_organization_id: userData.organization_id,
+            created_by_user_id: userData.id,
+            message,
+            status: 'PENDING',
+        }])
         .select()
         .single()
 
@@ -87,10 +111,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     // 自分のオファーであること確認
     const { data: offer } = await supabaseAdmin
-        .from('offers').select('id, supporter_user_id, case_id')
+        .from('offers').select('id, supporter_user_id, supporter_organization_id, case_id')
         .eq('id', offerId).eq('case_id', id).single()
 
-    if (!offer || offer.supporter_user_id !== userData.id) {
+    if (!offer || (offer.supporter_user_id !== userData.id && offer.supporter_organization_id !== userData.organization_id)) {
         return NextResponse.json({ error: 'Not your offer' }, { status: 403 })
     }
 

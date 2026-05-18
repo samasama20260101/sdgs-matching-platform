@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
     // オーナーのdisplay_nameを2ステップで取得
     const ownerIds = [...new Set((cases ?? []).map((c: { owner_user_id: string }) => c.owner_user_id))]
-    let ownerMap: Record<string, string> = {}
+    const ownerMap: Record<string, string> = {}
     if (ownerIds.length > 0) {
         const { data: owners } = await supabaseAdmin
             .from('users')

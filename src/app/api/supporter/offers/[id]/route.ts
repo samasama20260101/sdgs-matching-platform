@@ -2,6 +2,7 @@
 // サポーター用：自分のオファー操作（RLSバイパス）
 // [id] = offer id
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { NextResponse } from 'next/server'
 
 async function getAuthUser(request: Request) {
@@ -24,11 +25,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!userData || userData.role !== 'SUPPORTER') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+    }
 
     // 自分のオファーであることを確認
     const { data: offer } = await supabaseAdmin
-        .from('offers').select('id, supporter_user_id').eq('id', id).single()
-    if (!offer || offer.supporter_user_id !== userData.id) {
+        .from('offers').select('id, supporter_user_id, supporter_organization_id').eq('id', id).single()
+    if (!offer || (offer.supporter_user_id !== userData.id && offer.supporter_organization_id !== organizationContext.organizationId)) {
         return NextResponse.json({ error: 'Not your offer' }, { status: 403 })
     }
 

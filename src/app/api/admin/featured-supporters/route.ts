@@ -21,12 +21,21 @@ export async function GET(request: Request) {
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: supporters } = await supabaseAdmin
-        .from('users')
-        .select('id, display_name, organization_name, supporter_type, is_featured, featured_order')
-        .eq('role', 'SUPPORTER')
+        .from('organizations')
+        .select('id, name, supporter_type, is_featured, featured_order')
+        .eq('status', 'ACTIVE')
         .order('featured_order', { ascending: true })
 
-    return NextResponse.json({ supporters: supporters ?? [] })
+    return NextResponse.json({
+        supporters: (supporters ?? []).map((s: { id: string; name: string; supporter_type: string | null; is_featured: boolean; featured_order: number }) => ({
+            id: s.id,
+            display_name: s.name,
+            organization_name: s.name,
+            supporter_type: s.supporter_type,
+            is_featured: s.is_featured,
+            featured_order: s.featured_order,
+        })),
+    })
 }
 
 // PATCH: 特定サポーターのis_featured・featured_orderを更新
@@ -46,10 +55,10 @@ export async function PATCH(request: Request) {
     if (featured_order !== undefined) updateData.featured_order = featured_order
 
     const { error } = await supabaseAdmin
-        .from('users')
+        .from('organizations')
         .update(updateData)
         .eq('id', supporter_id)
-        .eq('role', 'SUPPORTER')
+        .eq('status', 'ACTIVE')
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -69,7 +78,7 @@ export async function POST(request: Request) {
 
     // 並び順を1件ずつ更新
     const updates = orders.map(({ id, featured_order }: { id: string; featured_order: number }) =>
-        supabaseAdmin.from('users').update({ featured_order }).eq('id', id)
+        supabaseAdmin.from('organizations').update({ featured_order }).eq('id', id)
     )
     await Promise.all(updates)
 

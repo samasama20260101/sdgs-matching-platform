@@ -25,6 +25,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     // サポーター情報を付加
     const offersWithSupporter = await Promise.all(
         offersData.map(async (offer) => {
+            if (offer.supporter_organization_id) {
+                const { data: organization } = await supabaseAdmin
+                    .from('organizations')
+                    .select('id, name, supporter_type')
+                    .eq('id', offer.supporter_organization_id)
+                    .single()
+                if (organization) {
+                    return {
+                        ...offer,
+                        supporter: {
+                            id: offer.supporter_user_id,
+                            organization_id: organization.id,
+                            display_name: organization.name,
+                            organization_name: organization.name,
+                            supporter_type: organization.supporter_type || 'NPO',
+                        },
+                    }
+                }
+            }
+
             const { data: supporter } = await supabaseAdmin
                 .from('users')
                 .select('id, display_name, organization_name, supporter_type')
