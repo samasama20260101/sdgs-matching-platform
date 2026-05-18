@@ -14,6 +14,22 @@ type Supporter = {
   resolved_count: number; badge_count: number;
 };
 
+type UserRole = 'SOS' | 'SUPPORTER' | 'ADMIN' | null;
+
+type AuthRoleResponse = {
+  role?: UserRole;
+  user?: {
+    sos_region_code?: string | null;
+  } | null;
+};
+
+const getDashboardHref = (role: UserRole) => {
+  if (role === 'SOS') return '/sos/dashboard';
+  if (role === 'SUPPORTER') return '/supporter/dashboard';
+  if (role === 'ADMIN') return '/admin/dashboard';
+  return null;
+};
+
 export default function SupportersPage() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [displayCount, setDisplayCount] = useState(20); // 最初は20件表示
@@ -22,6 +38,8 @@ export default function SupportersPage() {
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const handleTypeFilter = (v: string | null) => { setTypeFilter(v); setDisplayCount(20); };
   const [userRegionCode, setUserRegionCode] = useState<string | null>(null);
+  const [dashboardHref, setDashboardHref] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     fetch('/api/public/supporters')
@@ -33,18 +51,31 @@ export default function SupportersPage() {
       })
       .catch(e => { setApiError(String(e)); setIsLoading(false); });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-      fetch('/api/auth/get-role', {
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-      })
-        .then(r => r.json())
-        .then(d => {
-          if (d.role === 'SOS' && d.user?.sos_region_code) {
-            setUserRegionCode(d.user.sos_region_code);
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        if (!session) {
+          setAuthChecked(true);
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/auth/get-role', {
+            cache: 'no-store',
+            headers: { 'Authorization': `Bearer ${session.access_token}` },
+          });
+          if (!response.ok) return;
+
+          const data = await response.json() as AuthRoleResponse;
+          setDashboardHref(getDashboardHref(data.role ?? null));
+
+          if (data.role === 'SOS' && data.user?.sos_region_code) {
+            setUserRegionCode(data.user.sos_region_code);
           }
-        });
-    });
+        } finally {
+          setAuthChecked(true);
+        }
+      })
+      .catch(() => setAuthChecked(true));
   }, []);
 
   const isRegionMatch = (s: Supporter) =>
@@ -71,20 +102,30 @@ export default function SupportersPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center no-underline">
+          <Link href={dashboardHref ?? '/'} className="flex items-center no-underline">
             <Logo variant="default" size="sm" showText={true} />
           </Link>
           <div className="flex gap-3">
-            <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
-            <Link href="/signup" className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
-              相談する
-            </Link>
+            {authChecked && dashboardHref ? (
+              <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
+                ダッシュボードへ戻る
+              </Link>
+            ) : authChecked ? (
+              <>
+                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
+                <Link href="/signup" className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+                  相談する
+                </Link>
+              </>
+            ) : null}
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <Link href="/" className="text-xs text-gray-400 hover:text-teal-500 transition-colors">← トップに戻る</Link>
+        <Link href={dashboardHref ?? '/'} className="text-xs text-gray-400 hover:text-teal-500 transition-colors">
+          {dashboardHref ? '← ダッシュボードへ戻る' : '← トップに戻る'}
+        </Link>
         <h1 className="text-2xl font-black text-gray-800 mt-3">登録サポーター一覧</h1>
         <p className="text-gray-500 text-sm mt-1">
           相談前にどんな団体が参加しているか確認できます

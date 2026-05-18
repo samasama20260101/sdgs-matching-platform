@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
 import Link from 'next/link';
 import { Logo } from '@/components/icons/Logo';
+import { supabase } from '@/lib/supabase/client';
 
 type SocialLinks = {
   website?: string; twitter?: string;
@@ -20,6 +21,12 @@ type Supporter = {
   bio?: string | null; social_links?: SocialLinks | null;
 };
 
+type UserRole = 'SOS' | 'SUPPORTER' | 'ADMIN' | null;
+
+type AuthRoleResponse = {
+  role?: UserRole;
+};
+
 const BADGE_INFO: Record<string, { emoji: string; label: string }> = {
   gold_medal: { emoji: '🥇', label: 'ありがとう（主要）' },
   silver_medal: { emoji: '🥈', label: 'ありがとう（サポート）' },
@@ -30,6 +37,13 @@ const BADGE_INFO: Record<string, { emoji: string; label: string }> = {
   grateful_partner: { emoji: '🤝', label: '一緒に向き合い大感謝' },
 };
 
+const getDashboardHref = (role: UserRole) => {
+  if (role === 'SOS') return '/sos/dashboard';
+  if (role === 'SUPPORTER') return '/supporter/dashboard';
+  if (role === 'ADMIN') return '/admin/dashboard';
+  return null;
+};
+
 export default function SupporterProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -38,6 +52,8 @@ export default function SupporterProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [ctaHref, setCtaHref] = useState('/');
   const [ctaLabel, setCtaLabel] = useState('無料で相談してみる →');
+  const [dashboardHref, setDashboardHref] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     fetch(`/api/public/supporters/${id}`, { cache: 'no-store' })
@@ -53,17 +69,42 @@ export default function SupporterProfilePage() {
 
   // ログイン状態でCTA遷移先を切り替え
   useEffect(() => {
-    import('@/lib/supabase/client').then(({ supabase }) => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setCtaHref('/sos/dashboard');
-          setCtaLabel('ダッシュボードへ →');
-        } else {
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        if (!session) {
           setCtaHref('/');
           setCtaLabel('無料で相談してみる →');
+          setAuthChecked(true);
+          return;
         }
-      });
-    });
+
+        try {
+          const response = await fetch('/api/auth/get-role', {
+            cache: 'no-store',
+            headers: { 'Authorization': `Bearer ${session.access_token}` },
+          });
+          if (!response.ok) {
+            setCtaHref('/');
+            setCtaLabel('無料で相談してみる →');
+            return;
+          }
+
+          const data = await response.json() as AuthRoleResponse;
+          const href = getDashboardHref(data.role ?? null);
+          setDashboardHref(href);
+
+          if (href) {
+            setCtaHref(href);
+            setCtaLabel('ダッシュボードへ →');
+          } else {
+            setCtaHref('/');
+            setCtaLabel('無料で相談してみる →');
+          }
+        } finally {
+          setAuthChecked(true);
+        }
+      })
+      .catch(() => setAuthChecked(true));
   }, []);
 
   if (isLoading) {
@@ -95,15 +136,23 @@ export default function SupporterProfilePage() {
       {/* ヘッダー */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center no-underline">
+          <Link href={dashboardHref ?? '/'} className="flex items-center no-underline">
             <Logo variant="default" size="sm" showText={true} />
           </Link>
           <div className="flex gap-3">
-            <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
-            <Link href="/signup"
-              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
-              相談する
-            </Link>
+            {authChecked && dashboardHref ? (
+              <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
+                ダッシュボードへ戻る
+              </Link>
+            ) : authChecked ? (
+              <>
+                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
+                <Link href="/signup"
+                  className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+                  相談する
+                </Link>
+              </>
+            ) : null}
           </div>
         </div>
       </header>
