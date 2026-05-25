@@ -23,14 +23,41 @@ type UserData = {
     postal_code: string | null;
     prefecture: string | null;
     city: string | null;
-    address_structured: any;
-    service_areas: any;
+    address_structured: {
+        line1?: string;
+        line2?: string;
+    } | null;
+    service_areas: ServiceArea[];
     service_area_nationwide: boolean;
+    organization_id?: string | null;
     bio: string | null;
     social_links: {
         website?: string; twitter?: string;
         instagram?: string; facebook?: string; line?: string;
     } | null;
+};
+type ProfileUpdateData = {
+    real_name: string;
+    display_name: string;
+    phone: string | null;
+    postal_code: string | null;
+    prefecture: string | null;
+    city: string | null;
+    address_structured: {
+        country: 'JP';
+        postal_code: string;
+        prefecture: string;
+        city: string;
+        line1: string;
+        line2: string;
+    } | null;
+    updated_at: string;
+    sos_region_code?: string | null;
+    organization_name?: string | null;
+    service_area_nationwide?: boolean;
+    service_areas?: ServiceArea[];
+    bio?: string | null;
+    social_links?: Record<string, string> | null;
 };
 
 // SOSユーザー向け地域セレクト（DBのregionsテーブルから取得）
@@ -91,12 +118,23 @@ export default function ProfilePage() {
                     headers: { 'Authorization': `Bearer ${session.access_token}` },
                 });
                 const roleData = await roleRes.json();
+                if (roleRes.status === 403) {
+                    if (roleData.code === 'ACCOUNT_SUSPENDED' || roleData.error === 'Account suspended') {
+                        await supabase.auth.signOut();
+                        router.push('/login?reason=suspended');
+                        return;
+                    }
+                }
                 if (!roleData.user) {
                     setError('ユーザー情報が見つかりません');
                     setIsLoading(false);
                     return;
                 }
                 const data = roleData.user;
+                if (data.role === 'SUPPORTER' && !data.organization_id) {
+                    router.push('/supporter/no-organization');
+                    return;
+                }
                 setUserData(data);
                 setRealName(data.real_name || '');
                 setDisplayName(data.display_name || '');
@@ -165,13 +203,13 @@ export default function ProfilePage() {
                 }
             }
 
-            const addressStructured = (addressData.postalCode || addressData.prefecture || addressData.city) ? {
+            const addressStructured: ProfileUpdateData['address_structured'] = (addressData.postalCode || addressData.prefecture || addressData.city) ? {
                 country: 'JP', postal_code: addressData.postalCode,
                 prefecture: addressData.prefecture, city: addressData.city,
                 line1: addressData.addressLine1, line2: addressData.addressLine2,
             } : null;
 
-            const updateData: any = {
+            const updateData: ProfileUpdateData = {
                 real_name: realName.trim(), display_name: displayName.trim(),
                 phone: phone.trim() || null,
                 postal_code: addressData.postalCode || null, prefecture: addressData.prefecture || null,

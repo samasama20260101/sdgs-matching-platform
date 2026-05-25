@@ -1,9 +1,21 @@
+'use client'
+
 import Link from 'next/link'
-import { Building2, Mail, ShieldAlert } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Building2, LogOut, Mail, ShieldAlert } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { supabase } from '@/lib/supabase/client'
 
 export default function SupporterNoOrganizationPage() {
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+    router.refresh()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -39,12 +51,14 @@ export default function SupporterNoOrganizationPage() {
                 <Mail className="size-4" />
                 運営に問い合わせる
               </Link>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
               >
-                トップページへ
-              </Link>
+                <LogOut className="size-4" />
+                ログアウトしてトップへ
+              </button>
             </div>
           </CardContent>
         </Card>

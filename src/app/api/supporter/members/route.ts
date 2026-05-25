@@ -272,6 +272,7 @@ export async function POST(request: Request) {
         })
 
         return NextResponse.json({
+            reused_existing_user: true,
             member: {
                 ...(membership as MembershipRow),
                 user: updatedUser as PublicUser,
@@ -353,6 +354,7 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({
+        reused_existing_user: false,
         member: {
             ...(membership as MembershipRow),
             user: newUser as PublicUser,

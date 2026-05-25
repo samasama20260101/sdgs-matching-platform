@@ -36,16 +36,15 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) {
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
 
     // Step1: supporter_service_areas 取得
-    let areasQuery = supabaseAdmin
+    const areasQuery = supabaseAdmin
         .from('supporter_service_areas')
         .select('id, region_code, is_nationwide, country')
-    if (organizationContext?.organizationId) {
-        areasQuery = areasQuery.or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
-    } else {
-        areasQuery = areasQuery.eq('supporter_user_id', userData.id)
-    }
+        .or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
     const { data: areas, error: areasError } = await areasQuery
 
     if (areasError) {
@@ -104,18 +103,17 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) {
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
 
     const { service_areas, service_area_nationwide } = await request.json()
 
     // 既存データを全削除
-    let deleteQuery = supabaseAdmin
+    const deleteQuery = supabaseAdmin
         .from('supporter_service_areas')
         .delete()
-    if (organizationContext?.organizationId) {
-        deleteQuery = deleteQuery.or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
-    } else {
-        deleteQuery = deleteQuery.eq('supporter_user_id', userData.id)
-    }
+        .or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
     const { error: deleteError } = await deleteQuery
 
     if (deleteError) {
@@ -128,7 +126,7 @@ export async function PUT(request: Request) {
             .from('supporter_service_areas')
             .insert([{
                 supporter_user_id: userData.id,
-                organization_id: organizationContext?.organizationId ?? null,
+                organization_id: organizationContext.organizationId,
                 region_code: null,
                 country: 'JP',
                 is_nationwide: true,
@@ -140,7 +138,7 @@ export async function PUT(request: Request) {
     } else if (Array.isArray(service_areas) && service_areas.length > 0) {
         const rows = (service_areas as ServiceAreaInput[]).map((a) => ({
             supporter_user_id: userData.id,
-            organization_id: organizationContext?.organizationId ?? null,
+            organization_id: organizationContext.organizationId,
             region_code: a.region_code,
             country: a.country || 'JP',
             is_nationwide: false,
