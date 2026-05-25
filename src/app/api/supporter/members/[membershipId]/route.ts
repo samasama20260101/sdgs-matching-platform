@@ -52,13 +52,16 @@ async function getSupporterMemberContext(request: Request): Promise<SupporterMem
         .eq('auth_user_id', user.id)
         .single()
 
-    if (!userData || userData.role !== 'SUPPORTER' || userData.is_suspended) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!userData || userData.role !== 'SUPPORTER') {
+        return NextResponse.json({ error: 'アクセス権限がありません', code: 'FORBIDDEN' }, { status: 403 })
+    }
+    if (userData.is_suspended) {
+        return NextResponse.json({ error: 'このアカウントは停止されています', code: 'ACCOUNT_SUSPENDED' }, { status: 403 })
     }
 
     const organizationContext = await getActiveOrganizationForUser(userData.id)
     if (!organizationContext) {
-        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
     }
 
     return { userData: userData as PublicUser, organizationContext }

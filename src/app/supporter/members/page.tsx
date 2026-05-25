@@ -49,6 +49,11 @@ type MembersResponse = {
   members: Member[];
 };
 
+type ApiErrorResponse = {
+  error?: string;
+  code?: 'ACCOUNT_SUSPENDED' | 'NO_ACTIVE_ORGANIZATION' | 'FORBIDDEN' | string;
+};
+
 const ROLE_LABEL: Record<OrganizationRole, string> = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
@@ -122,7 +127,16 @@ export default function SupporterMembersPage() {
       });
 
       if (!response.ok) {
-        const result = await response.json();
+        const result = await response.json().catch(() => ({})) as ApiErrorResponse;
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (response.status === 403 && result.code === 'ACCOUNT_SUSPENDED') {
+          await supabase.auth.signOut();
+          router.push('/login?reason=suspended');
+          return;
+        }
         throw new Error(result.error || 'メンバー情報の取得に失敗しました');
       }
 
@@ -174,7 +188,16 @@ export default function SupporterMembersPage() {
       });
 
       if (!response.ok) {
-        const result = await response.json();
+        const result = await response.json().catch(() => ({})) as ApiErrorResponse;
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (response.status === 403 && result.code === 'ACCOUNT_SUSPENDED') {
+          await supabase.auth.signOut();
+          router.push('/login?reason=suspended');
+          return;
+        }
         throw new Error(result.error || 'メンバー追加に失敗しました');
       }
 
@@ -212,7 +235,16 @@ export default function SupporterMembersPage() {
       });
 
       if (!response.ok) {
-        const result = await response.json();
+        const result = await response.json().catch(() => ({})) as ApiErrorResponse;
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (response.status === 403 && result.code === 'ACCOUNT_SUSPENDED') {
+          await supabase.auth.signOut();
+          router.push('/login?reason=suspended');
+          return;
+        }
         throw new Error(result.error || 'メンバー更新に失敗しました');
       }
 
