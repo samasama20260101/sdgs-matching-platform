@@ -24,6 +24,8 @@ type MembershipRow = {
     created_at: string
 }
 
+type MembershipStatus = MembershipRow['status']
+
 type SupporterMemberContext = {
     userData: PublicUser
     organizationContext: ActiveOrganizationContext
@@ -31,6 +33,7 @@ type SupporterMemberContext = {
 
 const MANAGER_ROLES: OrganizationRole[] = ['OWNER', 'ADMIN']
 const MEMBER_ROLES: OrganizationRole[] = ['OWNER', 'ADMIN', 'MEMBER']
+const BLOCKING_MEMBERSHIP_STATUSES: MembershipStatus[] = ['ACTIVE', 'SUSPENDED']
 
 function normalizeEmail(email: unknown) {
     return typeof email === 'string' ? email.trim().toLowerCase() : ''
@@ -96,7 +99,28 @@ export async function GET(request: Request) {
     }
 
     const membershipRows = (memberships ?? []) as MembershipRow[]
-    const userIds = membershipRows.map((m) => m.user_id)
+    const leftUserIds = membershipRows.filter((m) => m.status === 'LEFT').map((m) => m.user_id)
+    const usersWithActiveMembership = new Set<string>()
+
+    if (leftUserIds.length > 0) {
+        const { data: activeMemberships, error: activeMembershipsError } = await supabaseAdmin
+            .from('organization_memberships')
+            .select('user_id')
+            .in('user_id', leftUserIds)
+            .eq('status', 'ACTIVE')
+
+        if (activeMembershipsError) {
+            console.error('[supporter/members] active membership check error:', activeMembershipsError)
+            return NextResponse.json({ error: activeMembershipsError.message }, { status: 500 })
+        }
+
+        ;((activeMemberships ?? []) as Array<{ user_id: string }>).forEach((m) => {
+            usersWithActiveMembership.add(m.user_id)
+        })
+    }
+
+    const visibleMembershipRows = membershipRows.filter((m) => m.status !== 'LEFT' || !usersWithActiveMembership.has(m.user_id))
+    const userIds = visibleMembershipRows.map((m) => m.user_id)
     const usersById: Record<string, PublicUser> = {}
 
     if (userIds.length > 0) {
@@ -121,7 +145,7 @@ export async function GET(request: Request) {
             id: organizationContext.membershipId,
             role: organizationContext.organizationRole,
         },
-        members: membershipRows.map((membership) => ({
+        members: visibleMembershipRows.map((membership) => ({
             ...membership,
             user: usersById[membership.user_id] ?? null,
         })),
@@ -146,20 +170,120 @@ export async function POST(request: Request) {
     const requestedRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : 'MEMBER'
     const memberRole = organizationContext.organizationRole === 'OWNER' ? requestedRole : 'MEMBER'
 
-    if (!email || !realName || !password) {
-        return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
-    }
-    if (password.length < 8 || password.length > 64) {
-        return NextResponse.json({ error: '初期パスワードは8文字以上64文字以内で入力してください' }, { status: 400 })
+    if (!email) {
+        return NextResponse.json({ error: 'メールアドレスを入力してください' }, { status: 400 })
     }
 
     const { data: existingUser } = await supabaseAdmin
         .from('users')
-        .select('id')
+        .select('id, auth_user_id, role, real_name, display_name, email, phone, is_suspended')
         .eq('email', email)
         .maybeSingle()
     if (existingUser) {
-        return NextResponse.json({ error: 'このメールアドレスはすでに登録されています' }, { status: 409 })
+        const existing = existingUser as PublicUser
+        if (existing.role !== 'SUPPORTER') {
+            return NextResponse.json({ error: 'このメールアドレスは別の利用者種別で登録されています' }, { status: 409 })
+        }
+
+        const { data: existingMemberships, error: existingMembershipsError } = await supabaseAdmin
+            .from('organization_memberships')
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+            .eq('user_id', existing.id)
+
+        if (existingMembershipsError) {
+            return NextResponse.json({ error: existingMembershipsError.message }, { status: 500 })
+        }
+
+        const memberships = (existingMemberships ?? []) as MembershipRow[]
+        const blockingMembership = memberships.find((m) => BLOCKING_MEMBERSHIP_STATUSES.includes(m.status))
+        if (blockingMembership) {
+            const isSameOrganization = blockingMembership.organization_id === organizationContext.organizationId
+            return NextResponse.json({
+                error: isSameOrganization
+                    ? 'このメンバーはすでに所属中、または停止中です'
+                    : 'このメールアドレスは既に別団体に所属しています',
+                code: 'ACTIVE_MEMBERSHIP_EXISTS',
+            }, { status: 409 })
+        }
+
+        if (existing.is_suspended && !memberships.some((m) => m.status === 'LEFT')) {
+            return NextResponse.json({ error: 'このアカウントは停止中のため追加できません', code: 'ACCOUNT_SUSPENDED' }, { status: 409 })
+        }
+
+        const leftMembership = memberships.find((m) => m.organization_id === organizationContext.organizationId && m.status === 'LEFT')
+        const membershipPayload = {
+            organization_id: organizationContext.organizationId,
+            user_id: existing.id,
+            role: memberRole,
+            status: 'ACTIVE' as const,
+            invited_by_user_id: userData.id,
+            joined_at: new Date().toISOString(),
+            left_at: null,
+        }
+
+        const membershipQuery = leftMembership
+            ? supabaseAdmin
+                .from('organization_memberships')
+                .update(membershipPayload)
+                .eq('id', leftMembership.id)
+            : supabaseAdmin
+                .from('organization_memberships')
+                .insert(membershipPayload)
+
+        const { data: membership, error: membershipError } = await membershipQuery
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+            .single()
+
+        if (membershipError || !membership) {
+            return NextResponse.json({ error: membershipError?.message ?? '所属作成に失敗しました' }, { status: 500 })
+        }
+
+        const userUpdates: Record<string, unknown> = {
+            organization_name: organizationContext.organization.name,
+            supporter_type: organizationContext.organization.supporter_type,
+            is_suspended: false,
+        }
+        if (phone) userUpdates.phone = phone
+        if (realName) userUpdates.real_name = realName
+        if (displayName) userUpdates.display_name = displayName
+
+        const { data: updatedUser, error: userUpdateError } = await supabaseAdmin
+            .from('users')
+            .update(userUpdates)
+            .eq('id', existing.id)
+            .select('id, auth_user_id, role, real_name, display_name, email, phone, is_suspended')
+            .single()
+
+        if (userUpdateError || !updatedUser) {
+            return NextResponse.json({ error: userUpdateError?.message ?? 'ユーザー更新に失敗しました' }, { status: 500 })
+        }
+
+        await supabaseAdmin.auth.admin.updateUserById(existing.auth_user_id, {
+            ban_duration: 'none',
+        })
+
+        await supabaseAdmin.from('audit_logs').insert({
+            actor_user_id: userData.id,
+            organization_id: organizationContext.organizationId,
+            action: leftMembership ? 'organization_member_reactivated' : 'organization_member_added_existing_user',
+            target_table: 'organization_memberships',
+            target_id: membership.id,
+            metadata: { user_id: existing.id, role: memberRole },
+        })
+
+        return NextResponse.json({
+            member: {
+                ...(membership as MembershipRow),
+                user: updatedUser as PublicUser,
+            },
+        })
+    }
+
+    if (!realName || !password) {
+        return NextResponse.json({ error: '新規メンバーは担当者名と初期パスワードが必要です' }, { status: 400 })
+    }
+    if (password.length < 8 || password.length > 64) {
+        return NextResponse.json({ error: '初期パスワードは8文字以上64文字以内で入力してください' }, { status: 400 })
     }
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({

@@ -210,6 +210,7 @@ export default function SupporterDashboard() {
       const roleData = await roleRes.json();
       if (roleData.role !== 'SUPPORTER') { router.push('/'); return; }
       if (!roleData.user) { router.push('/'); return; }
+      if (!roleData.user.organization_id) { router.push('/supporter/no-organization'); return; }
 
       // 活動地域は専用APIから直接取得（確実に最新データを得るため）
       const [dashRes, areaRes] = await Promise.all([

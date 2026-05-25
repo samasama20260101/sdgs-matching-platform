@@ -24,6 +24,13 @@ type Case = {
     id: string; title: string; status: string; created_at: string
     users?: { display_name: string } | null
 }
+type Inquiry = {
+    id: string; display_id: string; status: string; role: string | null
+    category: string; created_at: string; name: string | null; email: string
+    organization: string | null; phone: string | null; message: string
+    admin_memo: string | null
+    users?: { organization_name: string | null } | null
+}
 type TabKey = 'supporters' | 'sos' | 'open_cases' | 'matched_cases' | 'resolved_cases' | 'inquiries'
 type FormData = {
     email: string; password: string; real_name: string
@@ -42,14 +49,6 @@ const initialAdminForm: AdminFormData = {
     email: '', password: '', real_name: '', display_name: '',
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-    OPEN:        { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-700' },
-    MATCHED:     { label: 'マッチ済み・支援中', color: 'bg-amber-100 text-amber-700' },
-    RESOLVED:    { label: '解決済み',       color: 'bg-teal-50 text-teal-700' },
-    CANCELLED:   { label: '取消済み',       color: 'bg-gray-100 text-gray-500' },
-    CLOSED:      { label: '終了',           color: 'bg-gray-100 text-gray-500' },
-}
-
 export default function AdminDashboardPage() {
     const router = useRouter()
     const [confirmModal, setConfirmModal] = useState<{
@@ -64,7 +63,7 @@ export default function AdminDashboardPage() {
     const [caseStats, setCaseStats] = useState({ open: 0, in_progress: 0, resolved: 0 })
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<TabKey>('supporters')
-    const [inquiries, setInquiries] = useState<any[]>([])
+    const [inquiries, setInquiries] = useState<Inquiry[]>([])
     const [inquiryOpenCount, setInquiryOpenCount] = useState(0)
     const [inquiryStatusFilter, setInquiryStatusFilter] = useState<string>('OPEN')
     const [savingInquiryId, setSavingInquiryId] = useState<string | null>(null)
@@ -163,11 +162,8 @@ export default function AdminDashboardPage() {
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` }
             const url = `/api/admin/users/${confirmModal.userId}`
 
-            if (confirmModal.type === 'delete') {
-                await fetch(url, { method: 'DELETE', headers })
-            } else {
-                await fetch(url, { method: 'PATCH', headers, body: JSON.stringify({ action: confirmModal.type }) })
-            }
+            if (confirmModal.type === 'delete') return
+            await fetch(url, { method: 'PATCH', headers, body: JSON.stringify({ action: confirmModal.type }) })
             setConfirmModal({ isOpen: false, type: null, userId: '', userName: '' })
             loadData()
         } catch {
@@ -402,8 +398,6 @@ export default function AdminDashboardPage() {
                                                                     <button onClick={() => setConfirmModal({ isOpen: true, type: 'suspend', userId: s.id, userName: s.organization_name || s.real_name })}
                                                                         className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200">停止</button>
                                                                 )}
-                                                                <button onClick={() => setConfirmModal({ isOpen: true, type: 'delete', userId: s.id, userName: s.organization_name || s.real_name })}
-                                                                    className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">削除</button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -462,8 +456,6 @@ export default function AdminDashboardPage() {
                                                                 <button onClick={() => setConfirmModal({ isOpen: true, type: 'suspend', userId: u.id, userName: u.display_name || u.real_name })}
                                                                     className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200">停止</button>
                                                             )}
-                                                            <button onClick={() => setConfirmModal({ isOpen: true, type: 'delete', userId: u.id, userName: u.display_name || u.real_name })}
-                                                                className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">削除</button>
                                                         </div>
                                                     </td>
                                                 </tr>
