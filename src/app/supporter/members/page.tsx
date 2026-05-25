@@ -70,7 +70,7 @@ const STATUS_LABEL: Record<MembershipStatus, string> = {
   INVITED: '招待中',
   ACTIVE: '有効',
   SUSPENDED: '停止中',
-  LEFT: '解除済み',
+  LEFT: '所属解除中',
 };
 
 const STATUS_CLASS: Record<MembershipStatus, string> = {
@@ -137,6 +137,10 @@ export default function SupporterMembersPage() {
           router.push('/login?reason=suspended');
           return;
         }
+        if (response.status === 403 && result.code === 'NO_ACTIVE_ORGANIZATION') {
+          router.push('/supporter/no-organization');
+          return;
+        }
         throw new Error(result.error || 'メンバー情報の取得に失敗しました');
       }
 
@@ -158,6 +162,14 @@ export default function SupporterMembersPage() {
   const canManage = myRole === 'OWNER';
   const activeMembers = useMemo(
     () => data?.members.filter((member) => member.status === 'ACTIVE').length ?? 0,
+    [data]
+  );
+  const currentMembers = useMemo(
+    () => data?.members.filter((member) => member.status !== 'LEFT') ?? [],
+    [data]
+  );
+  const leftMembers = useMemo(
+    () => data?.members.filter((member) => member.status === 'LEFT') ?? [],
     [data]
   );
 
@@ -196,6 +208,10 @@ export default function SupporterMembersPage() {
         if (response.status === 403 && result.code === 'ACCOUNT_SUSPENDED') {
           await supabase.auth.signOut();
           router.push('/login?reason=suspended');
+          return;
+        }
+        if (response.status === 403 && result.code === 'NO_ACTIVE_ORGANIZATION') {
+          router.push('/supporter/no-organization');
           return;
         }
         throw new Error(result.error || 'メンバー追加に失敗しました');
@@ -243,6 +259,10 @@ export default function SupporterMembersPage() {
         if (response.status === 403 && result.code === 'ACCOUNT_SUSPENDED') {
           await supabase.auth.signOut();
           router.push('/login?reason=suspended');
+          return;
+        }
+        if (response.status === 403 && result.code === 'NO_ACTIVE_ORGANIZATION') {
+          router.push('/supporter/no-organization');
           return;
         }
         throw new Error(result.error || 'メンバー更新に失敗しました');
@@ -309,6 +329,7 @@ export default function SupporterMembersPage() {
         )}
 
         <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+          <div className="space-y-5">
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -329,11 +350,18 @@ export default function SupporterMembersPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {(data?.members ?? []).map((member) => {
+                    {currentMembers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400">
+                          有効な所属メンバーはいません。
+                        </td>
+                      </tr>
+                    )}
+                    {currentMembers.map((member) => {
                       const isSelf = member.id === data?.my_membership.id;
                       const isBusy = actionMemberId === member.id;
                       const user = member.user;
-                      const canOperate = canManage && !isSelf && member.status !== 'LEFT';
+                      const canOperate = canManage && !isSelf;
 
                       return (
                         <tr key={member.id} className={member.status === 'LEFT' ? 'bg-gray-50 text-gray-400' : 'bg-white'}>
@@ -415,6 +443,48 @@ export default function SupporterMembersPage() {
             </CardContent>
           </Card>
 
+          {leftMembers.length > 0 && (
+            <Card className="lg:col-span-1">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <RotateCcw className="size-4 text-amber-600" />
+                  所属解除中
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-4">
+                {leftMembers.map((member) => {
+                  const user = member.user;
+                  const isBusy = actionMemberId === member.id;
+
+                  return (
+                    <div key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-gray-800">
+                          {user?.display_name || user?.real_name || '不明'}
+                        </div>
+                        <div className="truncate text-xs text-gray-500">{user?.email || '-'}</div>
+                      </div>
+                      {canManage ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isBusy}
+                          onClick={() => updateMember(member.id, { status: 'ACTIVE' })}
+                        >
+                          {isBusy ? <Loader2 className="animate-spin" /> : <RotateCcw />}
+                          所属復活
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+          </div>
+
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -430,8 +500,8 @@ export default function SupporterMembersPage() {
                     <Input id="memberEmail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="memberRealName">担当者名 <span className="text-red-500">*</span></Label>
-                    <Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} required />
+                    <Label htmlFor="memberRealName">担当者名</Label>
+                    <Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="memberDisplayName">表示名</Label>
@@ -459,13 +529,16 @@ export default function SupporterMembersPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="memberPassword">初期パスワード <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="memberPassword">初期パスワード</Label>
                     <div className="flex gap-2">
-                      <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} required />
+                      <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} />
                       <Button type="button" variant="outline" size="icon" onClick={() => setPassword(generatePassword())} title="生成">
                         <KeyRound />
                       </Button>
                     </div>
+                    <p className="text-xs text-gray-400">
+                      既存メンバーの再追加・移籍では初期パスワードは使いません。
+                    </p>
                   </div>
                   <Button type="submit" disabled={isSubmitting} className="w-full bg-teal-600 hover:bg-teal-700">
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <UserPlus />}

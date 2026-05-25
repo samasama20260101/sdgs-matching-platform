@@ -1,5 +1,5 @@
 // src/app/api/admin/users/[id]/route.ts
-// 管理者によるユーザー操作（停止・削除）
+// 管理者によるユーザー操作（停止・停止解除）
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
@@ -65,33 +65,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const admin = await checkAdmin(request)
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
 
-    const { id: userId } = await params
-
-    // public.users から auth_user_id を取得
-    const { data: userData, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('auth_user_id')
-        .eq('id', userId)
-        .single()
-
-    if (userError || !userData) {
-        return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 })
-    }
-
-    // 既存セッションを即時無効化（削除前に実行）
-    await supabaseAdmin.auth.admin.signOut(userData.auth_user_id, 'global')
-
-    // public.users を削除（CASCADE で関連データも削除）
-    const { error: deleteError } = await supabaseAdmin
-        .from('users')
-        .delete()
-        .eq('id', userId)
-
-    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
-
-    // Supabase Auth からも削除
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userData.auth_user_id)
-    if (authDeleteError) return NextResponse.json({ error: authDeleteError.message }, { status: 500 })
-
-    return NextResponse.json({ success: true })
+    await params
+    return NextResponse.json({ error: 'アカウントの物理削除は無効化されています' }, { status: 405 })
 }
