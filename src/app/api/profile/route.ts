@@ -25,6 +25,24 @@ export async function POST(request: Request) {
     // service_areas（活動地域）を分離して別テーブルに保存
     const { service_areas, service_area_nationwide, ...updateData } = body
 
+    const { data: currentUserData, error: currentUserError } = await supabaseAdmin
+        .from('users')
+        .select('id, role')
+        .eq('auth_user_id', user.id)
+        .single()
+
+    if (currentUserError || !currentUserData) {
+        return NextResponse.json({ error: currentUserError?.message ?? 'ユーザーが見つかりません' }, { status: 404 })
+    }
+
+    const organizationContext = currentUserData.role === 'SUPPORTER'
+        ? await getActiveOrganizationForUser(currentUserData.id)
+        : null
+
+    if (currentUserData.role === 'SUPPORTER' && !organizationContext) {
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
+
     // usersテーブル更新
     const { data: userData, error: updateError } = await supabaseAdmin
         .from('users')
@@ -38,10 +56,6 @@ export async function POST(request: Request) {
     }
 
     // サポーター団体情報を organizations にも同期（D案への段階移行）
-    const organizationContext = userData?.role === 'SUPPORTER'
-        ? await getActiveOrganizationForUser(userData.id)
-        : null
-
     if (userData?.role === 'SUPPORTER' && organizationContext?.organizationId) {
         const organizationUpdate: Record<string, unknown> = {}
 

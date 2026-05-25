@@ -48,6 +48,10 @@ type MembersResponse = {
   };
   members: Member[];
 };
+type MemberCreateResponse = {
+  reused_existing_user?: boolean;
+  member: Member;
+};
 
 type ApiErrorResponse = {
   error?: string;
@@ -217,7 +221,10 @@ export default function SupporterMembersPage() {
         throw new Error(result.error || 'メンバー追加に失敗しました');
       }
 
-      setSuccess('メンバーを追加しました');
+      const result = await response.json() as MemberCreateResponse;
+      setSuccess(result.reused_existing_user
+        ? '既存アカウントをメンバーに追加しました。パスワードは変更されません。'
+        : 'メンバーを追加しました');
       setEmail('');
       setRealName('');
       setDisplayName('');
@@ -529,7 +536,7 @@ export default function SupporterMembersPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="memberPassword">初期パスワード</Label>
+                    <Label htmlFor="memberPassword">初期パスワード <span className="text-xs font-normal text-gray-400">（新規メンバーのみ）</span></Label>
                     <div className="flex gap-2">
                       <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} />
                       <Button type="button" variant="outline" size="icon" onClick={() => setPassword(generatePassword())} title="生成">
@@ -537,7 +544,7 @@ export default function SupporterMembersPage() {
                       </Button>
                     </div>
                     <p className="text-xs text-gray-400">
-                      既存メンバーの再追加・移籍では初期パスワードは使いません。
+                      既存アカウントの再追加・移籍では、現在のパスワードをそのまま使います。
                     </p>
                   </div>
                   <Button type="submit" disabled={isSubmitting} className="w-full bg-teal-600 hover:bg-teal-700">
