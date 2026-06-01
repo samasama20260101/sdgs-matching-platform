@@ -19,6 +19,7 @@ type UserData = {
     display_name: string;
     email: string;
     phone: string | null;
+    organization_phone?: string | null;
     organization_name: string | null;
     postal_code?: string | null;
     prefecture?: string | null;
@@ -55,6 +56,7 @@ type ProfileUpdateData = {
     updated_at: string;
     sos_region_code?: string | null;
     organization_name?: string | null;
+    organization_phone?: string | null;
     service_area_nationwide?: boolean;
     service_areas?: ServiceArea[];
     bio?: string | null;
@@ -96,6 +98,7 @@ export default function ProfilePage() {
     const [displayName, setDisplayName] = useState('');
     const [phone, setPhone] = useState('');
     const [organizationName, setOrganizationName] = useState('');
+    const [organizationPhone, setOrganizationPhone] = useState('');
     const [sosRegionCode, setSosRegionCode] = useState('');
     const [addressData, setAddressData] = useState<AddressFormData>({
         postalCode: '', prefecture: '', city: '', addressLine1: '', addressLine2: '',
@@ -141,6 +144,7 @@ export default function ProfilePage() {
                 setDisplayName(data.display_name || '');
                 setPhone(data.phone || '');
                 setOrganizationName(data.organization_name || '');
+                setOrganizationPhone(data.organization_phone || '');
                 if (data.role === 'SOS') {
                     setSosRegionCode(data.sos_region_code || '');
                 }
@@ -228,6 +232,7 @@ export default function ProfilePage() {
 
             if (canEditOrganization) {
                 updateData.organization_name = organizationName.trim() || null;
+                updateData.organization_phone = organizationPhone.trim() || null;
                 updateData.postal_code = addressData.postalCode || null;
                 updateData.prefecture = addressData.prefecture || null;
                 updateData.city = addressData.city || null;
@@ -351,6 +356,17 @@ export default function ProfilePage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {canEditOrganization && (
+                        <Card>
+                            <CardHeader><CardTitle className="text-base">団体連絡先</CardTitle></CardHeader>
+                            <CardContent className="space-y-2">
+                                <Label htmlFor="organizationPhone">団体代表電話番号</Label>
+                                <Input id="organizationPhone" type="tel" value={organizationPhone} onChange={(e) => setOrganizationPhone(e.target.value)} placeholder="03-1234-5678" maxLength={30} />
+                                <p className="text-xs text-gray-500">担当者個人の電話番号、所属メンバーの外線・内線とは別に管理されます。</p>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {userData.role === 'SOS' && (
                         <Card>
