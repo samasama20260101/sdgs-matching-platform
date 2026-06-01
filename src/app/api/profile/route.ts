@@ -15,7 +15,7 @@ const SOS_PROFILE_FIELDS = new Set([
     'postal_code', 'prefecture', 'city', 'address_structured', 'sos_region_code',
 ])
 const ORGANIZATION_PROFILE_FIELDS = new Set([
-    'organization_name', 'supporter_type', 'bio', 'social_links',
+    'organization_name', 'organization_phone', 'supporter_type', 'bio', 'social_links',
     'postal_code', 'prefecture', 'city', 'address_structured',
 ])
 
@@ -88,6 +88,9 @@ export async function POST(request: Request) {
 
         if (Object.prototype.hasOwnProperty.call(updateData, 'organization_name')) {
             organizationUpdate.name = updateData.organization_name
+        }
+        if (Object.prototype.hasOwnProperty.call(updateData, 'organization_phone')) {
+            organizationUpdate.phone = updateData.organization_phone
         }
         if (Object.prototype.hasOwnProperty.call(updateData, 'supporter_type')) {
             organizationUpdate.supporter_type = updateData.supporter_type

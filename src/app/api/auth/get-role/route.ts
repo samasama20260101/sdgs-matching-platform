@@ -101,6 +101,7 @@ export async function GET(request: Request) {
             organization_role: organizationContext?.organizationRole ?? null,
             organization: organizationContext?.organization ?? null,
             organization_name: organizationContext?.organization.name ?? userData.organization_name,
+            organization_phone: organizationContext?.organization.phone ?? null,
             supporter_type: organizationContext?.organization.supporter_type ?? userData.supporter_type,
             bio: organizationContext?.organization.bio ?? userData.bio,
             social_links: organizationContext?.organization.social_links ?? userData.social_links,
