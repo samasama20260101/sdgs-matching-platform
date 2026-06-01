@@ -129,7 +129,9 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
 
     const getSenderLabel = (msg: Message) => {
         if (!msg.sender) return '不明';
-        if (msg.sender.role === 'SUPPORTER' && msg.sender.organization_name) return msg.sender.organization_name;
+        if (msg.sender.role === 'SUPPORTER' && msg.sender.organization_name) {
+            return `${msg.sender.organization_name} / 担当: ${msg.sender.display_name}`;
+        }
         return msg.sender.display_name;
     };
 
@@ -199,12 +201,10 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                                     ? 'bg-blue-600 text-white rounded-2xl rounded-br-md'
                                     : 'bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200'
                                     } px-4 py-2.5 shadow-sm`}>
-                                    {!isMe && (
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                            <span className="text-xs font-semibold text-gray-700">{getSenderLabel(msg)}</span>
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                            <span className={`text-xs font-semibold ${isMe ? 'text-blue-100' : 'text-gray-700'}`}>{getSenderLabel(msg)}</span>
                                             {getSenderRoleBadge(msg)}
-                                        </div>
-                                    )}
+                                    </div>
                                     <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isMe ? 'text-white' : 'text-gray-700'}`}>
                                         {displayContent}
                                     </p>

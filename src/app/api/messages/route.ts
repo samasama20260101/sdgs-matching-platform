@@ -84,7 +84,10 @@ export async function GET(request: Request) {
             ...m,
             sender: {
                 ...(sender || {}),
-                display_name: m.sender_display_name_snapshot || sender?.display_name || '不明',
+                display_name: m.sender_role_snapshot === 'SUPPORTER'
+                    && m.sender_display_name_snapshot === m.sender_organization_name_snapshot
+                    ? sender?.display_name || m.sender_display_name_snapshot || '不明'
+                    : m.sender_display_name_snapshot || sender?.display_name || '不明',
                 role: m.sender_role_snapshot || sender?.role || 'UNKNOWN',
                 organization_name: m.sender_organization_name_snapshot || sender?.organization_name || null,
             },
@@ -133,9 +136,7 @@ export async function POST(request: Request) {
             case_id,
             sender_user_id: userData.id,
             sender_organization_id: userData.organization_id,
-            sender_display_name_snapshot: userData.role === 'SUPPORTER'
-                ? userData.organization_name
-                : userData.display_name,
+            sender_display_name_snapshot: userData.display_name,
             sender_role_snapshot: userData.role,
             sender_organization_name_snapshot: userData.organization_name,
             content,

@@ -33,7 +33,6 @@ type Member = {
   department: string | null;
   external_phone: string | null;
   phone_extension: string | null;
-  admin_note: string | null;
   user: {
     id: string;
     real_name: string;
@@ -120,14 +119,15 @@ export default function SupporterMembersPage() {
   const [externalPhone, setExternalPhone] = useState('');
   const [department, setDepartment] = useState('');
   const [phoneExtension, setPhoneExtension] = useState('');
-  const [adminNote, setAdminNote] = useState('');
   const [password, setPassword] = useState('');
   const [memberRole, setMemberRole] = useState<OrganizationRole>('MEMBER');
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [detailRealName, setDetailRealName] = useState('');
+  const [detailDisplayName, setDetailDisplayName] = useState('');
+  const [detailPhone, setDetailPhone] = useState('');
   const [detailDepartment, setDetailDepartment] = useState('');
   const [detailExternalPhone, setDetailExternalPhone] = useState('');
   const [detailPhoneExtension, setDetailPhoneExtension] = useState('');
-  const [detailAdminNote, setDetailAdminNote] = useState('');
 
   const loadMembers = useCallback(async () => {
     setError(null);
@@ -197,10 +197,12 @@ export default function SupporterMembersPage() {
 
   const openMemberDetails = (member: Member) => {
     setSelectedMemberId(member.id);
+    setDetailRealName(member.user?.real_name || '');
+    setDetailDisplayName(member.user?.display_name || '');
+    setDetailPhone(member.user?.phone || '');
     setDetailDepartment(member.department || '');
     setDetailExternalPhone(member.external_phone || '');
     setDetailPhoneExtension(member.phone_extension || '');
-    setDetailAdminNote(member.admin_note || '');
   };
 
   const handleAddMember = async (event: FormEvent<HTMLFormElement>) => {
@@ -228,7 +230,6 @@ export default function SupporterMembersPage() {
             external_phone: externalPhone,
             department,
             phone_extension: phoneExtension,
-            admin_note: adminNote,
             password,
           } : {}),
           role: memberRole,
@@ -263,7 +264,6 @@ export default function SupporterMembersPage() {
       setExternalPhone('');
       setDepartment('');
       setPhoneExtension('');
-      setAdminNote('');
       setPassword('');
       setMemberRole('MEMBER');
       await loadMembers();
@@ -274,7 +274,7 @@ export default function SupporterMembersPage() {
     }
   };
 
-  const updateMember = async (membershipId: string, payload: { role?: OrganizationRole; status?: MembershipStatus; department?: string; external_phone?: string; phone_extension?: string; admin_note?: string }) => {
+  const updateMember = async (membershipId: string, payload: { role?: OrganizationRole; status?: MembershipStatus; real_name?: string; display_name?: string; phone?: string; department?: string; external_phone?: string; phone_extension?: string }) => {
     setError(null);
     setSuccess(null);
     setActionMemberId(membershipId);
@@ -322,10 +322,12 @@ export default function SupporterMembersPage() {
   const saveMemberDetails = async () => {
     if (!selectedMember) return;
     await updateMember(selectedMember.id, {
+      real_name: detailRealName,
+      display_name: detailDisplayName,
+      phone: detailPhone,
       department: detailDepartment,
       external_phone: detailExternalPhone,
       phone_extension: detailPhoneExtension,
-      admin_note: detailAdminNote,
     });
   };
 
@@ -407,16 +409,15 @@ export default function SupporterMembersPage() {
                     )}
                   </div>
                 </div>
+                <div className="space-y-2"><Label htmlFor="detailRealName">担当者名</Label><Input id="detailRealName" value={detailRealName} onChange={(event) => setDetailRealName(event.target.value)} disabled={!canEditSelectedMember} maxLength={64} /></div>
+                <div className="space-y-2"><Label htmlFor="detailDisplayName">表示名</Label><Input id="detailDisplayName" value={detailDisplayName} onChange={(event) => setDetailDisplayName(event.target.value)} disabled={!canEditSelectedMember} maxLength={64} /></div>
+                <div className="space-y-2"><Label htmlFor="detailPhone">本人電話番号</Label><Input id="detailPhone" type="tel" value={detailPhone} onChange={(event) => setDetailPhone(event.target.value)} disabled={!canEditSelectedMember} maxLength={30} /></div>
                 {[{ label: '部署・所属', value: detailDepartment, setter: setDetailDepartment }, { label: '外線番号', value: detailExternalPhone, setter: setDetailExternalPhone }, { label: '内線番号', value: detailPhoneExtension, setter: setDetailPhoneExtension }].map(({ label, value, setter }) => (
                   <div className="space-y-2" key={label}>
                     <Label>{label}</Label>
                     <Input value={value} onChange={(event) => setter(event.target.value)} disabled={!canEditSelectedMember} />
                   </div>
                 ))}
-                <div className="space-y-2">
-                  <Label htmlFor="detailAdminNote">管理メモ</Label>
-                  <textarea id="detailAdminNote" rows={4} maxLength={1000} value={detailAdminNote} onChange={(event) => setDetailAdminNote(event.target.value)} disabled={!canEditSelectedMember} className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm disabled:bg-gray-50" />
-                </div>
                 {canEditSelectedMember && (
                   <Button onClick={saveMemberDetails} disabled={actionMemberId === selectedMember.id} className="bg-teal-600 hover:bg-teal-700">
                     {actionMemberId === selectedMember.id ? <Loader2 className="animate-spin" /> : <Save />}
@@ -627,7 +628,6 @@ export default function SupporterMembersPage() {
                     <div className="space-y-2"><Label htmlFor="memberDepartment">部署・所属</Label><Input id="memberDepartment" value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={100} /></div>
                     <div className="space-y-2"><Label htmlFor="memberExternalPhone">外線番号</Label><Input id="memberExternalPhone" type="tel" value={externalPhone} onChange={(event) => setExternalPhone(event.target.value)} maxLength={30} /></div>
                     <div className="space-y-2"><Label htmlFor="memberPhoneExtension">内線番号</Label><Input id="memberPhoneExtension" value={phoneExtension} onChange={(event) => setPhoneExtension(event.target.value)} maxLength={30} /></div>
-                    <div className="space-y-2"><Label htmlFor="memberAdminNote">管理メモ</Label><textarea id="memberAdminNote" rows={3} maxLength={1000} value={adminNote} onChange={(event) => setAdminNote(event.target.value)} className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" /></div>
                   </>}
                   {registrationType === 'new' && <div className="space-y-2">
                     <Label htmlFor="memberRole">権限</Label>
