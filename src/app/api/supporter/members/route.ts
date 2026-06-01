@@ -25,7 +25,6 @@ type MembershipRow = {
     department: string | null
     external_phone: string | null
     phone_extension: string | null
-    admin_note: string | null
 }
 
 type MembershipStatus = MembershipRow['status']
@@ -99,7 +98,7 @@ export async function GET(request: Request) {
     const { organizationContext } = context
     const { data: memberships, error: membershipError } = await supabaseAdmin
         .from('organization_memberships')
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
         .eq('organization_id', organizationContext.organizationId)
         .order('created_at', { ascending: true })
 
@@ -180,9 +179,6 @@ export async function POST(request: Request) {
     const externalPhone = sanitizePhone(body.external_phone)
     const department = sanitizeText(body.department, 100)
     const phoneExtension = sanitizeText(body.phone_extension, 30)
-    const adminNote = organizationContext.organizationRole === 'OWNER'
-        ? sanitizeText(body.admin_note, 1000)
-        : null
     const requestedRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : 'MEMBER'
     const memberRole = registrationType === 'existing'
         ? 'MEMBER'
@@ -208,7 +204,7 @@ export async function POST(request: Request) {
 
         const { data: existingMemberships, error: existingMembershipsError } = await supabaseAdmin
             .from('organization_memberships')
-            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
             .eq('user_id', existing.id)
 
         if (existingMembershipsError) {
@@ -252,7 +248,7 @@ export async function POST(request: Request) {
                 .insert(membershipPayload)
 
         const { data: membership, error: membershipError } = await membershipQuery
-            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
             .single()
 
         if (membershipError || !membership) {
@@ -360,9 +356,8 @@ export async function POST(request: Request) {
             department,
             external_phone: externalPhone,
             phone_extension: phoneExtension,
-            admin_note: adminNote,
         })
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
         .single()
 
     if (membershipError || !membership) {

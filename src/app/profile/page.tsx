@@ -20,6 +20,9 @@ type UserData = {
     email: string;
     phone: string | null;
     organization_phone?: string | null;
+    membership_department?: string | null;
+    membership_external_phone?: string | null;
+    membership_phone_extension?: string | null;
     organization_name: string | null;
     postal_code?: string | null;
     prefecture?: string | null;
@@ -57,6 +60,9 @@ type ProfileUpdateData = {
     sos_region_code?: string | null;
     organization_name?: string | null;
     organization_phone?: string | null;
+    membership_department?: string | null;
+    membership_external_phone?: string | null;
+    membership_phone_extension?: string | null;
     service_area_nationwide?: boolean;
     service_areas?: ServiceArea[];
     bio?: string | null;
@@ -99,6 +105,9 @@ export default function ProfilePage() {
     const [phone, setPhone] = useState('');
     const [organizationName, setOrganizationName] = useState('');
     const [organizationPhone, setOrganizationPhone] = useState('');
+    const [membershipDepartment, setMembershipDepartment] = useState('');
+    const [membershipExternalPhone, setMembershipExternalPhone] = useState('');
+    const [membershipPhoneExtension, setMembershipPhoneExtension] = useState('');
     const [sosRegionCode, setSosRegionCode] = useState('');
     const [addressData, setAddressData] = useState<AddressFormData>({
         postalCode: '', prefecture: '', city: '', addressLine1: '', addressLine2: '',
@@ -145,6 +154,9 @@ export default function ProfilePage() {
                 setPhone(data.phone || '');
                 setOrganizationName(data.organization_name || '');
                 setOrganizationPhone(data.organization_phone || '');
+                setMembershipDepartment(data.membership_department || '');
+                setMembershipExternalPhone(data.membership_external_phone || '');
+                setMembershipPhoneExtension(data.membership_phone_extension || '');
                 if (data.role === 'SOS') {
                     setSosRegionCode(data.sos_region_code || '');
                 }
@@ -230,6 +242,12 @@ export default function ProfilePage() {
                 updateData.address_structured = addressStructured;
             }
 
+            if (userData.role === 'SUPPORTER') {
+                updateData.membership_department = membershipDepartment.trim() || null;
+                updateData.membership_external_phone = membershipExternalPhone.trim() || null;
+                updateData.membership_phone_extension = membershipPhoneExtension.trim() || null;
+            }
+
             if (canEditOrganization) {
                 updateData.organization_name = organizationName.trim() || null;
                 updateData.organization_phone = organizationPhone.trim() || null;
@@ -309,12 +327,6 @@ export default function ProfilePage() {
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-800">プロフィール編集</h1>
                     <p className="text-gray-500 mt-1">登録情報を更新できます</p>
-                    {userData.role === 'SUPPORTER' && (
-                        <a href={`/supporters/${userData.id}`} target="_blank"
-                            className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 mt-2 underline">
-                            🌐 公開プロフィールを確認する →
-                        </a>
-                    )}
                 </div>
 
                 <div className="space-y-6">
@@ -356,6 +368,26 @@ export default function ProfilePage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {userData.role === 'SUPPORTER' && (
+                        <Card>
+                            <CardHeader><CardTitle className="text-base">所属先での担当者情報</CardTitle></CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="membershipDepartment">部署・所属</Label>
+                                    <Input id="membershipDepartment" value={membershipDepartment} onChange={(e) => setMembershipDepartment(e.target.value)} maxLength={100} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="membershipExternalPhone">外線番号</Label>
+                                    <Input id="membershipExternalPhone" type="tel" value={membershipExternalPhone} onChange={(e) => setMembershipExternalPhone(e.target.value)} maxLength={30} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="membershipPhoneExtension">内線番号</Label>
+                                    <Input id="membershipPhoneExtension" value={membershipPhoneExtension} onChange={(e) => setMembershipPhoneExtension(e.target.value)} maxLength={30} />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {canEditOrganization && (
                         <Card>
@@ -415,6 +447,10 @@ export default function ProfilePage() {
                             <CardHeader>
                                 <CardTitle className="text-base">公開プロフィール</CardTitle>
                                 <p className="text-xs text-gray-400 mt-1">🌐 ログイン不要のサポーター紹介ページに表示されます</p>
+                                <a href={`/supporters/${userData.id}`} target="_blank"
+                                    className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 mt-2 underline">
+                                    団体公開ページを確認する →
+                                </a>
                             </CardHeader>
                             <CardContent className="space-y-5">
                                 <div className="space-y-2">

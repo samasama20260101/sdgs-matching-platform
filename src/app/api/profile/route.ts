@@ -18,6 +18,9 @@ const ORGANIZATION_PROFILE_FIELDS = new Set([
     'organization_name', 'organization_phone', 'supporter_type', 'bio', 'social_links',
     'postal_code', 'prefecture', 'city', 'address_structured',
 ])
+function sanitizeText(value: unknown, maxLength: number) {
+    return typeof value === 'string' && value.trim() ? value.trim().slice(0, maxLength) : null
+}
 
 export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -69,17 +72,42 @@ export async function POST(request: Request) {
     const updateData = Object.fromEntries(
         Object.entries(rawUpdateData).filter(([key]) => allowedUserFields.has(key))
     )
+    const membershipUpdate: Record<string, string | null> = {}
+    if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'membership_department')) {
+        membershipUpdate.department = sanitizeText(rawUpdateData.membership_department, 100)
+    }
+    if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'membership_external_phone')) {
+        membershipUpdate.external_phone = sanitizeText(rawUpdateData.membership_external_phone, 30)
+    }
+    if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'membership_phone_extension')) {
+        membershipUpdate.phone_extension = sanitizeText(rawUpdateData.membership_phone_extension, 30)
+    }
+    const includesMembershipUpdate = Object.keys(membershipUpdate).length > 0
 
     // usersテーブル更新
-    const { data: userData, error: updateError } = await supabaseAdmin
-        .from('users')
-        .update(updateData)
-        .eq('auth_user_id', user.id)
-        .select('id, role')
-        .single()
+    let userData = currentUserData
+    if (Object.keys(updateData).length > 0) {
+        const { data: updatedUserData, error: updateError } = await supabaseAdmin
+            .from('users')
+            .update(updateData)
+            .eq('auth_user_id', user.id)
+            .select('id, role')
+            .single()
 
-    if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 })
+        if (updateError) {
+            return NextResponse.json({ error: updateError.message }, { status: 500 })
+        }
+        userData = updatedUserData
+    }
+
+    if (currentUserData.role === 'SUPPORTER' && organizationContext?.membershipId && includesMembershipUpdate) {
+        const { error: membershipUpdateError } = await supabaseAdmin
+            .from('organization_memberships')
+            .update(membershipUpdate)
+            .eq('id', organizationContext.membershipId)
+        if (membershipUpdateError) {
+            return NextResponse.json({ error: membershipUpdateError.message }, { status: 500 })
+        }
     }
 
     // サポーター団体情報を organizations にも同期（D案への段階移行）

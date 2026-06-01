@@ -27,7 +27,6 @@ type MembershipRow = {
     department: string | null
     external_phone: string | null
     phone_extension: string | null
-    admin_note: string | null
 }
 
 type SupporterMemberContext = {
@@ -37,7 +36,8 @@ type SupporterMemberContext = {
 
 const MEMBER_ROLES: OrganizationRole[] = ['OWNER', 'ADMIN', 'MEMBER']
 const UPDATE_STATUSES: MembershipStatus[] = ['ACTIVE', 'SUSPENDED', 'LEFT']
-const DETAIL_FIELDS = ['department', 'external_phone', 'phone_extension', 'admin_note'] as const
+const DETAIL_FIELDS = ['department', 'external_phone', 'phone_extension'] as const
+const PERSONAL_FIELDS = ['real_name', 'display_name', 'phone'] as const
 
 function sanitizeDetail(value: unknown, maxLength: number) {
     return typeof value === 'string' && value.trim() ? value.trim().slice(0, maxLength) : null
@@ -103,7 +103,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     const { userData, organizationContext } = context
     const { data: targetMembership, error: targetError } = await supabaseAdmin
         .from('organization_memberships')
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
         .eq('id', membershipId)
         .eq('organization_id', organizationContext.organizationId)
         .single()
@@ -118,12 +118,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     const nextStatus = UPDATE_STATUSES.includes(body.status) ? body.status as MembershipStatus : undefined
 
     const hasDetails = DETAIL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
+    const hasPersonalDetails = PERSONAL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
     const isOwner = organizationContext.organizationRole === 'OWNER'
     const isSelf = target.id === organizationContext.membershipId
     if (!isOwner && (!isSelf || nextRole || nextStatus)) {
         return NextResponse.json({ error: 'メンバーを変更する権限がありません' }, { status: 403 })
     }
-    if (!nextRole && !nextStatus && !hasDetails) {
+    if (!nextRole && !nextStatus && !hasDetails && !hasPersonalDetails) {
         return NextResponse.json({ error: '変更内容がありません' }, { status: 400 })
     }
 
@@ -139,10 +140,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     }
 
     if (hasDetails) {
-        updateData.department = sanitizeDetail(body.department, 100)
-        updateData.external_phone = sanitizeDetail(body.external_phone, 30)
-        updateData.phone_extension = sanitizeDetail(body.phone_extension, 30)
-        updateData.admin_note = sanitizeDetail(body.admin_note, 1000)
+        if (Object.prototype.hasOwnProperty.call(body, 'department')) {
+            updateData.department = sanitizeDetail(body.department, 100)
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'external_phone')) {
+            updateData.external_phone = sanitizeDetail(body.external_phone, 30)
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'phone_extension')) {
+            updateData.phone_extension = sanitizeDetail(body.phone_extension, 30)
+        }
         auditMetadata.details_updated = true
     }
 
@@ -197,15 +203,44 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
         }
     }
 
-    const { data: updatedMembership, error: updateError } = await supabaseAdmin
-        .from('organization_memberships')
-        .update(updateData)
-        .eq('id', target.id)
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
-        .single()
+    let updatedMembership: MembershipRow = target
+    if (Object.keys(updateData).length > 0) {
+        const { data: membershipData, error: updateError } = await supabaseAdmin
+            .from('organization_memberships')
+            .update(updateData)
+            .eq('id', target.id)
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
+            .single()
 
-    if (updateError || !updatedMembership) {
-        return NextResponse.json({ error: updateError?.message ?? 'メンバー更新に失敗しました' }, { status: 500 })
+        if (updateError || !membershipData) {
+            return NextResponse.json({ error: updateError?.message ?? 'メンバー更新に失敗しました' }, { status: 500 })
+        }
+        updatedMembership = membershipData as MembershipRow
+    }
+
+    if (hasPersonalDetails) {
+        const personalUpdate: Record<string, unknown> = {}
+        if (Object.prototype.hasOwnProperty.call(body, 'real_name')) {
+            const realName = sanitizeDetail(body.real_name, 64)
+            if (!realName) return NextResponse.json({ error: '担当者名を入力してください' }, { status: 400 })
+            personalUpdate.real_name = realName
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'display_name')) {
+            const displayName = sanitizeDetail(body.display_name, 64)
+            if (!displayName) return NextResponse.json({ error: '表示名を入力してください' }, { status: 400 })
+            personalUpdate.display_name = displayName
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'phone')) {
+            personalUpdate.phone = sanitizeDetail(body.phone, 30)
+        }
+        const { error: personalUpdateError } = await supabaseAdmin
+            .from('users')
+            .update(personalUpdate)
+            .eq('id', target.user_id)
+        if (personalUpdateError) {
+            return NextResponse.json({ error: personalUpdateError.message }, { status: 500 })
+        }
+        auditMetadata.personal_profile_updated = true
     }
 
     if (nextStatus && nextStatus !== 'LEFT') {

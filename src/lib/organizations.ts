@@ -6,6 +6,9 @@ export type ActiveOrganizationContext = {
   membershipId: string
   organizationId: string
   organizationRole: OrganizationRole
+  department: string | null
+  externalPhone: string | null
+  phoneExtension: string | null
   organization: {
     id: string
     name: string
@@ -27,7 +30,7 @@ export type ActiveOrganizationContext = {
 export async function getActiveOrganizationForUser(userId: string): Promise<ActiveOrganizationContext | null> {
   const { data: membership, error: membershipError } = await supabaseAdmin
     .from('organization_memberships')
-    .select('id, organization_id, role')
+    .select('id, organization_id, role, department, external_phone, phone_extension')
     .eq('user_id', userId)
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: true })
@@ -56,6 +59,9 @@ export async function getActiveOrganizationForUser(userId: string): Promise<Acti
     membershipId: membership.id,
     organizationId: membership.organization_id,
     organizationRole: membership.role as OrganizationRole,
+    department: membership.department,
+    externalPhone: membership.external_phone,
+    phoneExtension: membership.phone_extension,
     organization,
   }
 }

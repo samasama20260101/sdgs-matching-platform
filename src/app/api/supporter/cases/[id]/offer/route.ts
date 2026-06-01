@@ -234,7 +234,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
                 case_id: id,
                 sender_user_id: userData.id,
                 sender_organization_id: userData.organization_id,
-                sender_display_name_snapshot: userData.organization_name,
+                sender_display_name_snapshot: userData.display_name,
                 sender_role_snapshot: 'SUPPORTER',
                 sender_organization_name_snapshot: userData.organization_name,
                 content: `__SYSTEM__${userData.organization_name}が対応をキャンセルしました。理由：${withdrawalReason}`,
