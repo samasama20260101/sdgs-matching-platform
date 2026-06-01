@@ -52,7 +52,7 @@ export async function GET(request: Request) {
             .from('supporter_service_areas')
             .select('region_code, is_nationwide, country')
         if (organizationContext?.organizationId) {
-            areasQuery = areasQuery.or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
+            areasQuery = areasQuery.eq('organization_id', organizationContext.organizationId)
         } else {
             areasQuery = areasQuery.eq('supporter_user_id', userData.id)
         }

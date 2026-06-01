@@ -24,6 +24,10 @@ type MembershipRow = {
     joined_at: string | null
     left_at: string | null
     created_at: string
+    department: string | null
+    external_phone: string | null
+    phone_extension: string | null
+    admin_note: string | null
 }
 
 type SupporterMemberContext = {
@@ -33,6 +37,11 @@ type SupporterMemberContext = {
 
 const MEMBER_ROLES: OrganizationRole[] = ['OWNER', 'ADMIN', 'MEMBER']
 const UPDATE_STATUSES: MembershipStatus[] = ['ACTIVE', 'SUSPENDED', 'LEFT']
+const DETAIL_FIELDS = ['department', 'external_phone', 'phone_extension', 'admin_note'] as const
+
+function sanitizeDetail(value: unknown, maxLength: number) {
+    return typeof value === 'string' && value.trim() ? value.trim().slice(0, maxLength) : null
+}
 
 async function getSupporterMemberContext(request: Request): Promise<SupporterMemberContext | NextResponse> {
     const authHeader = request.headers.get('Authorization')
@@ -98,7 +107,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
 
     const { data: targetMembership, error: targetError } = await supabaseAdmin
         .from('organization_memberships')
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
         .eq('id', membershipId)
         .eq('organization_id', organizationContext.organizationId)
         .single()
@@ -112,7 +121,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     const nextRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : undefined
     const nextStatus = UPDATE_STATUSES.includes(body.status) ? body.status as MembershipStatus : undefined
 
-    if (!nextRole && !nextStatus) {
+    const hasDetails = DETAIL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
+    if (!nextRole && !nextStatus && !hasDetails) {
         return NextResponse.json({ error: '変更内容がありません' }, { status: 400 })
     }
 
@@ -125,6 +135,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
         user_id: target.user_id,
         previous_role: target.role,
         previous_status: target.status,
+    }
+
+    if (hasDetails) {
+        updateData.department = sanitizeDetail(body.department, 100)
+        updateData.external_phone = sanitizeDetail(body.external_phone, 30)
+        updateData.phone_extension = sanitizeDetail(body.phone_extension, 30)
+        updateData.admin_note = sanitizeDetail(body.admin_note, 1000)
+        auditMetadata.details_updated = true
     }
 
     if (nextRole && nextRole !== target.role) {
@@ -182,7 +200,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
         .from('organization_memberships')
         .update(updateData)
         .eq('id', target.id)
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
         .single()
 
     if (updateError || !updatedMembership) {

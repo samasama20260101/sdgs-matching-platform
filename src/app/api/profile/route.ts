@@ -8,6 +8,12 @@ type ServiceAreaInput = {
     country?: string | null
 }
 
+const PROFILE_FIELDS = new Set([
+    'real_name', 'display_name', 'phone', 'postal_code', 'prefecture', 'city',
+    'address_structured', 'updated_at', 'sos_region_code', 'organization_name',
+    'supporter_type', 'bio', 'social_links',
+])
+
 export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -23,7 +29,10 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     // service_areas（活動地域）を分離して別テーブルに保存
-    const { service_areas, service_area_nationwide, ...updateData } = body
+    const { service_areas, service_area_nationwide, ...rawUpdateData } = body
+    const updateData = Object.fromEntries(
+        Object.entries(rawUpdateData).filter(([key]) => PROFILE_FIELDS.has(key))
+    )
 
     const { data: currentUserData, error: currentUserError } = await supabaseAdmin
         .from('users')
@@ -41,6 +50,9 @@ export async function POST(request: Request) {
 
     if (currentUserData.role === 'SUPPORTER' && !organizationContext) {
         return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
+    if (currentUserData.role === 'SUPPORTER' && organizationContext?.organizationRole !== 'OWNER') {
+        return NextResponse.json({ error: '団体プロフィールを変更できるのはOWNERのみです', code: 'FORBIDDEN' }, { status: 403 })
     }
 
     // usersテーブル更新
@@ -107,7 +119,7 @@ export async function POST(request: Request) {
             .from('supporter_service_areas')
             .delete()
         if (organizationContext?.organizationId) {
-            deleteQuery = deleteQuery.or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
+            deleteQuery = deleteQuery.eq('organization_id', organizationContext.organizationId)
         } else {
             deleteQuery = deleteQuery.eq('supporter_user_id', userData.id)
         }

@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     const { data: myAllOffers, error: offerErr } = await supabaseAdmin
         .from('offers')
         .select('case_id, status')
-        .or(`supporter_organization_id.eq.${supporterOrganizationId},supporter_user_id.eq.${supporterUserId}`)
+        .eq('supporter_organization_id', supporterOrganizationId)
     if (offerErr) console.error('myAllOffers error:', JSON.stringify(offerErr))
 
     const offerMap: Record<string, string> = {}
@@ -129,7 +129,7 @@ export async function GET(request: Request) {
     const { data: badges } = await supabaseAdmin
         .from('supporter_badges')
         .select('badge_key')
-        .or(`supporter_organization_id.eq.${supporterOrganizationId},supporter_user_id.eq.${supporterUserId}`)
+        .eq('supporter_organization_id', supporterOrganizationId)
 
     const badgeCounts: Record<string, number> = {}
     ;(badges || []).forEach((b: { badge_key: string }) => {

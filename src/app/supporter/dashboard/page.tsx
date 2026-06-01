@@ -38,6 +38,7 @@ type UserData = {
   display_name: string;
   organization_name: string | null;
   role: string;
+  organization_role?: 'OWNER' | 'ADMIN' | 'MEMBER' | null;
   service_area_nationwide?: boolean;
   service_areas?: Array<{ region_code: string; name_local: string; name_en: string }>;
 };
@@ -276,18 +277,20 @@ export default function SupporterDashboard() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
               <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <a href="/profile"
-                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
-                ✏️ プロフィール編集
-              </a>
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-shrink-0">
+              {userData?.organization_role === 'OWNER' && (
+                <a href="/profile"
+                  className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                  ✏️ プロフィール編集
+                </a>
+              )}
               <a href="/supporter/members"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
                 👥 メンバー管理
@@ -315,7 +318,7 @@ export default function SupporterDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
               <div className="text-[11px] text-gray-400 mb-1">{s.label}</div>
