@@ -193,6 +193,7 @@ export default function SupporterMembersPage() {
     () => data?.members.find((member) => member.id === selectedMemberId) ?? null,
     [data, selectedMemberId]
   );
+  const canEditSelectedMember = !!selectedMember && (canManage || selectedMember.id === data?.my_membership.id);
 
   const openMemberDetails = (member: Member) => {
     setSelectedMemberId(member.id);
@@ -393,23 +394,41 @@ export default function SupporterMembersPage() {
               <CardContent className="space-y-4 pt-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div><div className="text-xs text-gray-400">メールアドレス</div><div className="mt-1 break-all text-sm text-gray-700">{selectedMember.user?.email || '-'}</div></div>
-                  <div><div className="text-xs text-gray-400">権限</div><div className="mt-1 text-sm text-gray-700">{ROLE_LABEL[selectedMember.role]}</div></div>
+                  <div>
+                    <div className="text-xs text-gray-400">権限</div>
+                    {canManage && selectedMember.status === 'ACTIVE' && selectedMember.id !== data?.my_membership.id ? (
+                      <select value={selectedMember.role} onChange={(event) => updateMember(selectedMember.id, { role: event.target.value as OrganizationRole })} className="mt-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm font-semibold text-gray-700">
+                        <option value="OWNER">OWNER</option>
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="MEMBER">MEMBER</option>
+                      </select>
+                    ) : (
+                      <div className="mt-1 text-sm text-gray-700">{ROLE_LABEL[selectedMember.role]}</div>
+                    )}
+                  </div>
                 </div>
                 {[{ label: '部署・所属', value: detailDepartment, setter: setDetailDepartment }, { label: '外線番号', value: detailExternalPhone, setter: setDetailExternalPhone }, { label: '内線番号', value: detailPhoneExtension, setter: setDetailPhoneExtension }].map(({ label, value, setter }) => (
                   <div className="space-y-2" key={label}>
                     <Label>{label}</Label>
-                    <Input value={value} onChange={(event) => setter(event.target.value)} disabled={!canManage} />
+                    <Input value={value} onChange={(event) => setter(event.target.value)} disabled={!canEditSelectedMember} />
                   </div>
                 ))}
                 <div className="space-y-2">
                   <Label htmlFor="detailAdminNote">管理メモ</Label>
-                  <textarea id="detailAdminNote" rows={4} maxLength={1000} value={detailAdminNote} onChange={(event) => setDetailAdminNote(event.target.value)} disabled={!canManage} className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm disabled:bg-gray-50" />
+                  <textarea id="detailAdminNote" rows={4} maxLength={1000} value={detailAdminNote} onChange={(event) => setDetailAdminNote(event.target.value)} disabled={!canEditSelectedMember} className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm disabled:bg-gray-50" />
                 </div>
-                {canManage && (
+                {canEditSelectedMember && (
                   <Button onClick={saveMemberDetails} disabled={actionMemberId === selectedMember.id} className="bg-teal-600 hover:bg-teal-700">
                     {actionMemberId === selectedMember.id ? <Loader2 className="animate-spin" /> : <Save />}
                     保存する
                   </Button>
+                )}
+                {canManage && selectedMember.id !== data?.my_membership.id && (
+                  <div className="flex flex-wrap gap-2 border-t pt-4">
+                    {selectedMember.status === 'ACTIVE' && <Button size="sm" variant="outline" onClick={() => updateMember(selectedMember.id, { status: 'SUSPENDED' })}><UserMinus />停止</Button>}
+                    {selectedMember.status === 'SUSPENDED' && <Button size="sm" variant="outline" onClick={() => updateMember(selectedMember.id, { status: 'ACTIVE' })}><RotateCcw />復帰</Button>}
+                    {selectedMember.status !== 'LEFT' && <Button size="sm" variant="outline" onClick={() => updateMember(selectedMember.id, { status: 'LEFT' })}>所属解除</Button>}
+                  </div>
                 )}
               </CardContent>
             </Card>

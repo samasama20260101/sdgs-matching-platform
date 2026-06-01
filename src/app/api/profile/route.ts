@@ -8,10 +8,15 @@ type ServiceAreaInput = {
     country?: string | null
 }
 
-const PROFILE_FIELDS = new Set([
-    'real_name', 'display_name', 'phone', 'postal_code', 'prefecture', 'city',
-    'address_structured', 'updated_at', 'sos_region_code', 'organization_name',
-    'supporter_type', 'bio', 'social_links',
+const PERSONAL_PROFILE_FIELDS = new Set([
+    'real_name', 'display_name', 'phone', 'updated_at',
+])
+const SOS_PROFILE_FIELDS = new Set([
+    'postal_code', 'prefecture', 'city', 'address_structured', 'sos_region_code',
+])
+const ORGANIZATION_PROFILE_FIELDS = new Set([
+    'organization_name', 'supporter_type', 'bio', 'social_links',
+    'postal_code', 'prefecture', 'city', 'address_structured',
 ])
 
 export async function POST(request: Request) {
@@ -30,10 +35,6 @@ export async function POST(request: Request) {
 
     // service_areas（活動地域）を分離して別テーブルに保存
     const { service_areas, service_area_nationwide, ...rawUpdateData } = body
-    const updateData = Object.fromEntries(
-        Object.entries(rawUpdateData).filter(([key]) => PROFILE_FIELDS.has(key))
-    )
-
     const { data: currentUserData, error: currentUserError } = await supabaseAdmin
         .from('users')
         .select('id, role')
@@ -51,9 +52,23 @@ export async function POST(request: Request) {
     if (currentUserData.role === 'SUPPORTER' && !organizationContext) {
         return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
     }
-    if (currentUserData.role === 'SUPPORTER' && organizationContext?.organizationRole !== 'OWNER') {
+    const isOrganizationOwner = currentUserData.role === 'SUPPORTER' && organizationContext?.organizationRole === 'OWNER'
+    const includesOrganizationUpdate = Object.keys(rawUpdateData).some((key) => ORGANIZATION_PROFILE_FIELDS.has(key))
+        || service_areas !== undefined
+        || service_area_nationwide !== undefined
+    if (currentUserData.role === 'SUPPORTER' && !isOrganizationOwner && includesOrganizationUpdate) {
         return NextResponse.json({ error: '団体プロフィールを変更できるのはOWNERのみです', code: 'FORBIDDEN' }, { status: 403 })
     }
+    const allowedUserFields = new Set(PERSONAL_PROFILE_FIELDS)
+    if (currentUserData.role === 'SOS') {
+        SOS_PROFILE_FIELDS.forEach((field) => allowedUserFields.add(field))
+    }
+    if (isOrganizationOwner) {
+        ORGANIZATION_PROFILE_FIELDS.forEach((field) => allowedUserFields.add(field))
+    }
+    const updateData = Object.fromEntries(
+        Object.entries(rawUpdateData).filter(([key]) => allowedUserFields.has(key))
+    )
 
     // usersテーブル更新
     const { data: userData, error: updateError } = await supabaseAdmin
@@ -68,7 +83,7 @@ export async function POST(request: Request) {
     }
 
     // サポーター団体情報を organizations にも同期（D案への段階移行）
-    if (userData?.role === 'SUPPORTER' && organizationContext?.organizationId) {
+    if (userData?.role === 'SUPPORTER' && isOrganizationOwner && organizationContext?.organizationId) {
         const organizationUpdate: Record<string, unknown> = {}
 
         if (Object.prototype.hasOwnProperty.call(updateData, 'organization_name')) {
@@ -82,9 +97,6 @@ export async function POST(request: Request) {
         }
         if (Object.prototype.hasOwnProperty.call(updateData, 'social_links')) {
             organizationUpdate.social_links = updateData.social_links
-        }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'phone')) {
-            organizationUpdate.phone = updateData.phone
         }
         if (Object.prototype.hasOwnProperty.call(updateData, 'postal_code')) {
             organizationUpdate.postal_code = updateData.postal_code
@@ -113,7 +125,7 @@ export async function POST(request: Request) {
     }
 
     // サポーターの活動地域を更新
-    if (service_areas !== undefined && userData) {
+    if (userData?.role === 'SUPPORTER' && isOrganizationOwner && service_areas !== undefined) {
         // 既存データを全削除して入れ直す
         let deleteQuery = supabaseAdmin
             .from('supporter_service_areas')

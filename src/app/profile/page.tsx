@@ -20,10 +20,10 @@ type UserData = {
     email: string;
     phone: string | null;
     organization_name: string | null;
-    postal_code: string | null;
-    prefecture: string | null;
-    city: string | null;
-    address_structured: {
+    postal_code?: string | null;
+    prefecture?: string | null;
+    city?: string | null;
+    address_structured?: {
         line1?: string;
         line2?: string;
     } | null;
@@ -41,10 +41,10 @@ type ProfileUpdateData = {
     real_name: string;
     display_name: string;
     phone: string | null;
-    postal_code: string | null;
-    prefecture: string | null;
-    city: string | null;
-    address_structured: {
+    postal_code?: string | null;
+    prefecture?: string | null;
+    city?: string | null;
+    address_structured?: {
         country: 'JP';
         postal_code: string;
         prefecture: string;
@@ -136,10 +136,6 @@ export default function ProfilePage() {
                     router.push('/supporter/no-organization');
                     return;
                 }
-                if (data.role === 'SUPPORTER' && data.organization_role !== 'OWNER') {
-                    router.push('/supporter/dashboard');
-                    return;
-                }
                 setUserData(data);
                 setRealName(data.real_name || '');
                 setDisplayName(data.display_name || '');
@@ -185,19 +181,21 @@ export default function ProfilePage() {
         loadUserData();
     }, [router]);
 
+    const canEditOrganization = userData?.role === 'SUPPORTER' && userData.organization_role === 'OWNER';
+
     const handleSave = async () => {
         setError(null);
         setSuccess(false);
         setIsSaving(true);
         try {
             if (!userData) { setError('ユーザー情報がありません'); setIsSaving(false); return; }
-            if (!realName.trim()) { setError(userData.role === 'SOS' ? 'お名前（本名）は必須です' : '代表者名は必須です'); setIsSaving(false); return; }
+            if (!realName.trim()) { setError(userData.role === 'SOS' ? 'お名前（本名）は必須です' : '担当者名は必須です'); setIsSaving(false); return; }
             if (realName.length > 64) { setError('担当者名は64文字以内で入力してください'); setIsSaving(false); return; }
             if (!displayName.trim()) { setError(userData.role === 'SOS' ? 'ニックネームは必須です' : '表示名は必須です'); setIsSaving(false); return; }
             if (displayName.length > 64) { setError('表示名は64文字以内で入力してください'); setIsSaving(false); return; }
-            if (organizationName.length > 64) { setError('組織名は64文字以内で入力してください'); setIsSaving(false); return; }
+            if (canEditOrganization && organizationName.length > 64) { setError('組織名は64文字以内で入力してください'); setIsSaving(false); return; }
 
-            if (userData.role === 'SUPPORTER') {
+            if (canEditOrganization) {
                 if (!addressData.prefecture || !addressData.city || !addressData.addressLine1) {
                     setError('サポーターは住所（都道府県・市区町村・番地）の入力が必須です');
                     setIsSaving(false); return;
@@ -217,17 +215,23 @@ export default function ProfilePage() {
             const updateData: ProfileUpdateData = {
                 real_name: realName.trim(), display_name: displayName.trim(),
                 phone: phone.trim() || null,
-                postal_code: addressData.postalCode || null, prefecture: addressData.prefecture || null,
-                city: addressData.city || null, address_structured: addressStructured,
                 updated_at: new Date().toISOString(),
             };
 
             if (userData.role === 'SOS') {
                 updateData.sos_region_code = sosRegionCode || null;
+                updateData.postal_code = addressData.postalCode || null;
+                updateData.prefecture = addressData.prefecture || null;
+                updateData.city = addressData.city || null;
+                updateData.address_structured = addressStructured;
             }
 
-            if (userData.role === 'SUPPORTER') {
+            if (canEditOrganization) {
                 updateData.organization_name = organizationName.trim() || null;
+                updateData.postal_code = addressData.postalCode || null;
+                updateData.prefecture = addressData.prefecture || null;
+                updateData.city = addressData.city || null;
+                updateData.address_structured = addressStructured;
                 updateData.service_area_nationwide = isNationwide;
                 updateData.service_areas = serviceAreas;
                 updateData.bio = bio.trim() || null;
@@ -263,7 +267,7 @@ export default function ProfilePage() {
             }
 
             // サポーターの活動地域は専用APIでも保存（確実性のため二重保存）
-            if (userData.role === 'SUPPORTER') {
+            if (canEditOrganization) {
                 const areaRes = await fetch('/api/supporter/service-areas', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
@@ -313,7 +317,7 @@ export default function ProfilePage() {
                         <CardHeader><CardTitle className="text-base">基本情報</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前' : '代表者名'} <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前' : '担当者名'} <span className="text-red-500">*</span></Label>
                                 <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
                                 <div className="flex justify-between items-start mt-1">
                                     {userData.role === 'SOS' && <p className="text-xs text-gray-500">※ニックネームでもOKです。サポーターとマッチ後に共有されます（公開されません）</p>}
@@ -333,7 +337,7 @@ export default function ProfilePage() {
                                 <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
                                 <p className="text-xs text-gray-500">※メールアドレスは変更できません</p>
                             </div>
-                            {userData.role === 'SUPPORTER' && (
+                            {canEditOrganization && (
                                 <div className="space-y-2">
                                     <Label htmlFor="organizationName">組織名</Label>
                                     <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
@@ -358,7 +362,7 @@ export default function ProfilePage() {
                         </Card>
                     )}
 
-                    <Card>
+                    {(userData.role === 'SOS' || canEditOrganization) && <Card>
                         <CardHeader><CardTitle className="text-base">住所 {userData.role === 'SUPPORTER' ? <span className="text-red-500">*</span> : <span className="text-xs font-normal text-gray-400">（任意）</span>}</CardTitle></CardHeader>
                         <CardContent>
                             {userData.role === 'SOS' ? (
@@ -376,9 +380,9 @@ export default function ProfilePage() {
                                 </>
                             )}
                         </CardContent>
-                    </Card>
+                    </Card>}
 
-                    {userData.role === 'SUPPORTER' && (
+                    {canEditOrganization && (
                         <Card>
                             <CardHeader><CardTitle className="text-base">活動地域 <span className="text-red-500">*</span></CardTitle></CardHeader>
                             <CardContent>
@@ -390,7 +394,7 @@ export default function ProfilePage() {
                     )}
 
                     {/* 公開プロフィール（サポーターのみ） */}
-                    {userData.role === 'SUPPORTER' && (
+                    {canEditOrganization && (
                         <Card className="border-teal-200">
                             <CardHeader>
                                 <CardTitle className="text-base">公開プロフィール</CardTitle>

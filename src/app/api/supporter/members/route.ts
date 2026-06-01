@@ -108,9 +108,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: membershipError.message }, { status: 500 })
     }
 
-    const membershipRows = ((memberships ?? []) as MembershipRow[]).filter((membership) =>
-        organizationContext.organizationRole !== 'MEMBER' || membership.id === organizationContext.membershipId
-    )
+    const membershipRows = (memberships ?? []) as MembershipRow[]
     const leftUserIds = membershipRows.filter((m) => m.status === 'LEFT').map((m) => m.user_id)
     const usersWithActiveMembership = new Set<string>()
 
@@ -159,7 +157,6 @@ export async function GET(request: Request) {
         },
         members: visibleMembershipRows.map((membership) => ({
             ...membership,
-            admin_note: organizationContext.organizationRole === 'OWNER' ? membership.admin_note : null,
             user: usersById[membership.user_id] ?? null,
         })),
     })

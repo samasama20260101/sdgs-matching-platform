@@ -101,10 +101,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     if (!isContext(context)) return context
 
     const { userData, organizationContext } = context
-    if (organizationContext.organizationRole !== 'OWNER') {
-        return NextResponse.json({ error: 'メンバーを変更する権限がありません' }, { status: 403 })
-    }
-
     const { data: targetMembership, error: targetError } = await supabaseAdmin
         .from('organization_memberships')
         .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
@@ -122,11 +118,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     const nextStatus = UPDATE_STATUSES.includes(body.status) ? body.status as MembershipStatus : undefined
 
     const hasDetails = DETAIL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
+    const isOwner = organizationContext.organizationRole === 'OWNER'
+    const isSelf = target.id === organizationContext.membershipId
+    if (!isOwner && (!isSelf || nextRole || nextStatus)) {
+        return NextResponse.json({ error: 'メンバーを変更する権限がありません' }, { status: 403 })
+    }
     if (!nextRole && !nextStatus && !hasDetails) {
         return NextResponse.json({ error: '変更内容がありません' }, { status: 400 })
     }
 
-    if (nextStatus && target.id === organizationContext.membershipId) {
+    if (nextStatus && isSelf) {
         return NextResponse.json({ error: '自分自身の所属状態は変更できません' }, { status: 400 })
     }
 
