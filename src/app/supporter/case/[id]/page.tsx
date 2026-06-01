@@ -74,6 +74,7 @@ export default function SupporterCaseDetailPage() {
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [showQna, setShowQna] = useState(false);
   const [offerMessage, setOfferMessage] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getToken = async () => {
@@ -211,10 +212,16 @@ export default function SupporterCaseDetailPage() {
       const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
+        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN', withdrawal_reason: cancelReason }),
       });
-      if (!res.ok) { toast.error('対応のキャンセルに失敗しました'); return; }
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        toast.error(result.message || '対応のキャンセルに失敗しました');
+        await loadData();
+        return;
+      }
       setShowCancelModal(false);
+      setCancelReason('');
       toast.success('対応をキャンセルしました');
       router.push('/supporter/dashboard');
     } finally {
@@ -235,7 +242,12 @@ export default function SupporterCaseDetailPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ supporter_resolved_at: new Date().toISOString() }),
       });
-      if (!res.ok) { toast.error('解決報告に失敗しました'); return; }
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        toast.error(result.message || '他の担当者がすでに解決を報告しました');
+        await loadData();
+        return;
+      }
 
       // システムメッセージをAPIで投稿
       await fetch('/api/messages', {
@@ -287,7 +299,7 @@ export default function SupporterCaseDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <Button variant="outline" onClick={() => router.push('/supporter/dashboard')} className="mb-4">
           ← ダッシュボードに戻る
         </Button>
@@ -295,7 +307,7 @@ export default function SupporterCaseDetailPage() {
         {/* 案件詳細カード */}
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
               <div className="flex-1">
                 <CardTitle className="text-xl mb-2">{caseData?.title}</CardTitle>
                 <div className="flex gap-2 flex-wrap">
@@ -499,7 +511,7 @@ export default function SupporterCaseDetailPage() {
                     申し出を取り下げる
                   </Button>
                 )}
-                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && (
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && !hasReportedResolution && (
                   <Button variant="outline" size="sm" onClick={() => setShowCancelModal(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full mt-1">
                     🚫 対応をキャンセルする
                   </Button>
@@ -608,9 +620,14 @@ export default function SupporterCaseDetailPage() {
             <p className="text-sm text-red-700 mt-1">あなたの対応をキャンセルすると、この案件から外れます。次の副サポーターが自動的に主になります。</p>
           </div>
           <p className="text-sm text-gray-500">やむを得ない事情がある場合のみ使用してください。</p>
+          <div className="space-y-2">
+            <Label htmlFor="cancelReason">対応をキャンセルする理由 <span className="text-red-500">*</span></Label>
+            <textarea id="cancelReason" rows={4} maxLength={1000} value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} className="w-full rounded-lg border border-gray-200 p-3 text-sm" placeholder="相談者と関係サポーターへ共有されます" />
+            <p className="text-right text-xs text-gray-400">{cancelReason.length} / 1000</p>
+          </div>
           <div className="flex gap-3">
             <button onClick={() => setShowCancelModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">戻る</button>
-            <button onClick={confirmCancel} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" disabled={isActionLoading}>
+            <button onClick={confirmCancel} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50" disabled={isActionLoading || !cancelReason.trim()}>
               {isActionLoading ? '処理中...' : 'キャンセルする'}
             </button>
           </div>

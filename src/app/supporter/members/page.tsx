@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, KeyRound, Loader2, RotateCcw, Shield, UserMinus, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, ChevronRight, KeyRound, Loader2, RotateCcw, Save, Shield, UserMinus, UserPlus, Users } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,10 @@ type Member = {
   joined_at: string | null;
   left_at: string | null;
   created_at: string;
+  department: string | null;
+  external_phone: string | null;
+  phone_extension: string | null;
+  admin_note: string | null;
   user: {
     id: string;
     real_name: string;
@@ -110,11 +114,20 @@ export default function SupporterMembersPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
+  const [registrationType, setRegistrationType] = useState<'new' | 'existing'>('new');
   const [realName, setRealName] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [externalPhone, setExternalPhone] = useState('');
+  const [department, setDepartment] = useState('');
+  const [phoneExtension, setPhoneExtension] = useState('');
+  const [adminNote, setAdminNote] = useState('');
   const [password, setPassword] = useState('');
   const [memberRole, setMemberRole] = useState<OrganizationRole>('MEMBER');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [detailDepartment, setDetailDepartment] = useState('');
+  const [detailExternalPhone, setDetailExternalPhone] = useState('');
+  const [detailPhoneExtension, setDetailPhoneExtension] = useState('');
+  const [detailAdminNote, setDetailAdminNote] = useState('');
 
   const loadMembers = useCallback(async () => {
     setError(null);
@@ -176,6 +189,18 @@ export default function SupporterMembersPage() {
     () => data?.members.filter((member) => member.status === 'LEFT') ?? [],
     [data]
   );
+  const selectedMember = useMemo(
+    () => data?.members.find((member) => member.id === selectedMemberId) ?? null,
+    [data, selectedMemberId]
+  );
+
+  const openMemberDetails = (member: Member) => {
+    setSelectedMemberId(member.id);
+    setDetailDepartment(member.department || '');
+    setDetailExternalPhone(member.external_phone || '');
+    setDetailPhoneExtension(member.phone_extension || '');
+    setDetailAdminNote(member.admin_note || '');
+  };
 
   const handleAddMember = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -195,10 +220,16 @@ export default function SupporterMembersPage() {
         },
         body: JSON.stringify({
           email,
-          real_name: realName,
-          display_name: displayName,
-          phone,
-          password,
+          registration_type: registrationType,
+          ...(registrationType === 'new' ? {
+            real_name: realName,
+            display_name: displayName,
+            external_phone: externalPhone,
+            department,
+            phone_extension: phoneExtension,
+            admin_note: adminNote,
+            password,
+          } : {}),
           role: memberRole,
         }),
       });
@@ -228,7 +259,10 @@ export default function SupporterMembersPage() {
       setEmail('');
       setRealName('');
       setDisplayName('');
-      setPhone('');
+      setExternalPhone('');
+      setDepartment('');
+      setPhoneExtension('');
+      setAdminNote('');
       setPassword('');
       setMemberRole('MEMBER');
       await loadMembers();
@@ -239,7 +273,7 @@ export default function SupporterMembersPage() {
     }
   };
 
-  const updateMember = async (membershipId: string, payload: { role?: OrganizationRole; status?: MembershipStatus }) => {
+  const updateMember = async (membershipId: string, payload: { role?: OrganizationRole; status?: MembershipStatus; department?: string; external_phone?: string; phone_extension?: string; admin_note?: string }) => {
     setError(null);
     setSuccess(null);
     setActionMemberId(membershipId);
@@ -284,6 +318,16 @@ export default function SupporterMembersPage() {
     }
   };
 
+  const saveMemberDetails = async () => {
+    if (!selectedMember) return;
+    await updateMember(selectedMember.id, {
+      department: detailDepartment,
+      external_phone: detailExternalPhone,
+      phone_extension: detailPhoneExtension,
+      admin_note: detailAdminNote,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -301,7 +345,7 @@ export default function SupporterMembersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <Link href="/supporter/dashboard" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-teal-600 mb-4">
           <ArrowLeft className="size-3" />
           ダッシュボードへ戻る
@@ -337,6 +381,40 @@ export default function SupporterMembersPage() {
 
         <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
           <div className="space-y-5">
+          {selectedMember ? (
+            <Card>
+              <CardHeader className="border-b pb-4">
+                <button type="button" onClick={() => setSelectedMemberId(null)} className="mb-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-teal-600">
+                  <ArrowLeft className="size-3" />
+                  担当者一覧へ戻る
+                </button>
+                <CardTitle className="text-base">{selectedMember.user?.display_name || selectedMember.user?.real_name || '担当者詳細'}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div><div className="text-xs text-gray-400">メールアドレス</div><div className="mt-1 break-all text-sm text-gray-700">{selectedMember.user?.email || '-'}</div></div>
+                  <div><div className="text-xs text-gray-400">権限</div><div className="mt-1 text-sm text-gray-700">{ROLE_LABEL[selectedMember.role]}</div></div>
+                </div>
+                {[{ label: '部署・所属', value: detailDepartment, setter: setDetailDepartment }, { label: '外線番号', value: detailExternalPhone, setter: setDetailExternalPhone }, { label: '内線番号', value: detailPhoneExtension, setter: setDetailPhoneExtension }].map(({ label, value, setter }) => (
+                  <div className="space-y-2" key={label}>
+                    <Label>{label}</Label>
+                    <Input value={value} onChange={(event) => setter(event.target.value)} disabled={!canManage} />
+                  </div>
+                ))}
+                <div className="space-y-2">
+                  <Label htmlFor="detailAdminNote">管理メモ</Label>
+                  <textarea id="detailAdminNote" rows={4} maxLength={1000} value={detailAdminNote} onChange={(event) => setDetailAdminNote(event.target.value)} disabled={!canManage} className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm disabled:bg-gray-50" />
+                </div>
+                {canManage && (
+                  <Button onClick={saveMemberDetails} disabled={actionMemberId === selectedMember.id} className="bg-teal-600 hover:bg-teal-700">
+                    {actionMemberId === selectedMember.id ? <Loader2 className="animate-spin" /> : <Save />}
+                    保存する
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+          <>
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -345,7 +423,7 @@ export default function SupporterMembersPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[760px] text-sm">
                   <thead className="bg-gray-50 text-xs text-gray-500">
                     <tr>
@@ -373,10 +451,10 @@ export default function SupporterMembersPage() {
                       return (
                         <tr key={member.id} className={member.status === 'LEFT' ? 'bg-gray-50 text-gray-400' : 'bg-white'}>
                           <td className="px-5 py-4">
-                            <div className="font-semibold text-gray-800">
+                            <button type="button" onClick={() => openMemberDetails(member)} className="text-left font-semibold text-gray-800 hover:text-teal-600">
                               {user?.display_name || user?.real_name || '不明'}
                               {isSelf && <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-600">あなた</span>}
-                            </div>
+                            </button>
                             <div className="mt-1 text-xs text-gray-500">{user?.email || '-'}</div>
                           </td>
                           <td className="px-5 py-4">
@@ -447,6 +525,18 @@ export default function SupporterMembersPage() {
                   </tbody>
                 </table>
               </div>
+              <div className="divide-y divide-gray-100 md:hidden">
+                {currentMembers.map((member) => (
+                  <button key={member.id} type="button" onClick={() => openMemberDetails(member)} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-gray-800">{member.user?.display_name || member.user?.real_name || '不明'}</div>
+                      <div className="mt-1 truncate text-xs text-gray-500">{member.user?.email || '-'}</div>
+                      <div className="mt-2 flex flex-wrap gap-2"><span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${STATUS_CLASS[member.status]}`}>{STATUS_LABEL[member.status]}</span><span className="text-[11px] text-gray-500">{ROLE_LABEL[member.role]}</span></div>
+                    </div>
+                    <ChevronRight className="size-4 flex-none text-gray-400" />
+                  </button>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -490,6 +580,8 @@ export default function SupporterMembersPage() {
               </CardContent>
             </Card>
           )}
+          </>
+          )}
           </div>
 
           <Card>
@@ -502,23 +594,23 @@ export default function SupporterMembersPage() {
             <CardContent>
               {canAdd ? (
                 <form onSubmit={handleAddMember} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-1 rounded-md bg-gray-100 p-1 text-xs">
+                    <button type="button" onClick={() => setRegistrationType('new')} className={`rounded px-2 py-2 ${registrationType === 'new' ? 'bg-white font-semibold text-gray-800 shadow-sm' : 'text-gray-500'}`}>新しいアカウントを作成</button>
+                    <button type="button" onClick={() => setRegistrationType('existing')} className={`rounded px-2 py-2 ${registrationType === 'existing' ? 'bg-white font-semibold text-gray-800 shadow-sm' : 'text-gray-500'}`}>登録済みアカウントを所属に追加</button>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="memberEmail">メールアドレス <span className="text-red-500">*</span></Label>
                     <Input id="memberEmail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="memberRealName">担当者名</Label>
-                    <Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="memberDisplayName">表示名</Label>
-                    <Input id="memberDisplayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={64} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="memberPhone">電話番号</Label>
-                    <Input id="memberPhone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={20} />
-                  </div>
-                  <div className="space-y-2">
+                  {registrationType === 'new' && <>
+                    <div className="space-y-2"><Label htmlFor="memberRealName">担当者名</Label><Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} /></div>
+                    <div className="space-y-2"><Label htmlFor="memberDisplayName">表示名</Label><Input id="memberDisplayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={64} /></div>
+                    <div className="space-y-2"><Label htmlFor="memberDepartment">部署・所属</Label><Input id="memberDepartment" value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={100} /></div>
+                    <div className="space-y-2"><Label htmlFor="memberExternalPhone">外線番号</Label><Input id="memberExternalPhone" type="tel" value={externalPhone} onChange={(event) => setExternalPhone(event.target.value)} maxLength={30} /></div>
+                    <div className="space-y-2"><Label htmlFor="memberPhoneExtension">内線番号</Label><Input id="memberPhoneExtension" value={phoneExtension} onChange={(event) => setPhoneExtension(event.target.value)} maxLength={30} /></div>
+                    <div className="space-y-2"><Label htmlFor="memberAdminNote">管理メモ</Label><textarea id="memberAdminNote" rows={3} maxLength={1000} value={adminNote} onChange={(event) => setAdminNote(event.target.value)} className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" /></div>
+                  </>}
+                  {registrationType === 'new' && <div className="space-y-2">
                     <Label htmlFor="memberRole">権限</Label>
                     <select
                       id="memberRole"
@@ -534,8 +626,8 @@ export default function SupporterMembersPage() {
                       )}
                       <option value="MEMBER">MEMBER</option>
                     </select>
-                  </div>
-                  <div className="space-y-2">
+                  </div>}
+                  {registrationType === 'new' && <div className="space-y-2">
                     <Label htmlFor="memberPassword">初期パスワード <span className="text-xs font-normal text-gray-400">（新規メンバーのみ）</span></Label>
                     <div className="flex gap-2">
                       <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} />
@@ -546,7 +638,7 @@ export default function SupporterMembersPage() {
                     <p className="text-xs text-gray-400">
                       既存アカウントの再追加・移籍では、現在のパスワードをそのまま使います。
                     </p>
-                  </div>
+                  </div>}
                   <Button type="submit" disabled={isSubmitting} className="w-full bg-teal-600 hover:bg-teal-700">
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <UserPlus />}
                     追加する

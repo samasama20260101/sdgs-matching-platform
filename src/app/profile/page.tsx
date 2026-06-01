@@ -30,6 +30,7 @@ type UserData = {
     service_areas: ServiceArea[];
     service_area_nationwide: boolean;
     organization_id?: string | null;
+    organization_role?: 'OWNER' | 'ADMIN' | 'MEMBER' | null;
     bio: string | null;
     social_links: {
         website?: string; twitter?: string;
@@ -133,6 +134,10 @@ export default function ProfilePage() {
                 const data = roleData.user;
                 if (data.role === 'SUPPORTER' && !data.organization_id) {
                     router.push('/supporter/no-organization');
+                    return;
+                }
+                if (data.role === 'SUPPORTER' && data.organization_role !== 'OWNER') {
+                    router.push('/supporter/dashboard');
                     return;
                 }
                 setUserData(data);
@@ -291,7 +296,7 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
-            <main className="max-w-2xl mx-auto px-6 py-8">
+            <main className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-800">プロフィール編集</h1>
                     <p className="text-gray-500 mt-1">登録情報を更新できます</p>

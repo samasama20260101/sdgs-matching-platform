@@ -22,6 +22,10 @@ type MembershipRow = {
     joined_at: string | null
     left_at: string | null
     created_at: string
+    department: string | null
+    external_phone: string | null
+    phone_extension: string | null
+    admin_note: string | null
 }
 
 type MembershipStatus = MembershipRow['status']
@@ -42,6 +46,12 @@ function normalizeEmail(email: unknown) {
 function sanitizePhone(phone: unknown) {
     return typeof phone === 'string' && phone.trim()
         ? phone.replace(/[-\s().+]/g, '')
+        : null
+}
+
+function sanitizeText(value: unknown, maxLength: number) {
+    return typeof value === 'string' && value.trim()
+        ? value.trim().slice(0, maxLength)
         : null
 }
 
@@ -89,7 +99,7 @@ export async function GET(request: Request) {
     const { organizationContext } = context
     const { data: memberships, error: membershipError } = await supabaseAdmin
         .from('organization_memberships')
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
         .eq('organization_id', organizationContext.organizationId)
         .order('created_at', { ascending: true })
 
@@ -98,7 +108,9 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: membershipError.message }, { status: 500 })
     }
 
-    const membershipRows = (memberships ?? []) as MembershipRow[]
+    const membershipRows = ((memberships ?? []) as MembershipRow[]).filter((membership) =>
+        organizationContext.organizationRole !== 'MEMBER' || membership.id === organizationContext.membershipId
+    )
     const leftUserIds = membershipRows.filter((m) => m.status === 'LEFT').map((m) => m.user_id)
     const usersWithActiveMembership = new Set<string>()
 
@@ -147,6 +159,7 @@ export async function GET(request: Request) {
         },
         members: visibleMembershipRows.map((membership) => ({
             ...membership,
+            admin_note: organizationContext.organizationRole === 'OWNER' ? membership.admin_note : null,
             user: usersById[membership.user_id] ?? null,
         })),
     })
@@ -162,13 +175,21 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
+    const registrationType = body.registration_type === 'existing' ? 'existing' : 'new'
     const email = normalizeEmail(body.email)
     const realName = typeof body.real_name === 'string' ? body.real_name.trim() : ''
     const displayName = typeof body.display_name === 'string' ? body.display_name.trim() : ''
     const password = typeof body.password === 'string' ? body.password : ''
-    const phone = sanitizePhone(body.phone)
+    const externalPhone = sanitizePhone(body.external_phone)
+    const department = sanitizeText(body.department, 100)
+    const phoneExtension = sanitizeText(body.phone_extension, 30)
+    const adminNote = organizationContext.organizationRole === 'OWNER'
+        ? sanitizeText(body.admin_note, 1000)
+        : null
     const requestedRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : 'MEMBER'
-    const memberRole = organizationContext.organizationRole === 'OWNER' ? requestedRole : 'MEMBER'
+    const memberRole = registrationType === 'existing'
+        ? 'MEMBER'
+        : organizationContext.organizationRole === 'OWNER' ? requestedRole : 'MEMBER'
 
     if (!email) {
         return NextResponse.json({ error: 'メールアドレスを入力してください' }, { status: 400 })
@@ -180,6 +201,9 @@ export async function POST(request: Request) {
         .eq('email', email)
         .maybeSingle()
     if (existingUser) {
+        if (registrationType !== 'existing') {
+            return NextResponse.json({ error: 'このメールアドレスは登録済みです。「登録済みアカウントを所属に追加」を選択してください' }, { status: 409 })
+        }
         const existing = existingUser as PublicUser
         if (existing.role !== 'SUPPORTER') {
             return NextResponse.json({ error: 'このメールアドレスは別の利用者種別で登録されています' }, { status: 409 })
@@ -187,7 +211,7 @@ export async function POST(request: Request) {
 
         const { data: existingMemberships, error: existingMembershipsError } = await supabaseAdmin
             .from('organization_memberships')
-            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
             .eq('user_id', existing.id)
 
         if (existingMembershipsError) {
@@ -231,7 +255,7 @@ export async function POST(request: Request) {
                 .insert(membershipPayload)
 
         const { data: membership, error: membershipError } = await membershipQuery
-            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
             .single()
 
         if (membershipError || !membership) {
@@ -243,7 +267,6 @@ export async function POST(request: Request) {
             supporter_type: organizationContext.organization.supporter_type,
             is_suspended: false,
         }
-        if (phone) userUpdates.phone = phone
         if (realName) userUpdates.real_name = realName
         if (displayName) userUpdates.display_name = displayName
 
@@ -280,6 +303,9 @@ export async function POST(request: Request) {
         })
     }
 
+    if (registrationType === 'existing') {
+        return NextResponse.json({ error: '登録済みアカウントが見つかりません' }, { status: 404 })
+    }
     if (!realName || !password) {
         return NextResponse.json({ error: '新規メンバーは担当者名と初期パスワードが必要です' }, { status: 400 })
     }
@@ -312,7 +338,7 @@ export async function POST(request: Request) {
             display_name: displayName || realName,
             display_id: displayIdRow,
             email,
-            phone,
+            phone: externalPhone,
             organization_name: organizationContext.organization.name,
             supporter_type: organizationContext.organization.supporter_type,
             must_change_password: true,
@@ -334,8 +360,12 @@ export async function POST(request: Request) {
             status: 'ACTIVE',
             invited_by_user_id: userData.id,
             joined_at: new Date().toISOString(),
+            department,
+            external_phone: externalPhone,
+            phone_extension: phoneExtension,
+            admin_note: adminNote,
         })
-        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension, admin_note')
         .single()
 
     if (membershipError || !membership) {

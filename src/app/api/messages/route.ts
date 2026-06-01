@@ -11,8 +11,9 @@ async function getAuthUser(request: Request) {
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
     if (error || !user) return null
     const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role, display_name, organization_name').eq('auth_user_id', user.id).single()
+        .from('users').select('id, role, display_name, organization_name, is_suspended').eq('auth_user_id', user.id).single()
     if (!userData) return null
+    if (userData.is_suspended) return null
     const organizationContext = userData.role === 'SUPPORTER'
         ? await getActiveOrganizationForUser(userData.id)
         : null
@@ -31,6 +32,9 @@ export async function GET(request: Request) {
 
     const userData = await getAuthUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (userData.role === 'SUPPORTER' && !userData.organization_id) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+    }
 
     // この案件に関与しているか確認
     const { data: caseData } = await supabaseAdmin
@@ -39,17 +43,13 @@ export async function GET(request: Request) {
 
     // SOS所有者またはACCEPTEDサポーターのみアクセス許可
     let canAccess = caseData.owner_user_id === userData.id
-    if (!canAccess) {
+    if (!canAccess && userData.role === 'SUPPORTER') {
         let offerQuery = supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', caseId)
             .eq('status', 'ACCEPTED')
-        if (userData.organization_id) {
-            offerQuery = offerQuery.or(`supporter_organization_id.eq.${userData.organization_id},supporter_user_id.eq.${userData.id}`)
-        } else {
-            offerQuery = offerQuery.eq('supporter_user_id', userData.id)
-        }
+        offerQuery = offerQuery.eq('supporter_organization_id', userData.organization_id)
         const { data: offer } = await offerQuery
             .maybeSingle()
         canAccess = !!offer
@@ -98,6 +98,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     const userData = await getAuthUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (userData.role === 'SUPPORTER' && !userData.organization_id) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+    }
 
     const { case_id, content } = await request.json()
     if (!case_id || !content?.trim()) {
@@ -110,17 +113,13 @@ export async function POST(request: Request) {
     if (!caseData) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
 
     let canAccess = caseData.owner_user_id === userData.id
-    if (!canAccess) {
+    if (!canAccess && userData.role === 'SUPPORTER') {
         let offerQuery = supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', case_id)
             .eq('status', 'ACCEPTED')
-        if (userData.organization_id) {
-            offerQuery = offerQuery.or(`supporter_organization_id.eq.${userData.organization_id},supporter_user_id.eq.${userData.id}`)
-        } else {
-            offerQuery = offerQuery.eq('supporter_user_id', userData.id)
-        }
+        offerQuery = offerQuery.eq('supporter_organization_id', userData.organization_id)
         const { data: offer } = await offerQuery
             .maybeSingle()
         canAccess = !!offer

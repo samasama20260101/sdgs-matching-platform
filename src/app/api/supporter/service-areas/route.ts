@@ -39,12 +39,11 @@ export async function GET(request: Request) {
     if (!organizationContext) {
         return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
     }
-
     // Step1: supporter_service_areas 取得
     const areasQuery = supabaseAdmin
         .from('supporter_service_areas')
         .select('id, region_code, is_nationwide, country')
-        .or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
+        .eq('organization_id', organizationContext.organizationId)
     const { data: areas, error: areasError } = await areasQuery
 
     if (areasError) {
@@ -106,6 +105,9 @@ export async function PUT(request: Request) {
     if (!organizationContext) {
         return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
     }
+    if (organizationContext.organizationRole !== 'OWNER') {
+        return NextResponse.json({ error: '活動地域を変更できるのはOWNERのみです', code: 'FORBIDDEN' }, { status: 403 })
+    }
 
     const { service_areas, service_area_nationwide } = await request.json()
 
@@ -113,7 +115,7 @@ export async function PUT(request: Request) {
     const deleteQuery = supabaseAdmin
         .from('supporter_service_areas')
         .delete()
-        .or(`organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
+        .eq('organization_id', organizationContext.organizationId)
     const { error: deleteError } = await deleteQuery
 
     if (deleteError) {

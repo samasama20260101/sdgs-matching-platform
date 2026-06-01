@@ -52,59 +52,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             )
         }
 
-        // 現在の承認済み数を確認（ACCEPTED + WITHDRAWNも含めた全履歴の最大orderを取得）
-        const { data: acceptedOffers } = await supabaseAdmin
-            .from('offers')
-            .select('id, accepted_order')
-            .eq('case_id', offer.case_id)
-            .eq('status', 'ACCEPTED')
-            .order('accepted_order', { ascending: true })
-
-        const currentCount = acceptedOffers?.length ?? 0
-
-        if (currentCount >= MAX_ACCEPTED) {
-            return NextResponse.json({ error: 'MAX_REACHED', message: `承認上限（${MAX_ACCEPTED}名）に達しています` }, { status: 400 })
+        const { data: result, error: acceptError } = await supabaseAdmin.rpc('accept_sos_offer', {
+            p_offer_id: id,
+            p_sos_user_id: userData.id,
+            p_max_accepted: MAX_ACCEPTED,
+        })
+        if (acceptError) return NextResponse.json({ error: acceptError.message }, { status: 500 })
+        if (result?.error) {
+            const status = result.error === 'FORBIDDEN' ? 403 : 409
+            return NextResponse.json({ error: result.error, message: '他の操作が先に完了しています' }, { status })
         }
-
-        // accepted_order を付番（欠番が生じても重複しないようMAXを取得して+1）
-        // COUNT+1ではなくMAX+1を使う理由：
-        // 離脱者が出た後に新規承認されると同じorderが付番される問題を防ぐ
-        const { data: maxOrderRow } = await supabaseAdmin
-            .from('offers')
-            .select('accepted_order')
-            .eq('case_id', offer.case_id)
-            .not('accepted_order', 'is', null)
-            .order('accepted_order', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-        const nextOrder = (maxOrderRow?.accepted_order ?? 0) + 1
-
-        const { error: updateError } = await supabaseAdmin
-            .from('offers')
-            .update({ status: 'ACCEPTED', accepted_order: nextOrder, accepted_by_user_id: userData.id })
-            .eq('id', id)
-
-        if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
-
-        // 上限に達した場合、残りのPENDINGを全て自動DECLINED
-        if (nextOrder >= MAX_ACCEPTED) {
-            await supabaseAdmin
-                .from('offers')
-                .update({ status: 'DECLINED', declined_by_user_id: userData.id })
-                .eq('case_id', offer.case_id)
-                .eq('status', 'PENDING')
-        }
-
-        return NextResponse.json({ ok: true, accepted_order: nextOrder, auto_declined: nextOrder >= MAX_ACCEPTED })
+        return NextResponse.json(result)
     }
 
     // ── 辞退処理 ──────────────────────────────────────────
-    const updateData = body.status === 'DECLINED'
-        ? { ...body, declined_by_user_id: userData.id }
-        : body
+    if (body.status !== 'DECLINED' || offer.status !== 'PENDING') {
+        return NextResponse.json({ error: 'OFFER_NOT_PENDING', message: '他の操作が先に完了しています' }, { status: 409 })
+    }
+    const updateData = { status: 'DECLINED', declined_at: body.declined_at, declined_by_user_id: userData.id }
     const { error: updateError } = await supabaseAdmin
-        .from('offers').update(updateData).eq('id', id)
+        .from('offers').update(updateData).eq('id', id).eq('status', 'PENDING')
 
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 

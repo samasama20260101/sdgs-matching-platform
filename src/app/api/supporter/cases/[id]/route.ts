@@ -121,7 +121,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         .from('offers')
         .select('id')
         .eq('case_id', id)
-        .or(`supporter_organization_id.eq.${organizationContext.organizationId},supporter_user_id.eq.${userData.id}`)
+        .eq('supporter_organization_id', organizationContext.organizationId)
         .eq('status', 'ACCEPTED')
         .maybeSingle()
 
@@ -130,10 +130,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json()
-    const { error: updateError } = await supabaseAdmin
-        .from('cases').update(body).eq('id', id)
+    if (!body.supporter_resolved_at || Object.keys(body).length !== 1) {
+        return NextResponse.json({ error: 'Invalid update' }, { status: 400 })
+    }
+    const { data: updatedCase, error: updateError } = await supabaseAdmin
+        .from('cases')
+        .update({ supporter_resolved_at: body.supporter_resolved_at })
+        .eq('id', id)
+        .eq('status', 'MATCHED')
+        .is('supporter_resolved_at', null)
+        .select('id')
+        .maybeSingle()
     if (updateError) {
         return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+    if (!updatedCase) {
+        return NextResponse.json({ error: 'STALE_STATE', message: '他の担当者がすでに操作しました' }, { status: 409 })
     }
 
     return NextResponse.json({ ok: true })
