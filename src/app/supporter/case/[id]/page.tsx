@@ -60,10 +60,12 @@ export default function SupporterCaseDetailPage() {
   const [myOffer, setMyOffer] = useState<OfferData | null>(null);
   const [acceptedOfferOrders, setAcceptedOfferOrders] = useState<{
     supporter_user_id: string;
+    supporter_organization_id: string;
     accepted_order: number;
     profile: { display_name: string; organization_name: string | null; supporter_type: string } | null;
   }[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentOrganizationId, setCurrentOrganizationId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -96,9 +98,10 @@ export default function SupporterCaseDetailPage() {
       router.push('/supporter/dashboard');
       return;
     }
-    const { case: caseResult, supporterUserId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
+    const { case: caseResult, supporterUserId, supporterOrganizationId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
     setCaseData(caseResult);
     setCurrentUserId(supporterUserId);
+    setCurrentOrganizationId(supporterOrganizationId);
     setAcceptedOfferOrders(aOffers ?? []);
     setOwnerBirthDate(birthDate ?? null);
 
@@ -441,7 +444,7 @@ export default function SupporterCaseDetailPage() {
             <CardContent>
               <div className="space-y-2">
                 {acceptedOfferOrders.map((o, i) => {
-                  const isMe = o.supporter_user_id === currentUserId
+                  const isMe = o.supporter_organization_id === currentOrganizationId
                   const label = i === 0 ? '主' : '副'
                   const labelColor = i === 0
                     ? 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -452,7 +455,7 @@ export default function SupporterCaseDetailPage() {
                     ? 'bg-amber-100 text-amber-700'
                     : 'bg-blue-100 text-blue-700'
                   return (
-                    <div key={o.supporter_user_id} className={`flex items-center gap-3 p-3 rounded-lg border ${isMe ? 'bg-amber-50 border-amber-100' : 'bg-white border-gray-100'}`}>
+                    <div key={o.supporter_organization_id} className={`flex items-center gap-3 p-3 rounded-lg border ${isMe ? 'bg-amber-50 border-amber-100' : 'bg-white border-gray-100'}`}>
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${avatarColor}`}>
                         {initial}
                       </div>
@@ -471,7 +474,7 @@ export default function SupporterCaseDetailPage() {
                       </div>
                       {!isMe && (
                         <a
-                          href={`/supporters/${o.supporter_user_id}`}
+                          href={`/supporters/${o.supporter_organization_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 flex-shrink-0"

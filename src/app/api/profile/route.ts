@@ -156,23 +156,19 @@ export async function POST(request: Request) {
     }
 
     // サポーターの活動地域を更新
-    if (userData?.role === 'SUPPORTER' && isOrganizationOwner && service_areas !== undefined) {
+    if (userData?.role === 'SUPPORTER' && isOrganizationOwner && organizationContext && service_areas !== undefined) {
         // 既存データを全削除して入れ直す
-        let deleteQuery = supabaseAdmin
+        const deleteQuery = supabaseAdmin
             .from('supporter_service_areas')
             .delete()
-        if (organizationContext?.organizationId) {
-            deleteQuery = deleteQuery.eq('organization_id', organizationContext.organizationId)
-        } else {
-            deleteQuery = deleteQuery.eq('supporter_user_id', userData.id)
-        }
+            .eq('organization_id', organizationContext.organizationId)
         await deleteQuery
 
         if (service_area_nationwide) {
             // 全国対応：1レコードのみ
             await supabaseAdmin.from('supporter_service_areas').insert([{
                 supporter_user_id: userData.id,
-                organization_id: organizationContext?.organizationId ?? null,
+                organization_id: organizationContext.organizationId,
                 region_code: null,
                 is_nationwide: true,
             }])
@@ -180,7 +176,7 @@ export async function POST(request: Request) {
             const { error: insertError } = await supabaseAdmin.from('supporter_service_areas').insert(
                 (service_areas as ServiceAreaInput[]).map((a) => ({
                     supporter_user_id: userData.id,
-                    organization_id: organizationContext?.organizationId ?? null,
+                    organization_id: organizationContext.organizationId,
                     region_code: a.region_code,
                     country: a.country || 'JP',
                     is_nationwide: false,

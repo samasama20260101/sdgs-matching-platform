@@ -46,8 +46,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // 承認済みサポーターのプロフィールを2ステップで取得（協業用）
     const organizationIds = [...new Set((acceptedOffers ?? []).map((o: { supporter_organization_id?: string | null }) => o.supporter_organization_id).filter(Boolean))]
-    const supporterIds = (acceptedOffers ?? []).map((o: { supporter_user_id: string }) => o.supporter_user_id)
-    const supporterProfiles: Record<string, { display_name: string; organization_name: string | null; supporter_type: string }> = {}
     const organizationProfiles: Record<string, { display_name: string; organization_name: string | null; supporter_type: string }> = {}
     if (organizationIds.length > 0) {
         const { data: organizations } = await supabaseAdmin
@@ -62,26 +60,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             }
         })
     }
-    if (supporterIds.length > 0) {
-        const { data: profiles } = await supabaseAdmin
-            .from('users')
-            .select('id, display_name, organization_name, supporter_type')
-            .in('id', supporterIds)
-        ;(profiles ?? []).forEach((p: { id: string; display_name: string; organization_name: string | null; supporter_type: string }) => {
-            supporterProfiles[p.id] = {
-                display_name: p.display_name,
-                organization_name: p.organization_name,
-                supporter_type: p.supporter_type,
-            }
-        })
-    }
-
     // acceptedOffers にプロフィール情報を付加
     const acceptedOffersWithProfile = (acceptedOffers ?? []).map((o: { supporter_user_id: string; supporter_organization_id?: string | null; accepted_order: number; status: string }) => ({
         ...o,
         profile: o.supporter_organization_id
-            ? organizationProfiles[o.supporter_organization_id] ?? supporterProfiles[o.supporter_user_id] ?? null
-            : supporterProfiles[o.supporter_user_id] ?? null,
+            ? organizationProfiles[o.supporter_organization_id] ?? null
+            : null,
     }))
 
     // オーナーの birth_date を取得（未成年判定用）

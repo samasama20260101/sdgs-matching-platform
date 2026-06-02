@@ -447,7 +447,7 @@ export default function ProfilePage() {
                             <CardHeader>
                                 <CardTitle className="text-base">公開プロフィール</CardTitle>
                                 <p className="text-xs text-gray-400 mt-1">🌐 ログイン不要のサポーター紹介ページに表示されます</p>
-                                <a href={`/supporters/${userData.id}`} target="_blank"
+                                <a href={`/supporters/${userData.organization_id}`} target="_blank"
                                     className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 mt-2 underline">
                                     団体公開ページを確認する →
                                 </a>
