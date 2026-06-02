@@ -35,6 +35,7 @@ type Case = {
 
 type UserData = {
   id: string;
+  organization_id: string;
   display_name: string;
   organization_name: string | null;
   role: string;
@@ -285,6 +286,10 @@ export default function SupporterDashboard() {
               <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
             </div>
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-shrink-0">
+              <a href={`/supporters/${userData?.organization_id}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                🌐 団体公開ページ
+              </a>
               <a href="/profile"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
                 ✏️ プロフィール編集
