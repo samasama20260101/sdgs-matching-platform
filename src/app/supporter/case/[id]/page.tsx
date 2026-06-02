@@ -10,6 +10,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import MessageThread from '@/components/chat/MessageThread';
+import { InternalNotesPanel } from '@/components/supporter/InternalNotesPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -581,6 +582,10 @@ export default function SupporterCaseDetailPage() {
               readOnly={caseData?.status === 'RESOLVED' || caseData?.status === 'CLOSED' || caseData?.status === 'CANCELLED'}
             />
           </div>
+        )}
+
+        {isAccepted && accessToken && (
+          <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken} />
         )}
       </main>
 
