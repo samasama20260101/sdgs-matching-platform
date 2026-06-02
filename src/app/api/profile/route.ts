@@ -66,9 +66,6 @@ export async function POST(request: Request) {
     if (currentUserData.role === 'SOS') {
         SOS_PROFILE_FIELDS.forEach((field) => allowedUserFields.add(field))
     }
-    if (isOrganizationOwner) {
-        ORGANIZATION_PROFILE_FIELDS.forEach((field) => allowedUserFields.add(field))
-    }
     const updateData = Object.fromEntries(
         Object.entries(rawUpdateData).filter(([key]) => allowedUserFields.has(key))
     )
@@ -114,32 +111,32 @@ export async function POST(request: Request) {
     if (userData?.role === 'SUPPORTER' && isOrganizationOwner && organizationContext?.organizationId) {
         const organizationUpdate: Record<string, unknown> = {}
 
-        if (Object.prototype.hasOwnProperty.call(updateData, 'organization_name')) {
-            organizationUpdate.name = updateData.organization_name
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'organization_name')) {
+            organizationUpdate.name = rawUpdateData.organization_name
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'organization_phone')) {
-            organizationUpdate.phone = updateData.organization_phone
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'organization_phone')) {
+            organizationUpdate.phone = rawUpdateData.organization_phone
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'supporter_type')) {
-            organizationUpdate.supporter_type = updateData.supporter_type
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'supporter_type')) {
+            organizationUpdate.supporter_type = rawUpdateData.supporter_type
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'bio')) {
-            organizationUpdate.bio = updateData.bio
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'bio')) {
+            organizationUpdate.bio = rawUpdateData.bio
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'social_links')) {
-            organizationUpdate.social_links = updateData.social_links
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'social_links')) {
+            organizationUpdate.social_links = rawUpdateData.social_links
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'postal_code')) {
-            organizationUpdate.postal_code = updateData.postal_code
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'postal_code')) {
+            organizationUpdate.postal_code = rawUpdateData.postal_code
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'prefecture')) {
-            organizationUpdate.prefecture = updateData.prefecture
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'prefecture')) {
+            organizationUpdate.prefecture = rawUpdateData.prefecture
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'city')) {
-            organizationUpdate.city = updateData.city
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'city')) {
+            organizationUpdate.city = rawUpdateData.city
         }
-        if (Object.prototype.hasOwnProperty.call(updateData, 'address_structured')) {
-            organizationUpdate.address_structured = updateData.address_structured
+        if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'address_structured')) {
+            organizationUpdate.address_structured = rawUpdateData.address_structured
         }
 
         if (Object.keys(organizationUpdate).length > 0) {
