@@ -345,15 +345,6 @@ export default function SOSResultPage() {
         body: JSON.stringify({ supporter_resolved_at: null }),
       });
       if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-      // システムメッセージをAPIで投稿
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          case_id: params.id,
-          content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
-        }),
-      });
       toast.success('サポーターに対応継続を依頼しました');
       await loadData();
     } finally {

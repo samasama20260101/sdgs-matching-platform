@@ -253,16 +253,6 @@ export default function SupporterCaseDetailPage() {
         return;
       }
 
-      // システムメッセージをAPIで投稿
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          case_id: params.id,
-          content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
-        }),
-      });
-
       setShowResolveModal(false);
       await loadData();
       toast.success('解決を報告しました。相談者の確認をお待ちください');

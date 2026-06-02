@@ -109,6 +109,9 @@ export async function POST(request: Request) {
     if (!case_id || !content?.trim()) {
         return NextResponse.json({ error: 'case_id and content are required' }, { status: 400 })
     }
+    if (content.trim().startsWith('__SYSTEM__')) {
+        return NextResponse.json({ error: 'Reserved message prefix' }, { status: 400 })
+    }
 
     // この案件に関与しているか確認（SOS所有者またはACCEPTEDサポーター）
     const { data: caseData } = await supabaseAdmin

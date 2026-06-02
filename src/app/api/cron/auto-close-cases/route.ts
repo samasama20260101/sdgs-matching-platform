@@ -47,6 +47,9 @@ export async function GET(request: Request) {
             const messageInserts = resolvedCases.map((c: { id: string; owner_user_id: string }) => ({
                 case_id: c.id,
                 sender_user_id: c.owner_user_id,
+                sender_display_name_snapshot: 'システム',
+                sender_role_snapshot: 'SYSTEM',
+                message_type: 'SYSTEM',
                 content: '__SYSTEM__サポーターの解決報告から14日が経過したため、自動的に解決済みとなりました。',
             }))
             await supabaseAdmin.from('messages').insert(messageInserts)
@@ -118,6 +121,9 @@ export async function GET(request: Request) {
                     const closeMessages = inactiveCases.map((c: { id: string; owner_user_id: string }) => ({
                         case_id: c.id,
                         sender_user_id: c.owner_user_id,
+                        sender_display_name_snapshot: 'システム',
+                        sender_role_snapshot: 'SYSTEM',
+                        message_type: 'SYSTEM',
                         content: '__SYSTEM__最後のメッセージから14日間活動がなかったため、この案件は自動的に終了しました。',
                     }))
                     await supabaseAdmin.from('messages').insert(closeMessages)

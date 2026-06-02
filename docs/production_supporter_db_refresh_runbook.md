@@ -15,8 +15,9 @@ SOSユーザー、相談案件、チャット履歴は保持する。
 
 ## 本番保護
 
-- 対象Project Refは必ず `dqiqwclgzxhjxpotflvz` であることを確認する。
+- 対象Project RefはSupabase DashboardとVercel Production環境変数で作業直前に再確認する。
 - Staging Project Ref `fzawgdmqewmwdqjsqjwt` へ誤って接続していないことも確認する。
+- 過去資料のProduction Project RefとSupabase CLIのプロジェクト一覧に不一致が見つかっている。照合が終わるまでSQLを実行しない。
 - ProductionへのSQL実行、Auth操作、データ削除は、作業直前に内容を再確認してから行う。
 - DBバックアップを取得してから開始する。
 - SOSユーザー、相談内容、メッセージ、認証情報、支援履歴を一括削除しない。
@@ -70,9 +71,37 @@ Supabase DashboardのProduction SQL Editorで、以下を上から順に1本ず�
 3. `migrations/add_case_internal_notes.sql`
 4. `migrations/add_supporter_workflow_guards_and_member_details.sql`
 5. `migrations/finalize_supporter_organization_ownership.sql`
+6. `migrations/harden_supporter_organization_foundation.sql`
 
 各SQLの完了を確認してから次へ進む。
 `finalize_supporter_organization_ownership.sql` は孤立データがある場合に停止するため、エラー時はデータを削除せず状況を確認する。
+`harden_supporter_organization_foundation.sql` は重複所属や地域不整合がある場合に停止するため、エラー時はデータを削除せず状況を確認する。
+`harden_supporter_organization_foundation.sql` は廃止済みの案件ステータス `IN_PROGRESS` が残っている場合、現行の `MATCHED` へ統合する。
+
+### 6本目の実行前確認SQL
+
+5本目の完了後、6本目の強化migrationを実行する前に確認する。
+
+```sql
+select user_id, count(*) as current_memberships_count
+from organization_memberships
+where status in ('ACTIVE', 'SUSPENDED')
+group by user_id
+having count(*) > 1;
+
+select organization_id, country, region_code, count(*) as duplicate_service_areas_count
+from supporter_service_areas
+group by organization_id, country, region_code
+having count(*) > 1;
+
+select organization_id, coalesce(country, 'JP') as country
+from supporter_service_areas
+group by organization_id, coalesce(country, 'JP')
+having bool_or(is_nationwide = true)
+   and bool_or(is_nationwide = false);
+```
+
+3つとも `0件` であることを確認する。
 
 ## 適用後確認SQL
 
@@ -120,6 +149,24 @@ from (
 
 select count(*) as case_internal_notes_count
 from case_internal_notes;
+
+select count(*) as organizations_without_display_id
+from organizations
+where display_id is null;
+
+select count(*) as invalid_message_types
+from messages
+where message_type not in ('USER', 'SYSTEM');
+
+select relname, relrowsecurity
+from pg_class
+where relname in (
+    'organizations',
+    'organization_memberships',
+    'organization_invitations',
+    'audit_logs'
+)
+order by relname;
 ```
 
 以下はすべて `0` であることを確認する。
@@ -131,7 +178,11 @@ offers_without_organization
 badges_without_organization
 duplicate_organization_offers
 duplicate_organization_badges
+organizations_without_display_id
+invalid_message_types
 ```
+
+`relrowsecurity` は4テーブルすべて `true` であることを確認する。
 
 ## 運営サポーターの扱い
 
