@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -25,10 +25,16 @@ const COLORS = {
 };
 
 export function Toast({ message, type, onClose }: ToastProps) {
+    const onCloseRef = useRef(onClose);
+
     useEffect(() => {
-        const timer = setTimeout(onClose, 4000);
-        return () => clearTimeout(timer);
+        onCloseRef.current = onClose;
     }, [onClose]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => onCloseRef.current(), 4000);
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <div className="fixed top-20 right-4 z-50 animate-slide-in-right">
@@ -50,7 +56,7 @@ export function Toast({ message, type, onClose }: ToastProps) {
 export function useToast() {
     const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: ToastType }>>([]);
 
-    const showToast = (message: string, type: ToastType = 'info') => {
+    const showToast = useCallback((message: string, type: ToastType = 'info') => {
         // 同じメッセージが既に表示中なら追加しない（重複防止）
         setToasts((prev) => {
             const isDuplicate = prev.some(t => t.message === message && t.type === type);
@@ -58,13 +64,13 @@ export function useToast() {
             const id = Date.now();
             return [...prev, { id, message, type }];
         });
-    };
+    }, []);
 
-    const removeToast = (id: number) => {
+    const removeToast = useCallback((id: number) => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
-    };
+    }, []);
 
-    const ToastContainer = () => (
+    const ToastContainer = useCallback(() => (
         <div className="fixed top-20 right-4 z-[9999] pointer-events-none">
             <div className="flex flex-col gap-2 pointer-events-auto">
                 {toasts.map((t, index) => (
@@ -78,7 +84,7 @@ export function useToast() {
                 ))}
             </div>
         </div>
-    );
+    ), [removeToast, toasts]);
 
     return {
         success: (message: string) => showToast(message, 'success'),
