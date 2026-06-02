@@ -72,11 +72,13 @@ Supabase DashboardのProduction SQL Editorで、以下を上から順に1本ず�
 4. `migrations/add_supporter_workflow_guards_and_member_details.sql`
 5. `migrations/finalize_supporter_organization_ownership.sql`
 6. `migrations/harden_supporter_organization_foundation.sql`
+7. `migrations/add_admin_search_foundation.sql`
 
 各SQLの完了を確認してから次へ進む。
 `finalize_supporter_organization_ownership.sql` は孤立データがある場合に停止するため、エラー時はデータを削除せず状況を確認する。
 `harden_supporter_organization_foundation.sql` は重複所属や地域不整合がある場合に停止するため、エラー時はデータを削除せず状況を確認する。
 `harden_supporter_organization_foundation.sql` は廃止済みの案件ステータス `IN_PROGRESS` が残っている場合、現行の `MATCHED` へ統合する。
+`add_admin_search_foundation.sql` は案件へ `CASE-00001` 形式の管理用番号を付与し、ユーザーメールの大小文字を無視した重複登録を禁止する。
 
 ### 6本目の実行前確認SQL
 
@@ -158,6 +160,10 @@ select count(*) as invalid_message_types
 from messages
 where message_type not in ('USER', 'SYSTEM');
 
+select count(*) as cases_without_display_id
+from cases
+where display_id is null;
+
 select relname, relrowsecurity
 from pg_class
 where relname in (
@@ -180,6 +186,7 @@ duplicate_organization_offers
 duplicate_organization_badges
 organizations_without_display_id
 invalid_message_types
+cases_without_display_id
 ```
 
 `relrowsecurity` は4テーブルすべて `true` であることを確認する。
