@@ -47,6 +47,7 @@ type OfferData = {
   accepted_order: number | null;
   supporter: {
     id: string;
+    organization_id: string;
     display_name: string;
     organization_name: string | null;
     supporter_type: string;
@@ -97,6 +98,7 @@ export default function SOSResultPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export default function SOSResultPage() {
         () => { loadData(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const loadData = async () => {
@@ -159,9 +162,9 @@ export default function SOSResultPage() {
     setOffers(fetchedOffers as OfferData[]);
     if (badges && badges.length > 0) {
       const badgeMap: Record<string, Record<string, number>> = {};
-      badges.forEach((b: { supporter_user_id: string; badge_key: string }) => {
-        if (!badgeMap[b.supporter_user_id]) badgeMap[b.supporter_user_id] = {};
-        badgeMap[b.supporter_user_id][b.badge_key] = (badgeMap[b.supporter_user_id][b.badge_key] || 0) + 1;
+      badges.forEach((b: { supporter_organization_id: string; badge_key: string }) => {
+        if (!badgeMap[b.supporter_organization_id]) badgeMap[b.supporter_organization_id] = {};
+        badgeMap[b.supporter_organization_id][b.badge_key] = (badgeMap[b.supporter_organization_id][b.badge_key] || 0) + 1;
       });
       setSupporterBadges(badgeMap);
     }
@@ -314,7 +317,7 @@ export default function SOSResultPage() {
       if (accepted.length > 0 && currentUserId) {
         const autoBadges = accepted.map((offer, i) => ({
           case_id: params.id as string,
-          supporter_user_id: offer.supporter.id,
+          supporter_organization_id: offer.supporter.organization_id,
           badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
         }));
         await fetch('/api/sos/badges', {
@@ -367,7 +370,7 @@ export default function SOSResultPage() {
     const badgeRows = accepted.flatMap((offer) =>
       [...selectedBadges].map((badgeKey) => ({
         case_id: params.id as string,
-        supporter_user_id: offer.supporter.id,
+        supporter_organization_id: offer.supporter.organization_id,
         badge_key: badgeKey,
       }))
     );
@@ -636,7 +639,7 @@ export default function SOSResultPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {acceptedOffers.map((offer) => {
-                  const badges = supporterBadges[offer.supporter.id] || {};
+                  const badges = supporterBadges[offer.supporter.organization_id] || {};
                   return (
                     <div key={offer.id} className="bg-white p-4 rounded-lg border border-teal-200">
                       <div className="flex items-start justify-between mb-2">
@@ -691,7 +694,7 @@ export default function SOSResultPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {pendingOffers.map((offer) => {
-                const badges = supporterBadges[offer.supporter.id] || {};
+                const badges = supporterBadges[offer.supporter.organization_id] || {};
                 const badgeEntries = Object.entries(badges);
                 return (
                   <div key={offer.id} className="border border-gray-200 p-4 rounded-lg">

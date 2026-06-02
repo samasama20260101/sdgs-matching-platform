@@ -3,6 +3,16 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const BADGE_KEYS = new Set([
+    'gold_medal',
+    'silver_medal',
+    'very_satisfied',
+    'quick_response',
+    'sincere_support',
+    'problem_solved',
+    'grateful_partner',
+])
+
 // POST: バッジを付与（upsert）
 export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -19,7 +29,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { badges }: { badges: Array<{ case_id: string; supporter_user_id: string; badge_key: string }> } = await request.json()
+    const { badges }: { badges: Array<{ case_id: string; supporter_organization_id: string; badge_key: string }> } = await request.json()
 
     if (!badges || badges.length === 0) {
         return NextResponse.json({ error: 'badges array required' }, { status: 400 })
@@ -34,23 +44,34 @@ export async function POST(request: Request) {
         (cases || []).filter(c => c.owner_user_id === userData.id).map(c => c.id)
     )
 
-    const supporterIds = [...new Set(badges.map(b => b.supporter_user_id))]
-    const { data: memberships } = await supabaseAdmin
-        .from('organization_memberships')
-        .select('user_id, organization_id')
-        .in('user_id', supporterIds)
-        .eq('status', 'ACTIVE')
-    const organizationMap = Object.fromEntries(
-        (memberships || []).map((m: { user_id: string; organization_id: string }) => [m.user_id, m.organization_id])
+    const organizationIds = [...new Set(badges.map(b => b.supporter_organization_id).filter(Boolean))]
+    const { data: acceptedOffers } = await supabaseAdmin
+        .from('offers')
+        .select('case_id, supporter_organization_id, supporter_user_id')
+        .in('case_id', caseIds)
+        .in('supporter_organization_id', organizationIds)
+        .eq('status', 'ACCEPTED')
+    const acceptedOfferMap = new Map(
+        (acceptedOffers || []).map((offer: { case_id: string; supporter_organization_id: string; supporter_user_id: string }) => [
+            `${offer.case_id}:${offer.supporter_organization_id}`,
+            offer,
+        ])
     )
 
     const validBadges = badges
-        .filter(b => ownedCaseIds.has(b.case_id))
-        .map(b => ({
-            ...b,
-            supporter_organization_id: organizationMap[b.supporter_user_id] ?? null,
+        .filter(b => ownedCaseIds.has(b.case_id) && BADGE_KEYS.has(b.badge_key))
+        .map(b => {
+            const acceptedOffer = acceptedOfferMap.get(`${b.case_id}:${b.supporter_organization_id}`)
+            if (!acceptedOffer) return null
+            return {
+            case_id: b.case_id,
+            supporter_user_id: acceptedOffer.supporter_user_id,
+            supporter_organization_id: b.supporter_organization_id,
+            badge_key: b.badge_key,
             given_by_user_id: userData.id,
-        }))
+            }
+        })
+        .filter((badge): badge is NonNullable<typeof badge> => badge !== null)
 
     if (validBadges.length === 0) {
         return NextResponse.json({ error: 'No valid badges to insert' }, { status: 400 })
@@ -58,7 +79,7 @@ export async function POST(request: Request) {
 
     const { error: upsertError } = await supabaseAdmin
         .from('supporter_badges')
-        .upsert(validBadges, { onConflict: 'case_id,supporter_user_id,badge_key' })
+        .upsert(validBadges, { onConflict: 'case_id,supporter_organization_id,badge_key' })
 
     if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 })
 

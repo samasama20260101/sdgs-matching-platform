@@ -12,6 +12,24 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
     if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('id, role')
+        .eq('auth_user_id', user.id)
+        .single()
+    if (!userData || userData.role !== 'SOS') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: caseData } = await supabaseAdmin
+        .from('cases')
+        .select('id, owner_user_id')
+        .eq('id', id)
+        .single()
+    if (!caseData || caseData.owner_user_id !== userData.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // offers取得
     const { data: offersData, error: offersError } = await supabaseAdmin
         .from('offers')
@@ -25,46 +43,38 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     // サポーター情報を付加
     const offersWithSupporter = await Promise.all(
         offersData.map(async (offer) => {
-            if (offer.supporter_organization_id) {
-                const { data: organization } = await supabaseAdmin
-                    .from('organizations')
-                    .select('id, name, supporter_type')
-                    .eq('id', offer.supporter_organization_id)
-                    .single()
-                if (organization) {
-                    return {
-                        ...offer,
-                        supporter: {
-                            id: offer.supporter_user_id,
-                            organization_id: organization.id,
-                            display_name: organization.name,
-                            organization_name: organization.name,
-                            supporter_type: organization.supporter_type || 'NPO',
-                        },
-                    }
-                }
-            }
-
-            const { data: supporter } = await supabaseAdmin
-                .from('users')
-                .select('id, display_name, organization_name, supporter_type')
-                .eq('id', offer.supporter_user_id)
+            const { data: organization } = await supabaseAdmin
+                .from('organizations')
+                .select('id, name, supporter_type')
+                .eq('id', offer.supporter_organization_id)
                 .single()
             return {
                 ...offer,
-                supporter: supporter || { id: '', display_name: '不明', organization_name: null, supporter_type: 'NPO' },
+                supporter: organization ? {
+                    id: organization.id,
+                    organization_id: organization.id,
+                    display_name: organization.name,
+                    organization_name: organization.name,
+                    supporter_type: organization.supporter_type || 'NPO',
+                } : {
+                    id: offer.supporter_organization_id,
+                    organization_id: offer.supporter_organization_id,
+                    display_name: '不明',
+                    organization_name: null,
+                    supporter_type: 'NPO',
+                },
             }
         })
     )
 
     // バッジ取得
-    const supporterIds = offersWithSupporter.map(o => o.supporter.id).filter(Boolean)
-    let badgeData: { supporter_user_id: string; badge_key: string }[] = []
-    if (supporterIds.length > 0) {
+    const organizationIds = offersWithSupporter.map(o => o.supporter.organization_id).filter(Boolean)
+    let badgeData: { supporter_organization_id: string; badge_key: string }[] = []
+    if (organizationIds.length > 0) {
         const { data: badges } = await supabaseAdmin
             .from('supporter_badges')
-            .select('supporter_user_id, badge_key')
-            .in('supporter_user_id', supporterIds)
+            .select('supporter_organization_id, badge_key')
+            .in('supporter_organization_id', organizationIds)
         badgeData = badges || []
     }
 

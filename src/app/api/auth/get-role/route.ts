@@ -48,14 +48,10 @@ export async function GET(request: Request) {
         organizationContext = await getActiveOrganizationForUser(userData.id)
 
         // Step1: 活動地域レコード取得
-        let areasQuery = supabaseAdmin
+        const areasQuery = supabaseAdmin
             .from('supporter_service_areas')
             .select('region_code, is_nationwide, country')
-        if (organizationContext?.organizationId) {
-            areasQuery = areasQuery.eq('organization_id', organizationContext.organizationId)
-        } else {
-            areasQuery = areasQuery.eq('supporter_user_id', userData.id)
-        }
+            .eq('organization_id', organizationContext?.organizationId ?? '')
         const { data: areas, error: areasError } = await areasQuery
 
         if (areasError) {
