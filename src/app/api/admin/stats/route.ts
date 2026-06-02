@@ -39,6 +39,31 @@ export async function GET(request: Request) {
         .eq('role', 'SOS')
         .order('created_at', { ascending: false })
 
+    const sosRegionCodes = [
+        ...new Set((sosUsers ?? [])
+            .map((u: { sos_region_code: string | null }) => u.sos_region_code)
+            .filter(Boolean)),
+    ] as string[]
+    const regionMap: Record<string, { name_local: string; name_en: string | null }> = {}
+    if (sosRegionCodes.length > 0) {
+        const { data: regions } = await supabaseAdmin
+            .from('regions')
+            .select('code, name_local, name_en')
+            .in('code', sosRegionCodes)
+        ;((regions ?? []) as Array<{ code: string; name_local: string; name_en: string | null }>).forEach((region) => {
+            regionMap[region.code] = {
+                name_local: region.name_local,
+                name_en: region.name_en,
+            }
+        })
+    }
+
+    const sosUsersWithRegion = (sosUsers ?? []).map((u: { sos_region_code: string | null; [key: string]: unknown }) => ({
+        ...u,
+        sos_region_name: u.sos_region_code ? regionMap[u.sos_region_code]?.name_local ?? null : null,
+        sos_region_known: u.sos_region_code ? Boolean(regionMap[u.sos_region_code]) : false,
+    }))
+
     // 案件一覧（全件）── FK JOIN を使わず2ステップで取得
     const { data: cases, error: casesError } = await supabaseAdmin
         .from('cases')
@@ -75,8 +100,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
         supporters: supporters ?? [],
-        sosUsers: sosUsers ?? [],
-        sosCount: (sosUsers ?? []).length,
+        sosUsers: sosUsersWithRegion,
+        sosCount: sosUsersWithRegion.length,
         cases: casesWithOwner,
         caseStats,
     })

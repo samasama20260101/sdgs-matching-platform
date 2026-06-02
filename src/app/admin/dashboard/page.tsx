@@ -17,6 +17,8 @@ type FeaturedSupporter = {
 type SosUser = {
     id: string; display_name: string; real_name: string
     email: string; created_at: string; sos_region_code: string | null
+    sos_region_name?: string | null
+    sos_region_known?: boolean
     birth_date: string | null
     is_suspended: boolean | null
 }
@@ -414,7 +416,12 @@ export default function AdminDashboardPage() {
                     {activeTab === 'sos' && (
                         <>
                             <div className="px-6 py-3 bg-blue-50 border-y border-blue-100">
-                                <p className="text-sm text-blue-800 font-medium">{sosUsers.length}件登録</p>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-sm text-blue-800 font-medium">{sosUsers.length}件登録</p>
+                                    <a href="/admin/regions" className="text-xs font-medium text-blue-700 hover:text-blue-900 hover:underline">
+                                        地域コード一覧を見る
+                                    </a>
+                                </div>
                             </div>
                             {sosUsers.length === 0 ? (
                                 <div className="px-6 py-12 text-center text-gray-400">相談者がいません</div>
@@ -426,7 +433,7 @@ export default function AdminDashboardPage() {
                                                 <th className="px-6 py-3 text-left w-1/6">表示名</th>
                                                 <th className="px-6 py-3 text-left w-1/6">本名</th>
                                                 <th className="px-6 py-3 text-left w-1/5">メール</th>
-                                                <th className="px-6 py-3 text-left w-1/8">地域コード</th>
+                                                <th className="px-6 py-3 text-left w-1/8">地域</th>
                                                 <th className="px-6 py-3 text-center w-1/8">未成年</th>
                                                 <th className="px-6 py-3 text-left w-1/8">登録日</th>
                                                 <th className="px-6 py-3 text-center w-1/8">操作</th>
@@ -438,7 +445,21 @@ export default function AdminDashboardPage() {
                                                     <td className="px-6 py-4 font-medium text-gray-900 break-words">{u.display_name || '—'}{u.is_suspended && <span className="ml-2 text-xs text-red-600 font-bold">停止中</span>}</td>
                                                     <td className="px-6 py-4 text-gray-700 break-words">{u.real_name || '—'}</td>
                                                     <td className="px-6 py-4 text-gray-500 break-all">{u.email}</td>
-                                                    <td className="px-6 py-4 text-gray-500">{u.sos_region_code || '—'}</td>
+                                                    <td className="px-6 py-4 text-gray-500">
+                                                        {u.sos_region_code ? (
+                                                            <div className="space-y-1">
+                                                                <div className={`font-medium ${u.sos_region_known === false ? 'text-red-600' : 'text-gray-700'}`}>
+                                                                    {u.sos_region_name || '未定義コード'}
+                                                                </div>
+                                                                <a href={`/admin/regions?highlight=${encodeURIComponent(u.sos_region_code)}`}
+                                                                    className="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline">
+                                                                    {u.sos_region_code}
+                                                                </a>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-400">未登録</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 text-center">
                                                         {isMinor(u.birth_date) && (
                                                             <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
