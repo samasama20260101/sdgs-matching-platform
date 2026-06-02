@@ -68,5 +68,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .from('cases').update(body).eq('id', id).eq('owner_user_id', userData.id)
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
+  if (body.supporter_resolved_at === null) {
+    const { error: messageError } = await supabaseAdmin.from('messages').insert({
+      case_id: id,
+      sender_user_id: userData.id,
+      sender_display_name_snapshot: 'システム',
+      sender_role_snapshot: 'SYSTEM',
+      message_type: 'SYSTEM',
+      content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
+    })
+    if (messageError) {
+      console.error('[sos/cases] resolution rejection system message insert error:', messageError)
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }

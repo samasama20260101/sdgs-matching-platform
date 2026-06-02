@@ -96,15 +96,42 @@ WHERE newer.supporter_organization_id = older.supporter_organization_id
   AND newer.ctid > older.ctid;
 
 -- 以降は団体IDなしのレコードを作らせない。
-ALTER TABLE supporter_service_areas
-    ADD CONSTRAINT supporter_service_areas_organization_required
-    CHECK (organization_id IS NOT NULL) NOT VALID;
-ALTER TABLE offers
-    ADD CONSTRAINT offers_supporter_organization_required
-    CHECK (supporter_organization_id IS NOT NULL) NOT VALID;
-ALTER TABLE supporter_badges
-    ADD CONSTRAINT supporter_badges_organization_required
-    CHECK (supporter_organization_id IS NOT NULL) NOT VALID;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'supporter_service_areas_organization_required'
+          AND conrelid = 'supporter_service_areas'::regclass
+    ) THEN
+        ALTER TABLE supporter_service_areas
+            ADD CONSTRAINT supporter_service_areas_organization_required
+            CHECK (organization_id IS NOT NULL) NOT VALID;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'offers_supporter_organization_required'
+          AND conrelid = 'offers'::regclass
+    ) THEN
+        ALTER TABLE offers
+            ADD CONSTRAINT offers_supporter_organization_required
+            CHECK (supporter_organization_id IS NOT NULL) NOT VALID;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'supporter_badges_organization_required'
+          AND conrelid = 'supporter_badges'::regclass
+    ) THEN
+        ALTER TABLE supporter_badges
+            ADD CONSTRAINT supporter_badges_organization_required
+            CHECK (supporter_organization_id IS NOT NULL) NOT VALID;
+    END IF;
+END;
+$$;
 
 ALTER TABLE supporter_service_areas
     VALIDATE CONSTRAINT supporter_service_areas_organization_required;
@@ -120,8 +147,19 @@ ALTER TABLE offers
 ALTER TABLE supporter_badges
     ALTER COLUMN supporter_organization_id SET NOT NULL;
 
-ALTER TABLE supporter_badges
-    ADD CONSTRAINT supporter_badges_organization_unique
-    UNIQUE (case_id, supporter_organization_id, badge_key);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'supporter_badges_organization_unique'
+          AND conrelid = 'supporter_badges'::regclass
+    ) THEN
+        ALTER TABLE supporter_badges
+            ADD CONSTRAINT supporter_badges_organization_unique
+            UNIQUE (case_id, supporter_organization_id, badge_key);
+    END IF;
+END;
+$$;
 
 COMMIT;

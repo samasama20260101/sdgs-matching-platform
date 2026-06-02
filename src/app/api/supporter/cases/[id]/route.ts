@@ -132,5 +132,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'STALE_STATE', message: '他の担当者がすでに操作しました' }, { status: 409 })
     }
 
+    const { error: messageError } = await supabaseAdmin.from('messages').insert({
+        case_id: id,
+        sender_user_id: userData.id,
+        sender_organization_id: organizationContext.organizationId,
+        sender_display_name_snapshot: 'システム',
+        sender_role_snapshot: 'SYSTEM',
+        sender_organization_name_snapshot: organizationContext.organization.name,
+        message_type: 'SYSTEM',
+        content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
+    })
+    if (messageError) {
+        console.error('[supporter/cases] resolution system message insert error:', messageError)
+    }
+
     return NextResponse.json({ ok: true })
 }
