@@ -58,6 +58,10 @@ Codexがこのプロジェクトで作業する際に必ず参照するドキュ
 - OS: Ubuntu + VSCode
 - パス: ~/samasama/sdgs-matching-platform
 - 環境変数ファイル: .env.local
+- 環境セットアップ手順: docs/environment_setup.md
+- 技術セット概要: docs/technical_stack.md
+- Stagingテスト仕様: docs/staging_role_function_test_spec.md
+- メンテナンスモード運用: docs/maintenance_mode.md
 
 ### 管理者アカウント（Staging）
 - メール: x25660@yahoo.co.jp
@@ -129,6 +133,9 @@ GoTrue は $2a$ 形式を期待する。Admin APIを使うこと。
 - ユーザー情報、相談内容、メッセージ、認証情報、支援履歴に影響し得る操作は特に慎重に扱う。
 - `supabase link` は原則 Staging に向ける。本番DB操作が必要な場合は、都度ユーザー確認を取る。
 - Production Supabase の project ref は、作業直前に Supabase Dashboard / Vercel 環境変数 / CLI表示で必ず再確認する。
+- Production DB作業中は、原則としてVercel Productionで `MAINTENANCE_MODE=true` を有効化してユーザー操作を止める。
+- メンテナンスモードは強制ログアウトしない。セッションを保持したまま `/maintenance` に誘導する。
+- 本番サポーター団体DB刷新は docs/production_supporter_db_refresh_runbook.md の順番に従う。
 
 ---
 
@@ -139,6 +146,25 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS is_suspended boolean DEFAULT false;
 ALTER TABLE supporter_badges ADD CONSTRAINT supporter_badges_unique UNIQUE (case_id, supporter_user_id, badge_key);
 ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 ```
+
+### サポーター団体DB刷新の現在地
+
+2026年6月3日時点:
+
+- Stagingにはサポーター団体DB刷新を適用済み。
+- Productionには未適用。2週間程度のStagingテスト後、runbookに沿って適用予定。
+- Production適用時は `migrations/fix_supporter_service_area_trigger_id_type.sql` も必ず含める。
+
+主なStaging実装:
+
+- `organizations` が団体エンティティの正本。
+- `organization_memberships` が個人ユーザーと団体の所属を管理。
+- 所属ロールは `OWNER` / `ADMIN` / `MEMBER`。
+- 団体情報、団体所在地、活動地域、公開プロフィールはOWNERのみ編集可能。
+- OWNERは複数存在可能。最後のOWNERを停止・解除・降格できないようDB/APIで保護。
+- 1ユーザーが同時に複数団体へ所属することはDB制約で禁止。
+- 団体の物理削除は避け、`ARCHIVED` 運用へ寄せる。
+- `supporter_service_areas.id` は bigint のため、混在防止トリガーでUUIDと比較しない。
 
 ---
 
@@ -187,15 +213,15 @@ export const MAX_SUPPORTERS_PER_CASE = 2
 
 ---
 
-# 7月末エンハンス設計（設計確定・実装待ち）
+# 7月末エンハンス設計（Staging実装状況を反映）
 
-以下は次のメジャーリリースに向けた設計。**実装前に必ずこのセクションを読むこと。**
+以下は次のメジャーリリースに向けた設計。**実装前・本番適用前に必ずこのセクションを読むこと。**
 
 ## 実装優先順位
 
 | 優先度 | 機能 |
 |---|---|
-| 1 | サポーター団体DB刷新（D案）← これが全ての前提 |
+| 1 | サポーター団体DB刷新（D案）← Staging実装済み・Production適用待ち |
 | 2 | 地域フィルター・提案 |
 | 3 | SDGs分類システム（GI）← D案完了後 |
 | 4 | インパクトダッシュボード ← 分類システム完了後 |
@@ -215,24 +241,37 @@ organizations テーブル（新設）← 団体エンティティ
   id, name, supporter_type, bio, service_areas ...
 
 users テーブル（変更）← 個人のログイン情報のみ
-  id, organization_id（FK）, role（ADMIN / MEMBER）
+  id, auth_user_id, role（SOS / SUPPORTER / ADMIN）
+
+organization_memberships テーブル
+  user_id, organization_id, role（OWNER / ADMIN / MEMBER）, status
 ```
 
-### 影響範囲（広大・注意）
-- cases / offers / messages / supporter_service_areas / ratings など全テーブルの外部キー変更
-- get-role API のロジック全面見直し
-- フロント全体の userData.id 参照箇所の修正
-- parent_supporter_id / member_approved_at カラム廃止
-- Staging・Production 両方にマイグレーション必要
+### Stagingで実装済みの主な範囲
+- organizations / organization_memberships の導入
+- offers / messages / supporter_service_areas / supporter_badges の団体ID対応
+- case_internal_notes の導入
+- get-role API の団体コンテキスト対応
+- サポーターOWNER/MEMBER管理UI
+- 団体プロフィールと担当者個人プロフィールのUI分離
+- 地域コード追跡用の管理画面
+- メンテナンスモード
+
+### Production適用時の注意
+- StagingでSQL実行済みでもProduction DBには反映されない。
+- Production適用は docs/production_supporter_db_refresh_runbook.md に従う。
+- 事前バックアップと `MAINTENANCE_MODE=true` が必須。
+- 実行SQL、Project Ref、rollback方針を作業直前に確認する。
 
 ### ⚠️ サブアカウントについて
 devブランチからサブアカウント機能（parent_supporter_id ベース）は意図的に削除済み。
 D案実装後に正式なサブアカウントとして再実装する。parent_supporter_id アプローチは拡張禁止。
 
-### 未解決論点
-- オーナーは1人か複数か
-- role の細分化（ADMIN / MEMBER か、さらに細かくするか）
-- 団体削除時の cases / messages の扱い
+### 現時点の設計判断
+- OWNERは複数可。
+- 最後のOWNERをDB/APIで保護。
+- roleは `OWNER` / `ADMIN` / `MEMBER`。
+- 団体削除は物理削除ではなく `ARCHIVED` 運用へ寄せる。
 
 ---
 
