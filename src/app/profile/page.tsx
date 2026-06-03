@@ -330,45 +330,88 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-6">
-                    <Card>
-                        <CardHeader><CardTitle className="text-base">基本情報</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="realName">{userData.role === 'SOS' ? 'お名前' : '担当者名'} <span className="text-red-500">*</span></Label>
-                                <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
-                                <div className="flex justify-between items-start mt-1">
-                                    {userData.role === 'SOS' && <p className="text-xs text-gray-500">※ニックネームでもOKです。サポーターとマッチ後に共有されます（公開されません）</p>}
-                                    <p className={`text-xs ml-auto flex-shrink-0 ${realName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{realName.length} / 64</p>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="displayName">{userData.role === 'SOS' ? 'ニックネーム' : '表示名'} <span className="text-red-500">*</span></Label>
-                                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={userData.role === 'SOS' ? 'たろう' : '山田太郎'} maxLength={64} />
-                                <div className="flex justify-between items-start mt-1">
-                                    {userData.role === 'SOS' && <p className="text-xs text-gray-500">※サポーター側に表示される名前です</p>}
-                                    <p className={`text-xs ml-auto flex-shrink-0 ${displayName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{displayName.length} / 64</p>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">メールアドレス</Label>
-                                <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
-                                <p className="text-xs text-gray-500">※メールアドレスは変更できません</p>
-                            </div>
-                            {canEditOrganization && (
+                    {userData.role === 'SOS' ? (
+                        <>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">非公開の連絡先</CardTitle>
+                                    <p className="text-xs text-gray-500 mt-1">ログイン・運営確認用の情報です。サポーターには自動表示されません。</p>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="realName">お名前 <span className="text-red-500">*</span></Label>
+                                        <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
+                                        <div className="flex justify-between items-start mt-1">
+                                            <p className="text-xs text-gray-500">※本名が不安な場合は、運営が識別できる名前でもかまいません。</p>
+                                            <p className={`text-xs ml-auto flex-shrink-0 ${realName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{realName.length} / 64</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">メールアドレス</Label>
+                                        <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
+                                        <p className="text-xs text-gray-500">※メールアドレスは変更できません。</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">電話番号 <span className="text-xs font-normal text-gray-400">（任意・非公開）</span></Label>
+                                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
+                                        <p className="text-xs text-gray-500">※必要な場合の運営連絡用です。サポーターには自動表示されません。</p>
+                                        <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">サポーターに表示される情報</CardTitle>
+                                    <p className="text-xs text-gray-500 mt-1">相談一覧やメッセージで支援者に見える名前です。</p>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="displayName">ニックネーム <span className="text-red-500">*</span></Label>
+                                        <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="たろう" maxLength={64} />
+                                        <div className="flex justify-between items-start mt-1">
+                                            <p className="text-xs text-gray-500">※本名ではなく、呼ばれてもよい名前を入力してください。</p>
+                                            <p className={`text-xs ml-auto flex-shrink-0 ${displayName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{displayName.length} / 64</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </>
+                    ) : (
+                        <Card>
+                            <CardHeader><CardTitle className="text-base">担当者の基本情報</CardTitle></CardHeader>
+                            <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="organizationName">団体名</Label>
-                                    <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
-                                    <p className={`text-xs text-right mt-1 ${organizationName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{organizationName.length} / 64</p>
+                                    <Label htmlFor="realName">担当者名 <span className="text-red-500">*</span></Label>
+                                    <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
+                                    <p className={`text-xs text-right mt-1 ${realName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{realName.length} / 64</p>
                                 </div>
-                            )}
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">{userData.role === 'SUPPORTER' ? '担当者個人の電話番号' : '電話番号'} <span className="text-xs font-normal text-gray-400">（任意）</span></Label>
-                                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
-                                {userData.role === 'SUPPORTER' && <p className="text-xs text-gray-500">※団体代表電話は下の「団体連絡先」で管理します。</p>}
-                                <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                <div className="space-y-2">
+                                    <Label htmlFor="displayName">表示名 <span className="text-red-500">*</span></Label>
+                                    <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="山田太郎" maxLength={64} />
+                                    <p className={`text-xs text-right mt-1 ${displayName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{displayName.length} / 64</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">メールアドレス</Label>
+                                    <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
+                                    <p className="text-xs text-gray-500">※メールアドレスは変更できません</p>
+                                </div>
+                                {canEditOrganization && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="organizationName">団体名</Label>
+                                        <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
+                                        <p className={`text-xs text-right mt-1 ${organizationName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{organizationName.length} / 64</p>
+                                    </div>
+                                )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">担当者個人の電話番号 <span className="text-xs font-normal text-gray-400">（任意）</span></Label>
+                                    <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
+                                    <p className="text-xs text-gray-500">※団体代表電話は下の「団体連絡先」で管理します。</p>
+                                    <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {userData.role === 'SUPPORTER' && (
                         <Card>
@@ -403,19 +446,20 @@ export default function ProfilePage() {
 
                     {userData.role === 'SOS' && (
                         <Card>
-                            <CardHeader><CardTitle className="text-base">お住まいの地域 <span className="text-xs font-normal text-teal-600">（推奨）</span></CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-base">支援提案に使う地域 <span className="text-xs font-normal text-teal-600">（推奨）</span></CardTitle></CardHeader>
                             <CardContent className="space-y-3">
-                                <p className="text-sm text-gray-600">💡 お近くのサポーターが優先的に表示されます。住所の詳細は公開されません。</p>
+                                <p className="text-sm text-gray-600">都道府県レベルの地域です。近くのサポーターを探しやすくするために使います。</p>
                                 <SosRegionSelect value={sosRegionCode} onChange={setSosRegionCode} />
                             </CardContent>
                         </Card>
                     )}
 
                     {(userData.role === 'SOS' || canEditOrganization) && <Card>
-                        <CardHeader><CardTitle className="text-base">{userData.role === 'SUPPORTER' ? '団体所在地' : '住所'} {userData.role === 'SUPPORTER' ? <span className="text-red-500">*</span> : <span className="text-xs font-normal text-gray-400">（任意）</span>}</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-base">{userData.role === 'SUPPORTER' ? '団体所在地' : '詳細住所'} {userData.role === 'SUPPORTER' ? <span className="text-red-500">*</span> : <span className="text-xs font-normal text-gray-400">（任意・非公開）</span>}</CardTitle></CardHeader>
                         <CardContent>
                             {userData.role === 'SOS' ? (
                                 <>
+                                    <p className="text-sm text-gray-600 mb-4">任意・非公開です。サポーターには自動表示されません。必要な場合だけ入力してください。</p>
                                     <AddressForm countryCode="JP" required={false}
                                         requiredFields={{ postalCode: false, prefecture: false, city: false, addressLine1: false }}
                                         onChange={setAddressData} initialData={addressData} />
