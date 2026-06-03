@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Namia line art</title>
+  <desc id="desc">A monochrome line art version of Namia for print materials.</desc>
+  <rect width="512" height="512" fill="none"/>
+  <path d="M256 54c82 94 146 183 146 278 0 91-62 143-146 143s-146-52-146-143c0-95 64-184 146-278z" fill="none" stroke="#0f2b3f" stroke-width="13" stroke-linejoin="round"/>
+  <path d="M165 320c-24-5-43-27-43-54 0-24 16-45 38-53" fill="none" stroke="#0f2b3f" stroke-width="10" stroke-linecap="round"/>
+  <path d="M347 320c24-5 43-27 43-54 0-24-16-45-38-53" fill="none" stroke="#0f2b3f" stroke-width="10" stroke-linecap="round"/>
+  <ellipse cx="187" cy="247" rx="18" ry="27" fill="#0f2b3f"/>
+  <ellipse cx="325" cy="247" rx="18" ry="27" fill="#0f2b3f"/>
+  <path d="M214 308c24 28 60 28 84 0" fill="none" stroke="#0f2b3f" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="256" cy="371" r="54" fill="none" stroke="#0f2b3f" stroke-width="10"/>
+  <path d="M202 472c-7 18-2 31 17 33h25" fill="none" stroke="#0f2b3f" stroke-width="10" stroke-linecap="round"/>
+  <path d="M310 472c7 18 2 31-17 33h-25" fill="none" stroke="#0f2b3f" stroke-width="10" stroke-linecap="round"/>
+</svg>

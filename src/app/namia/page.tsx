@@ -38,6 +38,21 @@ const profileItems = [
   ['役割', '声が届くまでの道を消さない案内役'],
 ];
 
+const awarenessUseItems = [
+  {
+    title: 'チラシ・名刺',
+    body: '右下や余白に小さく置いて、サービス名だけでは伝わりにくい「相談への入口」をやわらかく残します。',
+  },
+  {
+    title: 'SNS・お知らせ',
+    body: '制度紹介やイベント告知に添えることで、硬い情報を少し読みやすくします。深刻な相談事例の横では使いすぎない方針です。',
+  },
+  {
+    title: '説明資料',
+    body: '行政・NPO・学校・地域団体向けの説明で、明日もsamasamaの思想を覚えてもらう記憶点として使います。',
+  },
+];
+
 const poseItems = [
   {
     title: 'おてふり',
@@ -114,6 +129,89 @@ const funItems = [
   },
 ];
 
+const assetItems = [
+  {
+    title: '基本立ち絵',
+    kind: 'PNG',
+    src: '/concepts/mascots/namia-character-transparent-compact.png',
+    href: '/concepts/mascots/namia-character-transparent-compact.png',
+    body: '公式の標準ポーズ。資料表紙、Web、チラシのメインビジュアル向き。',
+    preview: 'image',
+    width: 910,
+    height: 1223,
+  },
+  {
+    title: 'ミニアイコン',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-mini-icon.svg',
+    href: '/concepts/mascots/namia-mini-icon.svg',
+    body: 'SNSアイコン、資料の角、見出し横に置きやすい簡略版。',
+    preview: 'svg',
+  },
+  {
+    title: '吹き出しテンプレ',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-speech-bubble-template.svg',
+    href: '/concepts/mascots/namia-speech-bubble-template.svg',
+    body: '啓発投稿やチラシに使う一言コピー入りテンプレート。',
+    preview: 'wide',
+  },
+  {
+    title: 'SNSカード',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-social-card-template.svg',
+    href: '/concepts/mascots/namia-social-card-template.svg',
+    body: '認知拡大投稿に使いやすい1200x630の横長カード。',
+    preview: 'wide',
+  },
+  {
+    title: 'みちあかり単体',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-michikari-light-trail.svg',
+    href: '/concepts/mascots/namia-michikari-light-trail.svg',
+    body: 'キャラを出しすぎず、ブランド感だけ添えたい時の光の軌跡。',
+    preview: 'wide',
+  },
+  {
+    title: '線画版',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-line-art.svg',
+    href: '/concepts/mascots/namia-line-art.svg',
+    body: '白黒印刷、行政資料、ワークシート向けの単色素材。',
+    preview: 'svg',
+  },
+  {
+    title: 'きくポーズ',
+    kind: 'PNG',
+    src: '/concepts/mascots/namia-pose-listen-transparent-compact.png',
+    href: '/concepts/mascots/namia-pose-listen-transparent-compact.png',
+    body: '相談入力、話を聞く導線、子ども向け説明に使いやすいポーズ。',
+    preview: 'image',
+    width: 768,
+    height: 1227,
+  },
+  {
+    title: '名刺のすみ',
+    kind: 'PNG',
+    src: '/concepts/mascots/namia-fun-card-transparent-compact.png',
+    href: '/concepts/mascots/namia-fun-card-transparent-compact.png',
+    body: '名刺、スライド、案内カードの余白に置きやすい小さめ素材。',
+    preview: 'image',
+    width: 597,
+    height: 864,
+  },
+  {
+    title: 'みちあかり説明',
+    kind: 'PNG',
+    src: '/concepts/mascots/namia-michikari-concept-v1.png',
+    href: '/concepts/mascots/namia-michikari-concept-v1.png',
+    body: '相談者から支援先へつながるイメージを説明する横長ビジュアル。',
+    preview: 'wide',
+    width: 1536,
+    height: 1024,
+  },
+];
+
 export default function NamiaPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#fbfffd] text-slate-900">
@@ -123,7 +221,7 @@ export default function NamiaPage() {
             <Logo variant="default" size="sm" showText={true} />
           </Link>
           <span className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-bold tracking-[0.18em] text-teal-700">
-            SECRET CHARACTER
+            BRAND CHARACTER KIT
           </span>
         </div>
       </header>
@@ -151,6 +249,14 @@ export default function NamiaPage() {
                   {label}
                 </span>
               ))}
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#asset-kit" className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-700">
+                素材をダウンロード
+              </a>
+              <a href="#use-guide" className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:text-teal-700">
+                使い方を見る
+              </a>
             </div>
           </div>
 
@@ -186,6 +292,36 @@ export default function NamiaPage() {
                 <p className="mt-3 text-sm leading-7 text-slate-600">{step.body}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="use-guide" className="bg-[#f8fbff] px-4 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-4 text-xs font-black tracking-[0.22em] text-blue-600">AWARENESS USE</p>
+            <h2 className="text-3xl font-black leading-tight text-slate-950 sm:text-5xl">
+              知ってもらうための、なみあ。
+            </h2>
+            <p className="mt-5 text-base leading-8 text-slate-600">
+              なみあは、サービスを売り込むキャラではなく、明日もsamasamaを思い出してもらうための記憶点です。
+              相談への入口をやさしく示す場面で使います。
+            </p>
+          </div>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {awarenessUseItems.map((item) => (
+              <div key={item.title} className="rounded-lg border border-blue-100 bg-white p-6 shadow-sm">
+                <h3 className="text-xl font-black text-slate-900">{item.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{item.body}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+            <p className="font-black">使い方の注意</p>
+            <p className="mt-1">
+              なみあは困りごとを解決する存在ではなく、相談につながる最初の灯です。
+              緊急時や深刻な相談本文のすぐ横では大きく使わず、案内・啓発・資料の入口で控えめに使います。
+            </p>
           </div>
         </div>
       </section>
@@ -307,40 +443,73 @@ export default function NamiaPage() {
         </div>
       </section>
 
-      <section className="bg-amber-50 px-4 py-14 sm:px-8 sm:py-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="mx-auto max-w-[260px]">
-            <Image
-              src="/concepts/mascots/namia-character-transparent-compact.png"
-              alt="PowerPoint素材用のなみあキャラクター。"
-              width={910}
-              height={1223}
-              className="h-auto w-full"
-            />
-          </div>
-          <div>
-            <p className="mb-4 text-xs font-black tracking-[0.22em] text-amber-700">POWERPOINT ASSET</p>
-            <h2 className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
-              資料にも使える、背景透明のなみあ。
+      <section id="asset-kit" className="bg-amber-50 px-4 py-14 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-4 text-xs font-black tracking-[0.22em] text-amber-700">NAMIA ASSET KIT</p>
+            <h2 className="text-3xl font-black leading-tight text-slate-950 sm:text-5xl">
+              広報で使える、なみあ素材。
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-700">
-              プレゼン資料や説明スライドに置きやすいように、文字なし・背景透明のPNG素材も用意しています。
-              いろいろな表情のなみあも、このページの画像ファイルをそのまま使えます。
+              チラシ、SNS、名刺、説明資料に使いやすい素材をまとめました。
+              PNGはそのまま配置しやすく、SVGは拡大してもきれいに使えます。
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a
-                href="/concepts/mascots/namia-character-transparent-compact.png"
-                className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-700"
-              >
-                透明PNGを見る
-              </a>
-              <a
-                href="/concepts/mascots/namia-michikari-concept-v1.png"
-                className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-800 shadow-sm transition hover:text-teal-700"
-              >
-                コンセプト画像を見る
-              </a>
-            </div>
+          </div>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {assetItems.map((asset) => (
+              <article key={asset.title} className="flex flex-col rounded-lg border border-amber-100 bg-white p-5 shadow-sm">
+                <div className="flex min-h-56 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_50%_75%,#fff9de_0%,#effffc_52%,#ffffff_80%)] p-4">
+                  {asset.preview === 'image' ? (
+                    <Image
+                      src={asset.src}
+                      alt={`なみあ素材: ${asset.title}`}
+                      width={asset.width ?? 900}
+                      height={asset.height ?? 900}
+                      className="max-h-52 w-auto object-contain drop-shadow-[0_12px_18px_rgba(10,143,212,0.16)]"
+                    />
+                  ) : (
+                    <div
+                      aria-label={`なみあ素材: ${asset.title}`}
+                      className={`w-full rounded-md bg-contain bg-center bg-no-repeat ${asset.preview === 'wide' ? 'h-36' : 'h-48'}`}
+                      style={{ backgroundImage: `url(${asset.src})` }}
+                    />
+                  )}
+                </div>
+                <div className="mt-4 flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-black text-slate-900">{asset.title}</h3>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">{asset.kind}</span>
+                </div>
+                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{asset.body}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <a
+                    href={asset.href}
+                    download
+                    className="rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700"
+                  >
+                    ダウンロード
+                  </a>
+                  <a
+                    href={asset.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-teal-50 hover:text-teal-700"
+                  >
+                    表示
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-10 rounded-lg bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
+            <h3 className="text-lg font-black text-slate-900">素材利用の基本ルール</h3>
+            <ul className="mt-3 space-y-2">
+              <li>・おなかの丸い灯をハートなど別の形に変えない。</li>
+              <li>・「なみあが解決する」ではなく、「相談につながる入口を照らす」と表現する。</li>
+              <li>・深刻な相談本文や緊急画面の横では、大きく・楽しく見せすぎない。</li>
+              <li>・明日もsamasamaの案内、啓発、広報、資料の記憶点として使う。</li>
+            </ul>
           </div>
         </div>
       </section>
