@@ -149,7 +149,7 @@ BEGIN
         WHERE ssa.organization_id = NEW.organization_id
           AND ssa.country = NEW.country
           AND ssa.is_nationwide <> NEW.is_nationwide
-          AND ssa.id <> COALESCE(NEW.id, gen_random_uuid())
+          AND (NEW.id IS NULL OR ssa.id <> NEW.id)
     ) THEN
         RAISE EXCEPTION 'nationwide and regional service areas cannot coexist for the same organization and country';
     END IF;
