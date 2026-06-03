@@ -379,7 +379,10 @@ export default function ProfilePage() {
                         </>
                     ) : (
                         <Card>
-                            <CardHeader><CardTitle className="text-base">担当者の基本情報</CardTitle></CardHeader>
+                            <CardHeader>
+                                <CardTitle className="text-base">あなたの担当者情報</CardTitle>
+                                <p className="text-xs text-gray-500 mt-1">団体に所属する担当者個人の情報です。団体情報とは別に管理されます。</p>
+                            </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="realName">担当者名 <span className="text-red-500">*</span></Label>
@@ -396,27 +399,12 @@ export default function ProfilePage() {
                                     <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
                                     <p className="text-xs text-gray-500">※メールアドレスは変更できません</p>
                                 </div>
-                                {canEditOrganization && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="organizationName">団体名</Label>
-                                        <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
-                                        <p className={`text-xs text-right mt-1 ${organizationName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{organizationName.length} / 64</p>
-                                    </div>
-                                )}
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">担当者個人の電話番号 <span className="text-xs font-normal text-gray-400">（任意）</span></Label>
                                     <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
                                     <p className="text-xs text-gray-500">※団体代表電話は下の「団体連絡先」で管理します。</p>
                                     <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {userData.role === 'SUPPORTER' && (
-                        <Card>
-                            <CardHeader><CardTitle className="text-base">所属先での担当者情報</CardTitle></CardHeader>
-                            <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="membershipDepartment">部署・所属</Label>
                                     <Input id="membershipDepartment" value={membershipDepartment} onChange={(e) => setMembershipDepartment(e.target.value)} maxLength={100} />
@@ -435,11 +423,34 @@ export default function ProfilePage() {
 
                     {canEditOrganization && (
                         <Card>
-                            <CardHeader><CardTitle className="text-base">団体連絡先</CardTitle></CardHeader>
-                            <CardContent className="space-y-2">
-                                <Label htmlFor="organizationPhone">団体代表電話番号</Label>
-                                <Input id="organizationPhone" type="tel" value={organizationPhone} onChange={(e) => setOrganizationPhone(e.target.value)} placeholder="03-1234-5678" maxLength={30} />
-                                <p className="text-xs text-gray-500">公開・運営連絡に使う団体の代表電話です。担当者個人の電話番号、所属メンバーの外線・内線とは別に管理されます。</p>
+                            <CardHeader>
+                                <CardTitle className="text-base">団体情報</CardTitle>
+                                <p className="text-xs text-gray-500 mt-1">団体として管理する情報です。担当者個人の情報とは別に保存されます。</p>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="organizationName">団体名</Label>
+                                    <Input id="organizationName" value={organizationName} onChange={(e) => setOrganizationName(e.target.value)} placeholder="NPO法人〇〇 / 株式会社〇〇" maxLength={64} />
+                                    <p className={`text-xs text-right mt-1 ${organizationName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{organizationName.length} / 64</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="organizationPhone">団体代表電話番号</Label>
+                                    <Input id="organizationPhone" type="tel" value={organizationPhone} onChange={(e) => setOrganizationPhone(e.target.value)} placeholder="03-1234-5678" maxLength={30} />
+                                    <p className="text-xs text-gray-500">公開・運営連絡に使う団体の代表電話です。担当者個人の電話番号、所属メンバーの外線・内線とは別に管理されます。</p>
+                                </div>
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-gray-800">団体所在地 <span className="text-red-500">*</span></h3>
+                                    <p className="text-sm text-gray-600">団体の所在地・活動拠点を入力してください。担当者個人の住所は入力しないでください。</p>
+                                    <AddressForm countryCode="JP" required={true}
+                                        requiredFields={{ postalCode: true, prefecture: true, city: true, addressLine1: true }}
+                                        onChange={setAddressData} initialData={addressData} />
+                                </div>
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-gray-800">活動地域 <span className="text-red-500">*</span></h3>
+                                    <ServiceAreaSelector country="JP"
+                                        onChange={(areas, nationwide) => { setServiceAreas(areas); setIsNationwide(nationwide); }}
+                                        initialAreas={serviceAreas} initialNationwide={isNationwide} />
+                                </div>
                             </CardContent>
                         </Card>
                     )}
@@ -454,37 +465,15 @@ export default function ProfilePage() {
                         </Card>
                     )}
 
-                    {(userData.role === 'SOS' || canEditOrganization) && <Card>
-                        <CardHeader><CardTitle className="text-base">{userData.role === 'SUPPORTER' ? '団体所在地' : '詳細住所'} {userData.role === 'SUPPORTER' ? <span className="text-red-500">*</span> : <span className="text-xs font-normal text-gray-400">（任意・非公開）</span>}</CardTitle></CardHeader>
+                    {userData.role === 'SOS' && <Card>
+                        <CardHeader><CardTitle className="text-base">詳細住所 <span className="text-xs font-normal text-gray-400">（任意・非公開）</span></CardTitle></CardHeader>
                         <CardContent>
-                            {userData.role === 'SOS' ? (
-                                <>
-                                    <p className="text-sm text-gray-600 mb-4">任意・非公開です。サポーターには自動表示されません。必要な場合だけ入力してください。</p>
-                                    <AddressForm countryCode="JP" required={false}
-                                        requiredFields={{ postalCode: false, prefecture: false, city: false, addressLine1: false }}
-                                        onChange={setAddressData} initialData={addressData} />
-                                </>
-                            ) : (
-                                <>
-                                    <p className="text-sm text-gray-600 mb-4">💡 団体の所在地・活動拠点を入力してください。担当者個人の住所は入力しないでください。</p>
-                                    <AddressForm countryCode="JP" required={true}
-                                        requiredFields={{ postalCode: true, prefecture: true, city: true, addressLine1: true }}
-                                        onChange={setAddressData} initialData={addressData} />
-                                </>
-                            )}
+                            <p className="text-sm text-gray-600 mb-4">任意・非公開です。サポーターには自動表示されません。必要な場合だけ入力してください。</p>
+                            <AddressForm countryCode="JP" required={false}
+                                requiredFields={{ postalCode: false, prefecture: false, city: false, addressLine1: false }}
+                                onChange={setAddressData} initialData={addressData} />
                         </CardContent>
                     </Card>}
-
-                    {canEditOrganization && (
-                        <Card>
-                            <CardHeader><CardTitle className="text-base">活動地域 <span className="text-red-500">*</span></CardTitle></CardHeader>
-                            <CardContent>
-                                <ServiceAreaSelector country="JP"
-                                    onChange={(areas, nationwide) => { setServiceAreas(areas); setIsNationwide(nationwide); }}
-                                    initialAreas={serviceAreas} initialNationwide={isNationwide} />
-                            </CardContent>
-                        </Card>
-                    )}
 
                     {/* 公開プロフィール（サポーターのみ） */}
                     {canEditOrganization && (
