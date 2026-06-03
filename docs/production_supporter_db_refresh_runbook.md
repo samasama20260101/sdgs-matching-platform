@@ -21,6 +21,8 @@ SOSユーザー、相談案件、チャット履歴は保持する。
 - ProductionへのSQL実行、Auth操作、データ削除は、作業直前に内容を再確認してから行う。
 - DBバックアップを取得してから開始する。
 - SOSユーザー、相談内容、メッセージ、認証情報、支援履歴を一括削除しない。
+- DB変更中はVercel Productionで `MAINTENANCE_MODE=true` にして、ユーザー操作を停止する。
+- メンテナンスモードは強制ログアウトを行わない。セッションは保持し、復旧後に通常利用へ戻す。
 
 ## 現在把握しているProductionの状態
 
@@ -64,6 +66,18 @@ from messages;
 
 ## Production適用順
 
+Production DBはStaging DBとは別環境のため、`dev`でSQL実行済みでもProductionには反映されない。
+本番適用時は、必ずProduction Supabase SQL Editorで以下を実行する。
+
+### メンテナンス開始
+
+1. Vercel Production環境変数で `MAINTENANCE_MODE=true` を設定する。
+2. 必要に応じて `MAINTENANCE_BYPASS_TOKEN` を設定し、運営確認用ブラウザだけバイパスCookieを発行する。
+3. Vercel Productionを再デプロイする。
+4. Production URLへアクセスし、通常画面が `/maintenance` へ誘導されることを確認する。
+5. `/api/health` が `maintenance: true` を返すことを確認する。
+6. DBバックアップを取得する。
+
 Supabase DashboardのProduction SQL Editorで、以下を上から順に1本ずつ実行する。
 
 1. `migrations/add_accepted_order_to_offers.sql`
@@ -73,12 +87,14 @@ Supabase DashboardのProduction SQL Editorで、以下を上から順に1本ず�
 5. `migrations/finalize_supporter_organization_ownership.sql`
 6. `migrations/harden_supporter_organization_foundation.sql`
 7. `migrations/add_admin_search_foundation.sql`
+8. `migrations/fix_supporter_service_area_trigger_id_type.sql`
 
 各SQLの完了を確認してから次へ進む。
 `finalize_supporter_organization_ownership.sql` は孤立データがある場合に停止するため、エラー時はデータを削除せず状況を確認する。
 `harden_supporter_organization_foundation.sql` は重複所属や地域不整合がある場合に停止するため、エラー時はデータを削除せず状況を確認する。
 `harden_supporter_organization_foundation.sql` は廃止済みの案件ステータス `IN_PROGRESS` が残っている場合、現行の `MATCHED` へ統合する。
 `add_admin_search_foundation.sql` は案件へ `CASE-00001` 形式の管理用番号を付与し、ユーザーメールの大小文字を無視した重複登録を禁止する。
+`fix_supporter_service_area_trigger_id_type.sql` は活動地域の混在防止トリガーを修正し、`bigint` と `uuid` の型不一致を解消する。
 
 ### 6本目の実行前確認SQL
 
@@ -207,6 +223,15 @@ migration適用後、既存の運営サポーターが正常に移行されて�
 
 ## アプリ反映後の確認
 
+メンテナンスモード中に運営確認する場合:
+
+```text
+/api/maintenance-bypass?token=<MAINTENANCE_BYPASS_TOKEN>&redirect=/
+```
+
+上記で運営確認用ブラウザに1時間有効のCookieを発行する。
+通常ユーザーは引き続き `/maintenance` に誘導される。
+
 1. 運営サポーターOWNERでログインできる。
 2. 団体プロフィールと団体公開ページを表示できる。
 3. メンバー追加、停止、復帰、所属解除を操作できる。
@@ -215,6 +240,11 @@ migration適用後、既存の運営サポーターが正常に移行されて�
 6. チャットに団体名と担当者名が表示される。
 7. 内部メモの `自団体のみ` と `担当サポーター間` を使い分けられる。
 8. SOS側に内部メモが表示されない。
+9. サポーターOWNERで団体情報・団体所在地・活動地域を保存できる。
+10. SOSプロフィールで非公開情報・表示名・地域・詳細住所を保存できる。
+11. 確認完了後、Vercel Production環境変数で `MAINTENANCE_MODE=false` または未設定に戻す。
+12. Vercel Productionを再デプロイする。
+13. 通常ブラウザでProduction URLを開き、`/maintenance` に誘導されないことを確認する。
 
 ## Rollback
 
