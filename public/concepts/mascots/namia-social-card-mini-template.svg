@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Namia social card template - mini icon</title>
+  <desc id="desc">A social card template using the Namia mini icon for compact awareness posts.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f4fffb"/>
+      <stop offset="0.6" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fff2bc"/>
+    </linearGradient>
+    <linearGradient id="body" x1="864" y1="86" x2="1038" y2="398" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#26dbc8"/>
+      <stop offset="1" stop-color="#1094d2"/>
+    </linearGradient>
+    <radialGradient id="light" cx="50%" cy="48%" r="58%">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.62" stop-color="#f3ffff"/>
+      <stop offset="1" stop-color="#ffe39a"/>
+    </radialGradient>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#0a8fd4" flood-opacity="0.17"/>
+    </filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1010" cy="278" r="186" fill="#e7fff9"/>
+  <circle cx="126" cy="520" r="174" fill="#e9f8ff"/>
+  <path d="M78 474c154-64 310-74 478-23" fill="none" stroke="#ffd963" stroke-width="10" stroke-linecap="round" opacity="0.62"/>
+  <path d="M118 462c38 16 75 17 112 2 70-28 126-67 218-30 31 12 60 15 88 9" fill="none" stroke="#ffd963" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 24" opacity="0.82"/>
+  <g filter="url(#shadow)">
+    <path d="M956 84c74 85 132 166 132 253 0 82-56 128-132 128s-132-46-132-128c0-87 58-168 132-253z" fill="url(#body)" stroke="#0876a7" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M872 239c11-13 26-20 43-19" fill="none" stroke="#0a6e9b" stroke-width="6" stroke-linecap="round" opacity="0.62"/>
+    <path d="M997 220c17-1 32 6 43 19" fill="none" stroke="#0a6e9b" stroke-width="6" stroke-linecap="round" opacity="0.62"/>
+    <ellipse cx="894" cy="265" rx="16" ry="23" fill="#071d3f"/>
+    <ellipse cx="1018" cy="265" rx="16" ry="23" fill="#071d3f"/>
+    <circle cx="900" cy="255" r="5.8" fill="#ffffff"/>
+    <circle cx="1024" cy="255" r="5.8" fill="#ffffff"/>
+    <path d="M921 321c21 22 49 22 70 0" fill="none" stroke="#08213a" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="956" cy="380" r="47" fill="url(#light)" filter="url(#glow)"/>
+  </g>
+  <text x="86" y="144" fill="#0d9c9a" font-family="sans-serif" font-size="24" font-weight="800" letter-spacing="6">NAMIA / MICHIAKARI</text>
+  <text x="82" y="248" fill="#0f2b3f" font-family="sans-serif" font-size="70" font-weight="900">ひとりで</text>
+  <text x="82" y="340" fill="#0f2b3f" font-family="sans-serif" font-size="70" font-weight="900">抱えこまないで。</text>
+  <text x="88" y="420" fill="#35606e" font-family="sans-serif" font-size="31">声にならない気持ちにも、道はある。</text>
+  <text x="88" y="532" fill="#0f766e" font-family="sans-serif" font-size="28" font-weight="800">明日もsamasama | SDGs MATCH</text>
+</svg>

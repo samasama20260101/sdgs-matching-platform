@@ -48,9 +48,11 @@
 - `namia-michikari-concept-v1.png`: みちあかりの説明イメージ
 - `namia-pose-*-transparent-compact.png`: 手を振る、聞く、ジャンプ、光らせる、のぞく等のポーズ
 - `namia-fun-*-transparent-compact.png`: サッカー、転ぶ、ウインク、名刺向け、走る等のおちゃめなポーズ
-- `namia-mini-icon.svg`: SNSアイコンや資料の小さな記憶点として使う簡略版
-- `namia-speech-bubble-template.svg`: 啓発投稿やチラシ向けの吹き出しテンプレート
-- `namia-social-card-template.svg`: SNS認知投稿向けの横長カード
+- `namia-mini-icon.svg`: A2方向で整理した、SNSアイコンや資料の小さな記憶点として使う簡略版
+- `namia-speech-bubble-template.svg`: 通常アイコン版の吹き出しテンプレート。なみあをしっかり見せたい啓発投稿・チラシ向け
+- `namia-speech-bubble-mini-template.svg`: ミニアイコン版の吹き出しテンプレート。コピーや案内文を主役にしたい紙面向け
+- `namia-social-card-template.svg`: 通常アイコン版のSNS認知投稿向け横長カード
+- `namia-social-card-mini-template.svg`: ミニアイコン版のSNS認知投稿向け横長カード。告知内容やコピーを主役にしやすい
 - `namia-michikari-light-trail.svg`: キャラを出しすぎずブランド感だけ添える光の軌跡
 - `namia-line-art.svg`: 白黒印刷、行政資料、ワークシート向けの線画版
 
@@ -60,6 +62,7 @@
 - SNSでは「なみあのひとこと」「今日の小さなみちあかり」など、啓発・案内・制度紹介に使う。
 - 子ども・若者向け資料では、相談窓口や支援導線の入口をやわらげる役割で使う。
 - イベントやブースでは、立ち止まってもらうための記憶点として使う。
+- 通常アイコン版は「なみあを覚えてもらう」場面、ミニアイコン版は「情報を読みやすくする」場面で使い分ける。
 
 ## 使いすぎない場面
 

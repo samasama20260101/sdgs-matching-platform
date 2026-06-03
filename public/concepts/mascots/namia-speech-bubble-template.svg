@@ -1,17 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Namia speech bubble template</title>
-  <desc id="desc">A social and flyer template with Namia and a message bubble.</desc>
+  <title id="title">Namia speech bubble template - standard icon</title>
+  <desc id="desc">A speech bubble template using the standard Namia character for awareness posts and flyers.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
       <stop stop-color="#e8fff9"/>
       <stop offset="0.52" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#fff7d9"/>
     </linearGradient>
-    <linearGradient id="namia" x1="190" y1="126" x2="372" y2="476" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#20d6c3"/>
+    <linearGradient id="namia" x1="170" y1="90" x2="386" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#27dbc8"/>
       <stop offset="1" stop-color="#1094d2"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+    <radialGradient id="light" cx="50%" cy="48%" r="58%">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.64" stop-color="#f4ffff"/>
+      <stop offset="1" stop-color="#ffe39a"/>
+    </radialGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="155%">
       <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0a8fd4" flood-opacity="0.18"/>
     </filter>
     <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
@@ -23,18 +28,26 @@
     </filter>
   </defs>
   <rect width="1200" height="630" rx="36" fill="url(#bg)"/>
+  <circle cx="166" cy="130" r="130" fill="#ffffff" opacity="0.52"/>
+  <circle cx="1016" cy="528" r="156" fill="#fff0a3" opacity="0.35"/>
   <g filter="url(#shadow)">
-    <path d="M284 94c91 104 154 191 154 282 0 95-64 149-154 149s-154-54-154-149c0-91 63-178 154-282z" fill="url(#namia)" stroke="#0876a7" stroke-width="9"/>
-    <circle cx="235" cy="302" r="19" fill="#071d3f"/>
-    <circle cx="331" cy="302" r="19" fill="#071d3f"/>
-    <circle cx="242" cy="294" r="7" fill="#fff"/>
-    <circle cx="338" cy="294" r="7" fill="#fff"/>
-    <path d="M254 362c21 22 47 22 68 0" fill="none" stroke="#08213a" stroke-width="10" stroke-linecap="round"/>
-    <circle cx="284" cy="432" r="48" fill="#f4feff" stroke="#ffe8a5" stroke-width="7" filter="url(#glow)"/>
+    <path d="M280 72c91 104 158 197 158 294 0 96-66 151-158 151s-158-55-158-151c0-97 67-190 158-294z" fill="url(#namia)" stroke="#0876a7" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M190 260c-28 9-46 34-43 62 3 30 25 53 55 58" fill="none" stroke="#0876a7" stroke-width="10" stroke-linecap="round"/>
+    <path d="M370 260c28 9 46 34 43 62-3 30-25 53-55 58" fill="none" stroke="#0876a7" stroke-width="10" stroke-linecap="round"/>
+    <path d="M187 231c13-15 31-22 52-20" fill="none" stroke="#0a6e9b" stroke-width="7" stroke-linecap="round" opacity="0.58"/>
+    <path d="M321 211c21-2 39 5 52 20" fill="none" stroke="#0a6e9b" stroke-width="7" stroke-linecap="round" opacity="0.58"/>
+    <ellipse cx="222" cy="286" rx="18" ry="26" fill="#071d3f"/>
+    <ellipse cx="338" cy="286" rx="18" ry="26" fill="#071d3f"/>
+    <circle cx="229" cy="276" r="6.5" fill="#ffffff"/>
+    <circle cx="345" cy="276" r="6.5" fill="#ffffff"/>
+    <path d="M247 346c22 24 44 24 66 0" fill="none" stroke="#08213a" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="280" cy="424" r="49" fill="url(#light)" filter="url(#glow)"/>
+    <path d="M222 512c-6 22 2 35 27 37h17" fill="none" stroke="#0876a7" stroke-width="10" stroke-linecap="round"/>
+    <path d="M338 512c6 22-2 35-27 37h-17" fill="none" stroke="#0876a7" stroke-width="10" stroke-linecap="round"/>
   </g>
-  <path d="M529 114h456c58 0 105 47 105 105v151c0 58-47 105-105 105H702l-107 82 26-82h-92c-58 0-105-47-105-105V219c0-58 47-105 105-105z" fill="#fff" stroke="#bdeee8" stroke-width="8"/>
-  <text x="565" y="249" fill="#0f2b3f" font-family="sans-serif" font-size="50" font-weight="800">ひとりで</text>
-  <text x="565" y="322" fill="#0f2b3f" font-family="sans-serif" font-size="50" font-weight="800">抱えこまないで。</text>
-  <text x="568" y="392" fill="#35606e" font-family="sans-serif" font-size="27">声にならない気持ちにも、道はある。</text>
-  <text x="565" y="515" fill="#0d9c9a" font-family="sans-serif" font-size="26" font-weight="700">明日もsamasama / なみあ</text>
+  <path d="M536 112h450c58 0 105 47 105 105v151c0 58-47 105-105 105H706l-112 85 27-85h-85c-58 0-105-47-105-105V217c0-58 47-105 105-105z" fill="#ffffff" stroke="#bdeee8" stroke-width="8"/>
+  <text x="568" y="248" fill="#0f2b3f" font-family="sans-serif" font-size="50" font-weight="800">ひとりで</text>
+  <text x="568" y="321" fill="#0f2b3f" font-family="sans-serif" font-size="50" font-weight="800">抱えこまないで。</text>
+  <text x="570" y="392" fill="#35606e" font-family="sans-serif" font-size="27">声にならない気持ちにも、道はある。</text>
+  <text x="568" y="515" fill="#0d9c9a" font-family="sans-serif" font-size="26" font-weight="700">明日もsamasama / なみあ</text>
 </svg>
