@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Namia mini icon</title>
+  <desc id="desc">A simplified teardrop character icon for Namia.</desc>
+  <defs>
+    <linearGradient id="body" x1="145" y1="84" x2="360" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#20d6c3"/>
+      <stop offset="1" stop-color="#1094d2"/>
+    </linearGradient>
+    <radialGradient id="light" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.58" stop-color="#eefcff"/>
+      <stop offset="1" stop-color="#ffe28a"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#f4fffb"/>
+  <path d="M256 52c82 94 146 183 146 278 0 91-62 143-146 143s-146-52-146-143c0-95 64-184 146-278z" fill="url(#body)" stroke="#0876a7" stroke-width="10"/>
+  <ellipse cx="187" cy="247" rx="20" ry="28" fill="#071d3f"/>
+  <ellipse cx="325" cy="247" rx="20" ry="28" fill="#071d3f"/>
+  <circle cx="194" cy="236" r="7" fill="#fff"/>
+  <circle cx="332" cy="236" r="7" fill="#fff"/>
+  <path d="M214 308c24 28 60 28 84 0" fill="none" stroke="#08213a" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="256" cy="371" r="54" fill="url(#light)" filter="url(#glow)"/>
+  <circle cx="368" cy="351" r="10" fill="#ffd45d"/>
+  <circle cx="391" cy="320" r="6" fill="#ffd45d"/>
+</svg>
