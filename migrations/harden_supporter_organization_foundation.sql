@@ -310,7 +310,7 @@ ALTER TABLE messages
 
 UPDATE messages
 SET message_type = 'SYSTEM'
-WHERE content LIKE '__SYSTEM__%';
+WHERE content LIKE '\_\_SYSTEM\_\_%' ESCAPE '\';
 
 DO $$
 BEGIN

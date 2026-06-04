@@ -103,7 +103,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     // 自分がACCEPTED状態のオファーを持っているか確認
     const { data: offer } = await supabaseAdmin
         .from('offers')
-        .select('id')
+        .select('id, accepted_order')
         .eq('case_id', id)
         .eq('supporter_organization_id', organizationContext.organizationId)
         .eq('status', 'ACCEPTED')
@@ -111,6 +111,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (!offer) {
         return NextResponse.json({ error: 'Not authorized for this case' }, { status: 403 })
+    }
+
+    const { data: primaryOffer, error: primaryOfferError } = await supabaseAdmin
+        .from('offers')
+        .select('id, accepted_order')
+        .eq('case_id', id)
+        .eq('status', 'ACCEPTED')
+        .not('accepted_order', 'is', null)
+        .order('accepted_order', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+    if (primaryOfferError) {
+        return NextResponse.json({ error: primaryOfferError.message }, { status: 500 })
+    }
+    if (!primaryOffer || primaryOffer.id !== offer.id) {
+        return NextResponse.json(
+            { error: 'NOT_PRIMARY_SUPPORTER', message: '解決報告は主サポーターのみ実行できます' },
+            { status: 403 }
+        )
     }
 
     const body = await request.json()
