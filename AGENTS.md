@@ -85,6 +85,11 @@ Codexがこのプロジェクトで作業する際に必ず参照するドキュ
 サーバーサイドAPIルートは必ず supabaseAdmin（service_role key）を使う。
 クライアントの anon key は RLS により auth.uid() が NULL になりアクセス拒否される。
 
+ただし、supabaseAdmin はRLSをバイパスするため、API Route側で必ず認証・認可を判定する。
+新規APIでは `src/lib/api/auth.ts` の `requireActiveAppUser()` を優先して使う。
+クライアントからDBテーブルを直接読み書きしない。Supabase Realtimeの `postgres_changes` 直接購読も原則使わない。
+詳細は `docs/api_security_design.md` を参照する。
+
 ### 2. テストユーザー作成
 SQL直接挿入では GoTrue の auth.identities が作られずログインできない。
 必ず supabaseAdmin.auth.admin.createUser() を使うこと。

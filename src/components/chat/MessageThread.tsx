@@ -6,7 +6,6 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { supabase } from '@/lib/supabase/client';
 
 type Message = {
     id: string;
@@ -60,17 +59,11 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
 
     useEffect(() => { loadMessages(); }, [loadMessages]);
 
-    // リアルタイム購読（新着を検知して再フェッチ）
+    // 認証済みAPI経由で定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
     useEffect(() => {
-        const channel = supabase
-            .channel(`messages:${caseId}`)
-            .on('postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages', filter: `case_id=eq.${caseId}` },
-                () => { loadMessages(); }
-            )
-            .subscribe();
-        return () => { supabase.removeChannel(channel); };
-    }, [caseId, loadMessages]);
+        const intervalId = window.setInterval(() => { void loadMessages(); }, 15000);
+        return () => { window.clearInterval(intervalId); };
+    }, [loadMessages]);
 
     // 自動スクロール
     useEffect(() => {

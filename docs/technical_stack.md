@@ -158,6 +158,11 @@ service_role key はサーバー専用
 クライアント側に絶対に出さない
 ```
 
+API Routeでは、`supabaseAdmin` を使う前に必ず認証・認可を確認します。
+新規APIでは `src/lib/api/auth.ts` の `requireActiveAppUser()` を優先して使います。
+
+詳細な設計方針は `docs/api_security_design.md` を参照します。
+
 ### Supabase Client
 
 ブラウザ側ではanon keyのSupabase clientを使います。
@@ -167,6 +172,12 @@ service_role key はサーバー専用
 ```text
 src/lib/supabase/client.ts
 ```
+
+ブラウザ側のanon clientは、認証・セッション取得に使います。
+相談、メッセージ、団体、管理情報などのDB読み書きは、Next.js API Route経由で行います。
+
+ブラウザからSupabase Realtimeの `postgres_changes` を直接購読する実装は避けます。
+通知や未読管理は、将来的に専用API・専用テーブルで扱います。
 
 ---
 
@@ -388,9 +399,9 @@ Staging / Preview環境
 | ファイル | 内容 |
 |---|---|
 | `AGENTS.md` | 開発ルール・サービス思想・本番保護ルール |
-| `CLAUDE.md` | ClaudeCode向け入口 |
 | `docs/environment_setup.md` | ローカル環境セットアップ手順 |
 | `docs/technical_stack.md` | この文書 |
+| `docs/api_security_design.md` | API認可・Supabase key・AI API・通知設計方針 |
 | `docs/maintenance_mode.md` | メンテナンスモード運用 |
 | `docs/production_supporter_db_refresh_runbook.md` | Productionサポーター団体DB刷新手順 |
 | `docs/staging_role_function_test_spec.md` | Stagingロール別機能仕様・テスト観点 |
