@@ -102,12 +102,8 @@ export default function SOSResultPage() {
   }, [params.id]);
 
   useEffect(() => {
-    const channel = supabase
-      .channel(`case-updates:${params.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${params.id}` },
-        () => { loadData(); })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const intervalId = window.setInterval(() => { void loadData(); }, 15000);
+    return () => { window.clearInterval(intervalId); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
@@ -176,6 +172,12 @@ export default function SOSResultPage() {
     const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
     const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
       // Q1〜Q5のチェック内容を整形（「該当なし」のみのQは除外してAIに渡す）
       const qaText = cd.intake_qna?.qa
         ? Object.entries(cd.intake_qna.qa)
@@ -191,7 +193,7 @@ export default function SOSResultPage() {
 
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ caseId: cd.id, description: fullDescription }),
       });
       if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
@@ -199,8 +201,6 @@ export default function SOSResultPage() {
       clearTimeout(step2);
       clearTimeout(step3);
       setAnalyzeStep(4);
-      const { data: { session: sess } } = await supabase.auth.getSession();
-
       // AIが返したtitleをそのまま使う（AIがsdgs_goals=[]のとき「再度見直してください」を返す）
       const aiTitle = result.analysis?.title || '再度見直してください';
       // ai_sdg_suggestion内にもtitleを保持（再分析要否の判定に使用）
@@ -208,7 +208,7 @@ export default function SOSResultPage() {
 
       const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({
           ai_sdg_suggestion: analysisWithTitle,
           visibility: 'LISTED',

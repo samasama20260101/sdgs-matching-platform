@@ -83,7 +83,12 @@ export default function SignupPage() {
       // 2. users テーブルにレコード作成（APIルート経由 / supabaseAdmin使用）
       const profileRes = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authData.session?.access_token
+            ? { 'Authorization': `Bearer ${authData.session.access_token}` }
+            : {}),
+        },
         body: JSON.stringify({
           auth_user_id: authData.user.id,
           email,

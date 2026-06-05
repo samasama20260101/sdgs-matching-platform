@@ -543,6 +543,7 @@ Stagingでのロール別テストは `docs/staging_role_function_test_spec.md` 
 | `AGENTS.md` | 開発ルール、サービス思想、本番保護ルール |
 | `docs/staging_role_function_test_spec.md` | ロール別機能仕様・テスト観点 |
 | `docs/technical_stack.md` | 技術構成 |
+| `docs/api_security_design.md` | API認可、Supabase key、AI API、通知設計方針 |
 | `docs/environment_setup.md` | 開発環境セットアップ |
 | `docs/maintenance_mode.md` | メンテナンスモード運用 |
 | `docs/production_supporter_db_refresh_runbook.md` | Production DB刷新手順 |

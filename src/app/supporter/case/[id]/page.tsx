@@ -121,17 +121,11 @@ export default function SupporterCaseDetailPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // casesテーブルのリアルタイム監視
+  // 認証済みAPI経由で定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
   useEffect(() => {
-    const channel = supabase
-      .channel(`case-updates:${params.id}`)
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${params.id}` },
-        () => { loadData(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [params.id, loadData]);
+    const intervalId = window.setInterval(() => { void loadData(); }, 15000);
+    return () => { window.clearInterval(intervalId); };
+  }, [loadData]);
 
   const handleSubmitOffer = async () => {
     if (!offerMessage.trim()) { toast.warning('メッセージを入力してください'); return; }

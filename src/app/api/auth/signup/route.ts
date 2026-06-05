@@ -1,4 +1,5 @@
 // src/app/api/auth/signup/route.ts
+import { getBearerToken } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -7,9 +8,41 @@ const MAX_SOS_USERS = 1000  // SOSユーザー登録上限（将来変更する�
 export async function POST(request: Request) {
   try {
     const { auth_user_id, email, real_name, display_name, phone, gender, birth_date } = await request.json()
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
 
-    if (!auth_user_id || !email || !real_name) {
+    if (!auth_user_id || !normalizedEmail || !real_name) {
       return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
+    }
+
+    const bearerToken = getBearerToken(request)
+    if (bearerToken) {
+      const { data: { user }, error: tokenError } = await supabaseAdmin.auth.getUser(bearerToken)
+      if (tokenError || !user || user.id !== auth_user_id) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      }
+    }
+
+    const { data: authUserData, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(auth_user_id)
+    const authEmail = authUserData.user?.email?.trim().toLowerCase()
+    if (authUserError || !authUserData.user || authEmail !== normalizedEmail) {
+      console.error('[api/auth/signup] auth user verification failed:', authUserError)
+      return NextResponse.json({ error: '認証ユーザーの確認に失敗しました' }, { status: 400 })
+    }
+
+    const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+      .from('users')
+      .select('id, role')
+      .eq('auth_user_id', auth_user_id)
+      .maybeSingle()
+    if (existingProfileError) {
+      console.error('[api/auth/signup] existing profile fetch error:', existingProfileError)
+      return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
+    if (existingProfile) {
+      if (existingProfile.role !== 'SOS') {
+        return NextResponse.json({ error: 'この認証ユーザーはSOSユーザーとして登録できません' }, { status: 409 })
+      }
+      return NextResponse.json({ success: true })
     }
 
     // SOSユーザー登録上限チェック
@@ -42,7 +75,7 @@ export async function POST(request: Request) {
       real_name,
       display_name: display_name || real_name,
       display_id: displayIdRow,
-      email,
+      email: normalizedEmail,
       phone: phone || null,
       gender: gender || null,
       birth_date: birth_date || null,

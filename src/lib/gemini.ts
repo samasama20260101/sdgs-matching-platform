@@ -1,6 +1,8 @@
 // lib/gemini.ts
 // Google Gemini API統合ライブラリ
 
+import 'server-only'
+
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /**
