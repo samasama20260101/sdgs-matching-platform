@@ -129,6 +129,59 @@ const funItems = [
   },
 ];
 
+const actionPoseItems = [
+  {
+    title: 'うなずく',
+    body: '「その気持ち、受けとめたよ」と静かに伝えるポーズ。',
+    colorSrc: '/concepts/mascots/namia-action-nod-color-transparent.png',
+    lineSrc: '/concepts/mascots/namia-action-nod-line-transparent.png',
+    width: 1254,
+    height: 1254,
+    lineWidth: 1254,
+    lineHeight: 1254,
+  },
+  {
+    title: '手を振る',
+    body: 'はじめての人にも、やさしく入口を示すポーズ。',
+    colorSrc: '/concepts/mascots/namia-action-wave-color-transparent.png',
+    lineSrc: '/concepts/mascots/namia-action-wave-line-transparent.png',
+    width: 1254,
+    height: 1254,
+    lineWidth: 1254,
+    lineHeight: 1254,
+  },
+  {
+    title: '光を差し出す',
+    body: 'おなかの灯をわけて、次の一歩を照らすポーズ。',
+    colorSrc: '/concepts/mascots/namia-action-offer-light-color-transparent.png',
+    lineSrc: '/concepts/mascots/namia-action-offer-light-line-transparent.png',
+    width: 1086,
+    height: 1448,
+    lineWidth: 1024,
+    lineHeight: 1536,
+  },
+  {
+    title: '考える',
+    body: '急がず、相手に合う道を一緒に探すポーズ。',
+    colorSrc: '/concepts/mascots/namia-action-thinking-color-transparent.png',
+    lineSrc: '/concepts/mascots/namia-action-thinking-line-transparent.png',
+    width: 1122,
+    height: 1402,
+    lineWidth: 1254,
+    lineHeight: 1254,
+  },
+  {
+    title: '安心してほほえむ',
+    body: 'ひとりではないことを、静かに伝える表情。',
+    colorSrc: '/concepts/mascots/namia-action-smile-color-transparent.png',
+    lineSrc: '/concepts/mascots/namia-action-smile-line-transparent.png',
+    width: 1024,
+    height: 1536,
+    lineWidth: 1122,
+    lineHeight: 1402,
+  },
+];
+
 const assetItems = [
   {
     title: '基本立ち絵',
@@ -421,6 +474,72 @@ export default function NamiaPage() {
                 <h3 className="mt-4 text-lg font-black text-slate-900">{pose.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{pose.body}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#f8fbff] px-4 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-4 text-xs font-black tracking-[0.22em] text-blue-600">NEW POSE PNG</p>
+            <h2 className="text-3xl font-black leading-tight text-slate-950 sm:text-5xl">
+              表情と動きの、なみあ。
+            </h2>
+            <p className="mt-5 text-base leading-8 text-slate-600">
+              SVG化しやすいように、1ポーズずつ独立した背景透明PNGにしました。
+              カラー版と白黒線画版を並べて確認できます。
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-5">
+            {actionPoseItems.map((pose) => (
+              <article key={pose.title} className="rounded-lg border border-blue-100 bg-white p-4 shadow-sm">
+                <div className="grid gap-3">
+                  <div>
+                    <p className="mb-2 text-xs font-black tracking-[0.16em] text-teal-600">カラー</p>
+                    <div className="flex h-52 items-end justify-center rounded-lg bg-[radial-gradient(circle_at_50%_78%,#fff8d7_0%,#eefcff_48%,#ffffff_78%)] p-3">
+                      <Image
+                        src={pose.colorSrc}
+                        alt={`なみあの${pose.title}ポーズ カラー版。`}
+                        width={pose.width}
+                        height={pose.height}
+                        className="max-h-full w-auto object-contain drop-shadow-[0_12px_18px_rgba(10,143,212,0.16)]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-black tracking-[0.16em] text-slate-500">白黒線画</p>
+                    <div className="flex h-52 items-end justify-center rounded-lg bg-white p-3">
+                      <Image
+                        src={pose.lineSrc}
+                        alt={`なみあの${pose.title}ポーズ 白黒線画版。`}
+                        width={pose.lineWidth}
+                        height={pose.lineHeight}
+                        className="max-h-full w-auto object-contain"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <h3 className="mt-4 text-lg font-black text-slate-900">{pose.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{pose.body}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <a
+                    href={pose.colorSrc}
+                    download
+                    className="rounded-full bg-slate-950 px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-700"
+                  >
+                    カラーPNG
+                  </a>
+                  <a
+                    href={pose.lineSrc}
+                    download
+                    className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-teal-50 hover:text-teal-700"
+                  >
+                    線画PNG
+                  </a>
+                </div>
+              </article>
             ))}
           </div>
         </div>
