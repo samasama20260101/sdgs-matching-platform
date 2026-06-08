@@ -268,6 +268,10 @@ OWNERは `/supporter/members` で団体メンバーを管理します。
 - 所属解除
 - 最後のOWNER保護
 
+団体内のメンバー停止は `organization_memberships.status = SUSPENDED` で管理します。
+`users.is_suspended` と Supabase Auth ban は、管理者による全体アカウント停止専用です。
+そのため、団体OWNERによる復帰・再所属操作では管理者停止を解除しません。
+
 主なAPI:
 
 | API | 役割 |

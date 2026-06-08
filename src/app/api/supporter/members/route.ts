@@ -109,26 +109,26 @@ export async function GET(request: Request) {
 
     const membershipRows = (memberships ?? []) as MembershipRow[]
     const leftUserIds = membershipRows.filter((m) => m.status === 'LEFT').map((m) => m.user_id)
-    const usersWithActiveMembership = new Set<string>()
+    const usersWithCurrentMembership = new Set<string>()
 
     if (leftUserIds.length > 0) {
-        const { data: activeMemberships, error: activeMembershipsError } = await supabaseAdmin
+        const { data: currentMemberships, error: currentMembershipsError } = await supabaseAdmin
             .from('organization_memberships')
             .select('user_id')
             .in('user_id', leftUserIds)
-            .eq('status', 'ACTIVE')
+            .in('status', BLOCKING_MEMBERSHIP_STATUSES)
 
-        if (activeMembershipsError) {
-            console.error('[supporter/members] active membership check error:', activeMembershipsError)
-            return NextResponse.json({ error: activeMembershipsError.message }, { status: 500 })
+        if (currentMembershipsError) {
+            console.error('[supporter/members] current membership check error:', currentMembershipsError)
+            return NextResponse.json({ error: currentMembershipsError.message }, { status: 500 })
         }
 
-        ;((activeMemberships ?? []) as Array<{ user_id: string }>).forEach((m) => {
-            usersWithActiveMembership.add(m.user_id)
+        ;((currentMemberships ?? []) as Array<{ user_id: string }>).forEach((m) => {
+            usersWithCurrentMembership.add(m.user_id)
         })
     }
 
-    const visibleMembershipRows = membershipRows.filter((m) => m.status !== 'LEFT' || !usersWithActiveMembership.has(m.user_id))
+    const visibleMembershipRows = membershipRows.filter((m) => m.status !== 'LEFT' || !usersWithCurrentMembership.has(m.user_id))
     const userIds = visibleMembershipRows.map((m) => m.user_id)
     const usersById: Record<string, PublicUser> = {}
 
@@ -223,11 +223,15 @@ export async function POST(request: Request) {
             }, { status: 409 })
         }
 
-        if (existing.is_suspended && !memberships.some((m) => m.status === 'LEFT')) {
+        if (existing.is_suspended) {
             return NextResponse.json({ error: 'このアカウントは停止中のため追加できません', code: 'ACCOUNT_SUSPENDED' }, { status: 409 })
         }
 
         const leftMembership = memberships.find((m) => m.organization_id === organizationContext.organizationId && m.status === 'LEFT')
+        if (leftMembership && organizationContext.organizationRole !== 'OWNER') {
+            return NextResponse.json({ error: '所属解除中メンバーの復帰はOWNERのみ実行できます' }, { status: 403 })
+        }
+        // 再所属は団体所属だけを復活させる。全体停止中アカウントの解除は管理者だけが行う。
         const membershipPayload = {
             organization_id: organizationContext.organizationId,
             user_id: existing.id,
@@ -258,7 +262,6 @@ export async function POST(request: Request) {
         const userUpdates: Record<string, unknown> = {
             organization_name: organizationContext.organization.name,
             supporter_type: organizationContext.organization.supporter_type,
-            is_suspended: false,
         }
         if (realName) userUpdates.real_name = realName
         if (displayName) userUpdates.display_name = displayName
@@ -273,10 +276,6 @@ export async function POST(request: Request) {
         if (userUpdateError || !updatedUser) {
             return NextResponse.json({ error: userUpdateError?.message ?? 'ユーザー更新に失敗しました' }, { status: 500 })
         }
-
-        await supabaseAdmin.auth.admin.updateUserById(existing.auth_user_id, {
-            ban_duration: 'none',
-        })
 
         await supabaseAdmin.from('audit_logs').insert({
             actor_user_id: userData.id,

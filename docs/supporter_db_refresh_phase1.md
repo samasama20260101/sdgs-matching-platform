@@ -87,7 +87,8 @@ ADMIN: 全て読める
 ```text
 停止:
   organization_memberships.status = SUSPENDED
-  users.is_suspended = true
+  users.is_suspended は変更しない
+  users.is_suspended / Supabase Auth ban は管理者による全体アカウント停止専用
   団体のメンバー一覧に残る
   OWNERが復帰できる
 
@@ -98,7 +99,7 @@ ADMIN: 全て読める
   有効な所属団体がないユーザーはログインできるが、サポーター機能は使えない
 
 所属復活:
-  同じユーザーが他団体にACTIVE所属していない場合のみ、LEFTからACTIVEに戻せる
+  同じユーザーが他団体にACTIVE/SUSPENDED所属していない場合のみ、LEFTからACTIVEに戻せる
 
 他団体への移籍:
   所属解除中のユーザーを、別団体のOWNER/ADMINが同じメールアドレスでメンバー追加できる
@@ -110,7 +111,7 @@ ADMIN: 全て読める
 ```
 
 所属がないサポーターユーザーには `/supporter/no-organization` を表示する。
-管理者画面からの物理削除は行わず、停止・停止解除を基本操作とする。
+管理者画面からの物理削除は行わず、全体アカウント停止・停止解除を基本操作とする。
 
 ## Dev 適用順
 

@@ -26,6 +26,8 @@ type Props = {
     readOnly?: boolean;    // RESOLVED時に入力を無効化
 };
 
+const MESSAGE_POLL_INTERVAL_MS = 60_000;
+
 export default function MessageThread({ caseId, currentUserId, accessToken, readOnly = false }: Props) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -68,10 +70,19 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
 
     useEffect(() => { loadMessages(); }, [loadMessages]);
 
-    // 認証済みAPI経由で定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
+    // 表示中のタブだけ定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
     useEffect(() => {
-        const intervalId = window.setInterval(() => { void loadMessages(); }, 15000);
-        return () => { window.clearInterval(intervalId); };
+        const refreshIfVisible = () => {
+            if (document.visibilityState !== 'visible') return;
+            void loadMessages();
+        };
+        const intervalId = window.setInterval(refreshIfVisible, MESSAGE_POLL_INTERVAL_MS);
+        document.addEventListener('visibilitychange', refreshIfVisible);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', refreshIfVisible);
+        };
     }, [loadMessages]);
 
     // チャット枠内だけをスクロールする。ページ全体を動かす scrollIntoView は使わない。
