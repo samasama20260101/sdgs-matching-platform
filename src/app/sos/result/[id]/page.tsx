@@ -73,6 +73,8 @@ const SDG_NAMES: Record<number, string> = {
   16: '平和と公正をすべての人に', 17: 'パートナーシップで目標を達成しよう',
 };
 
+const CASE_POLL_INTERVAL_MS = 60_000;
+
 export default function SOSResultPage() {
   const router = useRouter();
   const params = useParams();
@@ -102,8 +104,17 @@ export default function SOSResultPage() {
   }, [params.id]);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => { void loadData(); }, 15000);
-    return () => { window.clearInterval(intervalId); };
+    const refreshIfVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void loadData();
+    };
+    const intervalId = window.setInterval(refreshIfVisible, CASE_POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 

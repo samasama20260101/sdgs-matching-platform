@@ -131,6 +131,7 @@ Productionには未適用です。
 - 所属ロールは `OWNER` / `ADMIN` / `MEMBER`。
 - OWNERは複数可。最後のOWNERは停止・解除・降格できない。
 - 1ユーザーの同時複数団体所属はDBで禁止。
+- 団体内の所属停止は `organization_memberships.status = SUSPENDED` で表現し、`users.is_suspended` は管理者による全体アカウント停止専用にする。
 - 団体の物理削除は避け、`ARCHIVED` 運用へ寄せる。
 
 Production適用手順は `docs/production_supporter_db_refresh_runbook.md` を参照します。

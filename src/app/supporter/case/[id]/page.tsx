@@ -52,6 +52,8 @@ const QA_QUESTIONS = [
   { id: 5, question: 'どんな支援を求めていますか？' },
 ]
 
+const CASE_POLL_INTERVAL_MS = 60_000;
+
 export default function SupporterCaseDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -121,10 +123,19 @@ export default function SupporterCaseDetailPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // 認証済みAPI経由で定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
+  // 表示中のタブだけ定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
   useEffect(() => {
-    const intervalId = window.setInterval(() => { void loadData(); }, 15000);
-    return () => { window.clearInterval(intervalId); };
+    const refreshIfVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void loadData();
+    };
+    const intervalId = window.setInterval(refreshIfVisible, CASE_POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
   }, [loadData]);
 
   const handleSubmitOffer = async () => {

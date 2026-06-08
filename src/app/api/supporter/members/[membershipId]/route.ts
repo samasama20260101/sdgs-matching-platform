@@ -182,20 +182,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
 
         updateData.status = nextStatus
         auditMetadata.next_status = nextStatus
+        // 団体内の所属停止は membership.status だけで管理する。
+        // users.is_suspended / Auth ban は管理者による全体アカウント停止専用。
         if (nextStatus === 'ACTIVE') {
-            const { data: activeMemberships, error: activeMembershipsError } = await supabaseAdmin
+            const { data: currentMemberships, error: currentMembershipsError } = await supabaseAdmin
                 .from('organization_memberships')
-                .select('id, organization_id')
+                .select('id, organization_id, status')
                 .eq('user_id', target.user_id)
-                .eq('status', 'ACTIVE')
+                .in('status', ['ACTIVE', 'SUSPENDED'])
                 .neq('id', target.id)
 
-            if (activeMembershipsError) {
-                return NextResponse.json({ error: activeMembershipsError.message }, { status: 500 })
+            if (currentMembershipsError) {
+                return NextResponse.json({ error: currentMembershipsError.message }, { status: 500 })
             }
-            if ((activeMemberships ?? []).length > 0) {
-                return NextResponse.json({ error: 'このユーザーは既に別団体に所属しています', code: 'ACTIVE_MEMBERSHIP_EXISTS' }, { status: 409 })
+            if ((currentMemberships ?? []).length > 0) {
+                return NextResponse.json({ error: 'このユーザーは既に別団体に所属中、または停止中です', code: 'ACTIVE_MEMBERSHIP_EXISTS' }, { status: 409 })
             }
+            if (target.status === 'LEFT') updateData.joined_at = new Date().toISOString()
             updateData.left_at = null
         }
         if (nextStatus === 'LEFT') {
@@ -241,29 +244,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
             return NextResponse.json({ error: personalUpdateError.message }, { status: 500 })
         }
         auditMetadata.personal_profile_updated = true
-    }
-
-    if (nextStatus && nextStatus !== 'LEFT') {
-        const { error: userStatusError } = await supabaseAdmin
-            .from('users')
-            .update({ is_suspended: nextStatus !== 'ACTIVE' })
-            .eq('id', target.user_id)
-
-        if (userStatusError) {
-            console.error('[supporter/members] user suspension update error:', userStatusError)
-            return NextResponse.json({ error: userStatusError.message }, { status: 500 })
-        }
-    }
-    if (nextStatus === 'LEFT') {
-        const { error: userStatusError } = await supabaseAdmin
-            .from('users')
-            .update({ is_suspended: false })
-            .eq('id', target.user_id)
-
-        if (userStatusError) {
-            console.error('[supporter/members] user suspension update error:', userStatusError)
-            return NextResponse.json({ error: userStatusError.message }, { status: 500 })
-        }
     }
 
     await supabaseAdmin.from('audit_logs').insert({

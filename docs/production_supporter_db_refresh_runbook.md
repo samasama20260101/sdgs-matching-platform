@@ -97,14 +97,16 @@ Supabase DashboardのProduction SQL Editorで、以下を上から順に1本ず�
 3. `migrations/add_supporter_organizations.sql`
 4. `migrations/add_case_internal_notes.sql`
 5. `migrations/add_supporter_workflow_guards_and_member_details.sql`
-6. `migrations/finalize_supporter_organization_ownership.sql`
-7. `migrations/harden_supporter_organization_foundation.sql`
-8. `migrations/fix_system_message_type_prefix_match.sql`
-9. `migrations/add_admin_search_foundation.sql`
-10. `migrations/fix_supporter_service_area_trigger_id_type.sql`
+6. `migrations/separate_member_suspension_from_account_suspension.sql`
+7. `migrations/finalize_supporter_organization_ownership.sql`
+8. `migrations/harden_supporter_organization_foundation.sql`
+9. `migrations/fix_system_message_type_prefix_match.sql`
+10. `migrations/add_admin_search_foundation.sql`
+11. `migrations/fix_supporter_service_area_trigger_id_type.sql`
 
 各SQLの完了を確認してから次へ進む。
 `fix_primary_supporter_resolution_guard.sql` は既存の承認済み申し出に `accepted_order` がない場合だけ補完し、同一案件内の承認順重複を防ぐ。
+`separate_member_suspension_from_account_suspension.sql` は団体内の所属停止と管理者による全体アカウント停止を分離し、過去の所属停止由来の `users.is_suspended` を補正する。
 `finalize_supporter_organization_ownership.sql` は孤立データがある場合に停止するため、エラー時はデータを削除せず状況を確認する。
 `harden_supporter_organization_foundation.sql` は重複所属や地域不整合がある場合に停止するため、エラー時はデータを削除せず状況を確認する。
 `harden_supporter_organization_foundation.sql` は廃止済みの案件ステータス `IN_PROGRESS` が残っている場合、現行の `MATCHED` へ統合する。
@@ -112,9 +114,9 @@ Supabase DashboardのProduction SQL Editorで、以下を上から順に1本ず�
 `add_admin_search_foundation.sql` は案件へ `CASE-00001` 形式の管理用番号を付与し、ユーザーメールの大小文字を無視した重複登録を禁止する。
 `fix_supporter_service_area_trigger_id_type.sql` は活動地域の混在防止トリガーを修正し、`bigint` と `uuid` の型不一致を解消する。
 
-### 7本目の実行前確認SQL
+### `harden_supporter_organization_foundation.sql` の実行前確認SQL
 
-6本目の完了後、7本目の強化migrationを実行する前に確認する。
+`finalize_supporter_organization_ownership.sql` の完了後、強化migrationを実行する前に確認する。
 
 ```sql
 select user_id, count(*) as current_memberships_count

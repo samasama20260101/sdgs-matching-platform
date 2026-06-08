@@ -168,6 +168,7 @@ ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 - 団体情報、団体所在地、活動地域、公開プロフィールはOWNERのみ編集可能。
 - OWNERは複数存在可能。最後のOWNERを停止・解除・降格できないようDB/APIで保護。
 - 1ユーザーが同時に複数団体へ所属することはDB制約で禁止。
+- 団体内のメンバー停止は `organization_memberships.status = SUSPENDED` で管理し、`users.is_suspended` / Supabase Auth ban は管理者による全体アカウント停止専用にする。
 - 団体の物理削除は避け、`ARCHIVED` 運用へ寄せる。
 - `supporter_service_areas.id` は bigint のため、混在防止トリガーでUUIDと比較しない。
 
