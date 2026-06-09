@@ -496,7 +496,7 @@ export default function SOSHearingPage() {
           </Button>
 
           <p className="text-xs text-gray-400 text-center">
-            ※入力内容はAI分析のみに使用され、支援組織とのマッチングに活用されます
+            ※入力いただいた内容はAIが整理・分析し、あなたに合った支援組織を探すために使われます。支援に必要な範囲でサポーターにも共有されます。
           </p>
         </div>
       </main>

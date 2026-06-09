@@ -78,7 +78,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       sender_display_name_snapshot: 'システム',
       sender_role_snapshot: 'SYSTEM',
       message_type: 'SYSTEM',
-      content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
+      content: '__SYSTEM__相談者が、まだ解決していないことを伝えました。この案件は引き続き支援中です。チャットで残っている困りごとや次に必要な対応を確認してください。',
     })
     if (messageError) {
       console.error('[sos/cases] resolution rejection system message insert error:', messageError)

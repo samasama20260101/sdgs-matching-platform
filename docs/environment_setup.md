@@ -4,6 +4,9 @@
 
 専門用語に慣れていない人でも追えるように、まず全体像から説明します。
 
+新しいメンバーへ環境構築手順を渡す場合は、まず `docs/team_environment_setup.md` を使ってください。
+この文書は、現在のローカルPCで実施済みの設定記録として位置づけます。
+
 ---
 
 ## まず知っておくこと
@@ -14,7 +17,7 @@
 |---|---|---|
 | GitHub / Git | ソースコードの保管場所 | SSHで安全にpushできるようにした |
 | Vercel | Webアプリの公開・デプロイ | CLIでプロジェクト情報や環境変数を確認できるようにした |
-| Supabase | DB・ログイン認証 | CLIでStaging DBにリンクできるようにした |
+| Supabase | DB・ログイン認証 | CLIでStaging DBにリンクできるようにした。本番読み取りは専用read-only権限で扱う |
 
 通常の開発は、以下の流れで行います。
 
@@ -27,6 +30,7 @@ devブランチで開発
 ```
 
 本番DBは実ユーザーに影響するため、絶対に慎重に扱います。
+本番読み取りをメンバーやCodexに許可する場合も、`docs/team_environment_setup.md` の権限レベルに従います。
 
 ---
 
@@ -301,6 +305,9 @@ Staging: fzawgdmqewmwdqjsqjwt
 - RLS変更
 - Authユーザー操作
 - 環境変数変更
+
+本番DBの読み取り確認が必要な場合は、Production用の `service_role key` ではなく、専用のread-only接続情報を使います。
+詳細は `docs/team_environment_setup.md` の「Production読み取り」を参照してください。
 
 本番DBを操作する必要がある場合は、必ず事前に以下を確認します。
 

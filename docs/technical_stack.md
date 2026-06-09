@@ -2,7 +2,7 @@
 
 この文書は、明日もsamasama | SDGs Match の現在の技術構成をまとめたものです。
 
-環境の作り方は `docs/environment_setup.md`、開発時の重要ルールは `AGENTS.md` を参照してください。
+メンバー向けの環境構築は `docs/team_environment_setup.md`、現在PCのセットアップ記録は `docs/environment_setup.md`、開発時の重要ルールは `AGENTS.md` を参照してください。
 
 ---
 
@@ -164,6 +164,9 @@ API Routeでは、`supabaseAdmin` を使う前に必ず認証・認可を確認�
 
 詳細な設計方針は `docs/api_security_design.md` を参照します。
 DBアクセス量、Disk IO、ポーリング、index判断は `docs/supabase_io_and_db_access_guidelines.md` を参照します。
+
+Productionの状態確認を行う場合でも、Productionの `service_role key` を通常開発PCへ配布しません。
+本番参照は専用のread-only接続情報で行い、手順は `docs/team_environment_setup.md` に従います。
 
 ### Supabase Client
 
@@ -401,6 +404,7 @@ Staging / Preview環境
 | ファイル | 内容 |
 |---|---|
 | `AGENTS.md` | 開発ルール・サービス思想・本番保護ルール |
+| `docs/team_environment_setup.md` | メンバー向け環境セットアップ・権限レベル・Production read-only運用 |
 | `docs/environment_setup.md` | ローカル環境セットアップ手順 |
 | `docs/technical_stack.md` | この文書 |
 | `docs/api_security_design.md` | API認可・Supabase key・AI API・通知設計方針 |
