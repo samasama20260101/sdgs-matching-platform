@@ -62,6 +62,7 @@ Codexがこのプロジェクトで作業する際に必ず参照するドキュ
 - 技術セット概要: docs/technical_stack.md
 - Stagingテスト仕様: docs/staging_role_function_test_spec.md
 - メンテナンスモード運用: docs/maintenance_mode.md
+- Supabase IO・DBアクセス運用: docs/supabase_io_and_db_access_guidelines.md
 
 ### 管理者アカウント（Staging）
 - メール: x25660@yahoo.co.jp
@@ -88,7 +89,9 @@ Codexがこのプロジェクトで作業する際に必ず参照するドキュ
 ただし、supabaseAdmin はRLSをバイパスするため、API Route側で必ず認証・認可を判定する。
 新規APIでは `src/lib/api/auth.ts` の `requireActiveAppUser()` を優先して使う。
 クライアントからDBテーブルを直接読み書きしない。Supabase Realtimeの `postgres_changes` 直接購読も原則使わない。
-詳細は `docs/api_security_design.md` を参照する。
+API入力のUUIDはDBへ渡す前に `src/lib/api/validation.ts` で検証し、空文字をUUIDカラムへ渡さない。
+定期更新は原則60秒以上、非表示タブでは停止する。
+詳細は `docs/api_security_design.md` と `docs/supabase_io_and_db_access_guidelines.md` を参照する。
 
 ### 2. テストユーザー作成
 SQL直接挿入では GoTrue の auth.identities が作られずログインできない。

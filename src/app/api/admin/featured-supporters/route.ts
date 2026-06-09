@@ -1,6 +1,7 @@
 // src/app/api/admin/featured-supporters/route.ts
 // 管理者：おすすめサポーターの取得・更新
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 async function verifyAdmin(request: Request) {
@@ -50,6 +51,9 @@ export async function PATCH(request: Request) {
     if (!supporter_id) {
         return NextResponse.json({ error: 'supporter_id is required' }, { status: 400 })
     }
+    if (!isUuid(supporter_id)) {
+        return NextResponse.json({ error: 'Invalid supporter id' }, { status: 400 })
+    }
 
     const updateData: { is_featured: boolean; featured_order?: number } = { is_featured }
     if (featured_order !== undefined) updateData.featured_order = featured_order
@@ -74,6 +78,9 @@ export async function POST(request: Request) {
     const { orders } = await request.json()
     if (!Array.isArray(orders)) {
         return NextResponse.json({ error: 'orders must be an array' }, { status: 400 })
+    }
+    if (orders.some((order) => !order || typeof order !== 'object' || !isUuid((order as { id?: unknown }).id))) {
+        return NextResponse.json({ error: 'Invalid supporter id in orders' }, { status: 400 })
     }
 
     // 並び順を1件ずつ更新

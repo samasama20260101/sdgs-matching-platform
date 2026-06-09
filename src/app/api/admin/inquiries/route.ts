@@ -1,5 +1,6 @@
 // src/app/api/admin/inquiries/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 async function verifyAdmin(request: Request) {
@@ -48,8 +49,9 @@ export async function PATCH(request: Request) {
 
     const { id, status, admin_memo } = await request.json()
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid inquiry id' }, { status: 400 })
 
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     if (status) updateData.status = status
     if (admin_memo !== undefined) updateData.admin_memo = admin_memo
 

@@ -2,6 +2,7 @@
 // サポーター用：特定案件へのオファー取得・送信（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
@@ -27,6 +28,7 @@ async function getAuthSupporterUser(request: Request) {
 // GET: 自分のオファーを取得
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const userData = await getAuthSupporterUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -43,6 +45,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 // POST: 新規オファー送信
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const userData = await getAuthSupporterUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -108,6 +111,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 // PATCH: 既存オファー更新（再送・ステータス変更）
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const userData = await getAuthSupporterUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -116,6 +120,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (!offerId) {
         return NextResponse.json({ error: 'offerId is required' }, { status: 400 })
+    }
+    if (!isUuid(offerId)) {
+        return NextResponse.json({ error: 'Invalid offer id' }, { status: 400 })
     }
 
     // 自分のオファーであること確認

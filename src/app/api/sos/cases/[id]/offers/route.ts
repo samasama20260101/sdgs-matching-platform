@@ -1,9 +1,11 @@
 // src/app/api/sos/cases/[id]/offers/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

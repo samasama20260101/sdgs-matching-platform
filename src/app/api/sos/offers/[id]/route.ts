@@ -1,6 +1,7 @@
 // src/app/api/sos/offers/[id]/route.ts
 // SOS側：オファーの承認・辞退（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
@@ -21,6 +22,7 @@ async function getAuthSOSUser(request: Request) {
 // PATCH: オファーのステータス変更（ACCEPTED / DECLINED）
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid offer id' }, { status: 400 })
     const userData = await getAuthSOSUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

@@ -1,5 +1,6 @@
 // src/app/api/public/supporters/[id]/route.ts（認証不要）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 type RegionRow = { code: string; name_local: string; name_en: string }
@@ -11,6 +12,7 @@ type ServiceAreaRow = {
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     let { data: organization, error } = await supabaseAdmin
         .from('organizations')

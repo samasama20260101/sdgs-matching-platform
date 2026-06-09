@@ -2,6 +2,7 @@
 // サポーター用：案件取得・ステータス更新（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 async function getAuthUser(request: Request) {
@@ -16,6 +17,7 @@ async function getAuthUser(request: Request) {
 // GET: 案件詳細取得（サポーターはどのOPEN案件も閲覧可）
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const user = await getAuthUser(request)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -87,6 +89,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 // PATCH: 案件ステータス更新（サポーターが担当している案件のみ）
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+    if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const user = await getAuthUser(request)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

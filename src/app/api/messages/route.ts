@@ -2,6 +2,7 @@
 // メッセージ取得・送信（SOS・サポーター共通、RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 async function getAuthUser(request: Request) {
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const caseId = searchParams.get('case_id')
     if (!caseId) return NextResponse.json({ error: 'case_id required' }, { status: 400 })
+    if (!isUuid(caseId)) return NextResponse.json({ error: 'invalid case_id' }, { status: 400 })
 
     const userData = await getAuthUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -109,6 +111,7 @@ export async function POST(request: Request) {
     if (!case_id || !content?.trim()) {
         return NextResponse.json({ error: 'case_id and content are required' }, { status: 400 })
     }
+    if (!isUuid(case_id)) return NextResponse.json({ error: 'invalid case_id' }, { status: 400 })
     if (content.trim().startsWith('__SYSTEM__')) {
         return NextResponse.json({ error: 'Reserved message prefix' }, { status: 400 })
     }
