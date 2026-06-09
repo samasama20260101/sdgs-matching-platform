@@ -163,7 +163,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         sender_role_snapshot: 'SYSTEM',
         sender_organization_name_snapshot: organizationContext.organization.name,
         message_type: 'SYSTEM',
-        content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
+        content: '__SYSTEM__サポーターから解決報告が届きました。相談内容が解決していれば「解決を確認する」を選んでください。まだ困りごとが残っている場合は「まだ解決していない」を選び、チャットで状況を共有してください。',
     })
     if (messageError) {
         console.error('[supporter/cases] resolution system message insert error:', messageError)

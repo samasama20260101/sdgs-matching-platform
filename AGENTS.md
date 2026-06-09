@@ -58,6 +58,7 @@ Codexがこのプロジェクトで作業する際に必ず参照するドキュ
 - OS: Ubuntu + VSCode
 - パス: ~/samasama/sdgs-matching-platform
 - 環境変数ファイル: .env.local
+- メンバー向け環境セットアップ: docs/team_environment_setup.md
 - 環境セットアップ手順: docs/environment_setup.md
 - 技術セット概要: docs/technical_stack.md
 - Stagingテスト仕様: docs/staging_role_function_test_spec.md
@@ -130,6 +131,7 @@ GoTrue は $2a$ 形式を期待する。Admin APIを使うこと。
 このプロジェクトは Git / Vercel / Supabase DB を **開発環境と本番環境で分離**している。
 
 - 通常の開発作業は **devブランチ + Staging Supabase** で行う。
+- Production Supabaseの読み取り確認は、専用read-only接続情報を使う。Productionの `service_role key` を通常開発PCへ配布しない。
 - Production Supabase への変更操作は、ユーザーの明示許可なしに実行しない。
 - Production に対して `db push` / SQL実行 / データ更新 / RLS変更 / Auth操作 / 環境変数変更を勝手に行わない。
 - DB変更はまず migration SQL を作成し、内容・影響範囲・rollback方針を確認してから Staging に適用する。

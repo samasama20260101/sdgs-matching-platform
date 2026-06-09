@@ -623,7 +623,7 @@ export default function SupporterMembersPage() {
                     <Input id="memberEmail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
                   </div>
                   {registrationType === 'new' && <>
-                    <div className="space-y-2"><Label htmlFor="memberRealName">担当者名</Label><Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} /></div>
+                    <div className="space-y-2"><Label htmlFor="memberRealName">担当者名 <span className="text-red-500">*</span></Label><Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} required /></div>
                     <div className="space-y-2"><Label htmlFor="memberDisplayName">表示名</Label><Input id="memberDisplayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={64} /></div>
                     <div className="space-y-2"><Label htmlFor="memberDepartment">部署・所属</Label><Input id="memberDepartment" value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={100} /></div>
                     <div className="space-y-2"><Label htmlFor="memberExternalPhone">外線番号</Label><Input id="memberExternalPhone" type="tel" value={externalPhone} onChange={(event) => setExternalPhone(event.target.value)} maxLength={30} /></div>
@@ -647,9 +647,9 @@ export default function SupporterMembersPage() {
                     </select>
                   </div>}
                   {registrationType === 'new' && <div className="space-y-2">
-                    <Label htmlFor="memberPassword">初期パスワード <span className="text-xs font-normal text-gray-400">（新規メンバーのみ）</span></Label>
+                    <Label htmlFor="memberPassword">初期パスワード <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">（新規メンバーのみ）</span></Label>
                     <div className="flex gap-2">
-                      <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} />
+                      <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} required />
                       <Button type="button" variant="outline" size="icon" onClick={() => setPassword(generatePassword())} title="生成">
                         <KeyRound />
                       </Button>
