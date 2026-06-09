@@ -1,6 +1,7 @@
 // src/app/api/sos/badges/route.ts
 // SOS側：サポーターへのバッジ付与（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { normalizeUuidList } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 const BADGE_KEYS = new Set([
@@ -31,12 +32,16 @@ export async function POST(request: Request) {
 
     const { badges }: { badges: Array<{ case_id: string; supporter_organization_id: string; badge_key: string }> } = await request.json()
 
-    if (!badges || badges.length === 0) {
+    if (!Array.isArray(badges) || badges.length === 0) {
         return NextResponse.json({ error: 'badges array required' }, { status: 400 })
     }
 
     // 全バッジがこのユーザーの案件のものか検証
-    const caseIds = [...new Set(badges.map(b => b.case_id))]
+    const caseIds = normalizeUuidList(badges.map(b => b.case_id))
+    const organizationIds = normalizeUuidList(badges.map(b => b.supporter_organization_id))
+    if (!caseIds || !organizationIds || caseIds.length === 0 || organizationIds.length === 0) {
+        return NextResponse.json({ error: 'invalid badge target ids' }, { status: 400 })
+    }
     const { data: cases } = await supabaseAdmin
         .from('cases').select('id, owner_user_id').in('id', caseIds)
 
@@ -44,7 +49,6 @@ export async function POST(request: Request) {
         (cases || []).filter(c => c.owner_user_id === userData.id).map(c => c.id)
     )
 
-    const organizationIds = [...new Set(badges.map(b => b.supporter_organization_id).filter(Boolean))]
     const { data: acceptedOffers } = await supabaseAdmin
         .from('offers')
         .select('case_id, supporter_organization_id, supporter_user_id')

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser, type ActiveOrganizationContext, type OrganizationRole } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 type PublicUser = {
@@ -97,6 +98,7 @@ async function getActiveOwnerCount(organizationId: string) {
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ membershipId: string }> }) {
     const { membershipId } = await params
+    if (!isUuid(membershipId)) return NextResponse.json({ error: 'Invalid membership id' }, { status: 400 })
     const context = await getSupporterMemberContext(request)
     if (!isContext(context)) return context
 

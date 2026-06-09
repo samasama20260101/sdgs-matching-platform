@@ -47,46 +47,47 @@ export async function GET(request: Request) {
     if (userData?.role === 'SUPPORTER') {
         organizationContext = await getActiveOrganizationForUser(userData.id)
 
-        // Step1: 活動地域レコード取得
-        const areasQuery = supabaseAdmin
-            .from('supporter_service_areas')
-            .select('region_code, is_nationwide, country')
-            .eq('organization_id', organizationContext?.organizationId ?? '')
-        const { data: areas, error: areasError } = await areasQuery
+        if (organizationContext) {
+            // Step1: 活動地域レコード取得
+            const { data: areas, error: areasError } = await supabaseAdmin
+                .from('supporter_service_areas')
+                .select('region_code, is_nationwide, country')
+                .eq('organization_id', organizationContext.organizationId)
 
-        if (areasError) {
-            console.error('[get-role] supporter_service_areas fetch error:', areasError)
-        }
-
-        const areaRows = (areas || []) as ServiceAreaRow[]
-        if (areaRows.length > 0) {
-            // Step2: region_codeからregionsテーブルを明示的に引く（FK依存を回避）
-            const codes = areaRows.filter((a) => a.region_code).map((a) => a.region_code as string)
-            let regionMap: Record<string, { name_local: string; name_en: string }> = {}
-
-            if (codes.length > 0) {
-                const { data: regionRows } = await supabaseAdmin
-                    .from('regions')
-                    .select('code, name_local, name_en')
-                    .in('code', codes)
-                regionMap = Object.fromEntries(
-                    ((regionRows || []) as RegionRow[]).map((r) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
-                )
+            if (areasError) {
+                console.error('[get-role] supporter_service_areas fetch error:', areasError)
             }
 
-            serviceAreas = areaRows.map((a) => {
-                const code = a.region_code
-                return {
-                    region_code: code,
-                    is_nationwide: a.is_nationwide,
-                    country: a.country || 'JP',
-                    name_local: code ? regionMap[code]?.name_local ?? code : '',
-                    name_en: code ? regionMap[code]?.name_en ?? code : '',
-                }
-            })
-        }
+            const areaRows = (areas || []) as ServiceAreaRow[]
+            if (areaRows.length > 0) {
+                // Step2: region_codeからregionsテーブルを明示的に引く（FK依存を回避）
+                const codes = areaRows.filter((a) => a.region_code).map((a) => a.region_code as string)
+                let regionMap: Record<string, { name_local: string; name_en: string }> = {}
 
-        serviceAreaNationwide = areaRows.some((a) => a.is_nationwide)
+                if (codes.length > 0) {
+                    const { data: regionRows } = await supabaseAdmin
+                        .from('regions')
+                        .select('code, name_local, name_en')
+                        .in('code', codes)
+                    regionMap = Object.fromEntries(
+                        ((regionRows || []) as RegionRow[]).map((r) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
+                    )
+                }
+
+                serviceAreas = areaRows.map((a) => {
+                    const code = a.region_code
+                    return {
+                        region_code: code,
+                        is_nationwide: a.is_nationwide,
+                        country: a.country || 'JP',
+                        name_local: code ? regionMap[code]?.name_local ?? code : '',
+                        name_en: code ? regionMap[code]?.name_en ?? code : '',
+                    }
+                })
+            }
+
+            serviceAreaNationwide = areaRows.some((a) => a.is_nationwide)
+        }
     }
 
     return NextResponse.json({

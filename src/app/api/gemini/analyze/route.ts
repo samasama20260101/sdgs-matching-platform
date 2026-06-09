@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireActiveAppUser } from '@/lib/api/auth';
+import { isUuid } from '@/lib/api/validation';
 import { classifySDGs } from '@/lib/gemini';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (caseId !== undefined) {
-            if (typeof caseId !== 'string') {
+            if (!isUuid(caseId)) {
                 return NextResponse.json(
                     { error: '案件IDが不正です' },
                     { status: 400 }

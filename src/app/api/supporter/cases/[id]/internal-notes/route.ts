@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 const NOTE_VISIBILITIES = new Set(['ORGANIZATION_ONLY', 'APPROVED_SUPPORTERS'])
@@ -24,6 +25,10 @@ type InternalNoteRow = {
 }
 
 async function getSupporterContext(request: Request, caseId: string): Promise<SupporterContext | NextResponse> {
+    if (!isUuid(caseId)) {
+        return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
+    }
+
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -178,6 +183,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!noteId || !noteBody) {
         return NextResponse.json({ error: 'note_id and body are required' }, { status: 400 })
     }
+    if (!isUuid(noteId)) {
+        return NextResponse.json({ error: 'Invalid note id' }, { status: 400 })
+    }
     if (noteBody.length > MAX_NOTE_LENGTH) {
         return NextResponse.json({ error: `body must be ${MAX_NOTE_LENGTH} characters or less` }, { status: 400 })
     }
@@ -212,6 +220,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const body = await request.json()
     const noteId = typeof body.note_id === 'string' ? body.note_id : ''
     if (!noteId) return NextResponse.json({ error: 'note_id is required' }, { status: 400 })
+    if (!isUuid(noteId)) return NextResponse.json({ error: 'Invalid note id' }, { status: 400 })
 
     const { data: note } = await supabaseAdmin
         .from('case_internal_notes')

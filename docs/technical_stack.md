@@ -163,6 +163,7 @@ API Routeでは、`supabaseAdmin` を使う前に必ず認証・認可を確認�
 新規APIでは `src/lib/api/auth.ts` の `requireActiveAppUser()` を優先して使います。
 
 詳細な設計方針は `docs/api_security_design.md` を参照します。
+DBアクセス量、Disk IO、ポーリング、index判断は `docs/supabase_io_and_db_access_guidelines.md` を参照します。
 
 ### Supabase Client
 

@@ -2,6 +2,7 @@
 // 管理者によるユーザー操作（停止・停止解除）
 
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 // 管理者確認
@@ -22,6 +23,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { action } = await request.json() // action: 'suspend' | 'unsuspend'
     const { id: userId } = await params
+    if (!isUuid(userId)) return NextResponse.json({ error: 'Invalid user id' }, { status: 400 })
 
     // public.users から auth_user_id を取得
     const { data: userData, error: userError } = await supabaseAdmin
@@ -65,6 +67,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const admin = await checkAdmin(request)
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
 
-    await params
+    const { id: userId } = await params
+    if (!isUuid(userId)) return NextResponse.json({ error: 'Invalid user id' }, { status: 400 })
     return NextResponse.json({ error: 'アカウントの物理削除は無効化されています' }, { status: 405 })
 }
