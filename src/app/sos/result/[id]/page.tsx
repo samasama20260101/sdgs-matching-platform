@@ -189,47 +189,20 @@ export default function SOSResultPage() {
         return;
       }
 
-      // Q1〜Q5のチェック内容を整形（「該当なし」のみのQは除外してAIに渡す）
-      const qaText = cd.intake_qna?.qa
-        ? Object.entries(cd.intake_qna.qa)
-            .filter(([, answers]) => {
-              const ans = answers as string[];
-              // 「該当なし」のみ、または空の場合は除外
-              return ans.length > 0 && !(ans.length === 1 && ans[0] === '該当なし');
-            })
-            .map(([q, answers]) => `Q${q}: ${(answers as string[]).join('、')}`)
-            .join('\n')
-        : '';
-      const fullDescription = [qaText, cd.description_free].filter(Boolean).join('\n\n');
-
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ caseId: cd.id, description: fullDescription }),
+        body: JSON.stringify({ caseId: cd.id }),
       });
       if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
       const result = await response.json();
       clearTimeout(step2);
       clearTimeout(step3);
       setAnalyzeStep(4);
-      // AIが返したtitleをそのまま使う（AIがsdgs_goals=[]のとき「再度見直してください」を返す）
-      const aiTitle = result.analysis?.title || '再度見直してください';
-      // ai_sdg_suggestion内にもtitleを保持（再分析要否の判定に使用）
-      const analysisWithTitle = { ...result.analysis, title: aiTitle };
-
-      const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          ai_sdg_suggestion: analysisWithTitle,
-          visibility: 'LISTED',
-          title: aiTitle,
-        }),
-      });
-      if (updateRes.ok) {
-        await new Promise(r => setTimeout(r, 800));
-        setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
-      }
+      const analysisWithTitle = result.analysis;
+      const aiTitle = analysisWithTitle?.title || '再度見直してください';
+      await new Promise(r => setTimeout(r, 800));
+      setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
     } catch (err) {
       console.error('AI analysis error:', err);
       toast.error('AI分析に失敗しました');
@@ -265,12 +238,6 @@ export default function SOSResultPage() {
         setShowAcceptModal(false);
         return;
       }
-      // ケースをMATCHEDに
-      await fetch(`/api/sos/cases/${params.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ status: 'MATCHED' }),
-      });
       setShowAcceptModal(false);
       setSelectedOffer(null);
       await loadData();
@@ -320,23 +287,6 @@ export default function SOSResultPage() {
       if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
       setShowResolveModal(false);
       await loadData();
-      // 自動バッジ付与（API経由）
-      // accepted_order 昇順でソート → 最小order(主)が金メダル、以降が銀メダル
-      const accepted = offers
-        .filter(o => o.status === 'ACCEPTED')
-        .sort((a, b) => (a.accepted_order ?? 999) - (b.accepted_order ?? 999))
-      if (accepted.length > 0 && currentUserId) {
-        const autoBadges = accepted.map((offer, i) => ({
-          case_id: params.id as string,
-          supporter_organization_id: offer.supporter.organization_id,
-          badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
-        }));
-        await fetch('/api/sos/badges', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify({ badges: autoBadges }),
-        });
-      }
       setShowEvalModal(true);
     } finally {
       setIsActionLoading(false);

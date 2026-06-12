@@ -5,6 +5,8 @@ import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
+const MAX_MESSAGE_LENGTH = 5000
+
 async function getAuthUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) return null
@@ -66,7 +68,10 @@ export async function GET(request: Request) {
         .eq('case_id', caseId)
         .order('created_at', { ascending: true })
 
-    if (msgError) return NextResponse.json({ error: msgError.message }, { status: 500 })
+    if (msgError) {
+        console.error('[messages] fetch error:', msgError)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
 
     if (!messagesData || messagesData.length === 0) {
         return NextResponse.json({ messages: [] })
@@ -108,11 +113,15 @@ export async function POST(request: Request) {
     }
 
     const { case_id, content } = await request.json()
-    if (!case_id || !content?.trim()) {
+    const normalizedContent = typeof content === 'string' ? content.trim() : ''
+    if (!case_id || !normalizedContent) {
         return NextResponse.json({ error: 'case_id and content are required' }, { status: 400 })
     }
     if (!isUuid(case_id)) return NextResponse.json({ error: 'invalid case_id' }, { status: 400 })
-    if (content.trim().startsWith('__SYSTEM__')) {
+    if (normalizedContent.length > MAX_MESSAGE_LENGTH) {
+        return NextResponse.json({ error: `メッセージは${MAX_MESSAGE_LENGTH}文字以内で入力してください` }, { status: 400 })
+    }
+    if (normalizedContent.startsWith('__SYSTEM__')) {
         return NextResponse.json({ error: 'Reserved message prefix' }, { status: 400 })
     }
 
@@ -145,12 +154,15 @@ export async function POST(request: Request) {
             sender_display_name_snapshot: userData.display_name,
             sender_role_snapshot: userData.role,
             sender_organization_name_snapshot: userData.organization_name,
-            content,
+            content: normalizedContent,
         }])
         .select()
         .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+        console.error('[messages] insert error:', error)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
 
     return NextResponse.json({ message: data })
 }

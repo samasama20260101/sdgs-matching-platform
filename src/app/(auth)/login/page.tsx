@@ -7,8 +7,19 @@ import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase/client';
+
+const PENDING_SOS_SIGNUP_KEY = 'samasama_pending_sos_signup'
+
+type PendingSosSignupProfile = {
+    email: string
+    real_name: string
+    display_name: string
+    phone: string | null
+    gender: 'MALE' | 'FEMALE' | 'OTHER'
+    birth_date: string
+}
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +75,26 @@ export default function LoginPage() {
             const result = await res.json();
 
             if (!result.role) {
+                const pendingRaw = localStorage.getItem(PENDING_SOS_SIGNUP_KEY)
+                const pendingProfile = pendingRaw ? JSON.parse(pendingRaw) as PendingSosSignupProfile : null
+                if (pendingProfile?.email === formData.email.trim().toLowerCase()) {
+                    const profileRes = await fetch('/api/auth/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${data.session.access_token}`,
+                        },
+                        body: JSON.stringify(pendingProfile),
+                    })
+                    if (!profileRes.ok) {
+                        const profileData = await profileRes.json()
+                        setError(profileData.message || profileData.error || 'プロフィールの保存に失敗しました');
+                        return;
+                    }
+                    localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)
+                    window.location.href = '/sos/dashboard';
+                    return;
+                }
                 setError('ユーザー情報の取得に失敗しました');
                 return;
             }

@@ -1,28 +1,62 @@
 // src/app/api/sos/cases/route.ts
+import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+const DESCRIPTION_FREE_MAX_LENGTH = 2000
+const TITLE_MAX_LENGTH = 80
+const ALLOWED_URGENCIES = new Set(['Low', 'Medium', 'High'])
+const ALLOWED_REGION_COUNTRIES = new Set(['JP', 'ID'])
 
-    const { data: userData } = await supabaseAdmin
-        .from('users').select('id').eq('auth_user_id', user.id).single()
-    if (!userData) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+type CaseRow = {
+    id: string
+    status: string
+}
+
+type OfferRow = {
+    case_id: string
+}
+
+function sanitizeText(value: unknown, maxLength: number) {
+    return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
+}
+
+function sanitizeIntakeQna(value: unknown) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+    const qa = (value as { qa?: unknown }).qa
+    if (!qa || typeof qa !== 'object' || Array.isArray(qa)) return null
+
+    const sanitizedQa: Record<string, string[]> = {}
+    for (const [rawKey, rawAnswers] of Object.entries(qa as Record<string, unknown>)) {
+        if (!/^[1-5]$/.test(rawKey) && !/^q[1-5]$/.test(rawKey)) continue
+        if (!Array.isArray(rawAnswers)) continue
+        sanitizedQa[rawKey] = rawAnswers
+            .filter((answer): answer is string => typeof answer === 'string')
+            .map((answer) => answer.trim().slice(0, 250))
+            .filter(Boolean)
+            .slice(0, 10)
+    }
+
+    return { qa: sanitizedQa }
+}
+
+export async function GET(request: Request) {
+    const auth = await requireActiveAppUser(request, { roles: ['SOS'] })
+    if ('response' in auth) return auth.response
+    const userData = auth.appUser
 
     const { data: cases, error: casesError } = await supabaseAdmin
         .from('cases').select('*').eq('owner_user_id', userData.id).order('created_at', { ascending: false })
-    if (casesError) return NextResponse.json({ error: casesError.message }, { status: 500 })
+    if (casesError) {
+        console.error('[sos/cases] cases fetch error:', casesError)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
 
     if (!cases || cases.length === 0) return NextResponse.json({ cases: [], userId: userData.id })
 
     // OPENケースのPENDINGオファー数を取得
-    const openCaseIds = cases.filter((c: any) => c.status === 'OPEN').map((c: any) => c.id)
+    const caseRows = (cases || []) as CaseRow[]
+    const openCaseIds = caseRows.filter((c) => c.status === 'OPEN').map((c) => c.id)
     const offerCountMap: Record<string, number> = {}
     if (openCaseIds.length > 0) {
         const { data: offers } = await supabaseAdmin
@@ -30,12 +64,12 @@ export async function GET(request: Request) {
             .select('case_id')
             .in('case_id', openCaseIds)
             .eq('status', 'PENDING')
-        ;(offers || []).forEach((o: any) => {
+        ;((offers || []) as OfferRow[]).forEach((o) => {
             offerCountMap[o.case_id] = (offerCountMap[o.case_id] || 0) + 1
         })
     }
 
-    const enriched = cases.map((c: any) => ({
+    const enriched = caseRows.map((c) => ({
         ...c,
         pending_offer_count: offerCountMap[c.id] || 0,
     }))
@@ -44,26 +78,42 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: userData } = await supabaseAdmin
-        .from('users').select('id').eq('auth_user_id', user.id).single()
-    if (!userData) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    const auth = await requireActiveAppUser(request, { roles: ['SOS'] })
+    if ('response' in auth) return auth.response
+    const userData = auth.appUser
 
     const body = await request.json()
+    const descriptionFree = sanitizeText(body.description_free, DESCRIPTION_FREE_MAX_LENGTH)
+    if (!descriptionFree) {
+        return NextResponse.json({ error: '相談内容を入力してください' }, { status: 400 })
+    }
+    if (typeof body.description_free === 'string' && body.description_free.length > DESCRIPTION_FREE_MAX_LENGTH) {
+        return NextResponse.json({ error: `相談内容は${DESCRIPTION_FREE_MAX_LENGTH}文字以内で入力してください` }, { status: 400 })
+    }
+
+    const title = sanitizeText(body.title, TITLE_MAX_LENGTH) || descriptionFree.slice(0, 50) || '相談'
+    const urgency = typeof body.urgency === 'string' && ALLOWED_URGENCIES.has(body.urgency) ? body.urgency : 'Medium'
+    const regionCountry = typeof body.region_country === 'string' && ALLOWED_REGION_COUNTRIES.has(body.region_country)
+        ? body.region_country
+        : 'JP'
 
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')
-        .insert([{ ...body, owner_user_id: userData.id }])
+        .insert([{
+            owner_user_id: userData.id,
+            title,
+            description_free: descriptionFree,
+            intake_qna: sanitizeIntakeQna(body.intake_qna),
+            urgency,
+            region_country: regionCountry,
+            status: 'OPEN',
+        }])
         .select()
         .single()
-    if (caseError) return NextResponse.json({ error: caseError.message }, { status: 500 })
+    if (caseError) {
+        console.error('[sos/cases] case insert error:', caseError)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
 
     return NextResponse.json({ case: caseData })
 }

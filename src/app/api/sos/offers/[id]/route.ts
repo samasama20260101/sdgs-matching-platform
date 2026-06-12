@@ -1,30 +1,24 @@
 // src/app/api/sos/offers/[id]/route.ts
 // SOS側：オファーの承認・辞退（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
 const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE  // 1案件あたりの承認上限
 
-async function getAuthSOSUser(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !user) return null
-    const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role').eq('auth_user_id', user.id).single()
-    if (!userData || userData.role !== 'SOS') return null
-    return userData
+function serverError() {
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
 }
 
 // PATCH: オファーのステータス変更（ACCEPTED / DECLINED）
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid offer id' }, { status: 400 })
-    const userData = await getAuthSOSUser(request)
-    if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireActiveAppUser(request, { roles: ['SOS'] })
+    if ('response' in auth) return auth.response
+    const userData = auth.appUser
 
     // このオファーが自分の案件のものか確認
     const { data: offer } = await supabaseAdmin
@@ -59,11 +53,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             p_sos_user_id: userData.id,
             p_max_accepted: MAX_ACCEPTED,
         })
-        if (acceptError) return NextResponse.json({ error: acceptError.message }, { status: 500 })
+        if (acceptError) {
+            console.error('[sos/offers] accept_sos_offer error:', acceptError)
+            return serverError()
+        }
         if (result?.error) {
             const status = result.error === 'FORBIDDEN' ? 403 : 409
             return NextResponse.json({ error: result.error, message: '他の操作が先に完了しています' }, { status })
         }
+
+        const { error: caseUpdateError } = await supabaseAdmin
+            .from('cases')
+            .update({ status: 'MATCHED' })
+            .eq('id', offer.case_id)
+            .eq('status', 'OPEN')
+        if (caseUpdateError) {
+            console.error('[sos/offers] case matched update error:', caseUpdateError)
+            return serverError()
+        }
+
         return NextResponse.json(result)
     }
 
@@ -75,7 +83,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { error: updateError } = await supabaseAdmin
         .from('offers').update(updateData).eq('id', id).eq('status', 'PENDING')
 
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+    if (updateError) {
+        console.error('[sos/offers] decline offer error:', updateError)
+        return serverError()
+    }
 
     return NextResponse.json({ ok: true })
 }
