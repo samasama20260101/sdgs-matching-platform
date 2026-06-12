@@ -81,6 +81,11 @@ BEGIN
     WHERE id = p_offer_id
       AND status = 'PENDING';
 
+    UPDATE cases
+    SET status = 'MATCHED'
+    WHERE id = target_offer.case_id
+      AND status = 'OPEN';
+
     IF accepted_count + 1 >= p_max_accepted THEN
         UPDATE offers
         SET status = 'DECLINED',

@@ -2,32 +2,28 @@
 // サポーター用：案件取得・ステータス更新（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
-async function getAuthUser(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !user) return null
-    return user
+const ACTIVE_CASE_STATUSES = new Set(['OPEN', 'MATCHED'])
+
+function isValidTimestamp(value: unknown) {
+    return typeof value === 'string' && Number.isFinite(Date.parse(value))
 }
 
-// GET: 案件詳細取得（サポーターはどのOPEN案件も閲覧可）
+function serverError() {
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+}
+
+// GET: 案件詳細取得（公開中、または自団体が関与済みの案件のみ）
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
-    const user = await getAuthUser(request)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireActiveAppUser(request, { roles: ['SUPPORTER'] })
+    if ('response' in auth) return auth.response
 
-    // サポーターであることを確認
-    const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role').eq('auth_user_id', user.id).single()
-    if (!userData || userData.role !== 'SUPPORTER') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    const organizationContext = await getActiveOrganizationForUser(auth.appUser.id)
     if (!organizationContext) {
         return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
     }
@@ -35,6 +31,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases').select('*').eq('id', id).single()
     if (caseError || !caseData) {
+        return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+    }
+
+    const { data: myOffer, error: myOfferError } = await supabaseAdmin
+        .from('offers')
+        .select('id, status')
+        .eq('case_id', id)
+        .eq('supporter_organization_id', organizationContext.organizationId)
+        .maybeSingle()
+    if (myOfferError) {
+        console.error('[supporter/cases] my offer fetch error:', myOfferError)
+        return serverError()
+    }
+
+    const isPublicActiveCase = caseData.visibility === 'LISTED' && ACTIVE_CASE_STATUSES.has(caseData.status)
+    if (!isPublicActiveCase && !myOffer) {
         return NextResponse.json({ error: 'Case not found' }, { status: 404 })
     }
 
@@ -79,7 +91,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({
         case: caseData,
-        supporterUserId: userData.id,
+        supporterUserId: auth.appUser.id,
         supporterOrganizationId: organizationContext.organizationId,
         acceptedOffers: acceptedOffersWithProfile,
         ownerBirthDate: ownerData?.birth_date ?? null,
@@ -90,15 +102,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
-    const user = await getAuthUser(request)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireActiveAppUser(request, { roles: ['SUPPORTER'] })
+    if ('response' in auth) return auth.response
 
-    const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role').eq('auth_user_id', user.id).single()
-    if (!userData || userData.role !== 'SUPPORTER') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    const organizationContext = await getActiveOrganizationForUser(auth.appUser.id)
     if (!organizationContext) {
         return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
     }
@@ -127,7 +134,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         .maybeSingle()
 
     if (primaryOfferError) {
-        return NextResponse.json({ error: primaryOfferError.message }, { status: 500 })
+        console.error('[supporter/cases] primary offer fetch error:', primaryOfferError)
+        return serverError()
     }
     if (!primaryOffer || primaryOffer.id !== offer.id) {
         return NextResponse.json(
@@ -137,7 +145,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json()
-    if (!body.supporter_resolved_at || Object.keys(body).length !== 1) {
+    if (!body.supporter_resolved_at || Object.keys(body).length !== 1 || !isValidTimestamp(body.supporter_resolved_at)) {
         return NextResponse.json({ error: 'Invalid update' }, { status: 400 })
     }
     const { data: updatedCase, error: updateError } = await supabaseAdmin
@@ -149,7 +157,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         .select('id')
         .maybeSingle()
     if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 })
+        console.error('[supporter/cases] case update error:', updateError)
+        return serverError()
     }
     if (!updatedCase) {
         return NextResponse.json({ error: 'STALE_STATE', message: '他の担当者がすでに操作しました' }, { status: 409 })
@@ -157,7 +166,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { error: messageError } = await supabaseAdmin.from('messages').insert({
         case_id: id,
-        sender_user_id: userData.id,
+        sender_user_id: auth.appUser.id,
         sender_organization_id: organizationContext.organizationId,
         sender_display_name_snapshot: 'システム',
         sender_role_snapshot: 'SYSTEM',

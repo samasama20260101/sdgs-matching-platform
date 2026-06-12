@@ -2,21 +2,29 @@
 // サポーター用：特定案件へのオファー取得・送信（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 
+const MAX_OFFER_MESSAGE_LENGTH = 1000
+
 async function getAuthSupporterUser(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !user) return null
-    const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role, display_name').eq('auth_user_id', user.id).single()
-    if (!userData || userData.role !== 'SUPPORTER') return null
+    const auth = await requireActiveAppUser(request, { roles: ['SUPPORTER'] })
+    if ('response' in auth) return auth.response
+
+    const { data: userData, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('id, role, display_name')
+        .eq('id', auth.appUser.id)
+        .single()
+    if (userError || !userData) {
+        if (userError) console.error('[supporter/cases/offer] user fetch error:', userError)
+        return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
     const organizationContext = await getActiveOrganizationForUser(userData.id)
-    if (!organizationContext) return null
+    if (!organizationContext) return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
     return {
         ...userData,
         organization_id: organizationContext.organizationId,
@@ -25,12 +33,28 @@ async function getAuthSupporterUser(request: Request) {
     }
 }
 
+function isErrorResponse(value: Awaited<ReturnType<typeof getAuthSupporterUser>>): value is NextResponse {
+    return value instanceof NextResponse
+}
+
+function normalizeOfferMessage(value: unknown) {
+    if (typeof value !== 'string') return { ok: false as const, error: 'REQUIRED' as const }
+    const message = value.trim()
+    if (!message) return { ok: false as const, error: 'REQUIRED' as const }
+    if (message.length > MAX_OFFER_MESSAGE_LENGTH) return { ok: false as const, error: 'TOO_LONG' as const }
+    return { ok: true as const, value: message }
+}
+
+function serverError() {
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+}
+
 // GET: 自分のオファーを取得
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const userData = await getAuthSupporterUser(request)
-    if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (isErrorResponse(userData)) return userData
 
     const { data: offer } = await supabaseAdmin
         .from('offers')
@@ -47,19 +71,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id } = await params
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const userData = await getAuthSupporterUser(request)
-    if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (isErrorResponse(userData)) return userData
 
     const { message } = await request.json()
-    if (!message?.trim()) {
+    const normalizedMessage = normalizeOfferMessage(message)
+    if (!normalizedMessage.ok && normalizedMessage.error === 'REQUIRED') {
         return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    }
+    if (!normalizedMessage.ok && normalizedMessage.error === 'TOO_LONG') {
+        return NextResponse.json({ error: 'MESSAGE_TOO_LONG', message: `申し出メッセージは${MAX_OFFER_MESSAGE_LENGTH}文字以内で入力してください` }, { status: 400 })
     }
     const { data: caseData } = await supabaseAdmin
         .from('cases')
-        .select('id, status')
+        .select('id, status, visibility')
         .eq('id', id)
         .single()
     if (!caseData || !['OPEN', 'MATCHED'].includes(caseData.status)) {
         return NextResponse.json({ error: 'CASE_NOT_ACTIVE', message: 'この案件には申し出できません' }, { status: 409 })
+    }
+    if (caseData.visibility !== 'LISTED') {
+        return NextResponse.json({ error: 'CASE_NOT_AVAILABLE', message: 'この案件には申し出できません' }, { status: 409 })
     }
 
     const { data: existingOffer } = await supabaseAdmin
@@ -92,7 +123,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             supporter_user_id: userData.id,
             supporter_organization_id: userData.organization_id,
             created_by_user_id: userData.id,
-            message,
+            message: normalizedMessage.value,
             status: 'PENDING',
         }])
         .select()
@@ -102,7 +133,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         if (error.code === '23505') {
             return NextResponse.json({ error: 'DUPLICATE' }, { status: 409 })
         }
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        console.error('[supporter/cases/offer] offer insert error:', error)
+        return serverError()
     }
 
     return NextResponse.json({ offer: data })
@@ -113,7 +145,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid case id' }, { status: 400 })
     const userData = await getAuthSupporterUser(request)
-    if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (isErrorResponse(userData)) return userData
 
     const body = await request.json()
     const { offerId } = body
@@ -136,7 +168,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { data: caseData } = await supabaseAdmin
         .from('cases')
-        .select('id, status, supporter_resolved_at')
+        .select('id, status, supporter_resolved_at, visibility')
         .eq('id', id)
         .single()
     if (!caseData) {
@@ -145,7 +177,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     // PENDINGへの再申し出の場合、承認上限チェック
     if (body.status === 'PENDING') {
-        if (!['WITHDRAWN', 'DECLINED'].includes(offer.status) || !['OPEN', 'MATCHED'].includes(caseData.status)) {
+        if (!['WITHDRAWN', 'DECLINED'].includes(offer.status) || !['OPEN', 'MATCHED'].includes(caseData.status) || caseData.visibility !== 'LISTED') {
             return NextResponse.json({ error: 'STALE_STATE', message: '他の担当者がすでに操作しました' }, { status: 409 })
         }
         const { data: acceptedOffers } = await supabaseAdmin
@@ -159,15 +191,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
                 { status: 400 }
             )
         }
-        const message = typeof body.message === 'string' ? body.message.trim() : ''
-        if (!message) {
+        const message = normalizeOfferMessage(body.message)
+        if (!message.ok && message.error === 'REQUIRED') {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+        }
+        if (!message.ok && message.error === 'TOO_LONG') {
+            return NextResponse.json({ error: 'MESSAGE_TOO_LONG', message: `申し出メッセージは${MAX_OFFER_MESSAGE_LENGTH}文字以内で入力してください` }, { status: 400 })
         }
         const { data: updatedOffer, error: updateError } = await supabaseAdmin
             .from('offers')
             .update({
                 status: 'PENDING',
-                message,
+                message: message.value,
                 created_at: new Date().toISOString(),
                 withdrawal_reason: null,
                 withdrawn_at: null,
@@ -177,7 +212,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             .eq('status', offer.status)
             .select('id')
             .maybeSingle()
-        if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+        if (updateError) {
+            console.error('[supporter/cases/offer] offer republish error:', updateError)
+            return serverError()
+        }
         if (!updatedOffer) {
             return NextResponse.json({ error: 'STALE_STATE', message: '他の担当者がすでに操作しました' }, { status: 409 })
         }
@@ -212,7 +250,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             .select('id')
             .maybeSingle()
         if (updateError) {
-            return NextResponse.json({ error: updateError.message }, { status: 500 })
+            console.error('[supporter/cases/offer] offer withdrawal error:', updateError)
+            return serverError()
         }
         if (!updatedOffer) {
             return NextResponse.json({ error: 'STALE_STATE', message: '他の担当者がすでに操作しました' }, { status: 409 })

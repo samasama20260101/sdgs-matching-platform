@@ -2,17 +2,36 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const MAX_NAME_LENGTH = 100
+const MAX_EMAIL_LENGTH = 254
+const MAX_ORGANIZATION_LENGTH = 120
+const MAX_PHONE_LENGTH = 30
+const MAX_CATEGORY_LENGTH = 50
+const MAX_MESSAGE_LENGTH = 5000
+
+function sanitizeText(value: unknown, maxLength: number) {
+    return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
+}
+
 export async function POST(request: Request) {
     const body = await request.json()
-    const { name, email, organization, phone, category, message, access_token } = body
+    const { access_token } = body
+    const name = sanitizeText(body.name, MAX_NAME_LENGTH)
+    const email = sanitizeText(body.email, MAX_EMAIL_LENGTH).toLowerCase()
+    const organization = sanitizeText(body.organization, MAX_ORGANIZATION_LENGTH)
+    const phone = sanitizeText(body.phone, MAX_PHONE_LENGTH)
+    const category = sanitizeText(body.category, MAX_CATEGORY_LENGTH)
+    const message = sanitizeText(body.message, MAX_MESSAGE_LENGTH)
 
     if (!email || !category || !message) {
         return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
     }
+    if (typeof body.message === 'string' && body.message.length > MAX_MESSAGE_LENGTH) {
+        return NextResponse.json({ error: `お問い合わせ内容は${MAX_MESSAGE_LENGTH}文字以内で入力してください` }, { status: 400 })
+    }
 
     let userId: string | null = null
     let role: string | null = null
-    let displayId: string | null = null
 
     // ログイン済みの場合はユーザー情報を取得
     if (access_token) {
@@ -26,7 +45,6 @@ export async function POST(request: Request) {
             if (userData) {
                 userId = userData.id
                 role = userData.role
-                displayId = userData.display_id
             }
         }
     }
@@ -49,7 +67,7 @@ export async function POST(request: Request) {
 
     if (error) {
         console.error('[contact] insert error:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true, display_id: data.display_id })
