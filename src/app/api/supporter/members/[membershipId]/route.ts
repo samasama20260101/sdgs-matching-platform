@@ -119,6 +119,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ me
     const nextRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : undefined
     const nextStatus = UPDATE_STATUSES.includes(body.status) ? body.status as MembershipStatus : undefined
 
+    if (body.status === 'LEFT') {
+        return NextResponse.json(
+            { error: '第一弾では所属解除は利用できません。メンバーを一時的に止める場合は「停止」を使用してください。', code: 'MEMBER_LEAVE_DISABLED' },
+            { status: 400 }
+        )
+    }
+
     const hasDetails = DETAIL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
     const hasPersonalDetails = PERSONAL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
     const isOwner = organizationContext.organizationRole === 'OWNER'

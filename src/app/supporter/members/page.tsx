@@ -428,7 +428,6 @@ export default function SupporterMembersPage() {
                   <div className="flex flex-wrap gap-2 border-t pt-4">
                     {selectedMember.status === 'ACTIVE' && <Button size="sm" variant="outline" onClick={() => updateMember(selectedMember.id, { status: 'SUSPENDED' })}><UserMinus />停止</Button>}
                     {selectedMember.status === 'SUSPENDED' && <Button size="sm" variant="outline" onClick={() => updateMember(selectedMember.id, { status: 'ACTIVE' })}><RotateCcw />復帰</Button>}
-                    {selectedMember.status !== 'LEFT' && <Button size="sm" variant="outline" onClick={() => updateMember(selectedMember.id, { status: 'LEFT' })}>所属解除</Button>}
                   </div>
                 )}
               </CardContent>
@@ -520,18 +519,12 @@ export default function SupporterMembersPage() {
                                     <UserMinus />
                                     停止
                                   </Button>
-                                  <Button size="sm" variant="outline" onClick={() => updateMember(member.id, { status: 'LEFT' })}>
-                                    所属解除
-                                  </Button>
                                 </>
                               ) : canOperate && member.status === 'SUSPENDED' ? (
                                 <>
                                   <Button size="sm" variant="outline" onClick={() => updateMember(member.id, { status: 'ACTIVE' })}>
                                     <RotateCcw />
                                     復帰
-                                  </Button>
-                                  <Button size="sm" variant="outline" onClick={() => updateMember(member.id, { status: 'LEFT' })}>
-                                    所属解除
                                   </Button>
                                 </>
                               ) : (

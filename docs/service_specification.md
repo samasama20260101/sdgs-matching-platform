@@ -265,8 +265,11 @@ OWNERは `/supporter/members` で団体メンバーを管理します。
 - 担当者情報の確認・編集
 - MEMBER停止
 - MEMBER復帰
-- 所属解除
 - 最後のOWNER保護
+
+第一弾では、団体メンバーの移籍・所属解除は扱いません。
+そのため `/supporter/members` の所属解除ボタンは表示せず、APIでも `status = LEFT` への変更を拒否します。
+一時的に利用を止める場合は「停止」を使います。
 
 団体内のメンバー停止は `organization_memberships.status = SUSPENDED` で管理します。
 `users.is_suspended` と Supabase Auth ban は、管理者による全体アカウント停止専用です。
@@ -277,7 +280,7 @@ OWNERは `/supporter/members` で団体メンバーを管理します。
 | API | 役割 |
 |---|---|
 | `/api/supporter/members` | メンバー一覧・追加 |
-| `/api/supporter/members/[membershipId]` | メンバー更新・停止・復帰・解除 |
+| `/api/supporter/members/[membershipId]` | メンバー更新・停止・復帰（所属解除は第一弾では無効） |
 
 ### 9.5 案件確認・申し出
 
@@ -491,7 +494,7 @@ AIは最終判断者ではありません。
 | 用語 | 意味 | 主なDB表現 | 復帰・再利用 |
 |---|---|---|---|
 | 所属なし | アカウントは有効だが、現在どの団体にも所属していない | `users` は有効、`organization_memberships` に `ACTIVE` がない | 団体追加・移籍・再所属が可能 |
-| 所属解除 | 団体との所属関係が終了した | `organization_memberships.status = LEFT` | 既存アカウントの再所属として復帰可能 |
+| 所属解除 | 団体との所属関係が終了した | `organization_memberships.status = LEFT` | 将来対応。第一弾では新規に作成しない |
 | 団体内停止 | 団体内で一時的に利用を止めている | `organization_memberships.status = SUSPENDED` | OWNER/ADMINの操作で復帰可能 |
 | 管理者停止 | サービス全体でログイン・利用を止めている | `users.is_suspended = true`、将来は `users.account_status = SUSPENDED` | 管理者解除まで復帰不可 |
 | 退会 | 本人がサービス利用を終了した | 将来は `users.account_status = WITHDRAWN` | 方針に従って再登録または再有効化 |
@@ -501,7 +504,7 @@ UI上の用語は次を基本にします。
 | 表示語 | 使う場面 |
 |---|---|
 | 所属なし | 有効なアカウントだが団体所属がない場合 |
-| 所属解除 | 団体メンバー一覧で過去所属として扱う場合 |
+| 所属解除 | 将来、団体メンバー一覧で過去所属として扱う場合。第一弾では操作不可 |
 | 停止 | 管理者または団体管理者が一時的に利用を止める場合 |
 | 退会 | 本人がサービス利用を終了する場合 |
 
