@@ -51,11 +51,6 @@ type MembersResponse = {
   };
   members: Member[];
 };
-type MemberCreateResponse = {
-  reused_existing_user?: boolean;
-  member: Member;
-};
-
 type ApiErrorResponse = {
   error?: string;
   code?: 'ACCOUNT_SUSPENDED' | 'NO_ACTIVE_ORGANIZATION' | 'FORBIDDEN' | string;
@@ -113,7 +108,6 @@ export default function SupporterMembersPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
-  const [registrationType, setRegistrationType] = useState<'new' | 'existing'>('new');
   const [realName, setRealName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [externalPhone, setExternalPhone] = useState('');
@@ -223,15 +217,13 @@ export default function SupporterMembersPage() {
         },
         body: JSON.stringify({
           email,
-          registration_type: registrationType,
-          ...(registrationType === 'new' ? {
-            real_name: realName,
-            display_name: displayName,
-            external_phone: externalPhone,
-            department,
-            phone_extension: phoneExtension,
-            password,
-          } : {}),
+          registration_type: 'new',
+          real_name: realName,
+          display_name: displayName,
+          external_phone: externalPhone,
+          department,
+          phone_extension: phoneExtension,
+          password,
           role: memberRole,
         }),
       });
@@ -254,10 +246,8 @@ export default function SupporterMembersPage() {
         throw new Error(result.error || 'メンバー追加に失敗しました');
       }
 
-      const result = await response.json() as MemberCreateResponse;
-      setSuccess(result.reused_existing_user
-        ? '既存アカウントをメンバーに追加しました。パスワードは変更されません。'
-        : 'メンバーを追加しました');
+      await response.json();
+      setSuccess('メンバーを追加しました');
       setEmail('');
       setRealName('');
       setDisplayName('');
@@ -607,22 +597,19 @@ export default function SupporterMembersPage() {
             <CardContent>
               {canAdd ? (
                 <form onSubmit={handleAddMember} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-1 rounded-md bg-gray-100 p-1 text-xs">
-                    <button type="button" onClick={() => setRegistrationType('new')} className={`rounded px-2 py-2 ${registrationType === 'new' ? 'bg-white font-semibold text-gray-800 shadow-sm' : 'text-gray-500'}`}>新しいアカウントを作成</button>
-                    <button type="button" onClick={() => setRegistrationType('existing')} className={`rounded px-2 py-2 ${registrationType === 'existing' ? 'bg-white font-semibold text-gray-800 shadow-sm' : 'text-gray-500'}`}>登録済みアカウントを所属に追加</button>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                    第一弾では、新しい担当者アカウントの作成のみ対応しています。登録済みアカウントの追加・移籍は後続対応です。
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="memberEmail">メールアドレス <span className="text-red-500">*</span></Label>
                     <Input id="memberEmail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
                   </div>
-                  {registrationType === 'new' && <>
-                    <div className="space-y-2"><Label htmlFor="memberRealName">担当者名 <span className="text-red-500">*</span></Label><Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} required /></div>
-                    <div className="space-y-2"><Label htmlFor="memberDisplayName">表示名</Label><Input id="memberDisplayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={64} /></div>
-                    <div className="space-y-2"><Label htmlFor="memberDepartment">部署・所属</Label><Input id="memberDepartment" value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={100} /></div>
-                    <div className="space-y-2"><Label htmlFor="memberExternalPhone">外線番号</Label><Input id="memberExternalPhone" type="tel" value={externalPhone} onChange={(event) => setExternalPhone(event.target.value)} maxLength={30} /></div>
-                    <div className="space-y-2"><Label htmlFor="memberPhoneExtension">内線番号</Label><Input id="memberPhoneExtension" value={phoneExtension} onChange={(event) => setPhoneExtension(event.target.value)} maxLength={30} /></div>
-                  </>}
-                  {registrationType === 'new' && <div className="space-y-2">
+                  <div className="space-y-2"><Label htmlFor="memberRealName">担当者名 <span className="text-red-500">*</span></Label><Input id="memberRealName" value={realName} onChange={(event) => setRealName(event.target.value)} maxLength={64} required /></div>
+                  <div className="space-y-2"><Label htmlFor="memberDisplayName">表示名</Label><Input id="memberDisplayName" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={64} /></div>
+                  <div className="space-y-2"><Label htmlFor="memberDepartment">部署・所属</Label><Input id="memberDepartment" value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={100} /></div>
+                  <div className="space-y-2"><Label htmlFor="memberExternalPhone">外線番号</Label><Input id="memberExternalPhone" type="tel" value={externalPhone} onChange={(event) => setExternalPhone(event.target.value)} maxLength={30} /></div>
+                  <div className="space-y-2"><Label htmlFor="memberPhoneExtension">内線番号</Label><Input id="memberPhoneExtension" value={phoneExtension} onChange={(event) => setPhoneExtension(event.target.value)} maxLength={30} /></div>
+                  <div className="space-y-2">
                     <Label htmlFor="memberRole">権限</Label>
                     <select
                       id="memberRole"
@@ -638,8 +625,8 @@ export default function SupporterMembersPage() {
                       )}
                       <option value="MEMBER">MEMBER</option>
                     </select>
-                  </div>}
-                  {registrationType === 'new' && <div className="space-y-2">
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="memberPassword">初期パスワード <span className="text-red-500">*</span> <span className="text-xs font-normal text-gray-400">（新規メンバーのみ）</span></Label>
                     <div className="flex gap-2">
                       <Input id="memberPassword" type="text" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} required />
@@ -648,9 +635,9 @@ export default function SupporterMembersPage() {
                       </Button>
                     </div>
                     <p className="text-xs text-gray-400">
-                      既存アカウントの再追加・移籍では、現在のパスワードをそのまま使います。
+                      初回ログイン後、メンバー本人にパスワード変更を依頼してください。
                     </p>
-                  </div>}
+                  </div>
                   <Button type="submit" disabled={isSubmitting} className="w-full bg-teal-600 hover:bg-teal-700">
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <UserPlus />}
                     追加する

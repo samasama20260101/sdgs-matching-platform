@@ -171,7 +171,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const registrationType = body.registration_type === 'existing' ? 'existing' : 'new'
+    if (body.registration_type === 'existing') {
+        return NextResponse.json(
+            { error: '第一弾では登録済みアカウントの追加・移籍は利用できません。新しいメンバーアカウントを作成してください。', code: 'EXISTING_MEMBER_ADD_DISABLED' },
+            { status: 400 }
+        )
+    }
+
     const email = normalizeEmail(body.email)
     const realName = typeof body.real_name === 'string' ? body.real_name.trim() : ''
     const displayName = typeof body.display_name === 'string' ? body.display_name.trim() : ''
@@ -180,9 +186,7 @@ export async function POST(request: Request) {
     const department = sanitizeText(body.department, 100)
     const phoneExtension = sanitizeText(body.phone_extension, 30)
     const requestedRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : 'MEMBER'
-    const memberRole = registrationType === 'existing'
-        ? 'MEMBER'
-        : organizationContext.organizationRole === 'OWNER' ? requestedRole : 'MEMBER'
+    const memberRole = organizationContext.organizationRole === 'OWNER' ? requestedRole : 'MEMBER'
 
     if (!email) {
         return NextResponse.json({ error: 'メールアドレスを入力してください' }, { status: 400 })
@@ -194,110 +198,9 @@ export async function POST(request: Request) {
         .eq('email', email)
         .maybeSingle()
     if (existingUser) {
-        if (registrationType !== 'existing') {
-            return NextResponse.json({ error: 'このメールアドレスは登録済みです。「登録済みアカウントを所属に追加」を選択してください' }, { status: 409 })
-        }
-        const existing = existingUser as PublicUser
-        if (existing.role !== 'SUPPORTER') {
-            return NextResponse.json({ error: 'このメールアドレスは別の利用者種別で登録されています' }, { status: 409 })
-        }
-
-        const { data: existingMemberships, error: existingMembershipsError } = await supabaseAdmin
-            .from('organization_memberships')
-            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
-            .eq('user_id', existing.id)
-
-        if (existingMembershipsError) {
-            return NextResponse.json({ error: existingMembershipsError.message }, { status: 500 })
-        }
-
-        const memberships = (existingMemberships ?? []) as MembershipRow[]
-        const blockingMembership = memberships.find((m) => BLOCKING_MEMBERSHIP_STATUSES.includes(m.status))
-        if (blockingMembership) {
-            const isSameOrganization = blockingMembership.organization_id === organizationContext.organizationId
-            return NextResponse.json({
-                error: isSameOrganization
-                    ? 'このメンバーはすでに所属中、または停止中です'
-                    : 'このメールアドレスは既に別団体に所属しています',
-                code: 'ACTIVE_MEMBERSHIP_EXISTS',
-            }, { status: 409 })
-        }
-
-        if (existing.is_suspended) {
-            return NextResponse.json({ error: 'このアカウントは停止中のため追加できません', code: 'ACCOUNT_SUSPENDED' }, { status: 409 })
-        }
-
-        const leftMembership = memberships.find((m) => m.organization_id === organizationContext.organizationId && m.status === 'LEFT')
-        if (leftMembership && organizationContext.organizationRole !== 'OWNER') {
-            return NextResponse.json({ error: '所属解除中メンバーの復帰はOWNERのみ実行できます' }, { status: 403 })
-        }
-        // 再所属は団体所属だけを復活させる。全体停止中アカウントの解除は管理者だけが行う。
-        const membershipPayload = {
-            organization_id: organizationContext.organizationId,
-            user_id: existing.id,
-            role: memberRole,
-            status: 'ACTIVE' as const,
-            invited_by_user_id: userData.id,
-            joined_at: new Date().toISOString(),
-            left_at: null,
-        }
-
-        const membershipQuery = leftMembership
-            ? supabaseAdmin
-                .from('organization_memberships')
-                .update(membershipPayload)
-                .eq('id', leftMembership.id)
-            : supabaseAdmin
-                .from('organization_memberships')
-                .insert(membershipPayload)
-
-        const { data: membership, error: membershipError } = await membershipQuery
-            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
-            .single()
-
-        if (membershipError || !membership) {
-            return NextResponse.json({ error: membershipError?.message ?? '所属作成に失敗しました' }, { status: 500 })
-        }
-
-        const userUpdates: Record<string, unknown> = {
-            organization_name: organizationContext.organization.name,
-            supporter_type: organizationContext.organization.supporter_type,
-        }
-        if (realName) userUpdates.real_name = realName
-        if (displayName) userUpdates.display_name = displayName
-
-        const { data: updatedUser, error: userUpdateError } = await supabaseAdmin
-            .from('users')
-            .update(userUpdates)
-            .eq('id', existing.id)
-            .select('id, auth_user_id, role, real_name, display_name, email, phone, is_suspended')
-            .single()
-
-        if (userUpdateError || !updatedUser) {
-            return NextResponse.json({ error: userUpdateError?.message ?? 'ユーザー更新に失敗しました' }, { status: 500 })
-        }
-
-        await supabaseAdmin.from('audit_logs').insert({
-            actor_user_id: userData.id,
-            organization_id: organizationContext.organizationId,
-            action: leftMembership ? 'organization_member_reactivated' : 'organization_member_added_existing_user',
-            target_table: 'organization_memberships',
-            target_id: membership.id,
-            metadata: { user_id: existing.id, role: memberRole },
-        })
-
-        return NextResponse.json({
-            reused_existing_user: true,
-            member: {
-                ...(membership as MembershipRow),
-                user: updatedUser as PublicUser,
-            },
-        })
+        return NextResponse.json({ error: 'このメールアドレスは登録済みです。第一弾では登録済みアカウントの追加・移籍は利用できません。' }, { status: 409 })
     }
 
-    if (registrationType === 'existing') {
-        return NextResponse.json({ error: '登録済みアカウントが見つかりません' }, { status: 404 })
-    }
     if (!realName || !password) {
         return NextResponse.json({ error: '新規メンバーは担当者名と初期パスワードが必要です' }, { status: 400 })
     }

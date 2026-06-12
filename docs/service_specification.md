@@ -261,14 +261,14 @@ OWNERは `/supporter/members` で団体メンバーを管理します。
 主な操作:
 
 - メンバー一覧表示
-- メンバー追加
+- 新規メンバー追加
 - 担当者情報の確認・編集
 - MEMBER停止
 - MEMBER復帰
 - 最後のOWNER保護
 
-第一弾では、団体メンバーの移籍・所属解除は扱いません。
-そのため `/supporter/members` の所属解除ボタンは表示せず、APIでも `status = LEFT` への変更を拒否します。
+第一弾では、団体メンバーの移籍・再所属・所属解除は扱いません。
+そのため `/supporter/members` の「登録済みアカウントを所属に追加」導線と所属解除ボタンは表示せず、APIでも `registration_type = existing` と `status = LEFT` への変更を拒否します。
 一時的に利用を止める場合は「停止」を使います。
 
 団体内のメンバー停止は `organization_memberships.status = SUSPENDED` で管理します。
@@ -279,7 +279,7 @@ OWNERは `/supporter/members` で団体メンバーを管理します。
 
 | API | 役割 |
 |---|---|
-| `/api/supporter/members` | メンバー一覧・追加 |
+| `/api/supporter/members` | メンバー一覧・新規追加（登録済みアカウント追加は第一弾では無効） |
 | `/api/supporter/members/[membershipId]` | メンバー更新・停止・復帰（所属解除は第一弾では無効） |
 
 ### 9.5 案件確認・申し出
@@ -551,8 +551,8 @@ users.real_name / display_name / phone / birth_date / gender / address系
 | 任意電話番号 | 監査上不要であれば削除またはマスクを検討 |
 | messages / offers / audit_logs | 物理削除せず保持 |
 
-同じメールアドレスで再度関わる場合は、新規登録ではなく、既存アカウントの復帰・再所属・移籍として扱います。
-復帰は、原則として団体OWNERまたは管理権限を持つメンバーの承認操作によって行います。
+同じメールアドレスで再度関わる場合は、将来的には新規登録ではなく、既存アカウントの復帰・再所属・移籍として扱います。
+ただし第一弾では復帰・再所属・移籍のUI/APIは開放せず、必要になった時点で管理者確認を含む運用として設計します。
 本人退会済み、管理者停止中、または別団体に `ACTIVE` / `SUSPENDED` 所属中の場合は、通常の復帰ではなく管理者確認を必要とします。
 
 最後のOWNERは退会できません。
