@@ -1,6 +1,7 @@
 // src/app/api/admin/featured-supporters/route.ts
 // 管理者：おすすめサポーターの取得・更新
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
 async function verifyAdmin(request: Request) {
@@ -21,12 +22,21 @@ export async function GET(request: Request) {
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: supporters } = await supabaseAdmin
-        .from('users')
-        .select('id, display_name, organization_name, supporter_type, is_featured, featured_order')
-        .eq('role', 'SUPPORTER')
+        .from('organizations')
+        .select('id, name, supporter_type, is_featured, featured_order')
+        .eq('status', 'ACTIVE')
         .order('featured_order', { ascending: true })
 
-    return NextResponse.json({ supporters: supporters ?? [] })
+    return NextResponse.json({
+        supporters: (supporters ?? []).map((s: { id: string; name: string; supporter_type: string | null; is_featured: boolean; featured_order: number }) => ({
+            id: s.id,
+            display_name: s.name,
+            organization_name: s.name,
+            supporter_type: s.supporter_type,
+            is_featured: s.is_featured,
+            featured_order: s.featured_order,
+        })),
+    })
 }
 
 // PATCH: 特定サポーターのis_featured・featured_orderを更新
@@ -41,15 +51,18 @@ export async function PATCH(request: Request) {
     if (!supporter_id) {
         return NextResponse.json({ error: 'supporter_id is required' }, { status: 400 })
     }
+    if (!isUuid(supporter_id)) {
+        return NextResponse.json({ error: 'Invalid supporter id' }, { status: 400 })
+    }
 
     const updateData: { is_featured: boolean; featured_order?: number } = { is_featured }
     if (featured_order !== undefined) updateData.featured_order = featured_order
 
     const { error } = await supabaseAdmin
-        .from('users')
+        .from('organizations')
         .update(updateData)
         .eq('id', supporter_id)
-        .eq('role', 'SUPPORTER')
+        .eq('status', 'ACTIVE')
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -66,10 +79,13 @@ export async function POST(request: Request) {
     if (!Array.isArray(orders)) {
         return NextResponse.json({ error: 'orders must be an array' }, { status: 400 })
     }
+    if (orders.some((order) => !order || typeof order !== 'object' || !isUuid((order as { id?: unknown }).id))) {
+        return NextResponse.json({ error: 'Invalid supporter id in orders' }, { status: 400 })
+    }
 
     // 並び順を1件ずつ更新
     const updates = orders.map(({ id, featured_order }: { id: string; featured_order: number }) =>
-        supabaseAdmin.from('users').update({ featured_order }).eq('id', id)
+        supabaseAdmin.from('organizations').update({ featured_order }).eq('id', id)
     )
     await Promise.all(updates)
 

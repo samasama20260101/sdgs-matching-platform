@@ -2,6 +2,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
+import { getActiveOrganizationForUser } from '@/lib/organizations'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id'
 
@@ -21,6 +22,11 @@ export async function GET(request: Request) {
     }
 
     const supporterUserId = userData.id
+    const organizationContext = await getActiveOrganizationForUser(supporterUserId)
+    if (!organizationContext) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+    }
+    const supporterOrganizationId = organizationContext.organizationId
 
     // 1. アクティブ案件（OPEN / MATCHED）+ LISTED
     //    承認が上限未満なら引き続き申し出可能なため、全アクティブ状態を取得
@@ -37,7 +43,7 @@ export async function GET(request: Request) {
     const { data: myAllOffers, error: offerErr } = await supabaseAdmin
         .from('offers')
         .select('case_id, status')
-        .eq('supporter_user_id', supporterUserId)
+        .eq('supporter_organization_id', supporterOrganizationId)
     if (offerErr) console.error('myAllOffers error:', JSON.stringify(offerErr))
 
     const offerMap: Record<string, string> = {}
@@ -123,7 +129,7 @@ export async function GET(request: Request) {
     const { data: badges } = await supabaseAdmin
         .from('supporter_badges')
         .select('badge_key')
-        .eq('supporter_user_id', supporterUserId)
+        .eq('supporter_organization_id', supporterOrganizationId)
 
     const badgeCounts: Record<string, number> = {}
     ;(badges || []).forEach((b: { badge_key: string }) => {

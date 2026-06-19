@@ -1,7 +1,19 @@
 // src/app/api/supporter/service-areas/route.ts
 // サポーターの活動地域を直接取得・更新するAPI
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { NextResponse } from 'next/server'
+
+type RegionRow = { code: string; name_local: string; name_en: string }
+type ServiceAreaRow = {
+    region_code: string | null
+    is_nationwide: boolean
+    country: string | null
+}
+type ServiceAreaInput = {
+    region_code: string
+    country?: string | null
+}
 
 async function getUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -23,26 +35,31 @@ export async function GET(request: Request) {
     if (!userData || userData.role !== 'SUPPORTER') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
+    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) {
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
     // Step1: supporter_service_areas 取得
-    const { data: areas, error: areasError } = await supabaseAdmin
+    const areasQuery = supabaseAdmin
         .from('supporter_service_areas')
         .select('id, region_code, is_nationwide, country')
-        .eq('supporter_user_id', userData.id)
+        .eq('organization_id', organizationContext.organizationId)
+    const { data: areas, error: areasError } = await areasQuery
 
     if (areasError) {
         console.error('[service-areas GET] error:', areasError)
         return NextResponse.json({ error: areasError.message }, { status: 500 })
     }
 
-    const isNationwide = (areas || []).some((a: any) => a.is_nationwide)
+    const areaRows = (areas || []) as ServiceAreaRow[]
+    const isNationwide = areaRows.some((a) => a.is_nationwide)
 
-    if (!areas || areas.length === 0) {
+    if (areaRows.length === 0) {
         return NextResponse.json({ service_areas: [], service_area_nationwide: false })
     }
 
     // Step2: region_code → name を明示的に引く
-    const codes = areas.filter((a: any) => a.region_code).map((a: any) => a.region_code as string)
+    const codes = areaRows.filter((a) => a.region_code).map((a) => a.region_code as string)
     let regionMap: Record<string, { name_local: string; name_en: string }> = {}
 
     if (codes.length > 0) {
@@ -56,18 +73,21 @@ export async function GET(request: Request) {
         }
 
         regionMap = Object.fromEntries(
-            (regionRows || []).map((r: any) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
+            ((regionRows || []) as RegionRow[]).map((r) => [r.code, { name_local: r.name_local, name_en: r.name_en }])
         )
     }
 
-    const serviceAreas = areas
-        .filter((a: any) => !a.is_nationwide)
-        .map((a: any) => ({
-            region_code: a.region_code,
-            country: a.country || 'JP',
-            name_local: regionMap[a.region_code]?.name_local ?? a.region_code ?? '',
-            name_en:    regionMap[a.region_code]?.name_en    ?? a.region_code ?? '',
-        }))
+    const serviceAreas = areaRows
+        .filter((a) => !a.is_nationwide)
+        .map((a) => {
+            const code = a.region_code
+            return {
+                region_code: code,
+                country: a.country || 'JP',
+                name_local: code ? regionMap[code]?.name_local ?? code : '',
+                name_en: code ? regionMap[code]?.name_en ?? code : '',
+            }
+        })
 
     return NextResponse.json({
         service_areas: serviceAreas,
@@ -81,14 +101,22 @@ export async function PUT(request: Request) {
     if (!userData || userData.role !== 'SUPPORTER') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) {
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
+    if (organizationContext.organizationRole !== 'OWNER') {
+        return NextResponse.json({ error: '活動地域を変更できるのはOWNERのみです', code: 'FORBIDDEN' }, { status: 403 })
+    }
 
     const { service_areas, service_area_nationwide } = await request.json()
 
     // 既存データを全削除
-    const { error: deleteError } = await supabaseAdmin
+    const deleteQuery = supabaseAdmin
         .from('supporter_service_areas')
         .delete()
-        .eq('supporter_user_id', userData.id)
+        .eq('organization_id', organizationContext.organizationId)
+    const { error: deleteError } = await deleteQuery
 
     if (deleteError) {
         console.error('[service-areas PUT] delete error:', deleteError)
@@ -98,14 +126,21 @@ export async function PUT(request: Request) {
     if (service_area_nationwide) {
         const { error: insertError } = await supabaseAdmin
             .from('supporter_service_areas')
-            .insert([{ supporter_user_id: userData.id, region_code: null, country: 'JP', is_nationwide: true }])
+            .insert([{
+                supporter_user_id: userData.id,
+                organization_id: organizationContext.organizationId,
+                region_code: null,
+                country: 'JP',
+                is_nationwide: true,
+            }])
         if (insertError) {
             console.error('[service-areas PUT] insert nationwide error:', insertError)
             return NextResponse.json({ error: insertError.message }, { status: 500 })
         }
     } else if (Array.isArray(service_areas) && service_areas.length > 0) {
-        const rows = service_areas.map((a: any) => ({
+        const rows = (service_areas as ServiceAreaInput[]).map((a) => ({
             supporter_user_id: userData.id,
+            organization_id: organizationContext.organizationId,
             region_code: a.region_code,
             country: a.country || 'JP',
             is_nationwide: false,

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Namia mini icon</title>
+  <desc id="desc">A balanced mini icon of Namia for small brand placements.</desc>
+  <defs>
+    <linearGradient id="body" x1="148" y1="74" x2="355" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#26dbc8"/>
+      <stop offset="1" stop-color="#1094d2"/>
+    </linearGradient>
+    <radialGradient id="light" cx="50%" cy="48%" r="58%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.62" stop-color="#f3ffff"/>
+      <stop offset="1" stop-color="#ffe39a"/>
+    </radialGradient>
+    <filter id="lightGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path d="M256 52c80 92 143 180 143 274 0 89-61 139-143 139s-143-50-143-139c0-94 63-182 143-274z" fill="url(#body)" stroke="#0876a7" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M164 222c12-15 28-22 47-21" fill="none" stroke="#0a6e9b" stroke-width="7" stroke-linecap="round" opacity="0.62"/>
+  <path d="M301 201c19-1 35 6 47 21" fill="none" stroke="#0a6e9b" stroke-width="7" stroke-linecap="round" opacity="0.62"/>
+  <ellipse cx="188" cy="249" rx="18" ry="26" fill="#071d3f"/>
+  <ellipse cx="324" cy="249" rx="18" ry="26" fill="#071d3f"/>
+  <circle cx="195" cy="238" r="6.5" fill="#ffffff"/>
+  <circle cx="331" cy="238" r="6.5" fill="#ffffff"/>
+  <path d="M216 310c23 25 57 25 80 0" fill="none" stroke="#08213a" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="256" cy="374" r="51" fill="url(#light)" filter="url(#lightGlow)"/>
+</svg>

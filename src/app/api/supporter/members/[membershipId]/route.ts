@@ -1,0 +1,268 @@
+import { supabaseAdmin } from '@/lib/supabase/server'
+import { getActiveOrganizationForUser, type ActiveOrganizationContext, type OrganizationRole } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
+import { NextResponse } from 'next/server'
+
+type PublicUser = {
+    id: string
+    auth_user_id: string
+    role: string
+    real_name: string
+    display_name: string
+    email: string
+    phone: string | null
+    is_suspended: boolean | null
+}
+
+type MembershipStatus = 'INVITED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT'
+
+type MembershipRow = {
+    id: string
+    organization_id: string
+    user_id: string
+    role: OrganizationRole
+    status: MembershipStatus
+    joined_at: string | null
+    left_at: string | null
+    created_at: string
+    department: string | null
+    external_phone: string | null
+    phone_extension: string | null
+}
+
+type SupporterMemberContext = {
+    userData: PublicUser
+    organizationContext: ActiveOrganizationContext
+}
+
+const MEMBER_ROLES: OrganizationRole[] = ['OWNER', 'ADMIN', 'MEMBER']
+const UPDATE_STATUSES: MembershipStatus[] = ['ACTIVE', 'SUSPENDED', 'LEFT']
+const DETAIL_FIELDS = ['department', 'external_phone', 'phone_extension'] as const
+const PERSONAL_FIELDS = ['real_name', 'display_name', 'phone'] as const
+
+function sanitizeDetail(value: unknown, maxLength: number) {
+    return typeof value === 'string' && value.trim() ? value.trim().slice(0, maxLength) : null
+}
+
+async function getSupporterMemberContext(request: Request): Promise<SupporterMemberContext | NextResponse> {
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+    if (error || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('id, auth_user_id, role, real_name, display_name, email, phone, is_suspended')
+        .eq('auth_user_id', user.id)
+        .single()
+
+    if (!userData || userData.role !== 'SUPPORTER') {
+        return NextResponse.json({ error: 'アクセス権限がありません', code: 'FORBIDDEN' }, { status: 403 })
+    }
+    if (userData.is_suspended) {
+        return NextResponse.json({ error: 'このアカウントは停止されています', code: 'ACCOUNT_SUSPENDED' }, { status: 403 })
+    }
+
+    const organizationContext = await getActiveOrganizationForUser(userData.id)
+    if (!organizationContext) {
+        return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
+    }
+
+    return { userData: userData as PublicUser, organizationContext }
+}
+
+function isContext(value: SupporterMemberContext | NextResponse): value is SupporterMemberContext {
+    return !(value instanceof NextResponse)
+}
+
+async function getActiveOwnerCount(organizationId: string) {
+    const { count, error } = await supabaseAdmin
+        .from('organization_memberships')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .eq('role', 'OWNER')
+        .eq('status', 'ACTIVE')
+
+    if (error) {
+        console.error('[supporter/members] active owner count error:', error)
+        return null
+    }
+    return count ?? 0
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ membershipId: string }> }) {
+    const { membershipId } = await params
+    if (!isUuid(membershipId)) return NextResponse.json({ error: 'Invalid membership id' }, { status: 400 })
+    const context = await getSupporterMemberContext(request)
+    if (!isContext(context)) return context
+
+    const { userData, organizationContext } = context
+    const { data: targetMembership, error: targetError } = await supabaseAdmin
+        .from('organization_memberships')
+        .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
+        .eq('id', membershipId)
+        .eq('organization_id', organizationContext.organizationId)
+        .single()
+
+    if (targetError || !targetMembership) {
+        return NextResponse.json({ error: '対象メンバーが見つかりません' }, { status: 404 })
+    }
+
+    const target = targetMembership as MembershipRow
+    const body = await request.json()
+    const nextRole = MEMBER_ROLES.includes(body.role) ? body.role as OrganizationRole : undefined
+    const nextStatus = UPDATE_STATUSES.includes(body.status) ? body.status as MembershipStatus : undefined
+
+    if (body.status === 'LEFT') {
+        return NextResponse.json(
+            { error: '第一弾では所属解除は利用できません。メンバーを一時的に止める場合は「停止」を使用してください。', code: 'MEMBER_LEAVE_DISABLED' },
+            { status: 400 }
+        )
+    }
+
+    const hasDetails = DETAIL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
+    const hasPersonalDetails = PERSONAL_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field))
+    const isOwner = organizationContext.organizationRole === 'OWNER'
+    const isSelf = target.id === organizationContext.membershipId
+    if (!isOwner && (!isSelf || nextRole || nextStatus)) {
+        return NextResponse.json({ error: 'メンバーを変更する権限がありません' }, { status: 403 })
+    }
+    if (!nextRole && !nextStatus && !hasDetails && !hasPersonalDetails) {
+        return NextResponse.json({ error: '変更内容がありません' }, { status: 400 })
+    }
+
+    if (nextStatus && isSelf) {
+        return NextResponse.json({ error: '自分自身の所属状態は変更できません' }, { status: 400 })
+    }
+
+    const updateData: Record<string, unknown> = {}
+    const auditMetadata: Record<string, unknown> = {
+        user_id: target.user_id,
+        previous_role: target.role,
+        previous_status: target.status,
+    }
+
+    if (hasDetails) {
+        if (Object.prototype.hasOwnProperty.call(body, 'department')) {
+            updateData.department = sanitizeDetail(body.department, 100)
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'external_phone')) {
+            updateData.external_phone = sanitizeDetail(body.external_phone, 30)
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'phone_extension')) {
+            updateData.phone_extension = sanitizeDetail(body.phone_extension, 30)
+        }
+        auditMetadata.details_updated = true
+    }
+
+    if (nextRole && nextRole !== target.role) {
+        if (target.status !== 'ACTIVE') {
+            return NextResponse.json({ error: '停止中または解除済みのメンバーは権限変更できません' }, { status: 400 })
+        }
+        if (target.id === organizationContext.membershipId && target.role === 'OWNER' && nextRole !== 'OWNER') {
+            const ownerCount = await getActiveOwnerCount(organizationContext.organizationId)
+            if (ownerCount === null) {
+                return NextResponse.json({ error: 'OWNER確認に失敗しました' }, { status: 500 })
+            }
+            if (ownerCount <= 1) {
+                return NextResponse.json({ error: '最後のOWNERは変更できません' }, { status: 400 })
+            }
+        }
+        updateData.role = nextRole
+        auditMetadata.next_role = nextRole
+    }
+
+    if (nextStatus && nextStatus !== target.status) {
+        if (target.role === 'OWNER' && target.status === 'ACTIVE' && nextStatus !== 'ACTIVE') {
+            const ownerCount = await getActiveOwnerCount(organizationContext.organizationId)
+            if (ownerCount === null) {
+                return NextResponse.json({ error: 'OWNER確認に失敗しました' }, { status: 500 })
+            }
+            if (ownerCount <= 1) {
+                return NextResponse.json({ error: '最後のOWNERは停止・解除できません' }, { status: 400 })
+            }
+        }
+
+        updateData.status = nextStatus
+        auditMetadata.next_status = nextStatus
+        // 団体内の所属停止は membership.status だけで管理する。
+        // users.is_suspended / Auth ban は管理者による全体アカウント停止専用。
+        if (nextStatus === 'ACTIVE') {
+            const { data: currentMemberships, error: currentMembershipsError } = await supabaseAdmin
+                .from('organization_memberships')
+                .select('id, organization_id, status')
+                .eq('user_id', target.user_id)
+                .in('status', ['ACTIVE', 'SUSPENDED'])
+                .neq('id', target.id)
+
+            if (currentMembershipsError) {
+                return NextResponse.json({ error: currentMembershipsError.message }, { status: 500 })
+            }
+            if ((currentMemberships ?? []).length > 0) {
+                return NextResponse.json({ error: 'このユーザーは既に別団体に所属中、または停止中です', code: 'ACTIVE_MEMBERSHIP_EXISTS' }, { status: 409 })
+            }
+            if (target.status === 'LEFT') updateData.joined_at = new Date().toISOString()
+            updateData.left_at = null
+        }
+        if (nextStatus === 'LEFT') {
+            updateData.left_at = new Date().toISOString()
+        }
+    }
+
+    let updatedMembership: MembershipRow = target
+    if (Object.keys(updateData).length > 0) {
+        const { data: membershipData, error: updateError } = await supabaseAdmin
+            .from('organization_memberships')
+            .update(updateData)
+            .eq('id', target.id)
+            .select('id, organization_id, user_id, role, status, joined_at, left_at, created_at, department, external_phone, phone_extension')
+            .single()
+
+        if (updateError || !membershipData) {
+            return NextResponse.json({ error: updateError?.message ?? 'メンバー更新に失敗しました' }, { status: 500 })
+        }
+        updatedMembership = membershipData as MembershipRow
+    }
+
+    if (hasPersonalDetails) {
+        const personalUpdate: Record<string, unknown> = {}
+        if (Object.prototype.hasOwnProperty.call(body, 'real_name')) {
+            const realName = sanitizeDetail(body.real_name, 64)
+            if (!realName) return NextResponse.json({ error: '担当者名を入力してください' }, { status: 400 })
+            personalUpdate.real_name = realName
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'display_name')) {
+            const displayName = sanitizeDetail(body.display_name, 64)
+            if (!displayName) return NextResponse.json({ error: '表示名を入力してください' }, { status: 400 })
+            personalUpdate.display_name = displayName
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'phone')) {
+            personalUpdate.phone = sanitizeDetail(body.phone, 30)
+        }
+        const { error: personalUpdateError } = await supabaseAdmin
+            .from('users')
+            .update(personalUpdate)
+            .eq('id', target.user_id)
+        if (personalUpdateError) {
+            return NextResponse.json({ error: personalUpdateError.message }, { status: 500 })
+        }
+        auditMetadata.personal_profile_updated = true
+    }
+
+    await supabaseAdmin.from('audit_logs').insert({
+        actor_user_id: userData.id,
+        organization_id: organizationContext.organizationId,
+        action: 'organization_member_updated',
+        target_table: 'organization_memberships',
+        target_id: target.id,
+        metadata: auditMetadata,
+    })
+
+    return NextResponse.json({ member: updatedMembership as MembershipRow })
+}

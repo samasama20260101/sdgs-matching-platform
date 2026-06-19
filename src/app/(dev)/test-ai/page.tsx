@@ -1,14 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase/client';
 
 // 動的レンダリングを強制
 export const dynamic = 'force-dynamic';
 
+type ClassificationResult = {
+  sdgs_goals?: number[];
+  reasoning?: string;
+  keywords?: string[];
+}
+
 export default function TestAIPage() {
   const [consultationText, setConsultationText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ClassificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,10 +25,16 @@ export default function TestAIPage() {
     setResult(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('管理者ログインが必要です');
+      }
+
       const response = await fetch('/api/classify-sdgs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ consultationText }),
       });

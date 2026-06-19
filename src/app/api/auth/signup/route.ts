@@ -1,4 +1,5 @@
 // src/app/api/auth/signup/route.ts
+import { getBearerToken } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -7,9 +8,46 @@ const MAX_SOS_USERS = 1000  // SOSユーザー登録上限（将来変更する�
 export async function POST(request: Request) {
   try {
     const { auth_user_id, email, real_name, display_name, phone, gender, birth_date } = await request.json()
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
 
-    if (!auth_user_id || !email || !real_name) {
+    if (!normalizedEmail || !real_name) {
       return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
+    }
+
+    const bearerToken = getBearerToken(request)
+    if (!bearerToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { data: { user }, error: tokenError } = await supabaseAdmin.auth.getUser(bearerToken)
+    if (tokenError || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+    if (auth_user_id && auth_user_id !== user.id) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    const authUserId = user.id
+    const { data: authUserData, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(authUserId)
+    const authEmail = authUserData.user?.email?.trim().toLowerCase()
+    if (authUserError || !authUserData.user || authEmail !== normalizedEmail) {
+      console.error('[api/auth/signup] auth user verification failed:', authUserError)
+      return NextResponse.json({ error: '認証ユーザーの確認に失敗しました' }, { status: 400 })
+    }
+
+    const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+      .from('users')
+      .select('id, role')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle()
+    if (existingProfileError) {
+      console.error('[api/auth/signup] existing profile fetch error:', existingProfileError)
+      return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
+    if (existingProfile) {
+      if (existingProfile.role !== 'SOS') {
+        return NextResponse.json({ error: 'この認証ユーザーはSOSユーザーとして登録できません' }, { status: 409 })
+      }
+      return NextResponse.json({ success: true })
     }
 
     // SOSユーザー登録上限チェック
@@ -37,20 +75,22 @@ export async function POST(request: Request) {
     }
 
     const { error } = await supabaseAdmin.from('users').insert({
-      auth_user_id,
+      auth_user_id: authUserId,
       role: 'SOS',
-      real_name,
-      display_name: display_name || real_name,
+      real_name: String(real_name).trim().slice(0, 64),
+      display_name: typeof display_name === 'string' && display_name.trim()
+        ? display_name.trim().slice(0, 64)
+        : String(real_name).trim().slice(0, 64),
       display_id: displayIdRow,
-      email,
-      phone: phone || null,
-      gender: gender || null,
-      birth_date: birth_date || null,
+      email: normalizedEmail,
+      phone: typeof phone === 'string' && phone.trim() ? phone.trim().slice(0, 30) : null,
+      gender: typeof gender === 'string' && ['MALE', 'FEMALE', 'OTHER'].includes(gender) ? gender : null,
+      birth_date: typeof birth_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(birth_date) ? birth_date : null,
     })
 
     if (error) {
       console.error('[api/auth/signup] insert error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

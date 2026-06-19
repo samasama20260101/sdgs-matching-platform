@@ -1,7 +1,11 @@
 // src/app/api/messages/route.ts
 // メッセージ取得・送信（SOS・サポーター共通、RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
+
+const MAX_MESSAGE_LENGTH = 5000
 
 async function getAuthUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -10,9 +14,17 @@ async function getAuthUser(request: Request) {
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
     if (error || !user) return null
     const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role').eq('auth_user_id', user.id).single()
+        .from('users').select('id, role, display_name, organization_name, is_suspended').eq('auth_user_id', user.id).single()
     if (!userData) return null
-    return userData
+    if (userData.is_suspended) return null
+    const organizationContext = userData.role === 'SUPPORTER'
+        ? await getActiveOrganizationForUser(userData.id)
+        : null
+    return {
+        ...userData,
+        organization_id: organizationContext?.organizationId ?? null,
+        organization_name: organizationContext?.organization.name ?? userData.organization_name ?? null,
+    }
 }
 
 // GET: メッセージ一覧取得（case_id クエリパラメータ必須）
@@ -20,9 +32,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const caseId = searchParams.get('case_id')
     if (!caseId) return NextResponse.json({ error: 'case_id required' }, { status: 400 })
+    if (!isUuid(caseId)) return NextResponse.json({ error: 'invalid case_id' }, { status: 400 })
 
     const userData = await getAuthUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (userData.role === 'SUPPORTER' && !userData.organization_id) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+    }
 
     // この案件に関与しているか確認
     const { data: caseData } = await supabaseAdmin
@@ -31,13 +47,14 @@ export async function GET(request: Request) {
 
     // SOS所有者またはACCEPTEDサポーターのみアクセス許可
     let canAccess = caseData.owner_user_id === userData.id
-    if (!canAccess) {
-        const { data: offer } = await supabaseAdmin
+    if (!canAccess && userData.role === 'SUPPORTER') {
+        let offerQuery = supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', caseId)
-            .eq('supporter_user_id', userData.id)
             .eq('status', 'ACCEPTED')
+        offerQuery = offerQuery.eq('supporter_organization_id', userData.organization_id)
+        const { data: offer } = await offerQuery
             .maybeSingle()
         canAccess = !!offer
     }
@@ -51,7 +68,10 @@ export async function GET(request: Request) {
         .eq('case_id', caseId)
         .order('created_at', { ascending: true })
 
-    if (msgError) return NextResponse.json({ error: msgError.message }, { status: 500 })
+    if (msgError) {
+        console.error('[messages] fetch error:', msgError)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
 
     if (!messagesData || messagesData.length === 0) {
         return NextResponse.json({ messages: [] })
@@ -65,14 +85,21 @@ export async function GET(request: Request) {
         .in('id', senderIds)
 
     const senderMap = new Map((senders || []).map(s => [s.id, s]))
-    const enriched = messagesData.map(m => ({
-        ...m,
-        sender: senderMap.get(m.sender_user_id) || {
-            display_name: '不明',
-            role: 'UNKNOWN',
-            organization_name: null,
-        },
-    }))
+    const enriched = messagesData.map(m => {
+        const sender = senderMap.get(m.sender_user_id)
+        return {
+            ...m,
+            sender: {
+                ...(sender || {}),
+                display_name: m.sender_role_snapshot === 'SUPPORTER'
+                    && m.sender_display_name_snapshot === m.sender_organization_name_snapshot
+                    ? sender?.display_name || m.sender_display_name_snapshot || '不明'
+                    : m.sender_display_name_snapshot || sender?.display_name || '不明',
+                role: m.sender_role_snapshot || sender?.role || 'UNKNOWN',
+                organization_name: m.sender_organization_name_snapshot || sender?.organization_name || null,
+            },
+        }
+    })
 
     return NextResponse.json({ messages: enriched })
 }
@@ -81,10 +108,21 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     const userData = await getAuthUser(request)
     if (!userData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (userData.role === 'SUPPORTER' && !userData.organization_id) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+    }
 
     const { case_id, content } = await request.json()
-    if (!case_id || !content?.trim()) {
+    const normalizedContent = typeof content === 'string' ? content.trim() : ''
+    if (!case_id || !normalizedContent) {
         return NextResponse.json({ error: 'case_id and content are required' }, { status: 400 })
+    }
+    if (!isUuid(case_id)) return NextResponse.json({ error: 'invalid case_id' }, { status: 400 })
+    if (normalizedContent.length > MAX_MESSAGE_LENGTH) {
+        return NextResponse.json({ error: `メッセージは${MAX_MESSAGE_LENGTH}文字以内で入力してください` }, { status: 400 })
+    }
+    if (normalizedContent.startsWith('__SYSTEM__')) {
+        return NextResponse.json({ error: 'Reserved message prefix' }, { status: 400 })
     }
 
     // この案件に関与しているか確認（SOS所有者またはACCEPTEDサポーター）
@@ -93,13 +131,14 @@ export async function POST(request: Request) {
     if (!caseData) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
 
     let canAccess = caseData.owner_user_id === userData.id
-    if (!canAccess) {
-        const { data: offer } = await supabaseAdmin
+    if (!canAccess && userData.role === 'SUPPORTER') {
+        let offerQuery = supabaseAdmin
             .from('offers')
             .select('id')
             .eq('case_id', case_id)
-            .eq('supporter_user_id', userData.id)
             .eq('status', 'ACCEPTED')
+        offerQuery = offerQuery.eq('supporter_organization_id', userData.organization_id)
+        const { data: offer } = await offerQuery
             .maybeSingle()
         canAccess = !!offer
     }
@@ -108,11 +147,22 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabaseAdmin
         .from('messages')
-        .insert([{ case_id, sender_user_id: userData.id, content }])
+        .insert([{
+            case_id,
+            sender_user_id: userData.id,
+            sender_organization_id: userData.organization_id,
+            sender_display_name_snapshot: userData.display_name,
+            sender_role_snapshot: userData.role,
+            sender_organization_name_snapshot: userData.organization_name,
+            content: normalizedContent,
+        }])
         .select()
         .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+        console.error('[messages] insert error:', error)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
 
     return NextResponse.json({ message: data })
 }

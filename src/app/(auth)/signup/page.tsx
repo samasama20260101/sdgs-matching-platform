@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Logo } from '@/components/icons/Logo'
 import { supabase } from '@/lib/supabase/client'
 
+const PENDING_SOS_SIGNUP_KEY = 'samasama_pending_sos_signup'
+
 export default function SignupPage() {
   const router = useRouter()
 
@@ -80,25 +82,37 @@ export default function SignupPage() {
       if (authError) throw authError
       if (!authData.user) throw new Error('アカウント作成に失敗しました')
 
-      // 2. users テーブルにレコード作成（APIルート経由 / supabaseAdmin使用）
-      const profileRes = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          auth_user_id: authData.user.id,
-          email,
-          real_name: realName,
-          display_name: displayName || realName,
-          phone: sanitizedPhone || null,
-          gender,
-          birth_date: birthDate,
-        }),
-      })
+      const pendingProfile = {
+        email: email.trim().toLowerCase(),
+        real_name: realName,
+        display_name: displayName || realName,
+        phone: sanitizedPhone || null,
+        gender,
+        birth_date: birthDate,
+      }
 
-      if (!profileRes.ok) {
-        const profileData = await profileRes.json()
-        // 登録上限エラーは専用メッセージを使用
-        throw new Error(profileData.message || profileData.error || 'プロフィールの保存に失敗しました')
+      if (authData.session?.access_token) {
+        // 2. users テーブルにレコード作成（APIルート経由 / supabaseAdmin使用）
+        const profileRes = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authData.session.access_token}`,
+          },
+          body: JSON.stringify({
+            auth_user_id: authData.user.id,
+            ...pendingProfile,
+          }),
+        })
+
+        if (!profileRes.ok) {
+          const profileData = await profileRes.json()
+          // 登録上限エラーは専用メッセージを使用
+          throw new Error(profileData.message || profileData.error || 'プロフィールの保存に失敗しました')
+        }
+        localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)
+      } else {
+        localStorage.setItem(PENDING_SOS_SIGNUP_KEY, JSON.stringify(pendingProfile))
       }
 
       // Email Confirm がONの場合（本番）は session が null になる

@@ -10,6 +10,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import MessageThread from '@/components/chat/MessageThread';
+import { InternalNotesPanel } from '@/components/supporter/InternalNotesPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -51,6 +52,8 @@ const QA_QUESTIONS = [
   { id: 5, question: 'どんな支援を求めていますか？' },
 ]
 
+const CASE_POLL_INTERVAL_MS = 60_000;
+
 export default function SupporterCaseDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -60,10 +63,12 @@ export default function SupporterCaseDetailPage() {
   const [myOffer, setMyOffer] = useState<OfferData | null>(null);
   const [acceptedOfferOrders, setAcceptedOfferOrders] = useState<{
     supporter_user_id: string;
+    supporter_organization_id: string;
     accepted_order: number;
     profile: { display_name: string; organization_name: string | null; supporter_type: string } | null;
   }[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentOrganizationId, setCurrentOrganizationId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -74,6 +79,7 @@ export default function SupporterCaseDetailPage() {
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [showQna, setShowQna] = useState(false);
   const [offerMessage, setOfferMessage] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getToken = async () => {
@@ -95,9 +101,10 @@ export default function SupporterCaseDetailPage() {
       router.push('/supporter/dashboard');
       return;
     }
-    const { case: caseResult, supporterUserId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
+    const { case: caseResult, supporterUserId, supporterOrganizationId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
     setCaseData(caseResult);
     setCurrentUserId(supporterUserId);
+    setCurrentOrganizationId(supporterOrganizationId);
     setAcceptedOfferOrders(aOffers ?? []);
     setOwnerBirthDate(birthDate ?? null);
 
@@ -116,17 +123,20 @@ export default function SupporterCaseDetailPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // casesテーブルのリアルタイム監視
+  // 表示中のタブだけ定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
   useEffect(() => {
-    const channel = supabase
-      .channel(`case-updates:${params.id}`)
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${params.id}` },
-        () => { loadData(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [params.id, loadData]);
+    const refreshIfVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void loadData();
+    };
+    const intervalId = window.setInterval(refreshIfVisible, CASE_POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, [loadData]);
 
   const handleSubmitOffer = async () => {
     if (!offerMessage.trim()) { toast.warning('メッセージを入力してください'); return; }
@@ -211,10 +221,16 @@ export default function SupporterCaseDetailPage() {
       const res = await fetch(`/api/supporter/cases/${params.id}/offer`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN' }),
+        body: JSON.stringify({ offerId: myOffer.id, status: 'WITHDRAWN', withdrawal_reason: cancelReason }),
       });
-      if (!res.ok) { toast.error('対応のキャンセルに失敗しました'); return; }
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        toast.error(result.message || '対応のキャンセルに失敗しました');
+        await loadData();
+        return;
+      }
       setShowCancelModal(false);
+      setCancelReason('');
       toast.success('対応をキャンセルしました');
       router.push('/supporter/dashboard');
     } finally {
@@ -235,17 +251,12 @@ export default function SupporterCaseDetailPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ supporter_resolved_at: new Date().toISOString() }),
       });
-      if (!res.ok) { toast.error('解決報告に失敗しました'); return; }
-
-      // システムメッセージをAPIで投稿
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          case_id: params.id,
-          content: '__SYSTEM__サポーターが解決を報告しました。問題が解決していれば確認をお願いします。まだ解決していない場合は差し戻しができます。',
-        }),
-      });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        toast.error(result.message || '他の担当者がすでに解決を報告しました');
+        await loadData();
+        return;
+      }
 
       setShowResolveModal(false);
       await loadData();
@@ -287,7 +298,7 @@ export default function SupporterCaseDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <Button variant="outline" onClick={() => router.push('/supporter/dashboard')} className="mb-4">
           ← ダッシュボードに戻る
         </Button>
@@ -295,7 +306,7 @@ export default function SupporterCaseDetailPage() {
         {/* 案件詳細カード */}
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
               <div className="flex-1">
                 <CardTitle className="text-xl mb-2">{caseData?.title}</CardTitle>
                 <div className="flex gap-2 flex-wrap">
@@ -429,7 +440,7 @@ export default function SupporterCaseDetailPage() {
             <CardContent>
               <div className="space-y-2">
                 {acceptedOfferOrders.map((o, i) => {
-                  const isMe = o.supporter_user_id === currentUserId
+                  const isMe = o.supporter_organization_id === currentOrganizationId
                   const label = i === 0 ? '主' : '副'
                   const labelColor = i === 0
                     ? 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -440,7 +451,7 @@ export default function SupporterCaseDetailPage() {
                     ? 'bg-amber-100 text-amber-700'
                     : 'bg-blue-100 text-blue-700'
                   return (
-                    <div key={o.supporter_user_id} className={`flex items-center gap-3 p-3 rounded-lg border ${isMe ? 'bg-amber-50 border-amber-100' : 'bg-white border-gray-100'}`}>
+                    <div key={o.supporter_organization_id} className={`flex items-center gap-3 p-3 rounded-lg border ${isMe ? 'bg-amber-50 border-amber-100' : 'bg-white border-gray-100'}`}>
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${avatarColor}`}>
                         {initial}
                       </div>
@@ -459,7 +470,7 @@ export default function SupporterCaseDetailPage() {
                       </div>
                       {!isMe && (
                         <a
-                          href={`/supporters/${o.supporter_user_id}`}
+                          href={`/supporters/${o.supporter_organization_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 flex-shrink-0"
@@ -499,7 +510,7 @@ export default function SupporterCaseDetailPage() {
                     申し出を取り下げる
                   </Button>
                 )}
-                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && (
+                {myOffer.status === 'ACCEPTED' && caseData?.status === 'MATCHED' && !hasReportedResolution && (
                   <Button variant="outline" size="sm" onClick={() => setShowCancelModal(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full mt-1">
                     🚫 対応をキャンセルする
                   </Button>
@@ -567,6 +578,10 @@ export default function SupporterCaseDetailPage() {
             />
           </div>
         )}
+
+        {isAccepted && accessToken && (
+          <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken} />
+        )}
       </main>
 
       <Modal isOpen={showOfferModal} onClose={() => setShowOfferModal(false)} title="支援の申し出" type="info">
@@ -608,9 +623,14 @@ export default function SupporterCaseDetailPage() {
             <p className="text-sm text-red-700 mt-1">あなたの対応をキャンセルすると、この案件から外れます。次の副サポーターが自動的に主になります。</p>
           </div>
           <p className="text-sm text-gray-500">やむを得ない事情がある場合のみ使用してください。</p>
+          <div className="space-y-2">
+            <Label htmlFor="cancelReason">対応をキャンセルする理由 <span className="text-red-500">*</span></Label>
+            <textarea id="cancelReason" rows={4} maxLength={1000} value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} className="w-full rounded-lg border border-gray-200 p-3 text-sm" placeholder="相談者と関係サポーターへ共有されます" />
+            <p className="text-right text-xs text-gray-400">{cancelReason.length} / 1000</p>
+          </div>
           <div className="flex gap-3">
             <button onClick={() => setShowCancelModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">戻る</button>
-            <button onClick={confirmCancel} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" disabled={isActionLoading}>
+            <button onClick={confirmCancel} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50" disabled={isActionLoading || !cancelReason.trim()}>
               {isActionLoading ? '処理中...' : 'キャンセルする'}
             </button>
           </div>

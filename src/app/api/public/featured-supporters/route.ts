@@ -5,9 +5,9 @@ import { NextResponse } from 'next/server'
 export async function GET() {
     try {
         const { data: supporters, error } = await supabaseAdmin
-            .from('users')
-            .select('id, display_name, organization_name, supporter_type, bio, created_at, featured_order')
-            .eq('role', 'SUPPORTER')
+            .from('organizations')
+            .select('id, name, supporter_type, bio, created_at, featured_order')
+            .eq('status', 'ACTIVE')
             .eq('is_featured', true)
             .order('featured_order', { ascending: true })
 
@@ -18,7 +18,7 @@ export async function GET() {
         if (!supporters || supporters.length === 0) {
             // デバッグ：DBのfeatured状態を確認
             const { data: debug } = await supabaseAdmin
-                .from('users').select('id, is_featured, featured_order').eq('role', 'SUPPORTER')
+                .from('organizations').select('id, is_featured, featured_order').eq('status', 'ACTIVE')
             return NextResponse.json({ supporters: [], debug_db: debug })
         }
 
@@ -26,15 +26,15 @@ export async function GET() {
 
         // resolvedとbadgeはシンプルなクエリ
         const { data: resolvedOffers } = await supabaseAdmin
-            .from('offers').select('supporter_user_id').in('supporter_user_id', ids).eq('status', 'ACCEPTED')
+            .from('offers').select('supporter_organization_id').in('supporter_organization_id', ids).eq('status', 'ACCEPTED')
         const { data: badges } = await supabaseAdmin
-            .from('supporter_badges').select('supporter_user_id').in('supporter_user_id', ids)
+            .from('supporter_badges').select('supporter_organization_id').in('supporter_organization_id', ids)
 
         // service_areasはregionsテーブルから名前も取得
         const { data: serviceAreas } = await supabaseAdmin
             .from('supporter_service_areas')
-            .select('supporter_user_id, is_nationwide, region_code')
-            .in('supporter_user_id', ids)
+            .select('organization_id, is_nationwide, region_code')
+            .in('organization_id', ids)
 
         // region_codeからname_localを取得（regionsテーブルのPKは"code"）
         const regionCodes = [...new Set((serviceAreas || [])
@@ -50,30 +50,36 @@ export async function GET() {
 
         const resolvedMap: Record<string, number> = {}
         for (const o of (resolvedOffers || [])) {
-            const uid = (o as { supporter_user_id: string }).supporter_user_id
+            const uid = (o as { supporter_organization_id: string }).supporter_organization_id
             resolvedMap[uid] = (resolvedMap[uid] || 0) + 1
         }
         const badgeMap: Record<string, number> = {}
         for (const b of (badges || [])) {
-            const uid = (b as { supporter_user_id: string }).supporter_user_id
+            const uid = (b as { supporter_organization_id: string }).supporter_organization_id
             badgeMap[uid] = (badgeMap[uid] || 0) + 1
         }
 
         const areaMap: Record<string, { name_local: string }[]> = {}
         const nationwideSet = new Set<string>()
         for (const a of (serviceAreas || [])) {
-            const row = a as { supporter_user_id: string; is_nationwide: boolean; region_code: string }
+            const row = a as { organization_id: string; is_nationwide: boolean; region_code: string }
             if (row.is_nationwide) {
-                nationwideSet.add(row.supporter_user_id)
+                nationwideSet.add(row.organization_id)
             } else {
-                if (!areaMap[row.supporter_user_id]) areaMap[row.supporter_user_id] = []
-                areaMap[row.supporter_user_id].push({ name_local: regionNameMap[row.region_code] || row.region_code })
+                if (!areaMap[row.organization_id]) areaMap[row.organization_id] = []
+                areaMap[row.organization_id].push({ name_local: regionNameMap[row.region_code] || row.region_code })
             }
         }
 
         return NextResponse.json({
-            supporters: supporters.map((s: { id: string }) => ({
-                ...s,
+            supporters: supporters.map((s: { id: string; name: string; supporter_type: string | null; bio: string | null; created_at: string; featured_order: number }) => ({
+                id: s.id,
+                display_name: s.name,
+                organization_name: s.name,
+                supporter_type: s.supporter_type,
+                bio: s.bio,
+                created_at: s.created_at,
+                featured_order: s.featured_order,
                 resolved_count: resolvedMap[s.id] || 0,
                 badge_count: badgeMap[s.id] || 0,
                 service_area_nationwide: nationwideSet.has(s.id),

@@ -98,7 +98,6 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 // ─── メインコンポーネント ────────────────────────────────────
 export default function SOSHearingPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiStep, setAiStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -140,7 +139,6 @@ export default function SOSHearingPage() {
       const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
       if ((userCases?.length || 0) >= 3) { setShowLimitModal(true); return; }
 
-      setIsLoading(false);
     };
     checkAuth();
   }, [router]);
@@ -321,7 +319,7 @@ export default function SOSHearingPage() {
             <Card key={question.id}>
               <CardHeader>
                 <CardTitle className="text-base font-medium">
-                  Q{question.id}. {question.question}
+                  Q{question.id}. {question.question} <span className="text-red-500">*</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -498,7 +496,7 @@ export default function SOSHearingPage() {
           </Button>
 
           <p className="text-xs text-gray-400 text-center">
-            ※入力内容はAI分析のみに使用され、支援組織とのマッチングに活用されます
+            ※入力いただいた内容はAIが整理・分析し、あなたに合った支援組織を探すために使われます。支援に必要な範囲でサポーターにも共有されます。
           </p>
         </div>
       </main>

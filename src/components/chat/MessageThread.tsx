@@ -6,7 +6,6 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { supabase } from '@/lib/supabase/client';
 
 type Message = {
     id: string;
@@ -27,17 +26,27 @@ type Props = {
     readOnly?: boolean;    // RESOLVED時に入力を無効化
 };
 
+const MESSAGE_POLL_INTERVAL_MS = 60_000;
+
 export default function MessageThread({ caseId, currentUserId, accessToken, readOnly = false }: Props) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const didInitialScrollRef = useRef(false);
+    const shouldScrollToBottomRef = useRef(false);
+
+    const isNearBottom = useCallback(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return true;
+        return container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    }, []);
 
     // メッセージ読み込み（API経由でRLSバイパス）
-    const loadMessages = useCallback(async () => {
+    const loadMessages = useCallback(async (options: { forceScroll?: boolean } = {}) => {
         try {
             const res = await fetch(`/api/messages?case_id=${caseId}`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -48,6 +57,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                 return;
             }
             const { messages: data } = await res.json();
+            shouldScrollToBottomRef.current = options.forceScroll || !didInitialScrollRef.current || isNearBottom();
             setMessages(data || []);
             setError(null);
         } catch (err) {
@@ -56,25 +66,33 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
         } finally {
             setIsLoading(false);
         }
-    }, [caseId, accessToken]);
+    }, [caseId, accessToken, isNearBottom]);
 
     useEffect(() => { loadMessages(); }, [loadMessages]);
 
-    // リアルタイム購読（新着を検知して再フェッチ）
+    // 表示中のタブだけ定期更新する。DBのRealtime payloadをクライアントへ直接出さない。
     useEffect(() => {
-        const channel = supabase
-            .channel(`messages:${caseId}`)
-            .on('postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages', filter: `case_id=eq.${caseId}` },
-                () => { loadMessages(); }
-            )
-            .subscribe();
-        return () => { supabase.removeChannel(channel); };
-    }, [caseId, loadMessages]);
+        const refreshIfVisible = () => {
+            if (document.visibilityState !== 'visible') return;
+            void loadMessages();
+        };
+        const intervalId = window.setInterval(refreshIfVisible, MESSAGE_POLL_INTERVAL_MS);
+        document.addEventListener('visibilitychange', refreshIfVisible);
 
-    // 自動スクロール
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', refreshIfVisible);
+        };
+    }, [loadMessages]);
+
+    // チャット枠内だけをスクロールする。ページ全体を動かす scrollIntoView は使わない。
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (!shouldScrollToBottomRef.current) return;
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        container.scrollTop = container.scrollHeight;
+        didInitialScrollRef.current = true;
+        shouldScrollToBottomRef.current = false;
     }, [messages]);
 
     // メッセージ送信（API経由）
@@ -96,7 +114,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
             }
             setNewMessage('');
             if (textareaRef.current) textareaRef.current.style.height = 'auto';
-            await loadMessages();
+            await loadMessages({ forceScroll: true });
         } catch (err) {
             console.error('Send error:', err);
             setError('エラーが発生しました');
@@ -129,7 +147,9 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
 
     const getSenderLabel = (msg: Message) => {
         if (!msg.sender) return '不明';
-        if (msg.sender.role === 'SUPPORTER' && msg.sender.organization_name) return msg.sender.organization_name;
+        if (msg.sender.role === 'SUPPORTER' && msg.sender.organization_name) {
+            return `${msg.sender.organization_name} / 担当: ${msg.sender.display_name}`;
+        }
         return msg.sender.display_name;
     };
 
@@ -162,14 +182,14 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                         <h3 className="text-sm font-bold text-gray-800">メッセージ</h3>
                         {messages.length > 0 && <span className="text-[11px] text-gray-400">{messages.length}件</span>}
                     </div>
-                    <button onClick={loadMessages} className="text-xs text-gray-400 hover:text-blue-500 transition-colors" title="更新">
+                    <button onClick={() => { void loadMessages(); }} className="text-xs text-gray-400 hover:text-blue-500 transition-colors" title="更新">
                         🔄 更新
                     </button>
                 </div>
             </div>
 
             {/* メッセージ一覧 */}
-            <div className="h-[360px] overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/50">
+            <div ref={messagesContainerRef} className="h-[360px] overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/50">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <div className="text-3xl mb-2 opacity-50">💬</div>
@@ -199,12 +219,10 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                                     ? 'bg-blue-600 text-white rounded-2xl rounded-br-md'
                                     : 'bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200'
                                     } px-4 py-2.5 shadow-sm`}>
-                                    {!isMe && (
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                            <span className="text-xs font-semibold text-gray-700">{getSenderLabel(msg)}</span>
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                            <span className={`text-xs font-semibold ${isMe ? 'text-blue-100' : 'text-gray-700'}`}>{getSenderLabel(msg)}</span>
                                             {getSenderRoleBadge(msg)}
-                                        </div>
-                                    )}
+                                    </div>
                                     <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isMe ? 'text-white' : 'text-gray-700'}`}>
                                         {displayContent}
                                     </p>
@@ -216,7 +234,6 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                         );
                     })
                 )}
-                <div ref={bottomRef} />
             </div>
 
             {/* エラー表示 */}

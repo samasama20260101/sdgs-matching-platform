@@ -1,37 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 明日もsamasama | SDGs MATCH
 
-## Getting Started
+社会的困難を抱えるSOSユーザーと、NPO・行政・企業などのサポーターをAIでつなぐマッチングプラットフォームです。
 
-First, run the development server:
+## 主要ドキュメント
+
+| ドキュメント | 内容 |
+|---|---|
+| `docs/service_specification.md` | サービス全体仕様書。説明書・機能仕様の入口 |
+| `docs/staging_role_function_test_spec.md` | SOS・サポーター・管理者ごとの機能仕様とテスト観点 |
+| `AGENTS.md` | 開発ルール、サービス思想、本番保護ルール |
+| `docs/technical_stack.md` | 技術構成 |
+| `docs/api_security_design.md` | API認可、Supabase key、AI API、通知設計方針 |
+| `docs/environment_setup.md` | ローカル開発環境セットアップ |
+| `docs/maintenance_mode.md` | メンテナンスモード運用 |
+| `docs/production_supporter_db_refresh_runbook.md` | Production DB刷新手順 |
+
+## 環境
+
+| 環境 | 用途 |
+|---|---|
+| `dev` branch | Staging用。開発・検証 |
+| `main` branch | Production用。PR経由で反映 |
+
+Production DBへのSQL実行、環境変数変更、Auth操作、RLS変更、一括更新・削除は、事前確認なしに実施しません。
+
+## ローカル起動
+
+詳細は `docs/environment_setup.md` を参照してください。
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで以下を開きます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 技術概要
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# 明日もsamasama SDGs Match
+| 領域 | 技術 |
+|---|---|
+| Webアプリ | Next.js App Router |
+| 言語 | TypeScript |
+| UI | React / Tailwind CSS |
+| DB / Auth | Supabase |
+| AI | Google Gemini AI |
+| ホスティング | Vercel |

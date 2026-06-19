@@ -47,6 +47,7 @@ type OfferData = {
   accepted_order: number | null;
   supporter: {
     id: string;
+    organization_id: string;
     display_name: string;
     organization_name: string | null;
     supporter_type: string;
@@ -71,6 +72,8 @@ const SDG_NAMES: Record<number, string> = {
   14: '海の豊かさを守ろう', 15: '陸の豊かさも守ろう',
   16: '平和と公正をすべての人に', 17: 'パートナーシップで目標を達成しよう',
 };
+
+const CASE_POLL_INTERVAL_MS = 60_000;
 
 export default function SOSResultPage() {
   const router = useRouter();
@@ -97,15 +100,22 @@ export default function SOSResultPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   useEffect(() => {
-    const channel = supabase
-      .channel(`case-updates:${params.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${params.id}` },
-        () => { loadData(); })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const refreshIfVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void loadData();
+    };
+    const intervalId = window.setInterval(refreshIfVisible, CASE_POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const loadData = async () => {
@@ -159,9 +169,9 @@ export default function SOSResultPage() {
     setOffers(fetchedOffers as OfferData[]);
     if (badges && badges.length > 0) {
       const badgeMap: Record<string, Record<string, number>> = {};
-      badges.forEach((b: { supporter_user_id: string; badge_key: string }) => {
-        if (!badgeMap[b.supporter_user_id]) badgeMap[b.supporter_user_id] = {};
-        badgeMap[b.supporter_user_id][b.badge_key] = (badgeMap[b.supporter_user_id][b.badge_key] || 0) + 1;
+      badges.forEach((b: { supporter_organization_id: string; badge_key: string }) => {
+        if (!badgeMap[b.supporter_organization_id]) badgeMap[b.supporter_organization_id] = {};
+        badgeMap[b.supporter_organization_id][b.badge_key] = (badgeMap[b.supporter_organization_id][b.badge_key] || 0) + 1;
       });
       setSupporterBadges(badgeMap);
     }
@@ -173,49 +183,26 @@ export default function SOSResultPage() {
     const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
     const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
     try {
-      // Q1〜Q5のチェック内容を整形（「該当なし」のみのQは除外してAIに渡す）
-      const qaText = cd.intake_qna?.qa
-        ? Object.entries(cd.intake_qna.qa)
-            .filter(([, answers]) => {
-              const ans = answers as string[];
-              // 「該当なし」のみ、または空の場合は除外
-              return ans.length > 0 && !(ans.length === 1 && ans[0] === '該当なし');
-            })
-            .map(([q, answers]) => `Q${q}: ${(answers as string[]).join('、')}`)
-            .join('\n')
-        : '';
-      const fullDescription = [qaText, cd.description_free].filter(Boolean).join('\n\n');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
 
       const response = await fetch('/api/gemini/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caseId: cd.id, description: fullDescription }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ caseId: cd.id }),
       });
       if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
       const result = await response.json();
       clearTimeout(step2);
       clearTimeout(step3);
       setAnalyzeStep(4);
-      const { data: { session: sess } } = await supabase.auth.getSession();
-
-      // AIが返したtitleをそのまま使う（AIがsdgs_goals=[]のとき「再度見直してください」を返す）
-      const aiTitle = result.analysis?.title || '再度見直してください';
-      // ai_sdg_suggestion内にもtitleを保持（再分析要否の判定に使用）
-      const analysisWithTitle = { ...result.analysis, title: aiTitle };
-
-      const updateRes = await fetch(`/api/sos/cases/${cd.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sess?.access_token}` },
-        body: JSON.stringify({
-          ai_sdg_suggestion: analysisWithTitle,
-          visibility: 'LISTED',
-          title: aiTitle,
-        }),
-      });
-      if (updateRes.ok) {
-        await new Promise(r => setTimeout(r, 800));
-        setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
-      }
+      const analysisWithTitle = result.analysis;
+      const aiTitle = analysisWithTitle?.title || '再度見直してください';
+      await new Promise(r => setTimeout(r, 800));
+      setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
     } catch (err) {
       console.error('AI analysis error:', err);
       toast.error('AI分析に失敗しました');
@@ -251,12 +238,6 @@ export default function SOSResultPage() {
         setShowAcceptModal(false);
         return;
       }
-      // ケースをMATCHEDに
-      await fetch(`/api/sos/cases/${params.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ status: 'MATCHED' }),
-      });
       setShowAcceptModal(false);
       setSelectedOffer(null);
       await loadData();
@@ -306,23 +287,6 @@ export default function SOSResultPage() {
       if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
       setShowResolveModal(false);
       await loadData();
-      // 自動バッジ付与（API経由）
-      // accepted_order 昇順でソート → 最小order(主)が金メダル、以降が銀メダル
-      const accepted = offers
-        .filter(o => o.status === 'ACCEPTED')
-        .sort((a, b) => (a.accepted_order ?? 999) - (b.accepted_order ?? 999))
-      if (accepted.length > 0 && currentUserId) {
-        const autoBadges = accepted.map((offer, i) => ({
-          case_id: params.id as string,
-          supporter_user_id: offer.supporter.id,
-          badge_key: i === 0 ? 'gold_medal' : 'silver_medal',
-        }));
-        await fetch('/api/sos/badges', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify({ badges: autoBadges }),
-        });
-      }
       setShowEvalModal(true);
     } finally {
       setIsActionLoading(false);
@@ -342,15 +306,6 @@ export default function SOSResultPage() {
         body: JSON.stringify({ supporter_resolved_at: null }),
       });
       if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-      // システムメッセージをAPIで投稿
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({
-          case_id: params.id,
-          content: '__SYSTEM__相談者が解決報告を差し戻しました。まだ問題が解決していないため、引き続き対応をお願いいたします。',
-        }),
-      });
       toast.success('サポーターに対応継続を依頼しました');
       await loadData();
     } finally {
@@ -367,7 +322,7 @@ export default function SOSResultPage() {
     const badgeRows = accepted.flatMap((offer) =>
       [...selectedBadges].map((badgeKey) => ({
         case_id: params.id as string,
-        supporter_user_id: offer.supporter.id,
+        supporter_organization_id: offer.supporter.organization_id,
         badge_key: badgeKey,
       }))
     );
@@ -636,7 +591,7 @@ export default function SOSResultPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {acceptedOffers.map((offer) => {
-                  const badges = supporterBadges[offer.supporter.id] || {};
+                  const badges = supporterBadges[offer.supporter.organization_id] || {};
                   return (
                     <div key={offer.id} className="bg-white p-4 rounded-lg border border-teal-200">
                       <div className="flex items-start justify-between mb-2">
@@ -691,7 +646,7 @@ export default function SOSResultPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {pendingOffers.map((offer) => {
-                const badges = supporterBadges[offer.supporter.id] || {};
+                const badges = supporterBadges[offer.supporter.organization_id] || {};
                 const badgeEntries = Object.entries(badges);
                 return (
                   <div key={offer.id} className="border border-gray-200 p-4 rounded-lg">
