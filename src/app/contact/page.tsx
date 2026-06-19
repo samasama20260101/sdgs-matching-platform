@@ -29,9 +29,15 @@ const CATEGORIES = {
   ],
 };
 
+type ContactUser = {
+  role: 'SOS' | 'SUPPORTER' | 'ADMIN';
+  email: string;
+  display_id?: string | null;
+  access_token: string;
+};
+
 export default function ContactPage() {
-  const [authUser, setAuthUser] = useState<any>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<ContactUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // フォーム
@@ -56,12 +62,11 @@ export default function ContactPage() {
         session = refreshData.session;
       }
       if (session) {
-        setAuthUser(session.user);
         const res = await fetch('/api/auth/get-role', {
           headers: { 'Authorization': `Bearer ${session.access_token}` },
         });
         const data = await res.json();
-        if (data.user) setUserData({ ...data.user, access_token: session.access_token });
+        if (data.user) setUserData({ ...data.user, access_token: session.access_token } as ContactUser);
       }
       setIsLoading(false);
     };
