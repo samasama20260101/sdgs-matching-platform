@@ -17,7 +17,7 @@ SOSユーザー、相談案件、チャット履歴は保持する。
 
 - 対象Project RefはSupabase DashboardとVercel Production環境変数で作業直前に再確認する。
 - Staging Project Ref `fzawgdmqewmwdqjsqjwt` へ誤って接続していないことも確認する。
-- 過去資料のProduction Project RefとSupabase CLIのプロジェクト一覧に不一致が見つかっている。照合が終わるまでSQLを実行しない。
+- 2026年6月19日にSupabase CLIでProduction Project Refが `vxcoivgulfkpblqrawif`、Staging Project Refが `fzawgdmqewmwdqjsqjwt` であることを確認済み。ただし、本番作業直前にもDashboardとVercel Production環境変数で再照合する。
 - ProductionへのSQL実行、Auth操作、データ削除は、作業直前に内容を再確認してから行う。
 - DBバックアップを取得してから開始する。
 - SOSユーザー、相談内容、メッセージ、認証情報、支援履歴を一括削除しない。

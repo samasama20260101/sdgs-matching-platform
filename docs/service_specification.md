@@ -68,7 +68,7 @@ SUPPORTERは「団体」と「担当者個人」を分けて扱います。
 | 環境 | 用途 | URL / Project Ref |
 |---|---|---|
 | Staging | 開発・検証 | `https://sdgs-matching-platform-git-dev-samasama.vercel.app` / Supabase `fzawgdmqewmwdqjsqjwt` |
-| Production | 本番 | `https://sdgs-matching-platform-taupe.vercel.app` / `app.samasama.site` / Supabase `dqiqwclgzxhjxpotflvz` |
+| Production | 本番 | `https://sdgs-matching-platform-taupe.vercel.app` / `app.samasama.site` / Supabase `vxcoivgulfkpblqrawif` |
 
 ブランチ運用:
 

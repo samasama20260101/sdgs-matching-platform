@@ -325,7 +325,7 @@ Staging: fzawgdmqewmwdqjsqjwt
 現在のProduction Supabase refは以下です。
 
 ```text
-dqiqwclgzxhjxpotflvz
+vxcoivgulfkpblqrawif
 ```
 
 ただし、本番DB操作前には必ずSupabase Dashboard、Vercel環境変数、CLI表示を照合して、現在の本番DBを確認してください。

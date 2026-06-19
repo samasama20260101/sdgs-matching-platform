@@ -40,7 +40,7 @@ Codexがこのプロジェクトで作業する際に必ず参照するドキュ
 | 環境 | Project ID | URL |
 |---|---|---|
 | Staging | fzawgdmqewmwdqjsqjwt | https://fzawgdmqewmwdqjsqjwt.supabase.co |
-| Production | dqiqwclgzxhjxpotflvz | https://dqiqwclgzxhjxpotflvz.supabase.co |
+| Production | vxcoivgulfkpblqrawif | https://vxcoivgulfkpblqrawif.supabase.co |
 
 ### Vercel
 | 環境 | URL |

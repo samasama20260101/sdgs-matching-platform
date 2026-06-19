@@ -106,7 +106,7 @@ Storage候補
 | 環境 | 用途 | Project ref |
 |---|---|---|
 | Staging | 開発・検証 | `fzawgdmqewmwdqjsqjwt` |
-| Production | 本番 | `dqiqwclgzxhjxpotflvz` |
+| Production | 本番 | `vxcoivgulfkpblqrawif` |
 
 Productionのproject refは作業直前にSupabase Dashboard、Vercel環境変数、CLI表示で必ず再確認します。
 
