@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // scripts/test-gemini-connection.js
 // Gemini API接続テストスクリプト
 // 実行方法: node scripts/test-gemini-connection.js

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // scripts/list-models.js
 // 利用可能なGeminiモデルをリスト表示
 // 実行方法: node scripts/list-models.js

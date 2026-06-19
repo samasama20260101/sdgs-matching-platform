@@ -135,11 +135,11 @@ export default function StoryPage() {
         {/* ファウンダーノート */}
         <Reveal delay={200}>
           <div className="bg-slate-900 rounded-2xl p-8 mt-8 relative overflow-hidden">
-            <span className="absolute top-0 left-6 text-[100px] text-teal-400/10 leading-none select-none" style={{ fontFamily:'Georgia,serif' }}>"</span>
+            <span className="absolute top-0 left-6 text-[100px] text-teal-400/10 leading-none select-none" style={{ fontFamily:'Georgia,serif' }}>&ldquo;</span>
             <p className="serif text-white/85 text-sm sm:text-base leading-8 tracking-wider relative">
               支援を受けることは、恥でも弱さでもない。人は誰かに支えられながら生きている——それが当たり前の社会をつくりたい。
             </p>
-            <p className="text-teal-400 text-[10px] tracking-[4px] uppercase mt-5">Founder's Note</p>
+            <p className="text-teal-400 text-[10px] tracking-[4px] uppercase mt-5">Founder&apos;s Note</p>
           </div>
         </Reveal>
 
