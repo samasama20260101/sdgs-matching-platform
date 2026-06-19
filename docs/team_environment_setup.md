@@ -42,8 +42,8 @@ Level 2の人にも、原則としてProductionの `service_role key` は渡し�
 | 項目 | Staging | Production |
 |---|---|---|
 | Git branch | `dev` | `main` |
-| Supabase ref | `fzawgdmqewmwdqjsqjwt` | `dqiqwclgzxhjxpotflvz` |
-| Supabase URL | `https://fzawgdmqewmwdqjsqjwt.supabase.co` | `https://dqiqwclgzxhjxpotflvz.supabase.co` |
+| Supabase ref | `fzawgdmqewmwdqjsqjwt` | `vxcoivgulfkpblqrawif` |
+| Supabase URL | `https://fzawgdmqewmwdqjsqjwt.supabase.co` | `https://vxcoivgulfkpblqrawif.supabase.co` |
 | Vercel URL | `https://sdgs-matching-platform-git-dev-samasama.vercel.app` | `https://sdgs-matching-platform-taupe.vercel.app` / `https://app.samasama.site` |
 
 Productionのproject refは、本番作業や本番読み取りの直前に必ず画面上でも確認します。
@@ -385,7 +385,7 @@ Staging Supabaseだけ確認してください。本番DBは見ないでくだ�
 
 ```text
 Production Supabaseは読み取りのみ許可します。
-Project refは dqiqwclgzxhjxpotflvz です。
+Project refは vxcoivgulfkpblqrawif です。
 SELECTのみで、本文や個人情報の大量出力は避けてください。
 ```
 
