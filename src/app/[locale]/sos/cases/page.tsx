@@ -17,6 +17,7 @@ type Case = {
   status: string;
   created_at: string;
   ai_sdg_suggestion: {
+    title?: string;  // 相談者言語のタイトル（cases.titleは日本語正本。設計§5.7）
     sdgs_goals: number[];
     reasoning: string;
     keywords: string[];
@@ -148,7 +149,7 @@ export default function SOSCasesPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base font-medium">
-                      {c.title}
+                      {c.ai_sdg_suggestion?.title || c.title}
                     </CardTitle>
                     <div className="flex gap-2 flex-shrink-0">
                       {/* 緊急度 */}

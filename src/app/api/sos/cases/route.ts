@@ -1,6 +1,7 @@
 // src/app/api/sos/cases/route.ts
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { translateText } from '@/lib/i18n/translate'
 import { NextResponse } from 'next/server'
 
 const DESCRIPTION_FREE_MAX_LENGTH = 2000
@@ -107,11 +108,16 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const descriptionFree = sanitizeText(body.description_free, DESCRIPTION_FREE_MAX_LENGTH)
+    // エラーコード方式（設計§5.3）: code をクライアントが翻訳。error(ja文)は互換のため併記
     if (!descriptionFree) {
-        return NextResponse.json({ error: '相談内容を入力してください' }, { status: 400 })
+        return NextResponse.json({ error: '相談内容を入力してください', code: 'DESCRIPTION_REQUIRED' }, { status: 400 })
     }
     if (typeof body.description_free === 'string' && body.description_free.length > DESCRIPTION_FREE_MAX_LENGTH) {
-        return NextResponse.json({ error: `相談内容は${DESCRIPTION_FREE_MAX_LENGTH}文字以内で入力してください` }, { status: 400 })
+        return NextResponse.json({
+            error: `相談内容は${DESCRIPTION_FREE_MAX_LENGTH}文字以内で入力してください`,
+            code: 'DESCRIPTION_TOO_LONG',
+            params: { max: DESCRIPTION_FREE_MAX_LENGTH },
+        }, { status: 400 })
     }
 
     const title = sanitizeText(body.title, TITLE_MAX_LENGTH) || descriptionFree.slice(0, 50) || '相談'
@@ -121,12 +127,20 @@ export async function POST(request: Request) {
         : 'JP'
     const locale = sanitizeLocale(body.locale) || sanitizeLocale(body.intake_qna?.locale) || 'ja'
 
+    // 相談文の日本語訳（設計§5.8）。サポーターが日本語で全文を読めるようにする。
+    // 翻訳失敗でも投稿はブロックしない（NULLのまま保存 → /api/cron/retry-translations が回収）。
+    let descriptionFreeJa: string | null = null
+    if (locale !== 'ja') {
+        descriptionFreeJa = await translateText(descriptionFree, 'ja')
+    }
+
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')
         .insert([{
             owner_user_id: userData.id,
             title,
             description_free: descriptionFree,
+            description_free_ja: descriptionFreeJa,
             intake_qna: sanitizeIntakeQna(body.intake_qna, locale),
             urgency,
             locale,
@@ -137,7 +151,7 @@ export async function POST(request: Request) {
         .single()
     if (caseError) {
         console.error('[sos/cases] case insert error:', caseError)
-        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+        return NextResponse.json({ error: 'サーバーエラーが発生しました', code: 'SERVER_ERROR' }, { status: 500 })
     }
 
     return NextResponse.json({ case: caseData })

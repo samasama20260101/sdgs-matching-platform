@@ -15,6 +15,8 @@ type Case = {
   id: string;
   title: string;
   description_free: string;
+  description_free_ja?: string | null;  // 外国語相談の日本語訳（設計§5.8）
+  locale?: string | null;
   urgency: string;
   status: string;
   created_at: string;
@@ -82,7 +84,12 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
             )}
           </div>
         </div>
-        <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+          {case_.locale && case_.locale !== 'ja' && (
+            <span className="mr-1 text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 align-middle">🌐</span>
+          )}
+          {case_.description_free_ja || case_.description_free}
+        </p>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex gap-1 flex-wrap">
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}

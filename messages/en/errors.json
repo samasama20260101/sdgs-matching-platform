@@ -1,3 +1,6 @@
 {
-  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。"
+  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。",
+  "DESCRIPTION_REQUIRED": "Please enter your consultation",
+  "DESCRIPTION_TOO_LONG": "The consultation must be {max} characters or less",
+  "SERVER_ERROR": "A server error occurred. Please try again in a little while."
 }

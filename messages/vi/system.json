@@ -1,1 +1,7 @@
-{}
+{
+  "offerWithdrawn": "{organizationName} đã hủy việc hỗ trợ. Lý do: {reason}",
+  "autoResolved": "Đã 14 ngày kể từ khi người hỗ trợ báo cáo giải quyết, vụ việc đã tự động chuyển thành đã giải quyết.",
+  "autoClosed": "Không có hoạt động nào trong 14 ngày kể từ tin nhắn cuối, vụ việc này đã tự động kết thúc.",
+  "resolutionReported": "Người hỗ trợ đã báo cáo vấn đề được giải quyết. Nếu vấn đề của bạn đã được giải quyết, hãy chọn 「Xác nhận đã giải quyết」. Nếu vẫn còn khó khăn, hãy chọn 「Chưa giải quyết xong」 và chia sẻ tình hình qua tin nhắn.",
+  "resolutionRejected": "Người tư vấn cho biết vấn đề chưa được giải quyết. Vụ việc này vẫn đang được hỗ trợ. Hãy xác nhận qua tin nhắn những khó khăn còn lại và các bước tiếp theo."
+}

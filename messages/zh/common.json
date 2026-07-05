@@ -68,7 +68,12 @@
     "inputPlaceholder": "输入消息...（Shift+Enter换行）",
     "errorLoad": "获取消息失败",
     "errorSend": "发送消息失败",
-    "errorGeneric": "发生错误"
+    "errorGeneric": "发生错误",
+    "translatedLabel": "AI翻译",
+    "showOriginal": "显示原文",
+    "hideOriginal": "收起原文",
+    "translationPending": "正在准备翻译...",
+    "translationFailed": "AI翻译失败（正在显示原文）"
   },
   "address": {
     "postalCode": "邮政编码",

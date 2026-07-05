@@ -258,6 +258,10 @@ return NextResponse.json(
 
 - 一部ルート（offer等）は既に `error: 'MAX_REACHED', message: '…'` の形になっており、
   この方式の完成形。**移行中は `message`（ja文）を併記**して未対応クライアントを壊さない。
+- **移行中の実装規約（Phase 2で確定）**: 既存の `error`（ja文）はそのまま残し、
+  `code` ＋ `params` を**併記**する。クライアントは `tErrors.has(code)` で翻訳可能なら
+  翻訳文を表示、不可なら従来の ja 文へフォールバック（新旧どちらのクライアント・APIの
+  組み合わせでも壊れない）。
 - サーバー側で翻訳しない理由: API層にロケール伝搬が不要になり、
   同じレスポンスを言語の違う画面で使い回せる。
 
@@ -576,6 +580,18 @@ D案本番適用やバリアントPhase 2のmigrationと衝突しない。**i18n
 ※ お問い合わせカテゴリはDB保存値を日本語正本のまま・表示ラベルのみ翻訳（管理画面互換）。
 ※（注記）= 本文は日本語のまま、閲覧言語での案内バナーを表示（JaOnlyNotice）。
    本文翻訳は法務・広報確認後に言語別ファイルへ差し替え（§5.11）。
+```
+
+### Phase 2 実装状況（2026-07-06）
+
+```
+☑ システムメッセージID化（書き込み5箇所・MessageThread表示・system.json 6言語）
+☑ 送信時翻訳（messages POST・description_free_ja・/api/cron/retry-translations 15分間隔・原文トグルUI）
+☑ AI二言語出力（ai_sdg_suggestion拡張・cases.titleはja正本・SOS側一覧は相談者言語タイトル優先）
+☑ 相談言語バッジ＋日本語訳表示（サポーター案件詳細・ダッシュボード一覧）
+◪ APIエラーコード化: 第1波のみ（sos/cases POST + hearing のマッピング）。残ルートは段階適用
+□ migration: add_system_message_keys.sql の Staging適用（devマージ前の必須ゲート）
+   ※ add_case_chat_translation.sql は Staging 適用済み
 ```
 
 ---

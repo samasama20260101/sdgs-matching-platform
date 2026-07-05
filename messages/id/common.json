@@ -68,7 +68,12 @@
     "inputPlaceholder": "Ketik pesan... (Shift+Enter untuk baris baru)",
     "errorLoad": "Gagal memuat pesan",
     "errorSend": "Gagal mengirim pesan",
-    "errorGeneric": "Terjadi kesalahan"
+    "errorGeneric": "Terjadi kesalahan",
+    "translatedLabel": "Terjemahan AI",
+    "showOriginal": "Tampilkan teks asli",
+    "hideOriginal": "Sembunyikan teks asli",
+    "translationPending": "Menyiapkan terjemahan...",
+    "translationFailed": "Terjemahan AI tidak tersedia (menampilkan teks asli)"
   },
   "address": {
     "postalCode": "Kode pos",

@@ -22,6 +22,7 @@ type Case = {
   pending_offer_count?: number;
   created_at: string;
   ai_sdg_suggestion: {
+    title?: string;  // 相談者言語のタイトル（cases.titleは日本語正本。設計§5.7）
     sdgs_goals: number[];
     reasoning: string;
     keywords: string[];
@@ -148,6 +149,9 @@ export default function SOSDashboard() {
     if (key === 'low') return { label: t('urgencyLow'), color: 'text-gray-600' };
     return { label: t('urgencyMed'), color: 'text-yellow-600' };
   };
+
+  // SOS側の表示は相談者言語のタイトルを優先（DBの cases.title は日本語正本）
+  const displayTitle = (c: Case) => c.ai_sdg_suggestion?.title || c.title;
 
   const activeCases = cases.filter(c => ['OPEN', 'MATCHED'].includes(c.status));
   const pastCases = cases.filter(c => ['RESOLVED', 'CANCELLED', 'CLOSED'].includes(c.status));
@@ -282,7 +286,7 @@ export default function SOSDashboard() {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-base font-semibold line-clamp-2">
-                            {case_.title}
+                            {displayTitle(case_)}
                           </CardTitle>
                           <span className={`text-xs font-medium ${urgency.color}`}>
                             {t('urgencyLabel', { level: urgency.label })}
@@ -337,7 +341,7 @@ export default function SOSDashboard() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCancelCase(case_.id, case_.title)}
+                            onClick={() => handleCancelCase(case_.id, displayTitle(case_))}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             {t('cancelAction')}
@@ -369,7 +373,7 @@ export default function SOSDashboard() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-800">{case_.title}</h3>
+                            <h3 className="font-semibold text-gray-800">{displayTitle(case_)}</h3>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${case_.status === 'RESOLVED'
                               ? 'bg-teal-50 text-teal-700'
                               : 'bg-gray-100 text-gray-600'

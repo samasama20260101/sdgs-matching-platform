@@ -12,18 +12,28 @@ type CaseForAnalysis = {
     owner_user_id: string;
     description_free: string | null;
     intake_qna: unknown;
+    locale?: string | null;
 };
 
+// 二言語生成（設計§5.7）: 相談者言語がjaの場合 *_ja フィールドは付かない。
+// 相談者向けフィールド（title/summary/per_goal/keywords）は相談者の言語、
+// *_ja はサポーター向けの日本語版。
 type NormalizedAnalysis = {
+    locale: string;
     title: string;
+    title_ja?: string;
     sdgs_goals: number[];
     summary: string;
+    summary_ja?: string;
     per_goal: Array<{
         goal: number;
         title: string;
         explanation: string;
+        title_ja?: string;
+        explanation_ja?: string;
     }>;
     keywords: string[];
+    keywords_ja?: string[];
 };
 
 function truncateText(value: unknown, maxLength: number) {
@@ -55,8 +65,9 @@ function buildDescriptionFromCase(caseData: CaseForAnalysis) {
         .slice(0, MAX_DESCRIPTION_LENGTH);
 }
 
-function normalizeAnalysis(raw: unknown): NormalizedAnalysis {
+function normalizeAnalysis(raw: unknown, locale: string = 'ja'): NormalizedAnalysis {
     const source = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+    const isBilingual = locale !== 'ja';
     const goals = Array.isArray(source.sdgs_goals)
         ? [...new Set(source.sdgs_goals
             .map((goal) => Number(goal))
@@ -75,13 +86,17 @@ function normalizeAnalysis(raw: unknown): NormalizedAnalysis {
                 goal,
                 title: truncateText(match.title, 80),
                 explanation: truncateText(match.explanation, 600),
+                ...(isBilingual ? {
+                    title_ja: truncateText(match.title_ja, 80) || undefined,
+                    explanation_ja: truncateText(match.explanation_ja, 600) || undefined,
+                } : {}),
             };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null && !!item.title && !!item.explanation);
 
     const title = goals.length > 0
         ? truncateText(source.title, 40) || '相談内容を確認中'
-        : FALLBACK_TITLE;
+        : (isBilingual ? truncateText(source.title, 40) || FALLBACK_TITLE : FALLBACK_TITLE);
     const summary = truncateText(source.summary, 1000)
         || (goals.length > 0
             ? '相談内容をもとに、関連しそうな支援分野を整理しました。'
@@ -91,11 +106,19 @@ function normalizeAnalysis(raw: unknown): NormalizedAnalysis {
         : [];
 
     return {
+        locale,
         title,
         sdgs_goals: goals,
         summary,
         per_goal: perGoal,
         keywords,
+        ...(isBilingual ? {
+            title_ja: truncateText(source.title_ja, 40) || (goals.length === 0 ? FALLBACK_TITLE : undefined),
+            summary_ja: truncateText(source.summary_ja, 1000) || undefined,
+            keywords_ja: Array.isArray(source.keywords_ja)
+                ? [...new Set(source.keywords_ja.map((keyword) => truncateText(keyword, 40)).filter(Boolean))].slice(0, 8)
+                : undefined,
+        } : {}),
     };
 }
 
@@ -108,6 +131,7 @@ export async function POST(request: NextRequest) {
         const { caseId, description } = body;
         let analysisDescription: string | null = null;
         let targetCaseId: string | null = null;
+        let caseLocale = 'ja';
 
         if (caseId !== undefined) {
             if (!isUuid(caseId)) {
@@ -119,7 +143,7 @@ export async function POST(request: NextRequest) {
 
             const { data: caseData, error: caseError } = await supabaseAdmin
                 .from('cases')
-                .select('id, owner_user_id, description_free, intake_qna')
+                .select('id, owner_user_id, description_free, intake_qna, locale')
                 .eq('id', caseId)
                 .maybeSingle();
 
@@ -147,6 +171,7 @@ export async function POST(request: NextRequest) {
 
             analysisDescription = buildDescriptionFromCase(caseData as CaseForAnalysis);
             targetCaseId = caseData.id;
+            caseLocale = (caseData as CaseForAnalysis).locale || 'ja';
         } else {
             if (!description || typeof description !== 'string') {
                 return NextResponse.json(
@@ -171,7 +196,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await classifySDGs(analysisDescription);
+        const result = await classifySDGs(analysisDescription, caseLocale);
 
         if (!result.success) {
             return NextResponse.json(
@@ -180,14 +205,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const analysis = normalizeAnalysis(result.data);
+        const analysis = normalizeAnalysis(result.data, caseLocale);
 
         if (targetCaseId) {
             const { error: updateError } = await supabaseAdmin
                 .from('cases')
                 .update({
                     ai_sdg_suggestion: analysis,
-                    title: analysis.title,
+                    // cases.title は日本語を正とする（サポーター一覧・管理画面の可読性）。
+                    // 相談者言語のタイトルは ai_sdg_suggestion.title に保持し、SOS側画面はそちらを優先表示。
+                    title: analysis.title_ja || analysis.title,
                     visibility: 'LISTED',
                 })
                 .eq('id', targetCaseId);

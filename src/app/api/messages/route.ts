@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { isUuid } from '@/lib/api/validation'
+import { translateText, translationTarget, senderSourceLocale } from '@/lib/i18n/translate'
 import { NextResponse } from 'next/server'
 
 const MAX_MESSAGE_LENGTH = 5000
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
 
     // この案件に関与しているか確認（SOS所有者またはACCEPTEDサポーター）
     const { data: caseData } = await supabaseAdmin
-        .from('cases').select('id, owner_user_id').eq('id', case_id).single()
+        .from('cases').select('id, owner_user_id, locale').eq('id', case_id).single()
     if (!caseData) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
 
     let canAccess = caseData.owner_user_id === userData.id
@@ -145,6 +146,12 @@ export async function POST(request: Request) {
 
     if (!canAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+    // 送信時翻訳（設計§5.8）: 翻訳ペアは cases.locale ⇔ ja。
+    // 原文を先に保存し、翻訳失敗でも送信はブロックしない。
+    const senderIsOwner = caseData.owner_user_id === userData.id
+    const sourceLocale = senderSourceLocale(caseData.locale, senderIsOwner)
+    const targetLocale = translationTarget(caseData.locale, senderIsOwner)
+
     const { data, error } = await supabaseAdmin
         .from('messages')
         .insert([{
@@ -155,6 +162,8 @@ export async function POST(request: Request) {
             sender_role_snapshot: userData.role,
             sender_organization_name_snapshot: userData.organization_name,
             content: normalizedContent,
+            source_locale: sourceLocale,
+            translation_status: targetLocale ? 'PENDING' : 'NONE',
         }])
         .select()
         .single()
@@ -164,5 +173,22 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
 
-    return NextResponse.json({ message: data })
+    let message = data
+    if (targetLocale) {
+        // 同一リクエスト内で1回だけ即時リトライ。それでも失敗なら PENDING のまま
+        // /api/cron/retry-translations が回収する（送信は既に成立している）。
+        const translated = (await translateText(normalizedContent, targetLocale))
+            ?? (await translateText(normalizedContent, targetLocale))
+        if (translated) {
+            const { data: updated } = await supabaseAdmin
+                .from('messages')
+                .update({ translated_content: translated, translation_status: 'DONE' })
+                .eq('id', data.id)
+                .select()
+                .single()
+            if (updated) message = updated
+        }
+    }
+
+    return NextResponse.json({ message })
 }

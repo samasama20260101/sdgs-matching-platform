@@ -284,6 +284,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
                 sender_role_snapshot: 'SUPPORTER',
                 sender_organization_name_snapshot: userData.organization_name,
                 message_type: 'SYSTEM',
+                // 理由文（withdrawalReason）はユーザー生成のため翻訳対象外（設計§5.5）
+                system_key: 'offerWithdrawn',
+                system_params: { organizationName: userData.organization_name, reason: withdrawalReason },
                 content: `__SYSTEM__${userData.organization_name}が対応をキャンセルしました。理由：${withdrawalReason}`,
             })
         }

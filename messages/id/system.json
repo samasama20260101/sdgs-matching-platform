@@ -1,1 +1,7 @@
-{}
+{
+  "offerWithdrawn": "{organizationName} membatalkan dukungannya. Alasan: {reason}",
+  "autoResolved": "Sudah 14 hari sejak pendukung melaporkan penyelesaian, kasus ini otomatis ditandai terselesaikan.",
+  "autoClosed": "Tidak ada aktivitas selama 14 hari sejak pesan terakhir, kasus ini otomatis ditutup.",
+  "resolutionReported": "Pendukung melaporkan masalah telah terselesaikan. Jika masalah Anda sudah selesai, pilih 「Konfirmasi penyelesaian」. Jika masih ada kesulitan, pilih 「Belum terselesaikan」 dan bagikan situasinya lewat chat.",
+  "resolutionRejected": "Pengonsultasi menyatakan masalah belum terselesaikan. Kasus ini tetap dalam dukungan. Silakan periksa lewat chat kesulitan yang tersisa dan langkah berikutnya."
+}

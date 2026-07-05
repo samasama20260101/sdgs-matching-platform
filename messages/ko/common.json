@@ -68,7 +68,12 @@
     "inputPlaceholder": "메시지 입력... (Shift+Enter로 줄바꿈)",
     "errorLoad": "메시지를 불러오지 못했습니다",
     "errorSend": "메시지 전송에 실패했습니다",
-    "errorGeneric": "오류가 발생했습니다"
+    "errorGeneric": "오류가 발생했습니다",
+    "translatedLabel": "AI 번역",
+    "showOriginal": "원문 보기",
+    "hideOriginal": "원문 닫기",
+    "translationPending": "번역 준비 중...",
+    "translationFailed": "AI 번역을 할 수 없었습니다（원문을 표시 중）"
   },
   "address": {
     "postalCode": "우편번호",

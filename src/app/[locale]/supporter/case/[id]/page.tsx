@@ -23,6 +23,8 @@ type CaseData = {
   id: string;
   title: string;
   description_free: string;
+  description_free_ja?: string | null;  // 外国語相談の日本語訳（設計§5.8）
+  locale?: string | null;               // 相談者の言語（ja以外なら言語バッジを表示）
   urgency: string;
   status: string;
   created_at: string;
@@ -42,6 +44,11 @@ type OfferData = {
   status: string;
   created_at: string;
   accepted_order: number | null;
+};
+
+// 相談言語バッジの表示名（サポーターUIは日本語のためja表記。設計§5.7）
+const CASE_LOCALE_LABELS: Record<string, string> = {
+  en: '英語', zh: '中国語', ko: '韓国語', vi: 'ベトナム語', id: 'インドネシア語',
 };
 
 const QA_QUESTIONS = [
@@ -313,6 +320,11 @@ export default function SupporterCaseDetailPage() {
                   {caseData?.urgency === 'High' && (
                     <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>
                   )}
+                  {caseData?.locale && caseData.locale !== 'ja' && CASE_LOCALE_LABELS[caseData.locale] && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-medium">
+                      🌐 この相談は{CASE_LOCALE_LABELS[caseData.locale]}で書かれています
+                    </span>
+                  )}
                   {isMinor(ownerBirthDate) && (
                     <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
                       🔰 未成年
@@ -337,7 +349,22 @@ export default function SupporterCaseDetailPage() {
           <CardContent className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-2">詳細</h3>
-              <p className="text-gray-700 whitespace-pre-line">{caseData?.description_free}</p>
+              {caseData?.description_free_ja ? (
+                <>
+                  {/* 外国語相談: 日本語訳を主表示、原文は折りたたみ（設計§5.8） */}
+                  <p className="text-gray-700 whitespace-pre-line">{caseData.description_free_ja}</p>
+                  <details className="mt-2">
+                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                      🌐 AI翻訳 — 原文（{CASE_LOCALE_LABELS[caseData.locale || ''] || caseData.locale}）を表示
+                    </summary>
+                    <p className="mt-1 text-sm text-gray-500 whitespace-pre-line border-l-2 border-gray-200 pl-3">
+                      {caseData.description_free}
+                    </p>
+                  </details>
+                </>
+              ) : (
+                <p className="text-gray-700 whitespace-pre-line">{caseData?.description_free}</p>
+              )}
             </div>
 
             {/* Q1〜Q5 アンケート回答（折りたたみ） */}

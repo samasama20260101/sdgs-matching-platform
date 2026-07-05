@@ -1,3 +1,6 @@
 {
-  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。"
+  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。",
+  "DESCRIPTION_REQUIRED": "Silakan isi konsultasi Anda",
+  "DESCRIPTION_TOO_LONG": "Isi konsultasi maksimal {max} karakter",
+  "SERVER_ERROR": "Terjadi kesalahan server. Silakan coba lagi nanti."
 }

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 
-const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id'
+const CASE_SELECT = 'id, title, description_free, description_free_ja, locale, status, urgency, created_at, ai_sdg_suggestion, owner_user_id'
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get('Authorization')

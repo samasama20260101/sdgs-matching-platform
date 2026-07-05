@@ -61,6 +61,7 @@ export default function SOSHearingPage() {
   const tQ = useTranslations('sos.questions');
   const tLimit = useTranslations('sos.limitModal');
   const tForm = useTranslations('common.form');
+  const tErrors = useTranslations('errors');
   const router = useRouter();
   const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -272,7 +273,13 @@ export default function SOSHearingPage() {
       const caseResult = await caseRes.json();
       if (!caseRes.ok) {
         console.error('Case error:', caseResult);
-        setError(t('errorSave', { message: caseResult.error }));
+        // APIのエラーコード（設計§5.3）を閲覧者の言語で表示。未知コードはja文フォールバック
+        const code = typeof caseResult.code === 'string' ? caseResult.code : '';
+        if (code && tErrors.has(code)) {
+          setError(tErrors(code, caseResult.params || {}));
+        } else {
+          setError(t('errorSave', { message: caseResult.error }));
+        }
         setIsSubmitting(false);
         return;
       }

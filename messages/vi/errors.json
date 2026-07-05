@@ -1,3 +1,6 @@
 {
-  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。"
+  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。",
+  "DESCRIPTION_REQUIRED": "Vui lòng nhập nội dung tư vấn",
+  "DESCRIPTION_TOO_LONG": "Nội dung tư vấn tối đa {max} ký tự",
+  "SERVER_ERROR": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau ít phút."
 }

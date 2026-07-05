@@ -172,6 +172,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         sender_role_snapshot: 'SYSTEM',
         sender_organization_name_snapshot: organizationContext.organization.name,
         message_type: 'SYSTEM',
+        // system_key: 表示時に閲覧者の言語でレンダリング（messages/*/system.json）。content はja併記（互換・監査用）
+        system_key: 'resolutionReported',
+        system_params: {},
         content: '__SYSTEM__サポーターから解決報告が届きました。相談内容が解決していれば「解決を確認する」を選んでください。まだ困りごとが残っている場合は「まだ解決していない」を選び、チャットで状況を共有してください。',
     })
     if (messageError) {

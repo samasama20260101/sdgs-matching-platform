@@ -149,6 +149,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       sender_display_name_snapshot: 'システム',
       sender_role_snapshot: 'SYSTEM',
       message_type: 'SYSTEM',
+      system_key: 'resolutionRejected',
+      system_params: {},
       content: '__SYSTEM__相談者が、まだ解決していないことを伝えました。この案件は引き続き支援中です。チャットで残っている困りごとや次に必要な対応を確認してください。',
     })
     if (messageError) {
