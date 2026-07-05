@@ -1,6 +1,103 @@
 {
   "meta": {
     "title": "明日もsamasama | SDGs Match",
-    "description": "AIがあなたの困りごとを分析し、専門のNPO・支援団体・企業・行政につなげるマッチングプラットフォームです。"
+    "description": "Nền tảng ghép nối sử dụng AI để phân tích khó khăn của bạn và kết nối với các NPO, tổ chức hỗ trợ, doanh nghiệp và cơ quan hành chính chuyên môn."
+  },
+  "nav": {
+    "supporters": "Danh sách người hỗ trợ",
+    "story": "Tấm lòng của chúng tôi",
+    "login": "Đăng nhập",
+    "consult": "Tư vấn"
+  },
+  "hero": {
+    "badge": "Nền tảng kết nối với NPO và các tổ chức hỗ trợ",
+    "title": "Đừng gánh chịu một mình,<br></br>hãy giải quyết <accent>cùng với ai đó</accent>",
+    "description": "Khó khăn về đời sống, giáo dục, môi trường, phân biệt đối xử, cô lập... AI sẽ phân tích các vấn đề xã hội của bạn và kết nối với NPO, tổ chức hỗ trợ chuyên môn.",
+    "ctaConsult": "Tư vấn miễn phí →",
+    "ctaSupporters": "Xem người hỗ trợ",
+    "note": "Đăng ký miễn phí・Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận",
+    "haveAccount": "Đã có tài khoản?",
+    "loginHere": "Đăng nhập tại đây →",
+    "readStory": "Đọc tấm lòng của chúng tôi"
+  },
+  "stats": {
+    "resolved": "Tư vấn đã giải quyết",
+    "resolvedSuffix": "",
+    "supporters": "Tổ chức hỗ trợ đã đăng ký",
+    "supportersSuffix": "",
+    "areas": "Tỉnh thành hoạt động",
+    "areasSuffix": "",
+    "areasSuffixSm": ""
+  },
+  "concept": {
+    "kicker": "HOW IT WORKS",
+    "title": "Cơ chế kết nối tiếng kêu cứu với sự hỗ trợ",
+    "description": "Không yêu cầu người tư vấn phân loại phức tạp. AI và đội ngũ vận hành giúp tiếng nói của bạn đến được với sự hỗ trợ cần thiết.",
+    "caption": "Cánh cửa hỗ trợ để <accent>không ai phải gánh chịu một mình</accent>",
+    "imageAltMobile": "Tổng quan 明日もsamasama SDGs MATCH trên điện thoại: người cần giúp đỡ gửi SOS và được kết nối với các tổ chức muốn hỗ trợ thông qua nền tảng.",
+    "imageAltDesktop": "Tổng quan 明日もsamasama SDGs MATCH: người cần giúp đỡ gửi SOS, nền tảng kết nối họ với các tổ chức hỗ trợ thông qua tư vấn, ghép nối, cung cấp thông tin và trực quan hóa.",
+    "point1Title": "Gửi SOS như vốn có",
+    "point1Desc": "Không cần biết về SDGs, bạn có thể chia sẻ khó khăn bằng lời nói thường ngày.",
+    "point2Title": "AI sắp xếp phía sau",
+    "point2Desc": "Nội dung tư vấn được phân loại để dễ dàng kết nối với sự hỗ trợ phù hợp với khu vực và vấn đề.",
+    "point3Title": "Kết nối với người hỗ trợ và ban vận hành",
+    "point3Desc": "Ngoài việc ghép nối với NPO, cơ quan hành chính, doanh nghiệp, luôn có đường dây liên hệ với ban vận hành khi gặp khó khăn."
+  },
+  "steps": {
+    "title": "Quy trình sử dụng",
+    "subtitle": "Quy trình minh bạch để bạn có thể yên tâm sử dụng",
+    "label": "STEP {n}",
+    "step1Title": "Đăng tư vấn",
+    "step1Desc": "Tự do viết ra khó khăn của bạn. Chỉ cần thông tin cá nhân tối thiểu",
+    "step2Title": "AI phân tích",
+    "step2Desc": "AI phân tích nội dung tư vấn và xác định danh mục SDGs phù hợp nhất",
+    "step3Title": "Người hỗ trợ đề nghị",
+    "step3Desc": "Các NPO, tổ chức hỗ trợ chuyên môn sẽ giơ tay với tư vấn của bạn",
+    "step4Title": "Bạn lựa chọn",
+    "step4Desc": "Xem thông tin của tổ chức trước khi chấp nhận. Bạn cũng có thể tự do từ chối",
+    "step5Title": "Giải quyết・hoàn tất hỗ trợ",
+    "step5Desc": "Xác nhận khi vấn đề được giải quyết. Gửi lời cảm ơn bằng huy hiệu",
+    "privacyNote": "🔒 Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận"
+  },
+  "sdgsSection": {
+    "title": "Các mục tiêu SDGs được hỗ trợ",
+    "subtitle": "Các tổ chức hỗ trợ chuyên môn hoạt động trên tất cả 17 mục tiêu"
+  },
+  "supportersSection": {
+    "title": "Người hỗ trợ tham gia",
+    "subtitleFeatured": "Các tổ chức được đề xuất",
+    "subtitleDefault": "Bạn có thể tìm hiểu trước khi tư vấn",
+    "viewAll": "Xem tất cả {count} tổ chức →",
+    "nationwide": "Toàn quốc",
+    "resolvedStat": "✅ Đã giải quyết <strong>{count}</strong>",
+    "badgeStat": "🏆 <strong>{count} huy hiệu</strong>"
+  },
+  "faq": {
+    "title": "Những lo lắng và câu hỏi thường gặp",
+    "q1": "Thông tin cá nhân có an toàn không?",
+    "a1": "Cho đến khi bạn chấp nhận người hỗ trợ, không có bất kỳ thông tin định danh cá nhân nào được chia sẻ. Sau khi chấp nhận cũng chỉ chia sẻ thông tin tối thiểu cần thiết.",
+    "q2": "Tôi có thể từ chối đề nghị của người hỗ trợ không?",
+    "a2": "Có, bạn hoàn toàn tự do từ chối. Bạn là người quyết định có nhận đề nghị hay không, và có thể chờ đến khi cảm thấy yên tâm.",
+    "q3": "Thực sự miễn phí chứ?",
+    "a3": "Hoàn toàn miễn phí cho người cần giúp đỡ. Các NPO, doanh nghiệp hỗ trợ cũng không mất phí đăng ký.",
+    "q4": "Nếu có tổ chức đáng ngờ liên hệ thì sao?",
+    "a4": "Tất cả các tổ chức hỗ trợ đều được thẩm định khi đăng ký. Bạn cũng có thể xem trước thành tích và phần giới thiệu trên hồ sơ của họ.",
+    "q5": "Tôi có thể tư vấn về bất cứ điều gì không?",
+    "a5": "Đối tượng là các khó khăn xã hội liên quan đến SDGs — bao gồm nghèo khó, giáo dục, môi trường, phân biệt đối xử, cô lập và nhiều vấn đề khác."
+  },
+  "cta": {
+    "title": "Hãy thử bước một bước đầu tiên?",
+    "body": "Các chuyên gia có thể giải quyết khó khăn của bạn đang chờ đợi. Tư vấn miễn phí. Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận.",
+    "consult": "Tư vấn miễn phí →",
+    "login": "Đăng nhập"
+  },
+  "footer": {
+    "story": "Tấm lòng của chúng tôi",
+    "supporters": "Danh sách người hỗ trợ",
+    "contact": "Liên hệ",
+    "terms": "Điều khoản sử dụng",
+    "privacy": "Chính sách bảo mật",
+    "login": "Đăng nhập",
+    "copyright": "© 2026 明日もsamasama. All rights reserved."
   }
 }

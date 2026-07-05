@@ -5,7 +5,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import MessageThread from '@/components/chat/MessageThread';
@@ -13,8 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
-import { getSupporterTypeConfig } from '@/lib/supporterType';
+import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
 
 type CaseData = {
   id: string;
@@ -54,28 +55,18 @@ type OfferData = {
   };
 };
 
-const SDG_COLORS: Record<number, string> = {
-  1: '#e5243b', 2: '#dda63a', 3: '#4c9f38', 4: '#c5192d',
-  5: '#ff3a21', 6: '#26bde2', 7: '#fcc30b', 8: '#a21942',
-  9: '#fd6925', 10: '#dd1367', 11: '#fd9d24', 12: '#bf8b2e',
-  13: '#3f7e44', 14: '#0a97d9', 15: '#56c02b', 16: '#00689d',
-  17: '#19486a',
-};
-
-const SDG_NAMES: Record<number, string> = {
-  1: '貧困をなくそう', 2: '飢餓をゼロに', 3: 'すべての人に健康と福祉を',
-  4: '質の高い教育をみんなに', 5: 'ジェンダー平等を実現しよう',
-  6: '安全な水とトイレを世界中に', 7: 'エネルギーをみんなにそしてクリーンに',
-  8: '働きがいも経済成長も', 9: '産業と技術革新の基盤をつくろう',
-  10: '人や国の不平等をなくそう', 11: '住み続けられるまちづくりを',
-  12: 'つくる責任つかう責任', 13: '気候変動に具体的な対策を',
-  14: '海の豊かさを守ろう', 15: '陸の豊かさも守ろう',
-  16: '平和と公正をすべての人に', 17: 'パートナーシップで目標を達成しよう',
-};
-
 const CASE_POLL_INTERVAL_MS = 60_000;
+const MAX_ACTIVE_CASES = 3;
 
 export default function SOSResultPage() {
+  const t = useTranslations('sos.result');
+  const tLimit = useTranslations('sos.limitModal');
+  const tGoal = useTranslations('sdgs.goal');
+  const tBadge = useTranslations('sdgs.badge');
+  const tSupporterType = useTranslations('common.supporterType');
+  const tForm = useTranslations('common.form');
+  const tActions = useTranslations('common.actions');
+  const locale = useLocale();
   const router = useRouter();
   const params = useParams();
   const toast = useToast();
@@ -128,7 +119,7 @@ export default function SOSResultPage() {
       headers: { 'Authorization': `Bearer ${session.access_token}` },
     });
     if (!caseRes.ok) {
-      toast.error('相談が見つかりませんでした');
+      toast.error(t('toastCaseNotFound'));
       router.push('/sos/dashboard');
       return;
     }
@@ -139,7 +130,7 @@ export default function SOSResultPage() {
     });
     const roleData = await roleRes.json();
     if (!roleData.user || caseResult.owner_user_id !== roleData.user.id) {
-      toast.error('アクセス権限がありません');
+      toast.error(t('toastNoAccess'));
       router.push('/sos/dashboard');
       return;
     }
@@ -194,7 +185,7 @@ export default function SOSResultPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ caseId: cd.id }),
       });
-      if (!response.ok) { toast.error('AI分析に失敗しました'); return; }
+      if (!response.ok) { toast.error(t('toastAnalyzeFailed')); return; }
       const result = await response.json();
       clearTimeout(step2);
       clearTimeout(step3);
@@ -205,7 +196,7 @@ export default function SOSResultPage() {
       setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
     } catch (err) {
       console.error('AI analysis error:', err);
-      toast.error('AI分析に失敗しました');
+      toast.error(t('toastAnalyzeFailed'));
     } finally {
       setIsAnalyzing(false);
       setAnalyzeStep(0);
@@ -228,12 +219,12 @@ export default function SOSResultPage() {
       const offerResult = await offerRes.json();
       if (!offerRes.ok) {
         if (offerResult.error === 'MAX_REACHED') {
-          toast.error(`すでに${MAX_SUPPORTERS_PER_CASE}名のサポーターを承認済みです。これ以上承認できません。`);
+          toast.error(t('toastMaxReached', { max: MAX_SUPPORTERS_PER_CASE }));
         } else if (offerResult.error === 'OFFER_NOT_PENDING') {
-          toast.error('この申し出はすでに取り下げられています。ページを更新してご確認ください。');
+          toast.error(t('toastOfferNotPending'));
           await loadData();
         } else {
-          toast.error('承認に失敗しました');
+          toast.error(t('toastAcceptFailed'));
         }
         setShowAcceptModal(false);
         return;
@@ -242,9 +233,9 @@ export default function SOSResultPage() {
       setSelectedOffer(null);
       await loadData();
       if (offerResult.auto_declined) {
-        toast.success(`サポーターを承認しました。${MAX_SUPPORTERS_PER_CASE}名に達したため、残りの申し出は自動的に辞退されました。`);
+        toast.success(t('toastAcceptedAutoDeclined', { max: MAX_SUPPORTERS_PER_CASE }));
       } else {
-        toast.success('サポーターを承認しました！メッセージでやり取りを始めましょう');
+        toast.success(t('toastAccepted'));
       }
     } finally {
       setIsActionLoading(false);
@@ -263,11 +254,11 @@ export default function SOSResultPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
       });
-      if (!res.ok) { toast.error('辞退に失敗しました'); return; }
+      if (!res.ok) { toast.error(t('toastDeclineFailed')); return; }
       setShowDeclineModal(false);
       setSelectedOffer(null);
       await loadOffers();
-      toast.success('申し出を辞退しました');
+      toast.success(t('toastDeclined'));
     } finally {
       setIsActionLoading(false);
     }
@@ -284,7 +275,7 @@ export default function SOSResultPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
       });
-      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
+      if (!res.ok) { toast.error(t('toastStatusUpdateFailed')); return; }
       setShowResolveModal(false);
       await loadData();
       setShowEvalModal(true);
@@ -305,8 +296,8 @@ export default function SOSResultPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ supporter_resolved_at: null }),
       });
-      if (!res.ok) { toast.error('ステータスの更新に失敗しました'); return; }
-      toast.success('サポーターに対応継続を依頼しました');
+      if (!res.ok) { toast.error(t('toastStatusUpdateFailed')); return; }
+      toast.success(t('toastContinueRequested'));
       await loadData();
     } finally {
       setIsActionLoading(false);
@@ -332,11 +323,11 @@ export default function SOSResultPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ badges: badgeRows }),
       });
-      if (!res.ok) { toast.error('評価の送信に失敗しました'); setIsSubmittingBadges(false); return; }
+      if (!res.ok) { toast.error(t('toastEvalFailed')); setIsSubmittingBadges(false); return; }
     }
     setIsSubmittingBadges(false);
     setShowEvalModal(false);
-    toast.success('サポーターへの評価を送信しました！ありがとうございます 🎉');
+    toast.success(t('toastEvalSent'));
   };
 
   const toggleBadge = (key: BadgeKey) => {
@@ -357,19 +348,21 @@ export default function SOSResultPage() {
     });
     const casesData = await casesRes.json();
     const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
-    if ((userCases?.length || 0) >= 3) { setLimitModal(true); return; }
+    if ((userCases?.length || 0) >= MAX_ACTIVE_CASES) { setLimitModal(true); return; }
     router.push('/sos/hearing');
   };
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+    new Date(dateStr).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const badgeLabel = (key: string) => tBadge(key);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-gray-400">読み込み中...</p>
+          <p className="text-sm text-gray-400">{tForm('loading')}</p>
         </div>
       </div>
     );
@@ -387,14 +380,14 @@ export default function SOSResultPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-gray-700 font-medium">AIがあなたの相談を準備中です</p>
+            <p className="text-gray-700 font-medium">{t('preparing')}</p>
             <div className="flex justify-center gap-1">
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
               <span className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
           </div>
-          <p className="text-xs text-gray-400">少々お待ちください</p>
+          <p className="text-xs text-gray-400">{t('pleaseWait')}</p>
         </div>
       </div>
     );
@@ -409,7 +402,7 @@ export default function SOSResultPage() {
       <Header />
       <main className="max-w-4xl mx-auto px-6 py-8">
         <Button variant="outline" onClick={() => router.push('/sos/dashboard')} className="mb-4">
-          ← ダッシュボードに戻る
+          {t('backToDashboard')}
         </Button>
 
         {isAnalyzing && (
@@ -417,10 +410,10 @@ export default function SOSResultPage() {
             <CardContent className="py-8">
               <div className="max-w-md mx-auto space-y-4">
                 {[
-                  { step: 1, icon: '📨', text: '相談内容を受け付けました' },
-                  { step: 2, icon: '🔍', text: 'AIがあなたの状況を分析しています...' },
-                  { step: 3, icon: '🌍', text: '関連するSDGsゴールを特定中...' },
-                  { step: 4, icon: '✨', text: '分析が完了しました！' },
+                  { step: 1, icon: '📨', text: t('analyzeStep1') },
+                  { step: 2, icon: '🔍', text: t('analyzeStep2') },
+                  { step: 3, icon: '🌍', text: t('analyzeStep3') },
+                  { step: 4, icon: '✨', text: t('analyzeStep4') },
                 ].map((s) => {
                   const isActive = analyzeStep >= s.step;
                   const isCurrent = analyzeStep === s.step && s.step < 4;
@@ -453,8 +446,8 @@ export default function SOSResultPage() {
         {!isAnalyzing && caseData?.ai_sdg_suggestion ? (
           <div className="mb-6 space-y-4">
             <div className="text-center py-2">
-              <h2 className="text-lg font-bold text-gray-800">🌍 あなたの声と世界のつながり</h2>
-              <p className="text-xs text-gray-500 mt-1">あなたの相談がSDGs（持続可能な開発目標）のどの課題に関わるかをAIが分析しました</p>
+              <h2 className="text-lg font-bold text-gray-800">{t('aiSectionTitle')}</h2>
+              <p className="text-xs text-gray-500 mt-1">{t('aiSectionSubtitle')}</p>
             </div>
 
             {/* SDGsが分類できなかった場合 */}
@@ -464,9 +457,9 @@ export default function SOSResultPage() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl flex-shrink-0">💬</span>
                     <div>
-                      <p className="text-sm font-medium text-amber-800 mb-1">もう少し詳しく教えてください</p>
+                      <p className="text-sm font-medium text-amber-800 mb-1">{t('noGoalsTitle')}</p>
                       <p className="text-sm text-amber-700 leading-relaxed">
-                        {caseData.ai_sdg_suggestion.summary || 'もう少し詳しく教えてもらえると、より適切な支援者につなぐことができます。「何が起きているか」の欄に、困っていることをもう少し詳しく書いてみてください。'}
+                        {caseData.ai_sdg_suggestion.summary || t('noGoalsFallback')}
                       </p>
                     </div>
                   </div>
@@ -490,7 +483,7 @@ export default function SOSResultPage() {
                           <div className="flex-1 p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
-                              <span className="text-xs text-gray-500">{SDG_NAMES[pg.goal]}</span>
+                              <span className="text-xs text-gray-500">{tGoal(String(pg.goal))}</span>
                             </div>
                             <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
@@ -508,7 +501,7 @@ export default function SOSResultPage() {
                           <div className="flex-1 p-4">
                             <div className="flex items-center gap-2">
                               <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
-                              <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                              <span className="text-sm font-medium">{tGoal(String(goalId))}</span>
                             </div>
                           </div>
                         </div>
@@ -533,16 +526,16 @@ export default function SOSResultPage() {
             <Card className="border-none bg-white shadow-sm">
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-700">📊 進行状況</h3>
+                  <h3 className="text-sm font-medium text-gray-700">{t('progressTitle')}</h3>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
-                    {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && '🤝 マッチ済み・支援中'}
-                    {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && '📋 解決報告あり'}
-                    {caseData?.status === 'RESOLVED' && '✅ 解決済み'}
-                    {caseData?.status === 'OPEN' && '⏳ サポーター待ち'}
+                    {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && t('statusMatchedActive')}
+                    {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && t('statusReported')}
+                    {caseData?.status === 'RESOLVED' && t('statusResolved')}
+                    {caseData?.status === 'OPEN' && t('statusOpen')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  {['マッチ・支援中', '解決報告', '完了'].map((step, i) => {
+                  {[t('step1'), t('step2'), t('step3')].map((step, i) => {
                     const stepNum = i + 1;
                     const currentStep = caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at ? 1 : caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at ? 2 : caseData?.status === 'RESOLVED' ? 3 : 0;
                     const isActive = stepNum <= currentStep;
@@ -558,27 +551,27 @@ export default function SOSResultPage() {
                 <div className="mt-4">
                   {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && (
                     <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-center">
-                      <p className="text-sm text-amber-700">🤝 サポーターが支援中です。メッセージで連携してください</p>
+                      <p className="text-sm text-amber-700">{t('matchedNote')}</p>
                     </div>
                   )}
                   {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && (
                     <div className="space-y-3">
                       <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-center">
-                        <p className="text-sm text-emerald-700 font-medium">📋 サポーターが解決を報告しました</p>
-                        <p className="text-xs text-emerald-600 mt-1">問題が解決していれば、下のボタンで確認してください</p>
+                        <p className="text-sm text-emerald-700 font-medium">{t('reportedTitle')}</p>
+                        <p className="text-xs text-emerald-600 mt-1">{t('reportedBody')}</p>
                         {caseData?.supporter_resolved_at && (() => {
                           const deadline = new Date(new Date(caseData.supporter_resolved_at).getTime() + 14 * 24 * 60 * 60 * 1000);
                           const daysLeft = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-                          return <p className="text-[11px] text-gray-400 mt-2">⏰ 未確認の場合、{daysLeft}日後に自動で解決済みになります</p>;
+                          return <p className="text-[11px] text-gray-400 mt-2">{t('autoResolveNote', { days: daysLeft })}</p>;
                         })()}
                       </div>
-                      <Button onClick={() => setShowResolveModal(true)} className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white">✅ 解決を確認する</Button>
-                      <Button onClick={handleRejectResolution} variant="outline" className="w-full text-orange-600 border-orange-300 hover:bg-orange-50">❌ まだ解決していない</Button>
+                      <Button onClick={() => setShowResolveModal(true)} className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white">{t('confirmResolve')}</Button>
+                      <Button onClick={handleRejectResolution} variant="outline" className="w-full text-orange-600 border-orange-300 hover:bg-orange-50">{t('notResolved')}</Button>
                     </div>
                   )}
                   {caseData?.status === 'RESOLVED' && (
                     <div className="bg-teal-50 p-3 rounded-lg border border-teal-200 text-center">
-                      <p className="text-sm text-teal-700 font-medium">✅ この相談は解決済みです</p>
+                      <p className="text-sm text-teal-700 font-medium">{t('resolvedNote')}</p>
                     </div>
                   )}
                 </div>
@@ -587,7 +580,7 @@ export default function SOSResultPage() {
 
             <Card className="border-teal-200 bg-teal-50">
               <CardHeader>
-                <CardTitle className="text-base text-teal-800">✅ 承認済みのサポーター ({acceptedOffers.length}名)</CardTitle>
+                <CardTitle className="text-base text-teal-800">{t('acceptedTitle', { count: acceptedOffers.length })}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {acceptedOffers.map((offer) => {
@@ -600,21 +593,21 @@ export default function SOSResultPage() {
                             {offer.supporter.organization_name || offer.supporter.display_name}
                             <span className="text-[10px]">↗</span>
                           </a>
-                          <p className="text-xs text-gray-500">{getSupporterTypeConfig(offer.supporter.supporter_type).label}</p>
+                          <p className="text-xs text-gray-500">{tSupporterType(offer.supporter.supporter_type)}</p>
                         </div>
                         <span className="text-xs text-teal-600">{formatDate(offer.created_at)}</span>
                       </div>
                       <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                       {badges && Object.keys(badges).length > 0 && (
                         <div className="mt-3 pt-3 border-t border-teal-100">
-                          <p className="text-[11px] text-gray-400 mb-1.5">🎁 感謝バッジ（全案件の累計）</p>
+                          <p className="text-[11px] text-gray-400 mb-1.5">{t('badgesCumulative')}</p>
                           <div className="flex flex-wrap gap-1.5">
                             {Object.entries(badges).map(([bk, count]) => {
                               const b = SUPPORTER_BADGES[bk as BadgeKey];
                               if (!b) return null;
                               return (
-                                <span key={bk} className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-amber-50 border border-amber-200 rounded-full" title={b.label}>
-                                  <span>{b.emoji}</span><span className="text-amber-700">{b.label}</span>
+                                <span key={bk} className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-amber-50 border border-amber-200 rounded-full" title={badgeLabel(bk)}>
+                                  <span>{b.emoji}</span><span className="text-amber-700">{badgeLabel(bk)}</span>
                                   {count > 1 && <span className="text-amber-500 font-medium">×{count}</span>}
                                 </span>
                               );
@@ -642,7 +635,7 @@ export default function SOSResultPage() {
         {pendingOffers.length > 0 && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-base">💌 新しい支援の申し出 ({pendingOffers.length}件)</CardTitle>
+              <CardTitle className="text-base">{t('pendingTitle', { count: pendingOffers.length })}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {pendingOffers.map((offer) => {
@@ -657,20 +650,20 @@ export default function SOSResultPage() {
                           {offer.supporter.organization_name || offer.supporter.display_name}
                           <span className="text-xs">↗</span>
                         </a>
-                        <p className="text-xs text-gray-500">{getSupporterTypeConfig(offer.supporter.supporter_type).label}</p>
+                        <p className="text-xs text-gray-500">{tSupporterType(offer.supporter.supporter_type)}</p>
                       </div>
                       <span className="text-xs text-gray-500">{formatDate(offer.created_at)}</span>
                     </div>
                     {badgeEntries.length > 0 && (
                       <div className="mb-3 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
-                        <p className="text-[11px] text-amber-600 mb-1.5">🏆 これまでの評価</p>
+                        <p className="text-[11px] text-amber-600 mb-1.5">{t('pastRating')}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {badgeEntries.map(([bk, count]) => {
                             const b = SUPPORTER_BADGES[bk as BadgeKey];
                             if (!b) return null;
                             return (
                               <span key={bk} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-white border border-amber-200 rounded-full">
-                                <span>{b.emoji}</span><span className="text-amber-700">{b.label}</span>
+                                <span>{b.emoji}</span><span className="text-amber-700">{badgeLabel(bk)}</span>
                                 {count > 1 && <span className="text-amber-500 font-medium">×{count}</span>}
                               </span>
                             );
@@ -680,8 +673,8 @@ export default function SOSResultPage() {
                     )}
                     <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
                     <div className="flex gap-2">
-                      <Button onClick={async () => { await loadOffers(); setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">✅ 承認する</Button>
-                      <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">辞退する</Button>
+                      <Button onClick={async () => { await loadOffers(); setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">{t('acceptAction')}</Button>
+                      <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">{t('declineAction')}</Button>
                     </div>
                   </div>
                 );
@@ -694,89 +687,89 @@ export default function SOSResultPage() {
           <Card className="mb-6">
             <CardContent className="py-8 text-center">
               <div className="text-4xl mb-3">⏳</div>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">サポーターからの申し出を待っています</h3>
-              <p className="text-sm text-gray-500">AIがSDGsゴールに基づいて、適切なサポーターにあなたの相談を届けています</p>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">{t('waitingTitle')}</h3>
+              <p className="text-sm text-gray-500">{t('waitingBody')}</p>
             </CardContent>
           </Card>
         )}
 
         <div className="flex gap-3">
-          <Button onClick={handleNewConsultation} variant="outline" className="flex-1">別の相談を投稿</Button>
-          <Button onClick={() => router.push('/sos/dashboard')} className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">ダッシュボードへ</Button>
+          <Button onClick={handleNewConsultation} variant="outline" className="flex-1">{t('newConsultation')}</Button>
+          <Button onClick={() => router.push('/sos/dashboard')} className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">{t('toDashboard')}</Button>
         </div>
       </main>
 
-      <Modal isOpen={showAcceptModal} onClose={() => setShowAcceptModal(false)} title="サポーターを承認しますか？" type="info">
+      <Modal isOpen={showAcceptModal} onClose={() => setShowAcceptModal(false)} title={t('acceptModalTitle')} type="info">
         <div className="space-y-4">
-          <p className="text-gray-700"><span className="font-medium">{selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name}</span>からの支援を承認します。</p>
-          <p className="text-sm text-gray-500">承認後、メッセージでやり取りができるようになります。</p>
+          <p className="text-gray-700">{t('acceptModalBody', { name: selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name || '' })}</p>
+          <p className="text-sm text-gray-500">{t('acceptModalNote')}</p>
           {acceptedOffers.length > 0 ? (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
-              <p className="text-sm font-medium text-amber-800">⚠️ チャット履歴について</p>
+              <p className="text-sm font-medium text-amber-800">{t('chatHistoryWarnTitle')}</p>
               <p className="text-sm text-amber-700">
-                この案件のチャット欄はすでに{acceptedOffers.length}名のサポーターと共有されています。承認すると、<span className="font-medium">これまでの会話も含めて新しいサポーターにも見えるようになります。</span>
+                {t('chatHistoryWarnBody', { count: acceptedOffers.length })}
               </p>
             </div>
           ) : (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
               <p className="text-sm text-blue-700">
-                💬 この案件は最大{MAX_SUPPORTERS_PER_CASE}名まで承認できます。複数承認した場合、<span className="font-medium">チャット欄は承認した全員に共有</span>されますのでご注意ください。
+                {t('chatShareInfo', { max: MAX_SUPPORTERS_PER_CASE })}
               </p>
             </div>
           )}
           {acceptedOffers.length === MAX_SUPPORTERS_PER_CASE - 1 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-orange-800">🔔 上限に達します</p>
-              <p className="text-sm text-orange-700">これを承認すると{MAX_SUPPORTERS_PER_CASE}名の上限に達し、<span className="font-medium">残りの申し出はすべて自動的に辞退</span>されます。</p>
+              <p className="text-sm font-medium text-orange-800">{t('limitReachTitle')}</p>
+              <p className="text-sm text-orange-700">{t('limitReachBody', { max: MAX_SUPPORTERS_PER_CASE })}</p>
             </div>
           )}
           <div className="flex gap-3">
-            <button onClick={() => setShowAcceptModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={handleAcceptOffer} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">承認する</button>
+            <button onClick={() => setShowAcceptModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{tActions('cancel')}</button>
+            <button onClick={handleAcceptOffer} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">{t('acceptConfirm')}</button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={showDeclineModal} onClose={() => setShowDeclineModal(false)} title="この申し出を辞退しますか？" type="warning">
+      <Modal isOpen={showDeclineModal} onClose={() => setShowDeclineModal(false)} title={t('declineModalTitle')} type="warning">
         <div className="space-y-4">
-          <p className="text-gray-700"><span className="font-medium">{selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name}</span>からの支援を辞退します。</p>
+          <p className="text-gray-700">{t('declineModalBody', { name: selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name || '' })}</p>
           <div className="flex gap-3">
-            <button onClick={() => setShowDeclineModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">キャンセル</button>
-            <button onClick={handleDeclineOffer} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">辞退する</button>
+            <button onClick={() => setShowDeclineModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{tActions('cancel')}</button>
+            <button onClick={handleDeclineOffer} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">{t('declineConfirm')}</button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={limitModal} onClose={() => setLimitModal(false)} title="相談件数の上限に達しています" type="warning">
+      <Modal isOpen={limitModal} onClose={() => setLimitModal(false)} title={tLimit('title')} type="warning">
         <div className="text-center py-4">
           <div className="text-4xl mb-4">⚠️</div>
-          <p className="text-gray-700 mb-4 font-medium">進行中の相談は最大3件までです。</p>
-          <p className="text-sm text-gray-600 mb-6">ダッシュボードから既存の相談を取り消してから、新しい相談を登録してください。</p>
-          <button onClick={() => router.push('/sos/dashboard')} className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">ダッシュボードへ戻る</button>
+          <p className="text-gray-700 mb-4 font-medium">{tLimit('heading')}</p>
+          <p className="text-sm text-gray-600 mb-6">{tLimit('body')}</p>
+          <button onClick={() => router.push('/sos/dashboard')} className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">{tLimit('backToDashboard')}</button>
         </div>
       </Modal>
 
-      <Modal isOpen={showResolveModal} onClose={() => setShowResolveModal(false)} title="解決を確認しますか？" type="info">
+      <Modal isOpen={showResolveModal} onClose={() => setShowResolveModal(false)} title={t('resolveModalTitle')} type="info">
         <div className="space-y-4">
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
-            <p className="text-sm text-teal-700">✅ サポーターが解決を報告しています。問題が解決したことを確認します。</p>
+            <p className="text-sm text-teal-700">{t('resolveModalInfo')}</p>
           </div>
-          <p className="text-sm text-gray-500">確認後、案件は「解決済み」になります。これまでのメッセージ履歴は引き続き閲覧できます。</p>
+          <p className="text-sm text-gray-500">{t('resolveModalNote')}</p>
           <div className="flex gap-3">
-            <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">まだ解決していない</button>
-            <button onClick={handleResolveCase} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">解決を確認する</button>
+            <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t('resolveNotYet')}</button>
+            <button onClick={handleResolveCase} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">{t('resolveConfirm')}</button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} title="🎉 サポーターを評価" type="info">
+      <Modal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} title={t('evalModalTitle')} type="info">
         <div className="space-y-5">
           <div className="text-center">
             <div className="text-5xl mb-2">🎊</div>
-            <p className="text-sm text-gray-600">相談が解決しました！サポーターに感謝のバッジを贈りましょう。</p>
+            <p className="text-sm text-gray-600">{t('evalCongrats')}</p>
           </div>
           <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-            <p className="text-xs text-amber-600 font-medium mb-2">🏅 自動付与</p>
+            <p className="text-xs text-amber-600 font-medium mb-2">{t('evalAutoGrant')}</p>
             <div className="flex gap-3 flex-wrap">
               {offers.filter(o => o.status === 'ACCEPTED').map((offer, i) => (
                 <div key={offer.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-amber-200">
@@ -790,7 +783,7 @@ export default function SOSResultPage() {
             </div>
           </div>
           <div>
-            <p className="text-xs text-gray-500 font-medium mb-3">✨ 追加バッジを選択してください（複数可）</p>
+            <p className="text-xs text-gray-500 font-medium mb-3">{t('evalSelectPrompt')}</p>
             <div className="grid grid-cols-1 gap-2">
               {SELECTABLE_BADGES.map((key) => {
                 const badge = SUPPORTER_BADGES[key];
@@ -798,7 +791,7 @@ export default function SOSResultPage() {
                 return (
                   <button key={key} onClick={() => toggleBadge(key)} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}>
                     <span className="text-2xl">{badge.emoji}</span>
-                    <span className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>{badge.label}</span>
+                    <span className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>{badgeLabel(key)}</span>
                     {isSelected && <span className="ml-auto text-blue-500 text-lg">✓</span>}
                   </button>
                 );
@@ -806,9 +799,9 @@ export default function SOSResultPage() {
             </div>
           </div>
           <button onClick={handleSubmitBadges} disabled={isSubmittingBadges || selectedBadges.size === 0} className="w-full px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 text-sm font-medium disabled:opacity-50">
-            {isSubmittingBadges ? '送信中...' : `🎁 バッジを贈る (${selectedBadges.size})`}
+            {isSubmittingBadges ? tForm('submitting') : t('evalSend', { count: selectedBadges.size })}
           </button>
-          {selectedBadges.size === 0 && <p className="text-xs text-center text-gray-400">※ 1つ以上のバッジを選択してください</p>}
+          {selectedBadges.size === 0 && <p className="text-xs text-center text-gray-400">{t('evalSelectAtLeast')}</p>}
         </div>
       </Modal>
 

@@ -3,9 +3,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
+import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { Logo } from '@/components/icons/Logo';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
@@ -15,65 +16,6 @@ type Supporter = {
   service_areas: Array<{ name_local: string }>; sdgs_goals: number[];
   resolved_count: number; badge_count: number;
 };
-
-const SDG_COLORS: Record<number, string> = {
-  1: '#e5243b', 2: '#dda63a', 3: '#4c9f38', 4: '#c5192d', 5: '#ff3a21',
-  6: '#26bde2', 7: '#fcc30b', 8: '#a21942', 9: '#fd6925', 10: '#dd1367',
-  11: '#fd9d24', 12: '#bf8b2e', 13: '#3f7e44', 14: '#0a97d9', 15: '#56c02b',
-  16: '#00689d', 17: '#19486a',
-};
-const SDG_NAMES: Record<number, string> = {
-  1: '貧困', 2: '飢餓', 3: '健康', 4: '教育', 5: 'ジェンダー',
-  6: '水・衛生', 7: 'エネルギー', 8: '経済成長', 9: '産業・技術', 10: '不平等',
-  11: 'まちづくり', 12: '生産・消費', 13: '気候変動', 14: '海洋', 15: '陸上',
-  16: '平和・公正', 17: 'パートナー',
-};
-
-const STEPS = [
-  { icon: '📝', title: '相談を投稿', desc: '困っていることを自由に入力。個人情報は最小限でOK' },
-  { icon: '🤖', title: 'AIが分析', desc: 'AIが相談内容を解析し、最適なSDGsカテゴリを判定' },
-  { icon: '🤝', title: 'サポーターが申し出', desc: '専門分野のNPO・支援団体があなたの相談に手を挙げます' },
-  { icon: '✅', title: 'あなたが選ぶ', desc: '申し出た団体の情報を確認してから承認。断ることも自由' },
-  { icon: '🌟', title: '解決・サポート完了', desc: '問題が解決したら確認。感謝バッジで気持ちを伝えられます' },
-];
-
-const FAQS = [
-  {
-    q: '個人情報は大丈夫ですか？',
-    a: 'サポーターを承認するまで、個人を特定できる情報は一切渡りません。承認後も必要最小限の情報のみ共有されます。',
-  },
-  {
-    q: 'サポーターの申し出を断ることはできますか？',
-    a: 'はい、自由に断れます。申し出を受けるかどうかはあなたが決めます。納得できるまで待つことも可能です。',
-  },
-  {
-    q: '本当に無料ですか？',
-    a: 'SOS利用者の方は完全無料です。サポーターのNPO・企業も登録費用はかかりません。',
-  },
-  {
-    q: '怪しい団体が来たらどうなりますか？',
-    a: 'すべてのサポーター団体は登録時に審査を受けています。また、プロフィールで実績や紹介文を事前確認できます。',
-  },
-  {
-    q: '何でも相談していいですか？',
-    a: 'SDGsに関連する社会的な困りごとが対象です。生活困窮、教育、環境、差別、孤立など幅広く対応できます。',
-  },
-];
-
-const CONCEPT_POINTS = [
-  {
-    title: 'SOSはそのまま投稿',
-    desc: 'SDGsを意識しなくても、困っていることを普段の言葉で相談できます。',
-  },
-  {
-    title: 'AIが裏側で整理',
-    desc: '相談内容を分類し、地域や課題に合う支援につながりやすくします。',
-  },
-  {
-    title: '支援者と運営につながる',
-    desc: 'NPO・行政・企業とのマッチングに加え、困った時の運営導線も残します。',
-  },
-];
 
 function useCountUp(target: number, duration = 1200) {
   const [count, setCount] = useState(0);
@@ -110,8 +52,8 @@ function StatCard({ value, label, suffix = '', suffixSm }: { value: number; labe
       <div className="text-2xl sm:text-4xl font-black text-teal-600 leading-none whitespace-nowrap">
         {count.toLocaleString()}
         {/* スマホ: 短い単位 / デスクトップ: 通常単位 */}
-        <span className="text-base sm:text-2xl ml-0.5 sm:hidden">{suffixSm ?? suffix}</span>
-        <span className="text-2xl ml-0.5 hidden sm:inline">{suffix}</span>
+        {(suffixSm ?? suffix) && <span className="text-base sm:text-2xl ml-0.5 sm:hidden">{suffixSm ?? suffix}</span>}
+        {suffix && <span className="text-2xl ml-0.5 hidden sm:inline">{suffix}</span>}
       </div>
       {/* ラベル */}
       <div className="text-[10px] sm:text-sm text-gray-500 font-medium leading-snug mt-1.5 break-keep">{label}</div>
@@ -120,6 +62,9 @@ function StatCard({ value, label, suffix = '', suffixSm }: { value: number; labe
 }
 
 export default function HomePage() {
+  const t = useTranslations('landing');
+  const tGoalShort = useTranslations('sdgs.goalShort');
+  const tSupporterType = useTranslations('common.supporterType');
   const [stats, setStats] = useState<Stats | null>(null);
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [featuredSupporters, setFeaturedSupporters] = useState<Supporter[]>([]);
@@ -151,6 +96,21 @@ export default function HomePage() {
   // フィーチャードが設定されていればそれを、なければ登録順上位4件を表示
   const previewSupporters = featuredSupporters.length > 0 ? featuredSupporters : supporters.slice(0, 4);
 
+  const STEPS = [
+    { icon: '📝', title: t('steps.step1Title'), desc: t('steps.step1Desc') },
+    { icon: '🤖', title: t('steps.step2Title'), desc: t('steps.step2Desc') },
+    { icon: '🤝', title: t('steps.step3Title'), desc: t('steps.step3Desc') },
+    { icon: '✅', title: t('steps.step4Title'), desc: t('steps.step4Desc') },
+    { icon: '🌟', title: t('steps.step5Title'), desc: t('steps.step5Desc') },
+  ];
+
+  const FAQS = [1, 2, 3, 4, 5].map((n) => ({ q: t(`faq.q${n}`), a: t(`faq.a${n}`) }));
+
+  const CONCEPT_POINTS = [1, 2, 3].map((n) => ({
+    title: t(`concept.point${n}Title`),
+    desc: t(`concept.point${n}Desc`),
+  }));
+
   return (
     <div className="min-h-screen bg-white font-sans">
 
@@ -160,17 +120,17 @@ export default function HomePage() {
           <Logo variant="default" size="sm" showText={true} />
           <div className="flex items-center gap-3">
             <Link href="/supporters" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
-              サポーター一覧
+              {t('nav.supporters')}
             </Link>
             <Link href="/story" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
-              私たちの思い
+              {t('nav.story')}
             </Link>
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              ログイン
+              {t('nav.login')}
             </Link>
             <Link href="/signup"
               className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
-              相談する
+              {t('nav.consult')}
             </Link>
           </div>
         </div>
@@ -180,31 +140,32 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-teal-50 via-blue-50 to-white pt-14 sm:pt-20 pb-16 sm:pb-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-block bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1 rounded-full mb-5 tracking-wide">
-            NPO・支援団体と繋がるプラットフォーム
+            {t('hero.badge')}
           </div>
           <h1 className="text-3xl sm:text-5xl font-black text-gray-900 leading-tight mb-5">
-            ひとりで抱えずに、<br />
-            <span className="text-teal-500">誰かと一緒に</span>解決しよう
+            {t.rich('hero.title', {
+              br: () => <br />,
+              accent: (chunks) => <span className="text-teal-500">{chunks}</span>,
+            })}
           </h1>
           <p className="text-base sm:text-lg text-gray-500 mb-8 leading-relaxed">
-            生活困窮・教育・環境・差別・孤立など、社会的な困りごとを<br className="hidden sm:block" />
-            AIが分析し、専門のNPO・支援団体へつなぎます。
+            {t('hero.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup"
               className="px-8 py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-              無料で相談する →
+              {t('hero.ctaConsult')}
             </Link>
             <Link href="/supporters"
               className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200 rounded-2xl font-bold text-lg transition-all">
-              サポーターを見る
+              {t('hero.ctaSupporters')}
             </Link>
           </div>
-          <p className="text-xs text-gray-400 mt-4">登録無料・承認するまで個人情報は渡りません</p>
+          <p className="text-xs text-gray-400 mt-4">{t('hero.note')}</p>
           <div className="mt-5 flex items-center justify-center gap-2 text-sm text-gray-400">
-            <span>すでにアカウントをお持ちの方は</span>
+            <span>{t('hero.haveAccount')}</span>
             <Link href="/login" className="text-teal-600 font-bold hover:text-teal-700 border-b border-dashed border-teal-400 hover:border-teal-600 transition-colors">
-              こちらからログイン →
+              {t('hero.loginHere')}
             </Link>
           </div>
           <div className="mt-6">
@@ -212,7 +173,7 @@ export default function HomePage() {
               <svg width="14" height="14" viewBox="0 0 56 56" fill="none">
                 <path d="M28 4C28 4 8 24 8 38C8 49.5 17.1 54 28 54C38.9 54 48 49.5 48 38C48 24 28 4 28 4Z" fill="#0BC5A4"/>
               </svg>
-              <span className="border-b border-dashed border-gray-300 group-hover:border-teal-400 transition-colors">私たちの思いを読む</span>
+              <span className="border-b border-dashed border-gray-300 group-hover:border-teal-400 transition-colors">{t('hero.readStory')}</span>
               <span>→</span>
             </Link>
           </div>
@@ -223,9 +184,9 @@ export default function HomePage() {
       {stats && (
         <section className="border-y border-gray-100 bg-white">
           <div className="max-w-3xl mx-auto grid grid-cols-3 divide-x divide-gray-100">
-            <StatCard value={stats.resolvedCount} label="解決した相談" suffix="件" />
-            <StatCard value={stats.supporterCount} label="登録サポーター団体" suffix="団体" suffixSm="団体" />
-            <StatCard value={stats.areaCount} label="活動都道府県" suffix="都道府県" suffixSm="県" />
+            <StatCard value={stats.resolvedCount} label={t('stats.resolved')} suffix={t('stats.resolvedSuffix')} />
+            <StatCard value={stats.supporterCount} label={t('stats.supporters')} suffix={t('stats.supportersSuffix')} suffixSm={t('stats.supportersSuffix')} />
+            <StatCard value={stats.areaCount} label={t('stats.areas')} suffix={t('stats.areasSuffix')} suffixSm={t('stats.areasSuffixSm')} />
           </div>
         </section>
       )}
@@ -234,32 +195,34 @@ export default function HomePage() {
       <section className="bg-white px-4 py-14 sm:px-6 sm:py-18">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-3 text-xs font-bold tracking-[0.18em] text-teal-600">HOW IT WORKS</p>
+            <p className="mb-3 text-xs font-bold tracking-[0.18em] text-teal-600">{t('concept.kicker')}</p>
             <h2 className="text-2xl font-black leading-tight text-gray-900 sm:text-3xl">
-              助けてほしい声を、支援につなげる仕組み
+              {t('concept.title')}
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-gray-500 sm:text-base">
-              相談者にはむずかしい分類を求めず、AIと運営の仕組みで必要な支援に届きやすくします。
+              {t('concept.description')}
             </p>
           </div>
 
           <div className="relative mx-auto mt-8 max-w-[430px] md:max-w-5xl">
             <Image
               src="/concepts/top-concept-mobile-sample-b.png"
-              alt="明日もsamasama SDGs MATCHのスマートフォン向け概要。相談者がSOSを送り、明日もsamasamaを通じて支援したい団体へつながる流れ。"
+              alt={t('concept.imageAltMobile')}
               width={864}
               height={1821}
               className="block h-auto w-full md:hidden"
             />
             <Image
               src="/concepts/top-concept-flow-v1-transparent-no-bottom.png"
-              alt="明日もsamasama SDGs MATCHの概要。相談者がSOSを送り、明日もsamasamaが相談・マッチング・情報提供・可視化を通じて支援したい団体へつなぐ流れ。"
+              alt={t('concept.imageAltDesktop')}
               width={1672}
               height={941}
               className="hidden h-auto w-full md:block"
             />
             <p className="mx-auto mt-7 max-w-3xl text-center text-2xl font-black leading-tight text-gray-900 sm:mt-8 sm:text-3xl md:absolute md:inset-x-0 md:bottom-[5%] md:mt-0 md:text-4xl">
-              一人で抱え込まないための<span className="text-teal-600">支援の入口</span>
+              {t.rich('concept.caption', {
+                accent: (chunks) => <span className="text-teal-600">{chunks}</span>,
+              })}
             </p>
           </div>
 
@@ -283,8 +246,8 @@ export default function HomePage() {
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-black text-gray-900 mb-3">ご利用の流れ</h2>
-            <p className="text-gray-500">安心してご利用いただけるよう、透明なプロセスで進みます</p>
+            <h2 className="text-2xl font-black text-gray-900 mb-3">{t('steps.title')}</h2>
+            <p className="text-gray-500">{t('steps.subtitle')}</p>
           </div>
           <div className="space-y-4">
             {STEPS.map((step, i) => (
@@ -295,14 +258,14 @@ export default function HomePage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold text-teal-500 bg-teal-50 px-2 py-0.5 rounded-full">
-                      STEP {i + 1}
+                      {t('steps.label', { n: i + 1 })}
                     </span>
                     <span className="font-bold text-gray-800">{step.title}</span>
                   </div>
                   <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
                   {i === 3 && (
                     <p className="text-xs text-orange-500 font-medium mt-1.5">
-                      🔒 承認しない限り個人情報は渡りません
+                      {t('steps.privacyNote')}
                     </p>
                   )}
                 </div>
@@ -315,13 +278,13 @@ export default function HomePage() {
       {/* ── SDGs対応ゴール ── */}
       <section className="py-16 px-6 bg-white">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-black text-gray-900 mb-3">対応するSDGsゴール</h2>
-          <p className="text-gray-500 mb-8 text-sm">17のゴールすべての領域で、専門の支援団体が活動しています</p>
+          <h2 className="text-2xl font-black text-gray-900 mb-3">{t('sdgsSection.title')}</h2>
+          <p className="text-gray-500 mb-8 text-sm">{t('sdgsSection.subtitle')}</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {Array.from({ length: 17 }, (_, i) => i + 1).map(g => (
               <span key={g} style={{ background: SDG_COLORS[g] }}
                 className="text-white text-xs font-bold px-3 py-1.5 rounded-lg">
-                {g} {SDG_NAMES[g]}
+                {g} {tGoalShort(String(g))}
               </span>
             ))}
           </div>
@@ -334,12 +297,12 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
               <div>
-                <h2 className="text-2xl font-black text-gray-900">参加サポーター</h2>
-                <p className="text-gray-500 text-sm mt-1">{featuredSupporters.length > 0 ? 'おすすめ団体をピックアップ' : '事前に確認してから相談できます'}</p>
+                <h2 className="text-2xl font-black text-gray-900">{t('supportersSection.title')}</h2>
+                <p className="text-gray-500 text-sm mt-1">{featuredSupporters.length > 0 ? t('supportersSection.subtitleFeatured') : t('supportersSection.subtitleDefault')}</p>
               </div>
               <Link href="/supporters"
                 className="self-start sm:self-auto text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 px-4 py-2 rounded-full hover:bg-teal-50 transition-colors whitespace-nowrap">
-                全{supporters.length}団体を見る →
+                {t('supportersSection.viewAll', { count: supporters.length })}
               </Link>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -355,12 +318,12 @@ export default function HomePage() {
                         {s.organization_name || s.display_name}
                       </h3>
                       <span className={`mt-1 inline-flex max-w-full whitespace-normal break-all text-xs rounded-full px-2 py-0.5 font-medium border ${getSupporterTypeConfig(s.supporter_type).badgeClass}`}>
-                        {getSupporterTypeConfig(s.supporter_type).label}
+                        {tSupporterType(s.supporter_type)}
                       </span>
                     </div>
                   </div>
                   <div className="text-xs text-gray-400 mb-3 break-all">
-                    📍 {s.service_area_nationwide ? '全国対応' : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')}
+                    📍 {s.service_area_nationwide ? t('supportersSection.nationwide') : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')}
                   </div>
                   <div className="flex flex-wrap gap-1 mb-3">
                     {(s.sdgs_goals || []).slice(0, 5).map(g => (
@@ -371,8 +334,14 @@ export default function HomePage() {
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-1 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                    <span>✅ 解決 <strong className="text-teal-600">{s.resolved_count}件</strong></span>
-                    <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
+                    <span>{t.rich('supportersSection.resolvedStat', {
+                      count: s.resolved_count,
+                      strong: (chunks) => <strong className="text-teal-600">{chunks}</strong>,
+                    })}</span>
+                    <span>{t.rich('supportersSection.badgeStat', {
+                      count: s.badge_count,
+                      strong: (chunks) => <strong className="text-amber-500">{chunks}</strong>,
+                    })}</span>
                   </div>
                 </Link>
               ))}
@@ -384,7 +353,7 @@ export default function HomePage() {
       {/* ── よくある質問 ── */}
       <section className="py-16 px-6 bg-white">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-black text-gray-900 text-center mb-8">よくある不安・質問</h2>
+          <h2 className="text-2xl font-black text-gray-900 text-center mb-8">{t('faq.title')}</h2>
           <div className="space-y-3">
             {FAQS.map((faq, i) => (
               <div key={i} className="border border-gray-200 rounded-2xl overflow-hidden">
@@ -413,19 +382,18 @@ export default function HomePage() {
           <div className="flex justify-center mb-4">
             <Logo variant="white" size="md" showText={false} />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black mb-4">一歩踏み出してみませんか</h2>
+          <h2 className="text-2xl sm:text-3xl font-black mb-4">{t('cta.title')}</h2>
           <p className="text-sm sm:text-base text-teal-100 mb-8 leading-relaxed">
-            あなたの困りごとを解決できる専門家が、待っています。<br />
-            相談は無料。承認するまで個人情報は渡りません。
+            {t('cta.body')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup"
               className="px-8 py-4 bg-white text-teal-600 rounded-2xl font-bold text-lg hover:bg-teal-50 transition-all shadow-lg">
-              無料で相談する →
+              {t('cta.consult')}
             </Link>
             <Link href="/login"
               className="px-8 py-4 bg-teal-600/40 hover:bg-teal-600/60 text-white border border-white/30 rounded-2xl font-bold text-lg transition-all">
-              ログインする
+              {t('cta.login')}
             </Link>
           </div>
         </div>
@@ -437,14 +405,14 @@ export default function HomePage() {
           <Logo variant="white" size="sm" showText={true} />
         </div>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 text-gray-500">
-          <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">私たちの思い</Link>
-          <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">サポーター一覧</Link>
-          <Link href="/contact" className="hover:text-teal-400 transition-colors tracking-wide">お問い合わせ</Link>
-          <Link href="/terms" className="hover:text-teal-400 transition-colors tracking-wide">利用規約</Link>
-          <Link href="/privacy" className="hover:text-teal-400 transition-colors tracking-wide">プライバシー</Link>
-          <Link href="/login" className="hover:text-teal-400 transition-colors tracking-wide">ログイン</Link>
+          <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.story')}</Link>
+          <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.supporters')}</Link>
+          <Link href="/contact" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.contact')}</Link>
+          <Link href="/terms" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.terms')}</Link>
+          <Link href="/privacy" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.privacy')}</Link>
+          <Link href="/login" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.login')}</Link>
         </div>
-        <p>© 2026 明日もsamasama. All rights reserved.</p>
+        <p>{t('footer.copyright')}</p>
       </footer>
     </div>
   );

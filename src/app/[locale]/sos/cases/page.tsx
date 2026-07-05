@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SDG_COLORS, CASE_STATUS, type CaseStatusKey } from '@/lib/constants/sdgs';
 
 type Case = {
   id: string;
@@ -21,26 +23,11 @@ type Case = {
   } | null;
 };
 
-// SDGsゴールの色
-const SDG_COLORS: Record<number, string> = {
-  1: '#e5243b', 2: '#dda63a', 3: '#4c9f38', 4: '#c5192d',
-  5: '#ff3a21', 6: '#26bde2', 7: '#fcc30b', 8: '#a21942',
-  9: '#fd6925', 10: '#dd1367', 11: '#fd9d24', 12: '#bf8b2e',
-  13: '#3f7e44', 14: '#0a97d9', 15: '#56c02b', 16: '#00689d',
-  17: '#19486a',
-};
-
-// ステータスの日本語表示
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  OPEN: { label: 'サポーター待ち', color: 'bg-blue-100 text-blue-600' },
-  MATCHED: { label: 'マッチ済み', color: 'bg-amber-100 text-amber-600' },
-  IN_PROGRESS: { label: '対応中', color: 'bg-purple-100 text-purple-600' },
-  RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-600' },
-  CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-500' },
-  CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-500' },
-};
-
 export default function SOSCasesPage() {
+  const t = useTranslations('sos.casesList');
+  const tStatus = useTranslations('sdgs.caseStatus');
+  const tForm = useTranslations('common.form');
+  const locale = useLocale();
   const router = useRouter();
   const [cases, setCases] = useState<Case[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,30 +48,23 @@ export default function SOSCasesPage() {
       });
       const casesData = await casesRes.json();
       if (!casesRes.ok) {
-        setError('ユーザー情報が取得できませんでした');
-        setIsLoading(false);
-        return;
-      }
-      const data = casesData.cases;
-      const fetchError = null;
-
-      if (fetchError) {
-        setError('相談履歴の取得に失敗しました');
+        setError(t('errorUserFetch'));
         setIsLoading(false);
         return;
       }
 
-      setCases(data || []);
+      setCases(casesData.cases || []);
       setIsLoading(false);
     };
 
     loadCases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   // 日付フォーマット
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('ja-JP', {
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -93,10 +73,17 @@ export default function SOSCasesPage() {
     });
   };
 
+  // ステータスの表示ラベル（文言はカタログ・色はここで管理）
+  const statusDisplay = (status: string) => {
+    const color = (CASE_STATUS as Record<string, { color: string }>)[status]?.color || 'bg-gray-100 text-gray-500';
+    const isKnown = status in CASE_STATUS;
+    return { label: isKnown ? tStatus(status as CaseStatusKey) : status, color };
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">読み込み中...</p>
+        <p className="text-gray-500">{tForm('loading')}</p>
       </div>
     );
   }
@@ -110,17 +97,17 @@ export default function SOSCasesPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              相談履歴
+              {t('title')}
             </h1>
             <p className="text-gray-500 mt-1">
-              {cases.length}件の相談があります
+              {t('count', { count: cases.length })}
             </p>
           </div>
           <Button
             onClick={() => router.push('/sos/hearing')}
             className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
           >
-            ＋ 新しい相談
+            {t('newCase')}
           </Button>
         </div>
 
@@ -136,12 +123,12 @@ export default function SOSCasesPage() {
           <Card className="text-center py-12">
             <CardContent>
               <div className="text-4xl mb-3">📭</div>
-              <p className="text-gray-500 mb-4">まだ相談がありません</p>
+              <p className="text-gray-500 mb-4">{t('empty')}</p>
               <Button
                 onClick={() => router.push('/sos/hearing')}
                 className="bg-gradient-to-r from-blue-600 to-teal-600"
               >
-                最初の相談を投稿する
+                {t('postFirst')}
               </Button>
             </CardContent>
           </Card>
@@ -150,8 +137,7 @@ export default function SOSCasesPage() {
         {/* 相談一覧 */}
         <div className="space-y-4">
           {cases.map((c) => {
-            const statusInfo = STATUS_LABELS[c.status] ||
-              { label: c.status, color: 'bg-gray-100 text-gray-500' };
+            const statusInfo = statusDisplay(c.status);
 
             return (
               <Card
@@ -168,7 +154,7 @@ export default function SOSCasesPage() {
                       {/* 緊急度 */}
                       {c.urgency === 'High' && (
                         <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">
-                          ⚠️ 緊急
+                          {t('urgent')}
                         </span>
                       )}
                       {/* ステータス */}
@@ -188,7 +174,7 @@ export default function SOSCasesPage() {
                   {/* SDGsゴール（AI分析済みの場合） */}
                   {c.ai_sdg_suggestion?.sdgs_goals ? (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">SDGs:</span>
+                      <span className="text-xs text-gray-400">{t('sdgsLabel')}</span>
                       <div className="flex gap-1">
                         {c.ai_sdg_suggestion.sdgs_goals.map((goalId) => (
                           <span
@@ -203,8 +189,8 @@ export default function SOSCasesPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">SDGs分析:</span>
-                      <span className="text-xs text-orange-500">未分析</span>
+                      <span className="text-xs text-gray-400">{t('sdgsPendingLabel')}</span>
+                      <span className="text-xs text-orange-500">{t('notAnalyzed')}</span>
                     </div>
                   )}
 
@@ -225,7 +211,7 @@ export default function SOSCasesPage() {
             className="w-full"
             onClick={() => router.push('/sos/dashboard')}
           >
-            ダッシュボードへ戻る
+            {t('backToDashboard')}
           </Button>
         </div>
       </main>

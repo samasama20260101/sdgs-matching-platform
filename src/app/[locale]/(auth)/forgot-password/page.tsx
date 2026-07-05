@@ -2,7 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function ForgotPasswordPage() {
+    const t = useTranslations('auth.forgot');
+    const tAuth = useTranslations('auth.common');
+    const tForm = useTranslations('common.form');
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSent, setIsSent] = useState(false);
@@ -24,12 +28,12 @@ export default function ForgotPasswordPage() {
                 redirectTo: `${window.location.origin}/reset-password`,
             });
             if (resetError) {
-                setError('メールの送信に失敗しました。もう一度お試しください。');
+                setError(t('errorSendFailed'));
                 return;
             }
             setIsSent(true);
         } catch {
-            setError('エラーが発生しました。もう一度お試しください。');
+            setError(t('errorSendFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -41,29 +45,29 @@ export default function ForgotPasswordPage() {
                 <Card className="w-full max-w-md">
                     <CardHeader className="space-y-1 text-center">
                         <div className="text-5xl mb-2">📧</div>
-                        <CardTitle className="text-2xl font-bold">メールを送信しました</CardTitle>
+                        <CardTitle className="text-2xl font-bold">{t('sentTitle')}</CardTitle>
                         <CardDescription className="text-base">
-                            <span className="font-medium text-gray-700">{email}</span> に<br />
-                            パスワード再設定のリンクを送りました
+                            {t('sentDescription')}<br />
+                            <span className="font-medium text-gray-700">{email}</span>
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700 space-y-1.5">
-                            <p>・メールが届かない場合は迷惑メールフォルダをご確認ください</p>
-                            <p>・リンクの有効期限は1時間です</p>
-                            <p>・送信元: noreply@mail.app.supabase.io</p>
+                            <p>・{t('noteSpam')}</p>
+                            <p>・{t('noteExpiry')}</p>
+                            <p>・{t('noteSender')}</p>
                         </div>
                         <div className="text-center text-sm text-gray-500">
-                            メールが届かない場合は{' '}
+                            {t('resendPrompt')}{' '}
                             <button
                                 onClick={() => setIsSent(false)}
                                 className="text-blue-600 hover:underline font-medium">
-                                再送信する
+                                {t('resendAction')}
                             </button>
                         </div>
                         <div className="text-center pt-2">
                             <Link href="/login" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                                ← ログインに戻る
+                                {tAuth('backToLogin')}
                             </Link>
                         </div>
                     </CardContent>
@@ -78,23 +82,22 @@ export default function ForgotPasswordPage() {
                 <CardHeader className="space-y-1">
                     <div className="text-center text-4xl mb-2">🔑</div>
                     <CardTitle className="text-2xl font-bold text-center">
-                        パスワードをお忘れの方
+                        {t('title')}
                     </CardTitle>
                     <CardDescription className="text-center">
-                        登録済みのメールアドレスを入力してください。<br />
-                        パスワード再設定のリンクをお送りします。
+                        {t('description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="email">
-                                メールアドレス <span className="text-red-500">*</span>
+                                {tForm('email')} <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="example@email.com"
+                                placeholder={tAuth('emailPlaceholder')}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -110,12 +113,12 @@ export default function ForgotPasswordPage() {
                             type="submit"
                             className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             disabled={isLoading}>
-                            {isLoading ? '送信中...' : '再設定メールを送る'}
+                            {isLoading ? tForm('submitting') : t('submit')}
                         </Button>
                     </form>
                     <div className="mt-4 text-center">
                         <Link href="/login" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                            ← ログインに戻る
+                            {tAuth('backToLogin')}
                         </Link>
                     </div>
                 </CardContent>

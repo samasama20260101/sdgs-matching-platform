@@ -2,5 +2,102 @@
   "meta": {
     "title": "明日もsamasama | SDGs Match",
     "description": "AIがあなたの困りごとを分析し、専門のNPO・支援団体・企業・行政につなげるマッチングプラットフォームです。"
+  },
+  "nav": {
+    "supporters": "サポーター一覧",
+    "story": "私たちの思い",
+    "login": "ログイン",
+    "consult": "相談する"
+  },
+  "hero": {
+    "badge": "NPO・支援団体と繋がるプラットフォーム",
+    "title": "ひとりで抱えずに、<br></br><accent>誰かと一緒に</accent>解決しよう",
+    "description": "生活困窮・教育・環境・差別・孤立など、社会的な困りごとをAIが分析し、専門のNPO・支援団体へつなぎます。",
+    "ctaConsult": "無料で相談する →",
+    "ctaSupporters": "サポーターを見る",
+    "note": "登録無料・承認するまで個人情報は渡りません",
+    "haveAccount": "すでにアカウントをお持ちの方は",
+    "loginHere": "こちらからログイン →",
+    "readStory": "私たちの思いを読む"
+  },
+  "stats": {
+    "resolved": "解決した相談",
+    "resolvedSuffix": "件",
+    "supporters": "登録サポーター団体",
+    "supportersSuffix": "団体",
+    "areas": "活動都道府県",
+    "areasSuffix": "都道府県",
+    "areasSuffixSm": "県"
+  },
+  "concept": {
+    "kicker": "HOW IT WORKS",
+    "title": "助けてほしい声を、支援につなげる仕組み",
+    "description": "相談者にはむずかしい分類を求めず、AIと運営の仕組みで必要な支援に届きやすくします。",
+    "caption": "一人で抱え込まないための<accent>支援の入口</accent>",
+    "imageAltMobile": "明日もsamasama SDGs MATCHのスマートフォン向け概要。相談者がSOSを送り、明日もsamasamaを通じて支援したい団体へつながる流れ。",
+    "imageAltDesktop": "明日もsamasama SDGs MATCHの概要。相談者がSOSを送り、明日もsamasamaが相談・マッチング・情報提供・可視化を通じて支援したい団体へつなぐ流れ。",
+    "point1Title": "SOSはそのまま投稿",
+    "point1Desc": "SDGsを意識しなくても、困っていることを普段の言葉で相談できます。",
+    "point2Title": "AIが裏側で整理",
+    "point2Desc": "相談内容を分類し、地域や課題に合う支援につながりやすくします。",
+    "point3Title": "支援者と運営につながる",
+    "point3Desc": "NPO・行政・企業とのマッチングに加え、困った時の運営導線も残します。"
+  },
+  "steps": {
+    "title": "ご利用の流れ",
+    "subtitle": "安心してご利用いただけるよう、透明なプロセスで進みます",
+    "label": "STEP {n}",
+    "step1Title": "相談を投稿",
+    "step1Desc": "困っていることを自由に入力。個人情報は最小限でOK",
+    "step2Title": "AIが分析",
+    "step2Desc": "AIが相談内容を解析し、最適なSDGsカテゴリを判定",
+    "step3Title": "サポーターが申し出",
+    "step3Desc": "専門分野のNPO・支援団体があなたの相談に手を挙げます",
+    "step4Title": "あなたが選ぶ",
+    "step4Desc": "申し出た団体の情報を確認してから承認。断ることも自由",
+    "step5Title": "解決・サポート完了",
+    "step5Desc": "問題が解決したら確認。感謝バッジで気持ちを伝えられます",
+    "privacyNote": "🔒 承認しない限り個人情報は渡りません"
+  },
+  "sdgsSection": {
+    "title": "対応するSDGsゴール",
+    "subtitle": "17のゴールすべての領域で、専門の支援団体が活動しています"
+  },
+  "supportersSection": {
+    "title": "参加サポーター",
+    "subtitleFeatured": "おすすめ団体をピックアップ",
+    "subtitleDefault": "事前に確認してから相談できます",
+    "viewAll": "全{count}団体を見る →",
+    "nationwide": "全国対応",
+    "resolvedStat": "✅ 解決 <strong>{count}件</strong>",
+    "badgeStat": "🏆 <strong>{count}バッジ</strong>"
+  },
+  "faq": {
+    "title": "よくある不安・質問",
+    "q1": "個人情報は大丈夫ですか？",
+    "a1": "サポーターを承認するまで、個人を特定できる情報は一切渡りません。承認後も必要最小限の情報のみ共有されます。",
+    "q2": "サポーターの申し出を断ることはできますか？",
+    "a2": "はい、自由に断れます。申し出を受けるかどうかはあなたが決めます。納得できるまで待つことも可能です。",
+    "q3": "本当に無料ですか？",
+    "a3": "SOS利用者の方は完全無料です。サポーターのNPO・企業も登録費用はかかりません。",
+    "q4": "怪しい団体が来たらどうなりますか？",
+    "a4": "すべてのサポーター団体は登録時に審査を受けています。また、プロフィールで実績や紹介文を事前確認できます。",
+    "q5": "何でも相談していいですか？",
+    "a5": "SDGsに関連する社会的な困りごとが対象です。生活困窮、教育、環境、差別、孤立など幅広く対応できます。"
+  },
+  "cta": {
+    "title": "一歩踏み出してみませんか",
+    "body": "あなたの困りごとを解決できる専門家が、待っています。相談は無料。承認するまで個人情報は渡りません。",
+    "consult": "無料で相談する →",
+    "login": "ログインする"
+  },
+  "footer": {
+    "story": "私たちの思い",
+    "supporters": "サポーター一覧",
+    "contact": "お問い合わせ",
+    "terms": "利用規約",
+    "privacy": "プライバシー",
+    "login": "ログイン",
+    "copyright": "© 2026 明日もsamasama. All rights reserved."
   }
 }

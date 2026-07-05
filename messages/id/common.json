@@ -18,5 +18,38 @@
     "signup": "Daftar",
     "logout": "Keluar",
     "menu": "Menu"
+  },
+  "actions": {
+    "back": "Kembali",
+    "next": "Berikutnya",
+    "send": "Kirim",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "close": "Tutup",
+    "backToHome": "Kembali ke beranda",
+    "backToLogin": "Kembali ke halaman masuk"
+  },
+  "form": {
+    "email": "Alamat email",
+    "password": "Kata sandi",
+    "required": "Wajib diisi",
+    "loading": "Memuat...",
+    "submitting": "Mengirim...",
+    "saving": "Menyimpan..."
+  },
+  "supporterType": {
+    "NPO": "NPO / organisasi pendukung",
+    "CORPORATE": "Perusahaan",
+    "GOVERNMENT": "Pemerintah / lembaga publik"
+  },
+  "jaOnlyNotice": "Halaman ini saat ini hanya tersedia dalam bahasa Jepang.",
+  "maintenance": {
+    "metaTitle": "Dalam pemeliharaan | 明日もsamasama",
+    "badge": "Dalam pemeliharaan",
+    "title": "Layanan sedang dihentikan sementara",
+    "body": "Kami sedang memperbarui sistem agar layanan lebih aman. Layanan dapat digunakan kembali segera setelah pekerjaan selesai.",
+    "noteTitle": "Untuk Anda yang sedang berkonsultasi",
+    "noteBody": "Isi konsultasi dan informasi akun yang sudah dimasukkan tidak akan terhapus oleh tampilan ini. Silakan akses kembali beberapa saat lagi.",
+    "brand": "明日もsamasama | SDGs MATCH"
   }
 }

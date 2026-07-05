@@ -2,9 +2,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
+import { withLocalePath } from '@/i18n/routing'
 import { supabase } from '@/lib/supabase/client'
 
 export default function ChangePasswordPage() {
+    const t = useTranslations('auth.changePassword')
+    const tAuth = useTranslations('auth.common')
+    const locale = useLocale()
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [agreed, setAgreed] = useState(false)
@@ -16,15 +22,15 @@ export default function ChangePasswordPage() {
         setError(null)
 
         if (password !== confirmPassword) {
-            setError('パスワードが一致しません')
+            setError(t('errorMismatch'))
             return
         }
         if (password.length < 8) {
-            setError('パスワードは8文字以上で入力してください')
+            setError(t('errorTooShort'))
             return
         }
         if (!agreed) {
-            setError('利用規約・プライバシーポリシーへの同意が必要です')
+            setError(t('errorAgreement'))
             return
         }
 
@@ -50,14 +56,14 @@ export default function ChangePasswordPage() {
             const roleData = await roleRes.json()
 
             if (roleData.role === 'SUPPORTER') {
-                window.location.href = '/supporter/dashboard'
+                window.location.href = withLocalePath(locale, '/supporter/dashboard')
             } else if (roleData.role === 'SOS') {
-                window.location.href = '/sos/dashboard'
+                window.location.href = withLocalePath(locale, '/sos/dashboard')
             } else {
-                window.location.href = '/'
+                window.location.href = withLocalePath(locale, '/')
             }
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'エラーが発生しました')
+            setError(err instanceof Error ? err.message : t('errorGeneric'))
         } finally {
             setLoading(false)
         }
@@ -66,10 +72,10 @@ export default function ChangePasswordPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <h1 className="text-center text-3xl font-bold text-gray-900">SDGsマッチング</h1>
-                <h2 className="mt-2 text-center text-xl text-gray-600">パスワードの変更</h2>
+                <h1 className="text-center text-3xl font-bold text-gray-900">{t('title')}</h1>
+                <h2 className="mt-2 text-center text-xl text-gray-600">{t('heading')}</h2>
                 <p className="mt-2 text-center text-sm text-gray-500">
-                    初回ログインのため、新しいパスワードを設定してください
+                    {t('description')}
                 </p>
             </div>
 
@@ -84,7 +90,7 @@ export default function ChangePasswordPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
-                                新しいパスワード（8文字以上）
+                                {t('newLabel')}
                             </label>
                             <input
                                 type="password"
@@ -98,7 +104,7 @@ export default function ChangePasswordPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
-                                新しいパスワード（確認）
+                                {t('confirmLabel')}
                             </label>
                             <input
                                 type="password"
@@ -121,16 +127,20 @@ export default function ChangePasswordPage() {
                                     className="mt-0.5 w-4 h-4 accent-teal-500 flex-shrink-0"
                                 />
                                 <span className="text-sm text-gray-600 leading-6">
-                                    <a href="/terms" target="_blank" rel="noopener noreferrer"
-                                        className="text-teal-600 font-medium underline underline-offset-2 hover:text-teal-700">
-                                        利用規約
-                                    </a>
-                                    および
-                                    <a href="/privacy" target="_blank" rel="noopener noreferrer"
-                                        className="text-teal-600 font-medium underline underline-offset-2 hover:text-teal-700">
-                                        プライバシーポリシー
-                                    </a>
-                                    を読み、内容に同意します
+                                    {tAuth.rich('agreement', {
+                                        terms: (chunks) => (
+                                            <Link href="/terms" target="_blank" rel="noopener noreferrer"
+                                                className="text-teal-600 font-medium underline underline-offset-2 hover:text-teal-700">
+                                                {chunks}
+                                            </Link>
+                                        ),
+                                        privacy: (chunks) => (
+                                            <Link href="/privacy" target="_blank" rel="noopener noreferrer"
+                                                className="text-teal-600 font-medium underline underline-offset-2 hover:text-teal-700">
+                                                {chunks}
+                                            </Link>
+                                        ),
+                                    })}
                                 </span>
                             </label>
                         </div>
@@ -139,7 +149,7 @@ export default function ChangePasswordPage() {
                             disabled={loading || !agreed}
                             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                            {loading ? '変更中...' : 'パスワードを変更する'}
+                            {loading ? t('submitting') : t('submit')}
                         </button>
                     </form>
                 </div>

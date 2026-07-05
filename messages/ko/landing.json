@@ -1,6 +1,103 @@
 {
   "meta": {
     "title": "明日もsamasama | SDGs Match",
-    "description": "AIがあなたの困りごとを分析し、専門のNPO・支援団体・企業・行政につなげるマッチングプラットフォームです。"
+    "description": "AI가 당신의 어려움을 분석하여 전문 NPO・지원단체・기업・행정기관과 연결해 주는 매칭 플랫폼입니다."
+  },
+  "nav": {
+    "supporters": "서포터 목록",
+    "story": "우리의 마음",
+    "login": "로그인",
+    "consult": "상담하기"
+  },
+  "hero": {
+    "badge": "NPO・지원단체와 이어지는 플랫폼",
+    "title": "혼자 떠안지 말고,<br></br><accent>누군가와 함께</accent> 해결해요",
+    "description": "생활고・교육・환경・차별・고립 등 사회적인 어려움을 AI가 분석하여 전문 NPO・지원단체와 연결해 드립니다.",
+    "ctaConsult": "무료로 상담하기 →",
+    "ctaSupporters": "서포터 보기",
+    "note": "가입 무료・승인 전까지 개인정보는 전달되지 않습니다",
+    "haveAccount": "이미 계정이 있으신가요?",
+    "loginHere": "여기서 로그인 →",
+    "readStory": "우리의 마음 읽어보기"
+  },
+  "stats": {
+    "resolved": "해결된 상담",
+    "resolvedSuffix": "건",
+    "supporters": "등록 서포터 단체",
+    "supportersSuffix": "곳",
+    "areas": "활동 지역(도도부현)",
+    "areasSuffix": "곳",
+    "areasSuffixSm": "곳"
+  },
+  "concept": {
+    "kicker": "HOW IT WORKS",
+    "title": "도움을 청하는 목소리를 지원으로 잇는 구조",
+    "description": "상담자에게 어려운 분류를 요구하지 않고, AI와 운영 구조가 필요한 지원에 닿기 쉽게 만듭니다.",
+    "caption": "혼자 떠안지 않기 위한 <accent>지원의 입구</accent>",
+    "imageAltMobile": "明日もsamasama SDGs MATCH 스마트폰용 개요: 상담자가 SOS를 보내고, 플랫폼을 통해 지원하고 싶은 단체와 이어지는 흐름.",
+    "imageAltDesktop": "明日もsamasama SDGs MATCH 개요: 상담자가 SOS를 보내면 상담・매칭・정보 제공・가시화를 통해 지원 단체로 이어지는 흐름.",
+    "point1Title": "SOS는 그대로 올리기",
+    "point1Desc": "SDGs를 몰라도 평소 쓰는 말로 어려움을 상담할 수 있습니다.",
+    "point2Title": "AI가 뒤에서 정리",
+    "point2Desc": "상담 내용을 분류하여 지역과 과제에 맞는 지원에 닿기 쉽게 합니다.",
+    "point3Title": "지원자와 운영진으로 연결",
+    "point3Desc": "NPO・행정・기업과의 매칭에 더해, 어려울 때 운영진에게 닿는 길도 남겨 둡니다."
+  },
+  "steps": {
+    "title": "이용 흐름",
+    "subtitle": "안심하고 이용하실 수 있도록 투명한 과정으로 진행됩니다",
+    "label": "STEP {n}",
+    "step1Title": "상담 올리기",
+    "step1Desc": "어려움을 자유롭게 입력. 개인정보는 최소한이면 충분합니다",
+    "step2Title": "AI가 분석",
+    "step2Desc": "AI가 상담 내용을 해석하여 가장 알맞은 SDGs 카테고리를 판정",
+    "step3Title": "서포터가 신청",
+    "step3Desc": "전문 분야의 NPO・지원단체가 당신의 상담에 손을 듭니다",
+    "step4Title": "당신이 선택",
+    "step4Desc": "신청한 단체의 정보를 확인한 후 승인. 거절도 자유입니다",
+    "step5Title": "해결・지원 완료",
+    "step5Desc": "문제가 해결되면 확인. 감사 배지로 마음을 전할 수 있습니다",
+    "privacyNote": "🔒 승인하지 않는 한 개인정보는 전달되지 않습니다"
+  },
+  "sdgsSection": {
+    "title": "대응하는 SDGs 목표",
+    "subtitle": "17개 목표 전 영역에서 전문 지원단체가 활동하고 있습니다"
+  },
+  "supportersSection": {
+    "title": "참여 서포터",
+    "subtitleFeatured": "추천 단체를 소개합니다",
+    "subtitleDefault": "미리 확인한 후 상담할 수 있습니다",
+    "viewAll": "전체 {count}개 단체 보기 →",
+    "nationwide": "전국 대응",
+    "resolvedStat": "✅ 해결 <strong>{count}건</strong>",
+    "badgeStat": "🏆 <strong>{count} 배지</strong>"
+  },
+  "faq": {
+    "title": "자주 있는 불안과 질문",
+    "q1": "개인정보는 안전한가요?",
+    "a1": "서포터를 승인하기 전까지 개인을 특정할 수 있는 정보는 일절 전달되지 않습니다. 승인 후에도 필요한 최소한의 정보만 공유됩니다.",
+    "q2": "서포터의 신청을 거절할 수 있나요?",
+    "a2": "네, 자유롭게 거절할 수 있습니다. 신청을 받을지는 당신이 결정하며, 납득할 때까지 기다릴 수도 있습니다.",
+    "q3": "정말 무료인가요?",
+    "a3": "도움을 구하는 분은 완전 무료입니다. 서포터인 NPO・기업도 등록 비용이 들지 않습니다.",
+    "q4": "수상한 단체가 오면 어떻게 되나요?",
+    "a4": "모든 서포터 단체는 등록 시 심사를 받습니다. 또한 프로필에서 실적과 소개글을 미리 확인할 수 있습니다.",
+    "q5": "무엇이든 상담해도 되나요?",
+    "a5": "SDGs와 관련된 사회적 어려움이 대상입니다. 생활고, 교육, 환경, 차별, 고립 등 폭넓게 대응할 수 있습니다."
+  },
+  "cta": {
+    "title": "한 걸음 내디뎌 보지 않겠어요?",
+    "body": "당신의 어려움을 해결할 수 있는 전문가가 기다리고 있습니다. 상담은 무료. 승인 전까지 개인정보는 전달되지 않습니다.",
+    "consult": "무료로 상담하기 →",
+    "login": "로그인"
+  },
+  "footer": {
+    "story": "우리의 마음",
+    "supporters": "서포터 목록",
+    "contact": "문의",
+    "terms": "이용약관",
+    "privacy": "개인정보 처리방침",
+    "login": "로그인",
+    "copyright": "© 2026 明日もsamasama. All rights reserved."
   }
 }

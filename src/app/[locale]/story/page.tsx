@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useEffect, useRef } from 'react';
 import { LogoIcon, LogoMark, Logo } from '@/components/icons/Logo';
+import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice';
 
 const TeardropMark = ({ size = 40 }: { size?: number }) => <LogoMark size={size} />;
 const TeardropIcon = ({ size = 36 }: { size?: number }) => <LogoIcon size={size} />;
@@ -36,6 +37,7 @@ function Reveal({ children, delay = 0, className = '' }: {
 export default function StoryPage() {
   return (
     <div className="bg-white text-slate-800 overflow-x-hidden">
+      <JaOnlyNotice />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=DM+Serif+Display:ital@0;1&display=swap');
         .serif { font-family: 'Noto Serif JP', serif; }

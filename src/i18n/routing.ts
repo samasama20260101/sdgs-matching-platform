@@ -25,6 +25,12 @@ export function isAppLocale(locale: string | undefined): locale is AppLocale {
   return locales.includes(locale as AppLocale);
 }
 
+// ハードリロード（window.location.href）時にロケールを維持するためのパス生成。
+// 通常の遷移は @/i18n/navigation の Link / useRouter を使うこと。
+export function withLocalePath(locale: string, path: string) {
+  return locale === defaultLocale || !isAppLocale(locale) ? path : `/${locale}${path}`;
+}
+
 export function stripLocalePrefix(pathname: string) {
   const segments = pathname.split('/');
   const maybeLocale = segments[1];

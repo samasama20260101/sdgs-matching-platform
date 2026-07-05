@@ -18,5 +18,38 @@
     "signup": "新規登録",
     "logout": "ログアウト",
     "menu": "メニュー"
+  },
+  "actions": {
+    "back": "戻る",
+    "next": "次へ",
+    "send": "送信する",
+    "save": "保存する",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "backToHome": "ホームへ戻る",
+    "backToLogin": "ログインページへ戻る"
+  },
+  "form": {
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "required": "必須",
+    "loading": "読み込み中...",
+    "submitting": "送信中...",
+    "saving": "保存中..."
+  },
+  "supporterType": {
+    "NPO": "NPO / 支援団体",
+    "CORPORATE": "企業",
+    "GOVERNMENT": "行政・公共機関"
+  },
+  "jaOnlyNotice": "このページは日本語で提供しています。",
+  "maintenance": {
+    "metaTitle": "メンテナンス中 | 明日もsamasama",
+    "badge": "メンテナンス中",
+    "title": "ただいまサービスを一時停止しています",
+    "body": "より安全にご利用いただくため、システムの更新作業を行っています。作業が完了次第、通常どおりご利用いただけます。",
+    "noteTitle": "相談中の方へ",
+    "noteBody": "入力済みの相談内容やアカウント情報が、この画面によって削除されることはありません。時間をおいて再度アクセスしてください。",
+    "brand": "明日もsamasama | SDGs MATCH"
   }
 }

@@ -18,5 +18,38 @@
     "signup": "Đăng ký",
     "logout": "Đăng xuất",
     "menu": "Menu"
+  },
+  "actions": {
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "send": "Gửi",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "backToHome": "Về trang chủ",
+    "backToLogin": "Quay lại trang đăng nhập"
+  },
+  "form": {
+    "email": "Địa chỉ email",
+    "password": "Mật khẩu",
+    "required": "Bắt buộc",
+    "loading": "Đang tải...",
+    "submitting": "Đang gửi...",
+    "saving": "Đang lưu..."
+  },
+  "supporterType": {
+    "NPO": "NPO / tổ chức hỗ trợ",
+    "CORPORATE": "Doanh nghiệp",
+    "GOVERNMENT": "Cơ quan hành chính / công"
+  },
+  "jaOnlyNotice": "Trang này hiện chỉ có bản tiếng Nhật.",
+  "maintenance": {
+    "metaTitle": "Đang bảo trì | 明日もsamasama",
+    "badge": "Đang bảo trì",
+    "title": "Dịch vụ đang tạm dừng",
+    "body": "Chúng tôi đang cập nhật hệ thống để bạn sử dụng an toàn hơn. Dịch vụ sẽ hoạt động trở lại ngay khi hoàn tất.",
+    "noteTitle": "Gửi những bạn đang trong quá trình tư vấn",
+    "noteBody": "Nội dung tư vấn và thông tin tài khoản đã nhập sẽ không bị xóa bởi màn hình này. Vui lòng truy cập lại sau.",
+    "brand": "明日もsamasama | SDGs MATCH"
   }
 }

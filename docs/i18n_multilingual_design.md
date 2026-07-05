@@ -567,12 +567,14 @@ D案本番適用やバリアントPhase 2のmigrationと衝突しない。**i18n
 ### 移行済み画面チェックリスト（Phase 1で更新していく）
 
 ```
-□ / （LP）         □ /story          □ /supporters, /supporters/[id]
-□ /terms（注記）    □ /privacy（注記）  □ /contact
-□ /login □ /signup □ /forgot-password □ /reset-password □ /verify-email □ /change-password
-□ /sos/hearing □ /sos/dashboard □ /sos/result/[id] □ /sos/cases
-□ /profile        □ /maintenance
-□ 共通: Header/Footer/chat/form コンポーネント
+☑ / （LP）         ☑ /story（注記）   □ /supporters, /supporters/[id]
+☑ /terms（注記）    ☑ /privacy（注記）  □ /contact
+☑ /login ☑ /signup ☑ /forgot-password ☑ /reset-password ☑ /verify-email ☑ /change-password
+☑ /sos/hearing ☑ /sos/dashboard ☑ /sos/result/[id] ☑ /sos/cases
+□ /profile        ☑ /maintenance
+☑ 共通: Header（Phase 0）  □ chat/form コンポーネント（MessageThread / AddressForm）
+※（注記）= 本文は日本語のまま、閲覧言語での案内バナーを表示（JaOnlyNotice）。
+   本文翻訳は法務・広報確認後に言語別ファイルへ差し替え（§5.11）。
 ```
 
 ---

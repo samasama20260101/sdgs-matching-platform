@@ -1,1 +1,68 @@
-{}
+{
+  "goal": {
+    "1": "No Poverty",
+    "2": "Zero Hunger",
+    "3": "Good Health and Well-being",
+    "4": "Quality Education",
+    "5": "Gender Equality",
+    "6": "Clean Water and Sanitation",
+    "7": "Affordable and Clean Energy",
+    "8": "Decent Work and Economic Growth",
+    "9": "Industry, Innovation and Infrastructure",
+    "10": "Reduced Inequalities",
+    "11": "Sustainable Cities and Communities",
+    "12": "Responsible Consumption and Production",
+    "13": "Climate Action",
+    "14": "Life Below Water",
+    "15": "Life on Land",
+    "16": "Peace, Justice and Strong Institutions",
+    "17": "Partnerships for the Goals"
+  },
+  "caseStatus": {
+    "OPEN": "Waiting for a supporter",
+    "MATCHED": "Matched / being supported",
+    "RESOLVED": "Resolved",
+    "CANCELLED": "Cancelled",
+    "CLOSED": "Closed"
+  },
+  "offerStatus": {
+    "PENDING": "Awaiting approval",
+    "ACCEPTED": "Accepted",
+    "DECLINED": "Declined",
+    "WITHDRAWN": "Withdrawn"
+  },
+  "statusSteps": {
+    "waiting": "Waiting",
+    "matched": "Matched",
+    "reported": "Reported",
+    "resolved": "Resolved"
+  },
+  "badge": {
+    "gold_medal": "Thank you (lead)",
+    "silver_medal": "Thank you (support)",
+    "very_satisfied": "Very satisfied",
+    "quick_response": "Quick response",
+    "sincere_support": "Sincere support",
+    "problem_solved": "Solved a problem I had given up on",
+    "grateful_partner": "Faced it together, deeply grateful"
+  },
+  "goalShort": {
+    "1": "Poverty",
+    "2": "Hunger",
+    "3": "Health",
+    "4": "Education",
+    "5": "Gender",
+    "6": "Water",
+    "7": "Energy",
+    "8": "Economy",
+    "9": "Industry",
+    "10": "Inequality",
+    "11": "Cities",
+    "12": "Consumption",
+    "13": "Climate",
+    "14": "Oceans",
+    "15": "Land",
+    "16": "Peace",
+    "17": "Partnership"
+  }
+}
