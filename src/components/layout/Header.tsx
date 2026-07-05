@@ -2,16 +2,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Logo } from '@/components/icons/Logo';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
+import { isAppLocale, type AppLocale } from '@/i18n/routing';
 
 type UserRole = 'SOS' | 'SUPPORTER' | 'ADMIN' | null;
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
+  const currentLocale = useLocale() as AppLocale;
   const t = useTranslations('common.navigation');
   const [role, setRole] = useState<UserRole>(null);
   const [displayName, setDisplayName] = useState<string>('');
@@ -35,6 +38,13 @@ export default function Header() {
         if (isMounted && data.user) {
           setRole(data.role as UserRole);
           setDisplayName(data.user.real_name || data.user.display_name || '');
+          const savedLocale = data.user.locale;
+          const hasRestoredLocale = sessionStorage.getItem('localeRestored');
+          if (isAppLocale(savedLocale) && savedLocale !== currentLocale && !hasRestoredLocale) {
+            sessionStorage.setItem('localeRestored', '1');
+            document.cookie = `NEXT_LOCALE=${savedLocale}; path=/; samesite=lax`;
+            router.replace(pathname, { locale: savedLocale });
+          }
         }
       } catch (e) {
         console.error('[Header] loadUserInfo error:', e);
@@ -45,7 +55,7 @@ export default function Header() {
     };
     loadUserInfo();
     return () => { isMounted = false; };
-  }, []);
+  }, [currentLocale, pathname, router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

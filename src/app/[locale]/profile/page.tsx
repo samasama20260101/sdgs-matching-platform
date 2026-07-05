@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddressForm, { AddressFormData } from '@/components/form/AddressForm';
 import ServiceAreaSelector, { ServiceArea } from '@/components/form/ServiceAreaSelector';
+import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
 
 type UserData = {
     id: string;
@@ -19,6 +21,7 @@ type UserData = {
     display_name: string;
     email: string;
     phone: string | null;
+    locale: AppLocale;
     organization_phone?: string | null;
     membership_department?: string | null;
     membership_external_phone?: string | null;
@@ -45,6 +48,7 @@ type ProfileUpdateData = {
     real_name: string;
     display_name: string;
     phone: string | null;
+    locale?: AppLocale;
     postal_code?: string | null;
     prefecture?: string | null;
     city?: string | null;
@@ -94,6 +98,7 @@ function SosRegionSelect({ value, onChange }: { value: string; onChange: (v: str
 
 export default function ProfilePage() {
     const router = useRouter();
+    const requestLocale = useLocale() as AppLocale;
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -103,6 +108,7 @@ export default function ProfilePage() {
     const [realName, setRealName] = useState('');
     const [displayName, setDisplayName] = useState('');
     const [phone, setPhone] = useState('');
+    const [locale, setLocale] = useState<AppLocale>(requestLocale);
     const [organizationName, setOrganizationName] = useState('');
     const [organizationPhone, setOrganizationPhone] = useState('');
     const [membershipDepartment, setMembershipDepartment] = useState('');
@@ -152,6 +158,7 @@ export default function ProfilePage() {
                 setRealName(data.real_name || '');
                 setDisplayName(data.display_name || '');
                 setPhone(data.phone || '');
+                setLocale(data.locale || requestLocale);
                 setOrganizationName(data.organization_name || '');
                 setOrganizationPhone(data.organization_phone || '');
                 setMembershipDepartment(data.membership_department || '');
@@ -195,7 +202,7 @@ export default function ProfilePage() {
             }
         };
         loadUserData();
-    }, [router]);
+    }, [router, requestLocale]);
 
     const canEditOrganization = userData?.role === 'SUPPORTER' && userData.organization_role === 'OWNER';
 
@@ -231,6 +238,7 @@ export default function ProfilePage() {
             const updateData: ProfileUpdateData = {
                 real_name: realName.trim(), display_name: displayName.trim(),
                 phone: phone.trim() || null,
+                locale,
                 updated_at: new Date().toISOString(),
             };
 
@@ -330,6 +338,26 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">表示言語</CardTitle>
+                            <p className="text-xs text-gray-500 mt-1">画面表示と今後の通知・翻訳に使う言語です。</p>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <Label htmlFor="locale">言語</Label>
+                            <select
+                                id="locale"
+                                value={locale}
+                                onChange={(e) => setLocale(e.target.value as AppLocale)}
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                {locales.map((option) => (
+                                    <option key={option} value={option}>{localeLabels[option]}</option>
+                                ))}
+                            </select>
+                        </CardContent>
+                    </Card>
+
                     {userData.role === 'SOS' ? (
                         <>
                             <Card>

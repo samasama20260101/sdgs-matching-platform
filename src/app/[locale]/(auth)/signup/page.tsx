@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/icons/Logo'
@@ -10,6 +11,7 @@ const PENDING_SOS_SIGNUP_KEY = 'samasama_pending_sos_signup'
 
 export default function SignupPage() {
   const router = useRouter()
+  const locale = useLocale()
 
   const [step, setStep] = useState<'account' | 'profile'>('account')
   const [loading, setLoading] = useState(false)
@@ -89,6 +91,7 @@ export default function SignupPage() {
         phone: sanitizedPhone || null,
         gender,
         birth_date: birthDate,
+        locale,
       }
 
       if (authData.session?.access_token) {

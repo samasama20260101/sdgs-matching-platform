@@ -4,6 +4,7 @@ import { Languages } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
+import { supabase } from '@/lib/supabase/client';
 
 export function LanguageSwitcher() {
   const locale = useLocale() as AppLocale;
@@ -12,7 +13,23 @@ export function LanguageSwitcher() {
   const t = useTranslations('common.locale');
 
   const handleChange = (nextLocale: AppLocale) => {
+    sessionStorage.setItem('localeRestored', '1');
+    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; samesite=lax`;
     router.replace(pathname, { locale: nextLocale });
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      return fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ locale: nextLocale }),
+      });
+    }).catch((error) => {
+      console.error('[LanguageSwitcher] locale save error:', error);
+    });
   };
 
   return (

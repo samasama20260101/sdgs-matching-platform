@@ -1,6 +1,6 @@
 {
   "locale": {
-    "label": "言語",
+    "label": "Language",
     "ja": "日本語",
     "en": "English",
     "zh": "中文",
@@ -9,14 +9,14 @@
     "id": "Bahasa Indonesia"
   },
   "navigation": {
-    "dashboard": "ダッシュボード",
-    "consult": "相談する",
-    "caseHistory": "相談履歴",
-    "profile": "プロフィール",
-    "contact": "お問い合わせ",
-    "login": "ログイン",
-    "signup": "新規登録",
-    "logout": "ログアウト",
-    "menu": "メニュー"
+    "dashboard": "Dashboard",
+    "consult": "Ask for help",
+    "caseHistory": "Case history",
+    "profile": "Profile",
+    "contact": "Contact",
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "menu": "Menu"
   }
 }
