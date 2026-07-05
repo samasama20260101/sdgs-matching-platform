@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
@@ -92,9 +93,9 @@ export default function AdminRegionsPage() {
                             SOS地域コードとサポーター活動地域の対応を確認できます。
                         </p>
                     </div>
-                    <a href="/admin/dashboard" className="text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline">
+                    <Link href="/admin/dashboard" className="text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline">
                         管理ダッシュボードへ戻る
-                    </a>
+                    </Link>
                 </div>
             </header>
 

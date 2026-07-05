@@ -2,15 +2,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Logo } from '@/components/icons/Logo';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 type UserRole = 'SOS' | 'SUPPORTER' | 'ADMIN' | null;
 
 export default function Header() {
   const router = useRouter();
+  const t = useTranslations('common.navigation');
   const [role, setRole] = useState<UserRole>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -58,16 +60,16 @@ export default function Header() {
   };
 
   const navLinks = role ? [
-    { href: getDashboardLink(), label: 'ダッシュボード' },
+    { href: getDashboardLink(), label: t('dashboard') },
     ...(role === 'SOS' ? [
-      { href: '/sos/hearing', label: '相談する' },
-      { href: '/sos/cases', label: '相談履歴' },
+      { href: '/sos/hearing', label: t('consult') },
+      { href: '/sos/cases', label: t('caseHistory') },
     ] : []),
-    { href: '/profile', label: displayName || 'プロフィール' },
-    { href: '/contact', label: 'お問い合わせ' },
+    { href: '/profile', label: displayName || t('profile') },
+    { href: '/contact', label: t('contact') },
   ] : [
-    { href: '/login', label: 'ログイン' },
-    { href: '/signup', label: '新規登録' },
+    { href: '/login', label: t('login') },
+    { href: '/signup', label: t('signup') },
   ];
 
   return (
@@ -89,9 +91,10 @@ export default function Header() {
             {role && (
               <button onClick={handleLogout}
                 className="text-sm border border-gray-300 text-gray-600 hover:text-red-600 hover:border-red-300 px-3 py-1.5 rounded-md transition-colors">
-                ログアウト
+                {t('logout')}
               </button>
             )}
+            <LanguageSwitcher />
           </nav>
         )}
 
@@ -100,7 +103,7 @@ export default function Header() {
           <button
             className="md:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="メニュー"
+            aria-label={t('menu')}
           >
             <span className={`block w-6 h-0.5 bg-gray-600 transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`block w-6 h-0.5 bg-gray-600 transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
@@ -122,9 +125,12 @@ export default function Header() {
           {role && (
             <button onClick={() => { setMenuOpen(false); handleLogout(); }}
               className="w-full text-left px-6 py-3 text-sm text-red-600 hover:bg-red-50">
-              ログアウト
+              {t('logout')}
             </button>
           )}
+          <div className="px-6 py-3">
+            <LanguageSwitcher />
+          </div>
         </div>
       )}
     </header>

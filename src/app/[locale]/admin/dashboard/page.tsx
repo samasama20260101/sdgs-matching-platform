@@ -2,6 +2,7 @@
 import { isMinor } from '@/lib/utils/age'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
@@ -418,9 +419,9 @@ export default function AdminDashboardPage() {
                             <div className="px-6 py-3 bg-blue-50 border-y border-blue-100">
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                     <p className="text-sm text-blue-800 font-medium">{sosUsers.length}件登録</p>
-                                    <a href="/admin/regions" className="text-xs font-medium text-blue-700 hover:text-blue-900 hover:underline">
+                                    <Link href="/admin/regions" className="text-xs font-medium text-blue-700 hover:text-blue-900 hover:underline">
                                         地域コード一覧を見る
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
                             {sosUsers.length === 0 ? (

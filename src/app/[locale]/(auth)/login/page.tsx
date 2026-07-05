@@ -216,14 +216,14 @@ export default function LoginPage() {
                     <div className="mt-4 space-y-2 text-center text-sm text-gray-600">
                         <div>
                             アカウントをお持ちでない方は{' '}
-                            <a href="/signup" className="text-blue-600 hover:underline">
+                            <Link href="/signup" className="text-blue-600 hover:underline">
                                 新規登録
-                            </a>
+                            </Link>
                         </div>
                         <div>
-                            <a href="/forgot-password" className="text-blue-600 hover:underline">
+                            <Link href="/forgot-password" className="text-blue-600 hover:underline">
                                 パスワードを忘れた方
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </CardContent>

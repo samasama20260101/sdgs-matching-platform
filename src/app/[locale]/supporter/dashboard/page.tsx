@@ -3,6 +3,7 @@
 import { isMinor } from '@/lib/utils/age'
 
 import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
@@ -290,18 +291,18 @@ export default function SupporterDashboard() {
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
                 🌐 団体公開ページ
               </a>
-              <a href="/profile"
+              <Link href="/profile"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
                 ✏️ プロフィール編集
-              </a>
-              <a href="/supporter/members"
+              </Link>
+              <Link href="/supporter/members"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
                 👥 メンバー管理
-              </a>
-              <a href="/contact"
+              </Link>
+              <Link href="/contact"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
                 📩 お問い合わせ
-              </a>
+              </Link>
             </div>
           </div>
           <div className="mt-3 flex items-start gap-2">
@@ -315,7 +316,7 @@ export default function SupporterDashboard() {
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-orange-600">未設定</span>
-                <a href="/profile" className="text-xs text-blue-600 hover:underline">→ 設定する</a>
+                <Link href="/profile" className="text-xs text-blue-600 hover:underline">→ 設定する</Link>
               </div>
             )}
           </div>
