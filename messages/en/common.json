@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "label": "Language",
+    "ja": "日本語",
+    "en": "English",
+    "zh": "中文",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "id": "Bahasa Indonesia"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "consult": "Ask for help",
+    "caseHistory": "Case history",
+    "profile": "Profile",
+    "contact": "Contact",
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "menu": "Menu"
+  }
+}

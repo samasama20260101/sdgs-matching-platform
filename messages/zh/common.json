@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "label": "语言",
+    "ja": "日本語",
+    "en": "English",
+    "zh": "中文",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "id": "Bahasa Indonesia"
+  },
+  "navigation": {
+    "dashboard": "控制面板",
+    "consult": "咨询",
+    "caseHistory": "咨询记录",
+    "profile": "个人资料",
+    "contact": "联系我们",
+    "login": "登录",
+    "signup": "注册",
+    "logout": "退出登录",
+    "menu": "菜单"
+  }
+}

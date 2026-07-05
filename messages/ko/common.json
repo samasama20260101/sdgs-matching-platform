@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "label": "언어",
+    "ja": "日本語",
+    "en": "English",
+    "zh": "中文",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "id": "Bahasa Indonesia"
+  },
+  "navigation": {
+    "dashboard": "대시보드",
+    "consult": "상담하기",
+    "caseHistory": "상담 내역",
+    "profile": "프로필",
+    "contact": "문의",
+    "login": "로그인",
+    "signup": "회원가입",
+    "logout": "로그아웃",
+    "menu": "메뉴"
+  }
+}

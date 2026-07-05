@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "label": "Bahasa",
+    "ja": "日本語",
+    "en": "English",
+    "zh": "中文",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "id": "Bahasa Indonesia"
+  },
+  "navigation": {
+    "dashboard": "Dasbor",
+    "consult": "Konsultasi",
+    "caseHistory": "Riwayat konsultasi",
+    "profile": "Profil",
+    "contact": "Kontak",
+    "login": "Masuk",
+    "signup": "Daftar",
+    "logout": "Keluar",
+    "menu": "Menu"
+  }
+}

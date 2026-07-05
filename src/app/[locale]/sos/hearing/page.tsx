@@ -1,0 +1,571 @@
+// ─────────────────────────────────────────────────────────────
+// 📂 src/app/sos/hearing/page.tsx
+// SOS相談フォーム（ヒアリング）
+// ─────────────────────────────────────────────────────────────
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
+import Header from '@/components/layout/Header';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
+
+// ─── 文字数制限 ──────────────────────────────────────────────
+const CHAR_LIMITS = {
+  otherText: 200,
+  what: 1000,
+  when: 200,
+  want: 200,
+};
+
+const SUPPORTED_LOCALES = new Set(['ja', 'en', 'zh', 'ko', 'vi', 'id']);
+
+type QAOption = {
+  id: string;
+  text: string;
+  urgent?: boolean;
+  exclusive?: boolean;
+};
+
+type QAQuestion = {
+  id: number;
+  question: string;
+  options: QAOption[];
+  otherPlaceholder: string;
+};
+
+// ─── Q&A選択肢の定義 ────────────────────────────────────────
+const QA_QUESTIONS: QAQuestion[] = [
+  {
+    id: 1,
+    question: '生活に必要なものについて、困っていることはありますか？',
+    options: [
+      { id: 'q1_1', text: '食べ物や飲み物が足りない、または購入するお金がない' },
+      { id: 'q1_2', text: '安全に暮らせる住まいがない' },
+      { id: 'q1_3', text: '電気が使えない' },
+      { id: 'q1_4', text: 'インターネットが使えない' },
+      { id: 'q1_5', text: '該当なし', exclusive: true },
+    ],
+    otherPlaceholder: '例：清潔な飲み水が手に入らない、冬に暖房がない',
+  },
+  {
+    id: 2,
+    question: '人間関係や権利について困っていますか？',
+    options: [
+      { id: 'q2_1', text: '性別・障害・国籍などを理由に差別を受けている' },
+      { id: 'q2_2', text: 'いじめや嫌がらせを受けている' },
+      { id: 'q2_3', text: '身体的・精神的・性的な暴力やハラスメントを受けている' },
+      { id: 'q2_4', text: '最低賃金より低い賃金で働いている、またはサービス残業がある' },
+      { id: 'q2_5', text: '該当なし', exclusive: true },
+    ],
+    otherPlaceholder: '例：宗教的な理由で自由を奪われている、難民として差別を受けている',
+  },
+  {
+    id: 3,
+    question: '仕事や将来について、不安に感じていることや困っていることはありますか？',
+    options: [
+      { id: 'q3_1', text: '仕事がなく、職業訓練も受けていない' },
+      { id: 'q3_2', text: '収入が少なく、最低限の生活を送ることができない' },
+      { id: 'q3_3', text: '学校に通うことができない' },
+      { id: 'q3_4', text: '15歳未満で働いている' },
+      { id: 'q3_5', text: '該当なし', exclusive: true },
+    ],
+    otherPlaceholder: '例：障害があり就職活動ができない、借金を返すために働き続けている',
+  },
+  {
+    id: 4,
+    question: '健康や心のことについて、現在困っていることはありますか？',
+    options: [
+      { id: 'q4_1', text: '体調が悪いが、金銭的な理由などで病院に行けない' },
+      { id: 'q4_2', text: '死にたいと思うことがある', urgent: true },
+      { id: 'q4_3', text: 'たばこの煙による受動喫煙がつらい' },
+      { id: 'q4_4', text: 'けがをしそうな危険な環境で働いていて不安がある' },
+      { id: 'q4_5', text: '該当なし', exclusive: true },
+    ],
+    otherPlaceholder: '例：精神的なケアが必要だが相談先がわからない、薬が手に入らない',
+  },
+  {
+    id: 5,
+    question: 'どのような支援を希望していますか？',
+    options: [
+      { id: 'q5_1', text: 'まずは相談に乗ってほしい' },
+      { id: 'q5_2', text: '公的な支援制度について知りたい' },
+      { id: 'q5_3', text: 'NPOや支援団体につながりたい' },
+      { id: 'q5_4', text: '弁護士や医師などの専門家に相談したい' },
+      { id: 'q5_5', text: '有料でもよいのでサポートを受けたい' },
+      { id: 'q5_6', text: '該当なし', exclusive: true },
+    ],
+    otherPlaceholder: '例：子どもの保護が必要、避難場所を探している',
+  },
+];
+
+// ─── 文字数カウンター ────────────────────────────────────────
+function CharCounter({ current, max }: { current: number; max: number }) {
+  return (
+    <div className={`text-right text-[11px] mt-1 ${current > max ? 'text-red-500 font-medium' : current > max * 0.8 ? 'text-amber-500' : 'text-gray-400'}`}>
+      {current} / {max}
+    </div>
+  );
+}
+
+// ─── メインコンポーネント ────────────────────────────────────
+export default function SOSHearingPage() {
+  const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [aiStep, setAiStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // AI処理ステップのラベル
+  const AI_STEPS = [
+    { icon: '📝', label: '相談内容を読み取っています...' },
+    { icon: '🤖', label: 'AIが状況を分析しています...' },
+    { icon: '🌍', label: 'SDGsの視点で課題を分類しています...' },
+    { icon: '✨', label: 'マッチングの準備をしています...' },
+  ];
+
+  // 選択された回答（複数選択可）
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<number, Set<string>>>({});
+
+  // Q1〜Q5の「その他」チェック状態 & テキスト
+  const [otherChecked, setOtherChecked] = useState<Record<number, boolean>>({});
+  const [otherTexts, setOtherTexts] = useState<Record<number, string>>({});
+
+  // 自由記述
+  const [freeText, setFreeText] = useState({ what: '', when: '', want: '' });
+
+  // ログイン確認
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/login'); return; }
+
+      const roleRes = await fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const roleData = await roleRes.json();
+      if (!roleData.user) { router.push('/login'); return; }
+      const casesRes = await fetch('/api/sos/cases', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const casesData = await casesRes.json();
+      const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
+      if ((userCases?.length || 0) >= 3) { setShowLimitModal(true); return; }
+
+    };
+    checkAuth();
+  }, [router]);
+
+  // チェックボックスの変更（「該当なし」は排他制御）
+  const handleToggleOption = (question: QAQuestion, option: QAOption) => {
+    setSelectedOptionIds(prev => {
+      const questionId = question.id;
+      const current = new Set(prev[questionId] || []);
+      const exclusiveOptionId = question.options.find(item => item.exclusive)?.id;
+      if (option.exclusive) {
+        // 「該当なし」を選んだら他をすべて外し、その他もリセット
+        if (current.has(option.id)) {
+          current.delete(option.id);
+        } else {
+          current.clear();
+          current.add(option.id);
+          setOtherChecked(p => ({ ...p, [questionId]: false }));
+          setOtherTexts(p => ({ ...p, [questionId]: '' }));
+        }
+      } else {
+        // 他の選択肢を選んだら「該当なし」を外す
+        if (exclusiveOptionId) current.delete(exclusiveOptionId);
+        if (current.has(option.id)) current.delete(option.id);
+        else current.add(option.id);
+      }
+      return { ...prev, [questionId]: current };
+    });
+  };
+
+  // 「その他」チェック切り替え
+  const handleToggleOther = (questionId: number) => {
+    setOtherChecked(prev => {
+      const next = { ...prev, [questionId]: !prev[questionId] };
+      if (!next[questionId]) {
+        setOtherTexts(p => ({ ...p, [questionId]: '' }));
+      } else {
+        // その他を選んだら「該当なし」を外す
+        setSelectedOptionIds(p => {
+          const current = new Set(p[questionId] || []);
+          const question = QA_QUESTIONS.find(item => item.id === questionId);
+          const exclusiveOptionId = question?.options.find(item => item.exclusive)?.id;
+          if (exclusiveOptionId) current.delete(exclusiveOptionId);
+          return { ...p, [questionId]: current };
+        });
+      }
+      return next;
+    });
+  };
+
+  // 自由記述専用の緊急語彙。機械翻訳だけで確定せず、ネイティブ/専門家確認が必要な暫定リスト。
+  const detectUrgency = (text: string): boolean => {
+    const urgentPhrases = [
+      '死にたい', '自殺', '殺される', '消えたい', '限界', '助けて', '虐待', '暴力', '人身取引', '監禁', '戦争', '紛争',
+      '想死', '不想活', '自杀', '自殺', '救命', '虐待', '暴力', '家暴', '人口贩卖', '人口販賣',
+      '죽고 싶', '죽고싶', '자살', '도와주세요', '살려주', '학대', '폭력', '가정폭력', '인신매매', '전쟁',
+      'want to die', 'kill myself', 'end my life', 'commit suicide', 'attempt suicide', 'suicidal thoughts',
+      'suicide', 'suicidal', 'abuse', 'abused', 'violence', 'trafficked', 'trafficking',
+      'muốn chết', 'muon chet', 'tự tử', 'muon tu tu', 'cứu tôi', 'cuu toi', 'bạo lực', 'bao luc', 'bạo hành', 'bao hanh', 'buôn người', 'buon nguoi', 'chiến tranh', 'chien tranh',
+      'bunuh diri', 'ingin mati', 'mau mati', 'ingin bunuh diri', 'tolong saya', 'kekerasan', 'perdagangan orang', 'kdrt', 'penganiayaan', 'diculik',
+    ];
+    const normalizedText = text.toLowerCase();
+    return urgentPhrases.some(phrase => normalizedText.includes(phrase.toLowerCase()));
+  };
+
+  const handleSubmit = async () => {
+    setError(null);
+
+    // バリデーション
+    for (const q of QA_QUESTIONS) {
+      const selected = selectedOptionIds[q.id]?.size || 0;
+      const hasOther = otherChecked[q.id] && otherTexts[q.id]?.trim();
+      if (selected === 0 && !hasOther) {
+        setError(`Q${q.id} に少なくとも1つ回答してください`);
+        return;
+      }
+      if (otherChecked[q.id] && !otherTexts[q.id]?.trim()) {
+        setError(`Q${q.id} の「その他」の内容を入力してください`);
+        return;
+      }
+      if ((otherTexts[q.id]?.length || 0) > CHAR_LIMITS.otherText) {
+        setError(`Q${q.id} の「その他」は${CHAR_LIMITS.otherText}文字以内で入力してください`);
+        return;
+      }
+    }
+
+    if (!freeText.what.trim()) {
+      setError('「いま何が起きていますか？」を入力してください');
+      return;
+    }
+    if (freeText.what.length > CHAR_LIMITS.what) {
+      setError(`「いま何が起きていますか？」は${CHAR_LIMITS.what}文字以内で入力してください`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAiStep(0);
+
+    // AIステップを1秒ごとに進める
+    const stepInterval = setInterval(() => {
+      setAiStep(prev => (prev < 3 ? prev + 1 : prev));
+    }, 1200);
+
+    // 30秒でタイムアウト
+    const timeoutId = setTimeout(() => {
+      clearInterval(stepInterval);
+      setIsSubmitting(false);
+      setAiStep(0);
+      setError('処理に時間がかかりすぎています。しばらくしてから再度お試しください。');
+    }, 30000);
+
+    try {
+      // 回答データ整形: qaは従来通り表示用の文字列配列、qa_idsは言語横断集計用。
+      const qaData: Record<number, string[]> = {};
+      const qaIds: Record<number, string[]> = {};
+      for (const q of QA_QUESTIONS) {
+        const selectedIds = [...(selectedOptionIds[q.id] || [])];
+        const items = selectedIds
+          .map(id => q.options.find(option => option.id === id)?.text)
+          .filter((text): text is string => Boolean(text));
+        if (otherChecked[q.id] && otherTexts[q.id]?.trim()) {
+          items.push(`その他: ${otherTexts[q.id].trim()}`);
+          selectedIds.push(`q${q.id}_other`);
+        }
+        qaData[q.id] = items;
+        qaIds[q.id] = selectedIds;
+      }
+
+      // 緊急度判定: 選択肢はurgentフラグ、自由記述と「その他」は語彙リストで判定する。
+      const hasUrgentChoice = QA_QUESTIONS.some(q =>
+        [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
+      );
+      const freeTextForUrgency = Object.values(freeText).join(' ') + ' ' + Object.values(otherTexts).join(' ');
+      const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
+      const currentLocale = typeof params.locale === 'string' && SUPPORTED_LOCALES.has(params.locale)
+        ? params.locale
+        : 'ja';
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/login'); return; }
+
+      const roleRes2 = await fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const roleData2 = await roleRes2.json();
+      if (!roleData2.user) { setError('ユーザー情報が取得できませんでした'); setIsSubmitting(false); return; }
+
+      const caseRes = await fetch('/api/sos/cases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          intake_qna: { qa: qaData, qa_ids: qaIds, locale: currentLocale },
+          description_free: [
+            freeText.what,
+            freeText.when ? `いつから: ${freeText.when}` : '',
+            freeText.want ? `どうなりたい: ${freeText.want}` : '',
+          ].filter(Boolean).join('\n'),
+          title: freeText.what.slice(0, 50) || '相談',
+          urgency: isUrgent ? 'High' : 'Medium',
+          locale: currentLocale,
+          status: 'OPEN',
+          region_country: 'ID',
+        }),
+      });
+      const caseResult = await caseRes.json();
+      if (!caseRes.ok) {
+        console.error('Case error:', caseResult);
+        setError(`保存エラー: ${caseResult.error}`);
+        setIsSubmitting(false);
+        return;
+      }
+      const caseData = caseResult.case;
+
+
+      clearInterval(stepInterval);
+      clearTimeout(timeoutId);
+      router.push(`/sos/result/${caseData.id}`);
+    } catch (err) {
+      console.error('Submit error:', err);
+      clearInterval(stepInterval);
+      clearTimeout(timeoutId);
+      setError('送信中にエラーが発生しました');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main className="max-w-2xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">相談フォーム</h1>
+          <p className="text-gray-500 mt-1">あなたの状況を教えてください。AIが最適な支援につなぎます。</p>
+          <p className="text-xs text-gray-400 mt-2">※ 複数の項目に当てはまる場合はすべてチェックしてください</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Q&Aフォーム */}
+          {QA_QUESTIONS.map((question) => (
+            <Card key={question.id}>
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Q{question.id}. {question.question} <span className="text-red-500">*</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {question.options.map((option) => {
+                    const isChecked = selectedOptionIds[question.id]?.has(option.id) || false;
+                    const isNone = Boolean(option.exclusive);
+                    return (
+                      <label
+                        key={option.id}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          isChecked
+                            ? isNone ? 'bg-gray-100 border-gray-400' : 'bg-blue-50 border-blue-300'
+                            : isNone ? 'hover:bg-gray-50 border-dashed border-gray-200' : 'hover:bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleToggleOption(question, option)}
+                          className="mt-0.5 text-blue-600 rounded"
+                        />
+                        <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{option.text}</span>
+                      </label>
+                    );
+                  })}
+
+                  {/* その他 */}
+                  <div>
+                    <label
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${otherChecked[question.id] ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={otherChecked[question.id] || false}
+                        onChange={() => handleToggleOther(question.id)}
+                        className="mt-0.5 text-blue-600 rounded"
+                      />
+                      <span className="text-sm">その他</span>
+                    </label>
+
+                    {otherChecked[question.id] && (
+                      <div className="mt-2 ml-8">
+                        <textarea
+                          rows={2}
+                          maxLength={CHAR_LIMITS.otherText}
+                          className="w-full p-3 border border-blue-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                          placeholder={question.otherPlaceholder}
+                          value={otherTexts[question.id] || ''}
+                          onChange={(e) => setOtherTexts(prev => ({ ...prev, [question.id]: e.target.value }))}
+                        />
+                        <CharCounter current={otherTexts[question.id]?.length || 0} max={CHAR_LIMITS.otherText} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* 自由記述 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-medium">もう少し詳しく教えてください</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1">
+                <Label htmlFor="what">
+                  いま何が起きていますか？ <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-gray-400 mb-1">
+                  できるだけ詳細に記載すると支援者が見つかりやすくなります
+                </p>
+                <textarea
+                  id="what"
+                  rows={4}
+                  maxLength={CHAR_LIMITS.what}
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="例：親が新興宗教の信者で病院への受診を拒否されている。1週間前から高熱が続いているが医療を受けられない。"
+                  value={freeText.what}
+                  onChange={(e) => setFreeText({ ...freeText, what: e.target.value })}
+                />
+                <CharCounter current={freeText.what.length} max={CHAR_LIMITS.what} />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="when">いつから困っていますか？</Label>
+                <textarea
+                  id="when"
+                  rows={2}
+                  maxLength={CHAR_LIMITS.when}
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="例：3ヶ月前から、去年の春から"
+                  value={freeText.when}
+                  onChange={(e) => setFreeText({ ...freeText, when: e.target.value })}
+                />
+                <CharCounter current={freeText.when.length} max={CHAR_LIMITS.when} />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="want">どうなりたいですか？</Label>
+                <textarea
+                  id="want"
+                  rows={2}
+                  maxLength={CHAR_LIMITS.want}
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="例：安全な場所で治療を受けたい、自分の意思で生活できるようになりたい"
+                  value={freeText.want}
+                  onChange={(e) => setFreeText({ ...freeText, want: e.target.value })}
+                />
+                <CharCounter current={freeText.want.length} max={CHAR_LIMITS.want} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* エラーメッセージ */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* AI送信中オーバーレイ */}
+          {isSubmitting && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 mx-6 max-w-sm w-full text-center">
+                {/* ロゴアニメーション */}
+                <div className="relative flex items-center justify-center mb-6">
+                  <div className="absolute w-24 h-24 rounded-full bg-teal-100 animate-ping opacity-40" />
+                  <div className="absolute w-16 h-16 rounded-full bg-teal-200 animate-pulse opacity-60" />
+                  <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white text-xl shadow-lg">
+                    🤖
+                  </div>
+                </div>
+
+                {/* メインメッセージ */}
+                <h3 className="text-lg font-bold text-gray-800 mb-1">AIが分析しています</h3>
+                <p className="text-xs text-gray-400 mb-6">Powered by Google Gemini AI</p>
+
+                {/* ステップ表示 */}
+                <div className="space-y-3 mb-6">
+                  {AI_STEPS.map((step, i) => (
+                    <div key={i} className={"flex items-center gap-3 text-left transition-all duration-500 " + (i <= aiStep ? "opacity-100" : "opacity-20")}>
+                      <div className={"w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0 transition-all " + (i < aiStep ? "bg-teal-100" : i === aiStep ? "bg-teal-500 text-white animate-pulse" : "bg-gray-100")}>
+                        {i < aiStep ? "✓" : step.icon}
+                      </div>
+                      <span className={"text-sm " + (i === aiStep ? "text-teal-700 font-medium" : i < aiStep ? "text-gray-500 line-through" : "text-gray-400")}>
+                        {step.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* プログレスバー */}
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-400 to-blue-500 rounded-full transition-all duration-1000"
+                    style={{ width: `${((aiStep + 1) / AI_STEPS.length) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-3">しばらくお待ちください...</p>
+              </div>
+            </div>
+          )}
+
+          {/* 送信ボタン */}
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 py-6 text-base"
+          >
+            {isSubmitting ? '送信中...' : '相談内容を送信する'}
+          </Button>
+
+          <p className="text-xs text-gray-400 text-center">
+            ※入力いただいた内容はAIが整理・分析し、あなたに合った支援組織を探すために使われます。支援に必要な範囲でサポーターにも共有されます。
+          </p>
+        </div>
+      </main>
+
+      {/* 3件制限モーダル */}
+      <Modal
+        isOpen={showLimitModal}
+        onClose={() => router.push('/sos/dashboard')}
+        title="相談件数の上限に達しています"
+        type="warning"
+      >
+        <div className="text-center py-4">
+          <div className="text-4xl mb-4">⚠️</div>
+          <p className="text-gray-700 mb-4 font-medium">進行中の相談は最大3件までです。</p>
+          <p className="text-sm text-gray-600 mb-6">
+            ダッシュボードから既存の相談を取り消してから、<br />
+            新しい相談を登録してください。
+          </p>
+          <button
+            onClick={() => router.push('/sos/dashboard')}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            ダッシュボードへ戻る
+          </button>
+        </div>
+      </Modal>
+    </div>
+  );
+}

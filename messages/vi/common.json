@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "label": "Ngôn ngữ",
+    "ja": "日本語",
+    "en": "English",
+    "zh": "中文",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "id": "Bahasa Indonesia"
+  },
+  "navigation": {
+    "dashboard": "Bảng điều khiển",
+    "consult": "Tư vấn",
+    "caseHistory": "Lịch sử tư vấn",
+    "profile": "Hồ sơ",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập",
+    "signup": "Đăng ký",
+    "logout": "Đăng xuất",
+    "menu": "Menu"
+  }
+}

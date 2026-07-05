@@ -1,14 +1,16 @@
 // src/app/api/auth/signup/route.ts
 import { getBearerToken } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { defaultLocale, isAppLocale } from '@/i18n/routing'
 import { NextResponse } from 'next/server'
 
 const MAX_SOS_USERS = 1000  // SOSユーザー登録上限（将来変更する場合はここだけ変える）
 
 export async function POST(request: Request) {
   try {
-    const { auth_user_id, email, real_name, display_name, phone, gender, birth_date } = await request.json()
+    const { auth_user_id, email, real_name, display_name, phone, gender, birth_date, locale } = await request.json()
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
+    const userLocale = isAppLocale(locale) ? locale : defaultLocale
 
     if (!normalizedEmail || !real_name) {
       return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
       phone: typeof phone === 'string' && phone.trim() ? phone.trim().slice(0, 30) : null,
       gender: typeof gender === 'string' && ['MALE', 'FEMALE', 'OTHER'].includes(gender) ? gender : null,
       birth_date: typeof birth_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(birth_date) ? birth_date : null,
+      locale: userLocale,
     })
 
     if (error) {

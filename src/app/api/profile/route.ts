@@ -2,6 +2,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { requireActiveAppUser } from '@/lib/api/auth'
+import { isAppLocale } from '@/i18n/routing'
 import { NextResponse } from 'next/server'
 
 type ServiceAreaInput = {
@@ -10,7 +11,7 @@ type ServiceAreaInput = {
 }
 
 const PERSONAL_PROFILE_FIELDS = new Set([
-    'real_name', 'display_name', 'phone', 'updated_at',
+    'real_name', 'display_name', 'phone', 'locale', 'updated_at',
 ])
 const SOS_PROFILE_FIELDS = new Set([
     'postal_code', 'prefecture', 'city', 'address_structured', 'sos_region_code',
@@ -139,6 +140,12 @@ export async function POST(request: Request) {
     }
     if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'phone')) {
         updateData.phone = sanitizeText(rawUpdateData.phone, 30)
+    }
+    if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'locale')) {
+        if (!isAppLocale(rawUpdateData.locale)) {
+            return NextResponse.json({ error: '表示言語が不正です' }, { status: 400 })
+        }
+        updateData.locale = rawUpdateData.locale
     }
     if (allowedUserFields.has('postal_code') && Object.prototype.hasOwnProperty.call(rawUpdateData, 'postal_code')) {
         updateData.postal_code = sanitizeText(rawUpdateData.postal_code, 20)
