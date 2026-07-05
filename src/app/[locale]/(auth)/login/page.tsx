@@ -2,7 +2,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+import { withLocalePath } from '@/i18n/routing';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +24,10 @@ type PendingSosSignupProfile = {
 }
 
 export default function LoginPage() {
+    const t = useTranslations('auth.login');
+    const tAuth = useTranslations('auth.common');
+    const tForm = useTranslations('common.form');
+    const locale = useLocale();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +40,7 @@ export default function LoginPage() {
     const searchParams = typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search) : null;
     const suspendedMsg = searchParams?.get('reason') === 'suspended'
-      ? 'このアカウントは停止されています。管理者にお問い合わせください。' : null;
+      ? t('errorSuspended') : null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,9 +57,9 @@ export default function LoginPage() {
             if (authError) {
                 // BANされたユーザーはSupabaseが "User is banned" を返す
                 if (authError.message?.toLowerCase().includes('banned') || authError.message?.toLowerCase().includes('ban')) {
-                    setError('このアカウントは停止されています。管理者にお問い合わせください。');
+                    setError(t('errorSuspended'));
                 } else {
-                    setError('メールアドレスまたはパスワードが正しくありません');
+                    setError(t('errorInvalidCredentials'));
                 }
                 return;
             }
@@ -68,7 +74,7 @@ export default function LoginPage() {
             // ログイン成功後でも停止されている場合（フラグのみ停止）
             if (res.status === 403) {
                 await supabase.auth.signOut();
-                setError('このアカウントは停止されています。管理者にお問い合わせください。');
+                setError(t('errorSuspended'));
                 return;
             }
 
@@ -88,33 +94,33 @@ export default function LoginPage() {
                     })
                     if (!profileRes.ok) {
                         const profileData = await profileRes.json()
-                        setError(profileData.message || profileData.error || 'プロフィールの保存に失敗しました');
+                        setError(profileData.message || profileData.error || t('errorProfileSave'));
                         return;
                     }
                     localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)
-                    window.location.href = '/sos/dashboard';
+                    window.location.href = withLocalePath(locale, '/sos/dashboard');
                     return;
                 }
-                setError('ユーザー情報の取得に失敗しました');
+                setError(t('errorUserFetch'));
                 return;
             }
 
             // 3. ロール別リダイレクト
             if (result.user?.must_change_password) {
-                window.location.href = '/change-password'
+                window.location.href = withLocalePath(locale, '/change-password')
             } else if (result.role === 'SOS') {
-                window.location.href = '/sos/dashboard';
+                window.location.href = withLocalePath(locale, '/sos/dashboard');
             } else if (result.role === 'SUPPORTER') {
-                window.location.href = '/supporter/dashboard';
+                window.location.href = withLocalePath(locale, '/supporter/dashboard');
             } else if (result.role === 'ADMIN') {
-                window.location.href = '/admin/dashboard';
+                window.location.href = withLocalePath(locale, '/admin/dashboard');
             } else {
-                window.location.href = '/';
+                window.location.href = withLocalePath(locale, '/');
             }
 
         } catch (err) {
             console.error('Login error:', err);
-            setError('ログイン中にエラーが発生しました');
+            setError(t('errorGeneric'));
         } finally {
             setIsLoading(false);
         }
@@ -125,7 +131,7 @@ export default function LoginPage() {
             <div className="w-full max-w-md">
                 <div className="mb-4">
                     <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600 transition-colors">
-                        ← トップページに戻る
+                        {tAuth('backToTop')}
                     </Link>
                 </div>
             <Card className="w-full max-w-md">
@@ -134,7 +140,7 @@ export default function LoginPage() {
                         <Logo variant="default" size="md" showText={true} />
                     </div>
                     <CardTitle className="text-xl font-bold text-center text-gray-700">
-                        ログイン
+                        {t('title')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -142,12 +148,12 @@ export default function LoginPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="email">
-                                メールアドレス <span className="text-red-500">*</span>
+                                {tForm('email')} <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="example@email.com"
+                                placeholder={tAuth('emailPlaceholder')}
                                 maxLength={254}
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -157,13 +163,13 @@ export default function LoginPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="password">
-                                パスワード <span className="text-red-500">*</span>
+                                {tForm('password')} <span className="text-red-500">*</span>
                             </Label>
                             <div className="relative">
                                 <Input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="パスワードを入力"
+                                    placeholder={t('passwordPlaceholder')}
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     required
@@ -208,21 +214,21 @@ export default function LoginPage() {
                             className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             disabled={isLoading}
                         >
-                            {isLoading ? 'ログイン中...' : 'ログイン'}
+                            {isLoading ? t('submitting') : t('submit')}
                         </Button>
 
                     </form>
 
                     <div className="mt-4 space-y-2 text-center text-sm text-gray-600">
                         <div>
-                            アカウントをお持ちでない方は{' '}
+                            {t('noAccount')}{' '}
                             <Link href="/signup" className="text-blue-600 hover:underline">
-                                新規登録
+                                {t('signupLink')}
                             </Link>
                         </div>
                         <div>
                             <Link href="/forgot-password" className="text-blue-600 hover:underline">
-                                パスワードを忘れた方
+                                {t('forgotLink')}
                             </Link>
                         </div>
                     </div>

@@ -18,5 +18,38 @@
     "signup": "注册",
     "logout": "退出登录",
     "menu": "菜单"
+  },
+  "actions": {
+    "back": "返回",
+    "next": "下一步",
+    "send": "发送",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "backToHome": "返回首页",
+    "backToLogin": "返回登录页"
+  },
+  "form": {
+    "email": "电子邮箱",
+    "password": "密码",
+    "required": "必填",
+    "loading": "加载中...",
+    "submitting": "提交中...",
+    "saving": "保存中..."
+  },
+  "supporterType": {
+    "NPO": "NPO／支援团体",
+    "CORPORATE": "企业",
+    "GOVERNMENT": "政府・公共机构"
+  },
+  "jaOnlyNotice": "本页面目前仅提供日语版本。",
+  "maintenance": {
+    "metaTitle": "维护中 | 明日もsamasama",
+    "badge": "维护中",
+    "title": "服务暂时停止中",
+    "body": "为了让您更安全地使用，我们正在进行系统更新。作业完成后即可正常使用。",
+    "noteTitle": "致正在咨询中的用户",
+    "noteBody": "已输入的咨询内容和账号信息不会因此画面而被删除。请稍后再次访问。",
+    "brand": "明日もsamasama | SDGs MATCH"
   }
 }

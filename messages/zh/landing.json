@@ -1,6 +1,103 @@
 {
   "meta": {
     "title": "明日もsamasama | SDGs Match",
-    "description": "AIがあなたの困りごとを分析し、専門のNPO・支援団体・企業・行政につなげるマッチングプラットフォームです。"
+    "description": "由AI分析您的困扰，并为您对接专业NPO、支援团体、企业和政府机构的匹配平台。"
+  },
+  "nav": {
+    "supporters": "支援者一览",
+    "story": "我们的心声",
+    "login": "登录",
+    "consult": "咨询"
+  },
+  "hero": {
+    "badge": "与NPO・支援团体建立联系的平台",
+    "title": "不要独自承受，<br></br>让我们<accent>与他人一起</accent>解决",
+    "description": "生活困难、教育、环境、歧视、孤立等社会性困扰，AI将为您分析，并对接专业的NPO・支援团体。",
+    "ctaConsult": "免费咨询 →",
+    "ctaSupporters": "查看支援者",
+    "note": "注册免费・在您批准之前不会共享个人信息",
+    "haveAccount": "已有账号？",
+    "loginHere": "从这里登录 →",
+    "readStory": "阅读我们的心声"
+  },
+  "stats": {
+    "resolved": "已解决的咨询",
+    "resolvedSuffix": "件",
+    "supporters": "注册支援团体",
+    "supportersSuffix": "个",
+    "areas": "活动都道府县",
+    "areasSuffix": "个",
+    "areasSuffixSm": "个"
+  },
+  "concept": {
+    "kicker": "HOW IT WORKS",
+    "title": "把求助的声音，连接到支援的机制",
+    "description": "不要求咨询者进行复杂的分类，通过AI和运营机制，让您更容易获得所需的支援。",
+    "caption": "让人不再独自承受的<accent>支援入口</accent>",
+    "imageAltMobile": "明日もsamasama SDGs MATCH 智能手机版概要：咨询者发送SOS，通过平台与愿意提供支援的团体建立联系。",
+    "imageAltDesktop": "明日もsamasama SDGs MATCH 概要：咨询者发送SOS，平台通过咨询、匹配、信息提供和可视化，将其与支援团体连接起来。",
+    "point1Title": "SOS直接发布",
+    "point1Desc": "无需了解SDGs，用平常的语言说出您的困扰即可。",
+    "point2Title": "AI在幕后整理",
+    "point2Desc": "对咨询内容进行分类，更容易对接符合地区和课题的支援。",
+    "point3Title": "与支援者和运营方相连",
+    "point3Desc": "除了与NPO・政府・企业匹配外，遇到困难时还保留了联系运营方的渠道。"
+  },
+  "steps": {
+    "title": "使用流程",
+    "subtitle": "为了让您安心使用，我们采用透明的流程",
+    "label": "STEP {n}",
+    "step1Title": "发布咨询",
+    "step1Desc": "自由输入您的困扰。个人信息最少即可",
+    "step2Title": "AI分析",
+    "step2Desc": "AI解析咨询内容，判定最合适的SDGs类别",
+    "step3Title": "支援者提出申请",
+    "step3Desc": "专业领域的NPO・支援团体会为您的咨询举手",
+    "step4Title": "由您选择",
+    "step4Desc": "确认申请团体的信息后再批准。也可以自由拒绝",
+    "step5Title": "解决・支援完成",
+    "step5Desc": "问题解决后进行确认。可以用感谢徽章表达心意",
+    "privacyNote": "🔒 在您批准之前不会共享个人信息"
+  },
+  "sdgsSection": {
+    "title": "覆盖的SDGs目标",
+    "subtitle": "在全部17个目标领域，都有专业的支援团体在活动"
+  },
+  "supportersSection": {
+    "title": "参与的支援者",
+    "subtitleFeatured": "精选推荐团体",
+    "subtitleDefault": "可以先确认后再咨询",
+    "viewAll": "查看全部{count}个团体 →",
+    "nationwide": "覆盖全国",
+    "resolvedStat": "✅ 已解决 <strong>{count}件</strong>",
+    "badgeStat": "🏆 <strong>{count}个徽章</strong>"
+  },
+  "faq": {
+    "title": "常见的不安与疑问",
+    "q1": "个人信息安全吗？",
+    "a1": "在您批准支援者之前，不会共享任何可识别个人身份的信息。批准后也只共享必要的最少信息。",
+    "q2": "可以拒绝支援者的申请吗？",
+    "a2": "可以，您可以自由拒绝。是否接受申请由您决定，也可以等到您觉得合适为止。",
+    "q3": "真的免费吗？",
+    "a3": "求助者完全免费。支援方的NPO・企业也无需注册费用。",
+    "q4": "如果有可疑团体联系我怎么办？",
+    "a4": "所有支援团体在注册时都经过审查。您也可以在其资料页面事先确认业绩和介绍。",
+    "q5": "什么都可以咨询吗？",
+    "a5": "面向与SDGs相关的社会性困扰。生活困难、教育、环境、歧视、孤立等都可以广泛应对。"
+  },
+  "cta": {
+    "title": "要不要迈出第一步？",
+    "body": "能够解决您困扰的专家正在等待。咨询免费，在您批准之前不会共享个人信息。",
+    "consult": "免费咨询 →",
+    "login": "登录"
+  },
+  "footer": {
+    "story": "我们的心声",
+    "supporters": "支援者一览",
+    "contact": "联系我们",
+    "terms": "服务条款",
+    "privacy": "隐私政策",
+    "login": "登录",
+    "copyright": "© 2026 明日もsamasama. All rights reserved."
   }
 }

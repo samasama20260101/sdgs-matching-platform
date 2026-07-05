@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Logo } from '@/components/icons/Logo'
+import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice'
 
 export const metadata = { title: 'プライバシーポリシー | 明日もsamasama' }
 
@@ -14,6 +15,8 @@ export default function PrivacyPage() {
           <Link href="/" className="text-sm text-gray-400 hover:text-teal-600 transition-colors">← トップへ</Link>
         </div>
       </header>
+
+      <JaOnlyNotice />
 
       <main className="max-w-3xl mx-auto px-6 py-14">
         <div className="mb-12">

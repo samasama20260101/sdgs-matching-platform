@@ -83,6 +83,22 @@ export function formatRelativeDate(dateStr: string): string {
     return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
 }
 
+// ─── 日付フォーマット（多言語対応版） ───────────────────────
+// 移行済み（i18n対応済み）画面はこちらを使う。localeは next-intl の useLocale() から渡す。
+// 旧 formatRelativeDate は未移行のサポーター画面用に残している（Phase 3 で統合予定）。
+export function formatRelativeDateIntl(dateStr: string, locale: string): string {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    if (diffDays <= 0) return rtf.format(0, 'day');
+    if (diffDays === 1) return rtf.format(-1, 'day');
+    if (diffDays < 7) return rtf.format(-diffDays, 'day');
+    if (diffDays < 30) return rtf.format(-Math.floor(diffDays / 7), 'week');
+    return date.toLocaleDateString(locale, { month: 'long', day: 'numeric' });
+}
+
 // ─── サポーター評価バッジ ─────────────────────────────────────
 export const SUPPORTER_BADGES = {
     gold_medal: { emoji: '🥇', label: 'ありがとう（主）', auto: true },

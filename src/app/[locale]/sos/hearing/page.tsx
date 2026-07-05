@@ -1,19 +1,22 @@
 // ─────────────────────────────────────────────────────────────
 // 📂 src/app/sos/hearing/page.tsx
 // SOS相談フォーム（ヒアリング）
+// 設問・選択肢の文言は messages/*/sos.json（sos.questions）で管理。
+// ここには ID・緊急フラグ・排他フラグだけを持つ（多言語化・バリアント対応の前提）。
 // ─────────────────────────────────────────────────────────────
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 
-// ─── 文字数制限 ──────────────────────────────────────────────
+// 入力上限
 const CHAR_LIMITS = {
   otherText: 200,
   what: 1000,
@@ -21,85 +24,26 @@ const CHAR_LIMITS = {
   want: 200,
 };
 
-const SUPPORTED_LOCALES = new Set(['ja', 'en', 'zh', 'ko', 'vi', 'id']);
+const MAX_ACTIVE_CASES = 3;
 
 type QAOption = {
   id: string;
-  text: string;
   urgent?: boolean;
   exclusive?: boolean;
 };
 
 type QAQuestion = {
   id: number;
-  question: string;
   options: QAOption[];
-  otherPlaceholder: string;
 };
 
-// ─── Q&A選択肢の定義 ────────────────────────────────────────
+// ─── Q&A構造の定義（文言は sos.questions.* に外出し済み） ─────
 const QA_QUESTIONS: QAQuestion[] = [
-  {
-    id: 1,
-    question: '生活に必要なものについて、困っていることはありますか？',
-    options: [
-      { id: 'q1_1', text: '食べ物や飲み物が足りない、または購入するお金がない' },
-      { id: 'q1_2', text: '安全に暮らせる住まいがない' },
-      { id: 'q1_3', text: '電気が使えない' },
-      { id: 'q1_4', text: 'インターネットが使えない' },
-      { id: 'q1_5', text: '該当なし', exclusive: true },
-    ],
-    otherPlaceholder: '例：清潔な飲み水が手に入らない、冬に暖房がない',
-  },
-  {
-    id: 2,
-    question: '人間関係や権利について困っていますか？',
-    options: [
-      { id: 'q2_1', text: '性別・障害・国籍などを理由に差別を受けている' },
-      { id: 'q2_2', text: 'いじめや嫌がらせを受けている' },
-      { id: 'q2_3', text: '身体的・精神的・性的な暴力やハラスメントを受けている' },
-      { id: 'q2_4', text: '最低賃金より低い賃金で働いている、またはサービス残業がある' },
-      { id: 'q2_5', text: '該当なし', exclusive: true },
-    ],
-    otherPlaceholder: '例：宗教的な理由で自由を奪われている、難民として差別を受けている',
-  },
-  {
-    id: 3,
-    question: '仕事や将来について、不安に感じていることや困っていることはありますか？',
-    options: [
-      { id: 'q3_1', text: '仕事がなく、職業訓練も受けていない' },
-      { id: 'q3_2', text: '収入が少なく、最低限の生活を送ることができない' },
-      { id: 'q3_3', text: '学校に通うことができない' },
-      { id: 'q3_4', text: '15歳未満で働いている' },
-      { id: 'q3_5', text: '該当なし', exclusive: true },
-    ],
-    otherPlaceholder: '例：障害があり就職活動ができない、借金を返すために働き続けている',
-  },
-  {
-    id: 4,
-    question: '健康や心のことについて、現在困っていることはありますか？',
-    options: [
-      { id: 'q4_1', text: '体調が悪いが、金銭的な理由などで病院に行けない' },
-      { id: 'q4_2', text: '死にたいと思うことがある', urgent: true },
-      { id: 'q4_3', text: 'たばこの煙による受動喫煙がつらい' },
-      { id: 'q4_4', text: 'けがをしそうな危険な環境で働いていて不安がある' },
-      { id: 'q4_5', text: '該当なし', exclusive: true },
-    ],
-    otherPlaceholder: '例：精神的なケアが必要だが相談先がわからない、薬が手に入らない',
-  },
-  {
-    id: 5,
-    question: 'どのような支援を希望していますか？',
-    options: [
-      { id: 'q5_1', text: 'まずは相談に乗ってほしい' },
-      { id: 'q5_2', text: '公的な支援制度について知りたい' },
-      { id: 'q5_3', text: 'NPOや支援団体につながりたい' },
-      { id: 'q5_4', text: '弁護士や医師などの専門家に相談したい' },
-      { id: 'q5_5', text: '有料でもよいのでサポートを受けたい' },
-      { id: 'q5_6', text: '該当なし', exclusive: true },
-    ],
-    otherPlaceholder: '例：子どもの保護が必要、避難場所を探している',
-  },
+  { id: 1, options: [{ id: 'q1_1' }, { id: 'q1_2' }, { id: 'q1_3' }, { id: 'q1_4' }, { id: 'q1_5', exclusive: true }] },
+  { id: 2, options: [{ id: 'q2_1' }, { id: 'q2_2' }, { id: 'q2_3' }, { id: 'q2_4' }, { id: 'q2_5', exclusive: true }] },
+  { id: 3, options: [{ id: 'q3_1' }, { id: 'q3_2' }, { id: 'q3_3' }, { id: 'q3_4' }, { id: 'q3_5', exclusive: true }] },
+  { id: 4, options: [{ id: 'q4_1' }, { id: 'q4_2', urgent: true }, { id: 'q4_3' }, { id: 'q4_4' }, { id: 'q4_5', exclusive: true }] },
+  { id: 5, options: [{ id: 'q5_1' }, { id: 'q5_2' }, { id: 'q5_3' }, { id: 'q5_4' }, { id: 'q5_5' }, { id: 'q5_6', exclusive: true }] },
 ];
 
 // ─── 文字数カウンター ────────────────────────────────────────
@@ -113,8 +57,12 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 
 // ─── メインコンポーネント ────────────────────────────────────
 export default function SOSHearingPage() {
+  const t = useTranslations('sos.hearing');
+  const tQ = useTranslations('sos.questions');
+  const tLimit = useTranslations('sos.limitModal');
+  const tForm = useTranslations('common.form');
   const router = useRouter();
-  const params = useParams<{ locale?: string }>();
+  const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiStep, setAiStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -122,10 +70,10 @@ export default function SOSHearingPage() {
 
   // AI処理ステップのラベル
   const AI_STEPS = [
-    { icon: '📝', label: '相談内容を読み取っています...' },
-    { icon: '🤖', label: 'AIが状況を分析しています...' },
-    { icon: '🌍', label: 'SDGsの視点で課題を分類しています...' },
-    { icon: '✨', label: 'マッチングの準備をしています...' },
+    { icon: '📝', label: t('aiStep1') },
+    { icon: '🤖', label: t('aiStep2') },
+    { icon: '🌍', label: t('aiStep3') },
+    { icon: '✨', label: t('aiStep4') },
   ];
 
   // 選択された回答（複数選択可）
@@ -154,7 +102,7 @@ export default function SOSHearingPage() {
       });
       const casesData = await casesRes.json();
       const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
-      if ((userCases?.length || 0) >= 3) { setShowLimitModal(true); return; }
+      if ((userCases?.length || 0) >= MAX_ACTIVE_CASES) { setShowLimitModal(true); return; }
 
     };
     checkAuth();
@@ -221,6 +169,8 @@ export default function SOSHearingPage() {
     return urgentPhrases.some(phrase => normalizedText.includes(phrase.toLowerCase()));
   };
 
+  const optionText = (questionId: number, optionId: string) => tQ(`q${questionId}.options.${optionId}`);
+
   const handleSubmit = async () => {
     setError(null);
 
@@ -229,25 +179,25 @@ export default function SOSHearingPage() {
       const selected = selectedOptionIds[q.id]?.size || 0;
       const hasOther = otherChecked[q.id] && otherTexts[q.id]?.trim();
       if (selected === 0 && !hasOther) {
-        setError(`Q${q.id} に少なくとも1つ回答してください`);
+        setError(t('errorAnswerRequired', { id: q.id }));
         return;
       }
       if (otherChecked[q.id] && !otherTexts[q.id]?.trim()) {
-        setError(`Q${q.id} の「その他」の内容を入力してください`);
+        setError(t('errorOtherRequired', { id: q.id }));
         return;
       }
       if ((otherTexts[q.id]?.length || 0) > CHAR_LIMITS.otherText) {
-        setError(`Q${q.id} の「その他」は${CHAR_LIMITS.otherText}文字以内で入力してください`);
+        setError(t('errorOtherTooLong', { id: q.id, max: CHAR_LIMITS.otherText }));
         return;
       }
     }
 
     if (!freeText.what.trim()) {
-      setError('「いま何が起きていますか？」を入力してください');
+      setError(t('errorWhatRequired'));
       return;
     }
     if (freeText.what.length > CHAR_LIMITS.what) {
-      setError(`「いま何が起きていますか？」は${CHAR_LIMITS.what}文字以内で入力してください`);
+      setError(t('errorWhatTooLong', { max: CHAR_LIMITS.what }));
       return;
     }
 
@@ -264,20 +214,19 @@ export default function SOSHearingPage() {
       clearInterval(stepInterval);
       setIsSubmitting(false);
       setAiStep(0);
-      setError('処理に時間がかかりすぎています。しばらくしてから再度お試しください。');
+      setError(t('errorTimeout'));
     }, 30000);
 
     try {
-      // 回答データ整形: qaは従来通り表示用の文字列配列、qa_idsは言語横断集計用。
+      // 回答データ整形: qaは表示用の文字列配列（ユーザーが見た言語のスナップショット）、
+      // qa_ids は言語横断集計用。
       const qaData: Record<number, string[]> = {};
       const qaIds: Record<number, string[]> = {};
       for (const q of QA_QUESTIONS) {
         const selectedIds = [...(selectedOptionIds[q.id] || [])];
-        const items = selectedIds
-          .map(id => q.options.find(option => option.id === id)?.text)
-          .filter((text): text is string => Boolean(text));
+        const items = selectedIds.map(id => optionText(q.id, id));
         if (otherChecked[q.id] && otherTexts[q.id]?.trim()) {
-          items.push(`その他: ${otherTexts[q.id].trim()}`);
+          items.push(`${tQ('otherPrefix')}${otherTexts[q.id].trim()}`);
           selectedIds.push(`q${q.id}_other`);
         }
         qaData[q.id] = items;
@@ -290,9 +239,6 @@ export default function SOSHearingPage() {
       );
       const freeTextForUrgency = Object.values(freeText).join(' ') + ' ' + Object.values(otherTexts).join(' ');
       const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
-      const currentLocale = typeof params.locale === 'string' && SUPPORTED_LOCALES.has(params.locale)
-        ? params.locale
-        : 'ja';
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -301,7 +247,7 @@ export default function SOSHearingPage() {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
       const roleData2 = await roleRes2.json();
-      if (!roleData2.user) { setError('ユーザー情報が取得できませんでした'); setIsSubmitting(false); return; }
+      if (!roleData2.user) { setError(t('errorUserFetch')); setIsSubmitting(false); return; }
 
       const caseRes = await fetch('/api/sos/cases', {
         method: 'POST',
@@ -310,15 +256,15 @@ export default function SOSHearingPage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          intake_qna: { qa: qaData, qa_ids: qaIds, locale: currentLocale },
+          intake_qna: { qa: qaData, qa_ids: qaIds, locale },
           description_free: [
             freeText.what,
-            freeText.when ? `いつから: ${freeText.when}` : '',
-            freeText.want ? `どうなりたい: ${freeText.want}` : '',
+            freeText.when ? `${t('whenPrefix')}${freeText.when}` : '',
+            freeText.want ? `${t('wantPrefix')}${freeText.want}` : '',
           ].filter(Boolean).join('\n'),
-          title: freeText.what.slice(0, 50) || '相談',
+          title: freeText.what.slice(0, 50) || t('defaultTitle'),
           urgency: isUrgent ? 'High' : 'Medium',
-          locale: currentLocale,
+          locale,
           status: 'OPEN',
           region_country: 'ID',
         }),
@@ -326,7 +272,7 @@ export default function SOSHearingPage() {
       const caseResult = await caseRes.json();
       if (!caseRes.ok) {
         console.error('Case error:', caseResult);
-        setError(`保存エラー: ${caseResult.error}`);
+        setError(t('errorSave', { message: caseResult.error }));
         setIsSubmitting(false);
         return;
       }
@@ -340,7 +286,7 @@ export default function SOSHearingPage() {
       console.error('Submit error:', err);
       clearInterval(stepInterval);
       clearTimeout(timeoutId);
-      setError('送信中にエラーが発生しました');
+      setError(t('errorSubmit'));
       setIsSubmitting(false);
     }
   };
@@ -351,9 +297,9 @@ export default function SOSHearingPage() {
 
       <main className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">相談フォーム</h1>
-          <p className="text-gray-500 mt-1">あなたの状況を教えてください。AIが最適な支援につなぎます。</p>
-          <p className="text-xs text-gray-400 mt-2">※ 複数の項目に当てはまる場合はすべてチェックしてください</p>
+          <h1 className="text-2xl font-bold text-gray-800">{t('title')}</h1>
+          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
+          <p className="text-xs text-gray-400 mt-2">{tQ('intro')}</p>
         </div>
 
         <div className="space-y-6">
@@ -362,7 +308,7 @@ export default function SOSHearingPage() {
             <Card key={question.id}>
               <CardHeader>
                 <CardTitle className="text-base font-medium">
-                  Q{question.id}. {question.question} <span className="text-red-500">*</span>
+                  Q{question.id}. {tQ(`q${question.id}.question`)} <span className="text-red-500">*</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -385,7 +331,7 @@ export default function SOSHearingPage() {
                           onChange={() => handleToggleOption(question, option)}
                           className="mt-0.5 text-blue-600 rounded"
                         />
-                        <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{option.text}</span>
+                        <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{optionText(question.id, option.id)}</span>
                       </label>
                     );
                   })}
@@ -402,7 +348,7 @@ export default function SOSHearingPage() {
                         onChange={() => handleToggleOther(question.id)}
                         className="mt-0.5 text-blue-600 rounded"
                       />
-                      <span className="text-sm">その他</span>
+                      <span className="text-sm">{tQ('otherLabel')}</span>
                     </label>
 
                     {otherChecked[question.id] && (
@@ -411,7 +357,7 @@ export default function SOSHearingPage() {
                           rows={2}
                           maxLength={CHAR_LIMITS.otherText}
                           className="w-full p-3 border border-blue-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
-                          placeholder={question.otherPlaceholder}
+                          placeholder={tQ(`q${question.id}.otherPlaceholder`)}
                           value={otherTexts[question.id] || ''}
                           onChange={(e) => setOtherTexts(prev => ({ ...prev, [question.id]: e.target.value }))}
                         />
@@ -427,22 +373,22 @@ export default function SOSHearingPage() {
           {/* 自由記述 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base font-medium">もう少し詳しく教えてください</CardTitle>
+              <CardTitle className="text-base font-medium">{t('freeSectionTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <Label htmlFor="what">
-                  いま何が起きていますか？ <span className="text-red-500">*</span>
+                  {t('whatLabel')} <span className="text-red-500">*</span>
                 </Label>
                 <p className="text-xs text-gray-400 mb-1">
-                  できるだけ詳細に記載すると支援者が見つかりやすくなります
+                  {t('whatHint')}
                 </p>
                 <textarea
                   id="what"
                   rows={4}
                   maxLength={CHAR_LIMITS.what}
                   className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder="例：親が新興宗教の信者で病院への受診を拒否されている。1週間前から高熱が続いているが医療を受けられない。"
+                  placeholder={t('whatPlaceholder')}
                   value={freeText.what}
                   onChange={(e) => setFreeText({ ...freeText, what: e.target.value })}
                 />
@@ -450,13 +396,13 @@ export default function SOSHearingPage() {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="when">いつから困っていますか？</Label>
+                <Label htmlFor="when">{t('whenLabel')}</Label>
                 <textarea
                   id="when"
                   rows={2}
                   maxLength={CHAR_LIMITS.when}
                   className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder="例：3ヶ月前から、去年の春から"
+                  placeholder={t('whenPlaceholder')}
                   value={freeText.when}
                   onChange={(e) => setFreeText({ ...freeText, when: e.target.value })}
                 />
@@ -464,13 +410,13 @@ export default function SOSHearingPage() {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="want">どうなりたいですか？</Label>
+                <Label htmlFor="want">{t('wantLabel')}</Label>
                 <textarea
                   id="want"
                   rows={2}
                   maxLength={CHAR_LIMITS.want}
                   className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder="例：安全な場所で治療を受けたい、自分の意思で生活できるようになりたい"
+                  placeholder={t('wantPlaceholder')}
                   value={freeText.want}
                   onChange={(e) => setFreeText({ ...freeText, want: e.target.value })}
                 />
@@ -500,8 +446,8 @@ export default function SOSHearingPage() {
                 </div>
 
                 {/* メインメッセージ */}
-                <h3 className="text-lg font-bold text-gray-800 mb-1">AIが分析しています</h3>
-                <p className="text-xs text-gray-400 mb-6">Powered by Google Gemini AI</p>
+                <h3 className="text-lg font-bold text-gray-800 mb-1">{t('aiOverlayTitle')}</h3>
+                <p className="text-xs text-gray-400 mb-6">{t('aiPoweredBy')}</p>
 
                 {/* ステップ表示 */}
                 <div className="space-y-3 mb-6">
@@ -524,7 +470,7 @@ export default function SOSHearingPage() {
                     style={{ width: `${((aiStep + 1) / AI_STEPS.length) * 100}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-3">しばらくお待ちください...</p>
+                <p className="text-xs text-gray-400 mt-3">{t('aiWait')}</p>
               </div>
             </div>
           )}
@@ -535,11 +481,11 @@ export default function SOSHearingPage() {
             disabled={isSubmitting}
             className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 py-6 text-base"
           >
-            {isSubmitting ? '送信中...' : '相談内容を送信する'}
+            {isSubmitting ? tForm('submitting') : t('submit')}
           </Button>
 
           <p className="text-xs text-gray-400 text-center">
-            ※入力いただいた内容はAIが整理・分析し、あなたに合った支援組織を探すために使われます。支援に必要な範囲でサポーターにも共有されます。
+            {t('privacyNote')}
           </p>
         </div>
       </main>
@@ -548,21 +494,20 @@ export default function SOSHearingPage() {
       <Modal
         isOpen={showLimitModal}
         onClose={() => router.push('/sos/dashboard')}
-        title="相談件数の上限に達しています"
+        title={tLimit('title')}
         type="warning"
       >
         <div className="text-center py-4">
           <div className="text-4xl mb-4">⚠️</div>
-          <p className="text-gray-700 mb-4 font-medium">進行中の相談は最大3件までです。</p>
+          <p className="text-gray-700 mb-4 font-medium">{tLimit('heading')}</p>
           <p className="text-sm text-gray-600 mb-6">
-            ダッシュボードから既存の相談を取り消してから、<br />
-            新しい相談を登録してください。
+            {tLimit('body')}
           </p>
           <button
             onClick={() => router.push('/sos/dashboard')}
             className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            ダッシュボードへ戻る
+            {tLimit('backToDashboard')}
           </button>
         </div>
       </Modal>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ const EyeIcon = ({ show }: { show: boolean }) => (
 );
 
 export default function ResetPasswordPage() {
+    const t = useTranslations('auth.reset');
     const router = useRouter();
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
@@ -45,22 +47,22 @@ export default function ResetPasswordPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        if (password.length < 8) { setError('パスワードは8文字以上で入力してください'); return; }
-        if (password !== confirm) { setError('パスワードが一致しません'); return; }
+        if (password.length < 8) { setError(t('errorTooShort')); return; }
+        if (password !== confirm) { setError(t('errorMismatch')); return; }
         setIsLoading(true);
         try {
             const { error: updateError } = await supabase.auth.updateUser({ password });
             if (updateError) {
                 if (updateError.message.includes('same password') || updateError.message.includes('different')) {
-                    setError('以前と同じパスワードは使用できません。別のパスワードを設定してください。');
+                    setError(t('errorSamePassword'));
                 } else {
-                    setError('パスワードの更新に失敗しました。リンクの有効期限が切れている可能性があります。');
+                    setError(t('errorUpdateFailed'));
                 }
                 return;
             }
             setIsDone(true);
             setTimeout(() => router.replace('/login'), 3000);
-        } catch { setError('エラーが発生しました。もう一度お試しください。'); }
+        } catch { setError(t('errorUpdateFailed')); }
         finally { setIsLoading(false); }
     };
 
@@ -69,13 +71,13 @@ export default function ResetPasswordPage() {
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1 text-center">
                     <div className="text-5xl mb-2">✅</div>
-                    <CardTitle className="text-2xl font-bold">パスワードを更新しました</CardTitle>
-                    <CardDescription>3秒後にログイン画面へ移動します</CardDescription>
+                    <CardTitle className="text-2xl font-bold">{t('doneTitle')}</CardTitle>
+                    <CardDescription>{t('doneDescription')}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center pt-2">
                     <Button onClick={() => router.replace('/login')}
                         className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                        今すぐログインへ →
+                        {t('goToLogin')}
                     </Button>
                 </CardContent>
             </Card>
@@ -87,8 +89,8 @@ export default function ResetPasswordPage() {
             <Card className="w-full max-w-md">
                 <CardContent className="pt-10 pb-8 text-center text-gray-400">
                     <div className="text-4xl mb-3 animate-pulse">🔑</div>
-                    <p>リンクを確認中...</p>
-                    <p className="text-xs mt-2">しばらくお待ちください</p>
+                    <p>{t('checkingLink')}</p>
+                    <p className="text-xs mt-2">{t('pleaseWait')}</p>
                 </CardContent>
             </Card>
         </div>
@@ -99,17 +101,17 @@ export default function ResetPasswordPage() {
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
                     <div className="text-center text-4xl mb-2">🔐</div>
-                    <CardTitle className="text-2xl font-bold text-center">新しいパスワードを設定</CardTitle>
-                    <CardDescription className="text-center">以前とは異なるパスワードを入力してください</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-center">{t('title')}</CardTitle>
+                    <CardDescription className="text-center">{t('description')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="password">新しいパスワード <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="password">{t('newPasswordLabel')} <span className="text-red-500">*</span></Label>
                             <div className="relative">
                                 <Input id="password"
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="8文字以上"
+                                    placeholder={t('newPasswordPlaceholder')}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required maxLength={64} className="pr-10" />
@@ -120,11 +122,11 @@ export default function ResetPasswordPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="confirm">パスワード（確認） <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="confirm">{t('confirmLabel')} <span className="text-red-500">*</span></Label>
                             <div className="relative">
                                 <Input id="confirm"
                                     type={showConfirm ? 'text' : 'password'}
-                                    placeholder="もう一度入力してください"
+                                    placeholder={t('confirmPlaceholder')}
                                     value={confirm}
                                     onChange={(e) => setConfirm(e.target.value)}
                                     required maxLength={64} className="pr-10" />
@@ -134,14 +136,14 @@ export default function ResetPasswordPage() {
                                 </button>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400">※ 以前と同じパスワードは使用できません</p>
+                        <p className="text-xs text-gray-400">{t('noteNotSame')}</p>
                         {error && (
                             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
                         )}
                         <Button type="submit"
                             className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             disabled={isLoading}>
-                            {isLoading ? '更新中...' : 'パスワードを更新する'}
+                            {isLoading ? t('submitting') : t('submit')}
                         </Button>
                     </form>
                 </CardContent>
