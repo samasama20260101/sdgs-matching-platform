@@ -101,6 +101,7 @@ export default function ProfilePage() {
     const t = useTranslations('common.profile');
     const tForm = useTranslations('common.form');
     const tActions = useTranslations('common.actions');
+    const tErrors = useTranslations('errors');
     const router = useRouter();
     const requestLocale = useLocale() as AppLocale;
     const [isLoading, setIsLoading] = useState(true);
@@ -298,7 +299,9 @@ export default function ProfilePage() {
             });
             if (!res.ok) {
                 const result = await res.json();
-                setError(t('errorUpdate', { message: result.error }));
+                // APIのエラーコード（設計§5.3）を閲覧者の言語で表示。未知コードはja文フォールバック
+                const code = typeof result.code === 'string' ? result.code : '';
+                setError(code && tErrors.has(code) ? tErrors(code) : t('errorUpdate', { message: result.error }));
                 setIsSaving(false); return;
             }
 

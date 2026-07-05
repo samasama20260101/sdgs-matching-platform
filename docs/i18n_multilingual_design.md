@@ -589,9 +589,11 @@ D案本番適用やバリアントPhase 2のmigrationと衝突しない。**i18n
 ☑ 送信時翻訳（messages POST・description_free_ja・/api/cron/retry-translations 15分間隔・原文トグルUI）
 ☑ AI二言語出力（ai_sdg_suggestion拡張・cases.titleはja正本・SOS側一覧は相談者言語タイトル優先）
 ☑ 相談言語バッジ＋日本語訳表示（サポーター案件詳細・ダッシュボード一覧）
-◪ APIエラーコード化: 第1波のみ（sos/cases POST + hearing のマッピング）。残ルートは段階適用
-□ migration: add_system_message_keys.sql の Staging適用（devマージ前の必須ゲート）
-   ※ add_case_chat_translation.sql は Staging 適用済み
+◪ APIエラーコード化: 第1〜2波（sos/cases POST・auth/signup・profile + hearing/signup/login/profile のマッピング）。
+   サポーター系ルートは Phase 3 で段階適用
+☑ migration: 2本とも Staging 適用済み（add_system_message_keys.sql は 2026-07-06 適用・検証済み）
+☑ featureブランチの Vercel プレビューで全機能E2E検証済み（vi相談投稿→ja訳/双方向チャット翻訳/
+   AI二言語分析/システムメッセージkey/状態ガード）
 ```
 
 ---
