@@ -1,1 +1,41 @@
-{}
+{
+  "public": {
+    "list": {
+      "title": "注册支援者一览",
+      "subtitle": "咨询前可以先确认有哪些团体参与",
+      "orgCount": "{count}个团体",
+      "backToDashboard": "← 返回控制面板",
+      "backToDashboardShort": "返回控制面板",
+      "backToTop": "← 返回首页",
+      "regionMatch": "已将覆盖您所在地区的 {count}个团体 优先显示",
+      "regionBadge": "📍 您的地区",
+      "filterAll": "全部",
+      "errorTitle": "数据获取错误",
+      "empty": "未找到符合条件的支援者",
+      "resetFilter": "重置筛选",
+      "othersSuffix": " 等",
+      "showMore": "显示更多（{count}个团体）"
+    },
+    "detail": {
+      "backToList": "← 返回支援者一览",
+      "registeredYears": "注册 {years}年",
+      "website": "🌐 官方网站",
+      "statResolved": "已解决的咨询",
+      "statResolvedUnit": "件",
+      "statBadges": "获得的徽章",
+      "statBadgesUnit": "个",
+      "statAreas": "活动区域",
+      "statAreasUnit": "个都道府县",
+      "bioTitle": "团体介绍",
+      "areasTitle": "活动区域",
+      "nationwideBadge": "🗾 覆盖全国",
+      "badgesTitle": "感谢徽章",
+      "badgesSubtitle": "来自咨询者赠送的徽章",
+      "badgeCount": "{count}次",
+      "ctaTitle": "想向这个团体咨询吗？",
+      "ctaBody": "发布咨询后由您选择支援者。在您批准之前不会共享个人信息。",
+      "ctaConsult": "免费咨询看看 →",
+      "ctaDashboard": "前往控制面板 →"
+    }
+  }
+}

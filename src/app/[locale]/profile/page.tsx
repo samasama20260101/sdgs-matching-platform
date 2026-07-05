@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLocale } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -75,6 +75,7 @@ type ProfileUpdateData = {
 
 // SOSユーザー向け地域セレクト（DBのregionsテーブルから取得）
 function SosRegionSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const t = useTranslations('common.profile');
     const [regions, setRegions] = useState<{ code: string; name_local: string }[]>([]);
     useEffect(() => {
         fetch('/api/regions?country=JP', { cache: 'no-store' })
@@ -88,7 +89,7 @@ function SosRegionSelect({ value, onChange }: { value: string; onChange: (v: str
             onChange={(e) => onChange(e.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-            <option value="">選択してください（任意）</option>
+            <option value="">{t('regionPlaceholder')}</option>
             {regions.map(r => (
                 <option key={r.code} value={r.code}>{r.name_local}</option>
             ))}
@@ -97,6 +98,9 @@ function SosRegionSelect({ value, onChange }: { value: string; onChange: (v: str
 }
 
 export default function ProfilePage() {
+    const t = useTranslations('common.profile');
+    const tForm = useTranslations('common.form');
+    const tActions = useTranslations('common.actions');
     const router = useRouter();
     const requestLocale = useLocale() as AppLocale;
     const [isLoading, setIsLoading] = useState(true);
@@ -145,7 +149,7 @@ export default function ProfilePage() {
                     }
                 }
                 if (!roleData.user) {
-                    setError('ユーザー情報が見つかりません');
+                    setError(t('errorNoUser'));
                     setIsLoading(false);
                     return;
                 }
@@ -197,11 +201,12 @@ export default function ProfilePage() {
                 setIsLoading(false);
             } catch (err) {
                 console.error('Load error:', err);
-                setError('データの読み込みに失敗しました');
+                setError(t('errorLoad'));
                 setIsLoading(false);
             }
         };
         loadUserData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router, requestLocale]);
 
     const canEditOrganization = userData?.role === 'SUPPORTER' && userData.organization_role === 'OWNER';
@@ -211,11 +216,11 @@ export default function ProfilePage() {
         setSuccess(false);
         setIsSaving(true);
         try {
-            if (!userData) { setError('ユーザー情報がありません'); setIsSaving(false); return; }
-            if (!realName.trim()) { setError(userData.role === 'SOS' ? 'お名前（本名）は必須です' : '担当者名は必須です'); setIsSaving(false); return; }
-            if (realName.length > 64) { setError('担当者名は64文字以内で入力してください'); setIsSaving(false); return; }
-            if (!displayName.trim()) { setError(userData.role === 'SOS' ? 'ニックネームは必須です' : '表示名は必須です'); setIsSaving(false); return; }
-            if (displayName.length > 64) { setError('表示名は64文字以内で入力してください'); setIsSaving(false); return; }
+            if (!userData) { setError(t('errorNoUser')); setIsSaving(false); return; }
+            if (!realName.trim()) { setError(userData.role === 'SOS' ? t('errorNameRequired') : '担当者名は必須です'); setIsSaving(false); return; }
+            if (realName.length > 64) { setError(t('errorTooLong')); setIsSaving(false); return; }
+            if (!displayName.trim()) { setError(userData.role === 'SOS' ? t('errorNicknameRequired') : '表示名は必須です'); setIsSaving(false); return; }
+            if (displayName.length > 64) { setError(t('errorTooLong')); setIsSaving(false); return; }
             if (canEditOrganization && organizationName.length > 64) { setError('組織名は64文字以内で入力してください'); setIsSaving(false); return; }
 
             if (canEditOrganization) {
@@ -293,7 +298,7 @@ export default function ProfilePage() {
             });
             if (!res.ok) {
                 const result = await res.json();
-                setError(`更新エラー: ${result.error}`);
+                setError(t('errorUpdate', { message: result.error }));
                 setIsSaving(false); return;
             }
 
@@ -320,31 +325,31 @@ export default function ProfilePage() {
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
             console.error('Save error:', err);
-            setError('保存中にエラーが発生しました');
+            setError(t('errorSave'));
             setIsSaving(false);
         }
     };
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">読み込み中...</p></div>;
-    if (!userData) return <div className="min-h-screen flex items-center justify-center"><p className="text-red-500">ユーザー情報が見つかりません</p></div>;
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">{tForm('loading')}</p></div>;
+    if (!userData) return <div className="min-h-screen flex items-center justify-center"><p className="text-red-500">{t('errorNoUser')}</p></div>;
 
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
             <main className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-800">プロフィール編集</h1>
-                    <p className="text-gray-500 mt-1">登録情報を更新できます</p>
+                    <h1 className="text-2xl font-bold text-gray-800">{t('title')}</h1>
+                    <p className="text-gray-500 mt-1">{t('subtitle')}</p>
                 </div>
 
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">表示言語</CardTitle>
-                            <p className="text-xs text-gray-500 mt-1">画面表示と今後の通知・翻訳に使う言語です。</p>
+                            <CardTitle className="text-base">{t('languageTitle')}</CardTitle>
+                            <p className="text-xs text-gray-500 mt-1">{t('languageNote')}</p>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                            <Label htmlFor="locale">言語</Label>
+                            <Label htmlFor="locale">{t('languageLabel')}</Label>
                             <select
                                 id="locale"
                                 value={locale}
@@ -362,27 +367,27 @@ export default function ProfilePage() {
                         <>
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">非公開の連絡先</CardTitle>
-                                    <p className="text-xs text-gray-500 mt-1">ログイン・運営確認用の情報です。サポーターには自動表示されません。</p>
+                                    <CardTitle className="text-base">{t('privateContactTitle')}</CardTitle>
+                                    <p className="text-xs text-gray-500 mt-1">{t('privateContactNote')}</p>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="realName">お名前 <span className="text-red-500">*</span></Label>
-                                        <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="山田太郎" maxLength={64} />
+                                        <Label htmlFor="realName">{t('nameLabel')} <span className="text-red-500">*</span></Label>
+                                        <Input id="realName" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder={t('namePlaceholder')} maxLength={64} />
                                         <div className="flex justify-between items-start mt-1">
-                                            <p className="text-xs text-gray-500">※本名が不安な場合は、運営が識別できる名前でもかまいません。</p>
+                                            <p className="text-xs text-gray-500">{t('nameNote')}</p>
                                             <p className={`text-xs ml-auto flex-shrink-0 ${realName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{realName.length} / 64</p>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="email">メールアドレス</Label>
+                                        <Label htmlFor="email">{tForm('email')}</Label>
                                         <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
-                                        <p className="text-xs text-gray-500">※メールアドレスは変更できません。</p>
+                                        <p className="text-xs text-gray-500">{t('emailNote')}</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">電話番号 <span className="text-xs font-normal text-gray-400">（任意・非公開）</span></Label>
+                                        <Label htmlFor="phone">{t('phoneLabel')} <span className="text-xs font-normal text-gray-400">{t('phoneOptionalPrivate')}</span></Label>
                                         <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03-1234-5678" maxLength={20} />
-                                        <p className="text-xs text-gray-500">※必要な場合の運営連絡用です。サポーターには自動表示されません。</p>
+                                        <p className="text-xs text-gray-500">{t('phoneNote')}</p>
                                         <p className={`text-xs text-right mt-1 ${phone.length >= 18 ? 'text-orange-500' : 'text-gray-400'}`}>{phone.length} / 20</p>
                                     </div>
                                 </CardContent>
@@ -390,15 +395,15 @@ export default function ProfilePage() {
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">サポーターに表示される情報</CardTitle>
-                                    <p className="text-xs text-gray-500 mt-1">相談一覧やメッセージで支援者に見える名前です。</p>
+                                    <CardTitle className="text-base">{t('publicInfoTitle')}</CardTitle>
+                                    <p className="text-xs text-gray-500 mt-1">{t('publicInfoNote')}</p>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="displayName">ニックネーム <span className="text-red-500">*</span></Label>
-                                        <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="たろう" maxLength={64} />
+                                        <Label htmlFor="displayName">{t('nicknameLabel')} <span className="text-red-500">*</span></Label>
+                                        <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('nicknamePlaceholder')} maxLength={64} />
                                         <div className="flex justify-between items-start mt-1">
-                                            <p className="text-xs text-gray-500">※本名ではなく、呼ばれてもよい名前を入力してください。</p>
+                                            <p className="text-xs text-gray-500">{t('nicknameNote')}</p>
                                             <p className={`text-xs ml-auto flex-shrink-0 ${displayName.length >= 58 ? 'text-orange-500' : 'text-gray-400'}`}>{displayName.length} / 64</p>
                                         </div>
                                     </div>
@@ -485,18 +490,18 @@ export default function ProfilePage() {
 
                     {userData.role === 'SOS' && (
                         <Card>
-                            <CardHeader><CardTitle className="text-base">支援提案に使う地域 <span className="text-xs font-normal text-teal-600">（推奨）</span></CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-base">{t('regionTitle')} <span className="text-xs font-normal text-teal-600">{t('regionRecommended')}</span></CardTitle></CardHeader>
                             <CardContent className="space-y-3">
-                                <p className="text-sm text-gray-600">都道府県レベルの地域です。近くのサポーターを探しやすくするために使います。</p>
+                                <p className="text-sm text-gray-600">{t('regionNote')}</p>
                                 <SosRegionSelect value={sosRegionCode} onChange={setSosRegionCode} />
                             </CardContent>
                         </Card>
                     )}
 
                     {userData.role === 'SOS' && <Card>
-                        <CardHeader><CardTitle className="text-base">詳細住所 <span className="text-xs font-normal text-gray-400">（任意・非公開）</span></CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-base">{t('addressTitle')} <span className="text-xs font-normal text-gray-400">{t('addressOptional')}</span></CardTitle></CardHeader>
                         <CardContent>
-                            <p className="text-sm text-gray-600 mb-4">任意・非公開です。サポーターには自動表示されません。必要な場合だけ入力してください。</p>
+                            <p className="text-sm text-gray-600 mb-4">{t('addressNote')}</p>
                             <AddressForm countryCode="JP" required={false}
                                 requiredFields={{ postalCode: false, prefecture: false, city: false, addressLine1: false }}
                                 onChange={setAddressData} initialData={addressData} />
@@ -557,7 +562,7 @@ export default function ProfilePage() {
 
                     {success && (
                         <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg text-teal-600 text-sm">
-                            ✅ プロフィールを更新しました
+                            {t('updated')}
                         </div>
                     )}
                     {error && (
@@ -568,10 +573,10 @@ export default function ProfilePage() {
 
                     <div className="flex gap-3">
                         <Button onClick={handleSave} disabled={isSaving} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                            {isSaving ? '保存中...' : '変更を保存'}
+                            {isSaving ? tForm('saving') : t('save')}
                         </Button>
                         <Button variant="outline" onClick={() => router.back()} className="flex-1">
-                            キャンセル
+                            {tActions('cancel')}
                         </Button>
                     </div>
                 </div>

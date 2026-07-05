@@ -2,11 +2,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
-import Link from 'next/link';
 import { Logo } from '@/components/icons/Logo';
 import { supabase } from '@/lib/supabase/client';
+import { SUPPORTER_BADGES, type BadgeKey } from '@/lib/constants/sdgs';
 
 type SocialLinks = {
   website?: string; twitter?: string;
@@ -27,16 +29,6 @@ type AuthRoleResponse = {
   role?: UserRole;
 };
 
-const BADGE_INFO: Record<string, { emoji: string; label: string }> = {
-  gold_medal: { emoji: '🥇', label: 'ありがとう（主要）' },
-  silver_medal: { emoji: '🥈', label: 'ありがとう（サポート）' },
-  very_satisfied: { emoji: '😆', label: '大満足' },
-  quick_response: { emoji: '⚡', label: '迅速な対応' },
-  sincere_support: { emoji: '💎', label: '誠実なサポート' },
-  problem_solved: { emoji: '🌟', label: 'あきらめていた問題が解決' },
-  grateful_partner: { emoji: '🤝', label: '一緒に向き合い大感謝' },
-};
-
 const getDashboardHref = (role: UserRole) => {
   if (role === 'SOS') return '/sos/dashboard';
   if (role === 'SUPPORTER') return '/supporter/dashboard';
@@ -45,13 +37,20 @@ const getDashboardHref = (role: UserRole) => {
 };
 
 export default function SupporterProfilePage() {
+  const t = useTranslations('supporter.public.detail');
+  const tList = useTranslations('supporter.public.list');
+  const tNav = useTranslations('landing.nav');
+  const tSection = useTranslations('landing.supportersSection');
+  const tSupporterType = useTranslations('common.supporterType');
+  const tBadge = useTranslations('sdgs.badge');
+  const tForm = useTranslations('common.form');
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [supporter, setSupporter] = useState<Supporter | null>(null);
   const [badges, setBadges] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [ctaHref, setCtaHref] = useState('/');
-  const [ctaLabel, setCtaLabel] = useState('無料で相談してみる →');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [dashboardHref, setDashboardHref] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -73,7 +72,7 @@ export default function SupporterProfilePage() {
       .then(async ({ data: { session } }) => {
         if (!session) {
           setCtaHref('/');
-          setCtaLabel('無料で相談してみる →');
+          setIsLoggedIn(false);
           setAuthChecked(true);
           return;
         }
@@ -85,7 +84,7 @@ export default function SupporterProfilePage() {
           });
           if (!response.ok) {
             setCtaHref('/');
-            setCtaLabel('無料で相談してみる →');
+            setIsLoggedIn(false);
             return;
           }
 
@@ -95,10 +94,10 @@ export default function SupporterProfilePage() {
 
           if (href) {
             setCtaHref(href);
-            setCtaLabel('ダッシュボードへ →');
+            setIsLoggedIn(true);
           } else {
             setCtaHref('/');
-            setCtaLabel('無料で相談してみる →');
+            setIsLoggedIn(false);
           }
         } finally {
           setAuthChecked(true);
@@ -112,7 +111,7 @@ export default function SupporterProfilePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center text-gray-400">
           <div className="text-4xl mb-3 animate-pulse">🔍</div>
-          <p>読み込み中...</p>
+          <p>{tForm('loading')}</p>
         </div>
       </div>
     );
@@ -121,7 +120,7 @@ export default function SupporterProfilePage() {
   if (!supporter) return null;
 
   const areas = supporter.service_area_nationwide
-    ? ['全国対応']
+    ? [tSection('nationwide')]
     : (supporter.service_areas || []).map(a => a.name_local || a.region_code);
 
   const totalBadges = Object.values(badges).reduce((s, n) => s + n, 0);
@@ -142,14 +141,14 @@ export default function SupporterProfilePage() {
           <div className="flex gap-3">
             {authChecked && dashboardHref ? (
               <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
-                ダッシュボードへ戻る
+                {tList('backToDashboardShort')}
               </Link>
             ) : authChecked ? (
               <>
-                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
+                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">{tNav('login')}</Link>
                 <Link href="/signup"
                   className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
-                  相談する
+                  {tNav('consult')}
                 </Link>
               </>
             ) : null}
@@ -159,7 +158,7 @@ export default function SupporterProfilePage() {
 
       <main className="max-w-3xl mx-auto px-6 py-10">
         <Link href="/supporters" className="text-xs text-gray-400 hover:text-teal-500 transition-colors">
-          ← サポーター一覧に戻る
+          {t('backToList')}
         </Link>
 
         {/* ── ヒーローカード ── */}
@@ -179,9 +178,9 @@ export default function SupporterProfilePage() {
               </div>
               <div className="pb-1 flex items-center gap-2 flex-wrap">
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${getSupporterTypeConfig(supporter.supporter_type).badgeClass}`}>
-                  {getSupporterTypeConfig(supporter.supporter_type).label}
+                  {tSupporterType(supporter.supporter_type)}
                 </span>
-                <span className="text-xs text-gray-400">登録 {yearsActive}年</span>
+                <span className="text-xs text-gray-400">{t('registeredYears', { years: yearsActive })}</span>
               </div>
             </div>
 
@@ -196,7 +195,7 @@ export default function SupporterProfilePage() {
                 {sl.website && (
                   <a href={sl.website} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full transition-colors">
-                    🌐 公式サイト
+                    {t('website')}
                   </a>
                 )}
                 {sl.twitter && (
@@ -233,9 +232,9 @@ export default function SupporterProfilePage() {
         {/* ── 実績3点セット ── */}
         <div className="grid grid-cols-3 gap-3 mt-4">
           {[
-            { value: supporter.resolved_count, label: '解決した相談', suffix: '件', color: 'text-teal-600' },
-            { value: totalBadges, label: '獲得バッジ', suffix: '個', color: 'text-amber-500' },
-            { value: supporter.service_area_nationwide ? 47 : areas.length, label: '活動エリア', suffix: '都道府県', color: 'text-blue-600' },
+            { value: supporter.resolved_count, label: t('statResolved'), suffix: t('statResolvedUnit'), color: 'text-teal-600' },
+            { value: totalBadges, label: t('statBadges'), suffix: t('statBadgesUnit'), color: 'text-amber-500' },
+            { value: supporter.service_area_nationwide ? 47 : areas.length, label: t('statAreas'), suffix: t('statAreasUnit'), color: 'text-blue-600' },
           ].map((item, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
               <div className={`text-2xl font-black ${item.color}`}>{item.value}</div>
@@ -249,7 +248,7 @@ export default function SupporterProfilePage() {
         {supporter.bio && (
           <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span>✍️</span> 自己紹介
+              <span>✍️</span> {t('bioTitle')}
             </h2>
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-all">{supporter.bio}</p>
           </div>
@@ -258,11 +257,11 @@ export default function SupporterProfilePage() {
         {/* ── 活動エリア ── */}
         <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span>📍</span> 活動エリア
+            <span>📍</span> {t('areasTitle')}
           </h2>
           {supporter.service_area_nationwide ? (
             <span className="inline-block bg-teal-50 text-teal-700 border border-teal-200 text-sm font-bold px-4 py-2 rounded-full">
-              🗾 全国対応
+              {t('nationwideBadge')}
             </span>
           ) : (
             <div className="flex flex-wrap gap-1.5">
@@ -279,19 +278,19 @@ export default function SupporterProfilePage() {
         {totalBadges > 0 && (
           <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
-              <span>🏆</span> 感謝バッジ
+              <span>🏆</span> {t('badgesTitle')}
             </h2>
-            <p className="text-xs text-gray-400 mb-4">相談者から贈られたバッジです</p>
+            <p className="text-xs text-gray-400 mb-4">{t('badgesSubtitle')}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {Object.entries(badges).map(([key, count]) => {
-                const info = BADGE_INFO[key];
+                const info = SUPPORTER_BADGES[key as BadgeKey];
                 if (!info || count === 0) return null;
                 return (
                   <div key={key} className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3">
                     <span className="text-2xl">{info.emoji}</span>
                     <div>
-                      <div className="text-xs font-bold text-amber-700">{info.label}</div>
-                      <div className="text-xs text-amber-500">{count}回</div>
+                      <div className="text-xs font-bold text-amber-700">{tBadge(key)}</div>
+                      <div className="text-xs text-amber-500">{t('badgeCount', { count })}</div>
                     </div>
                   </div>
                 );
@@ -302,14 +301,13 @@ export default function SupporterProfilePage() {
 
         {/* ── CTA ── */}
         <div className="mt-6 bg-gradient-to-r from-teal-500 to-teal-500 rounded-2xl p-6 text-white text-center">
-          <p className="font-bold mb-1">この団体に相談したいですか？</p>
+          <p className="font-bold mb-1">{t('ctaTitle')}</p>
           <p className="text-teal-100 text-xs mb-4">
-            相談を投稿してサポーターを選ぶ仕組みです。<br />
-            承認するまで個人情報は渡りません。
+            {t('ctaBody')}
           </p>
           <Link href={ctaHref}
             className="inline-block bg-white text-teal-600 font-bold px-6 py-3 rounded-xl hover:bg-teal-50 transition-colors text-sm shadow">
-            {ctaLabel}
+            {isLoggedIn ? t('ctaDashboard') : t('ctaConsult')}
           </Link>
         </div>
       </main>

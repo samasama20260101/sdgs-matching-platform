@@ -1,1 +1,41 @@
-{}
+{
+  "public": {
+    "list": {
+      "title": "등록 서포터 목록",
+      "subtitle": "상담 전에 어떤 단체가 참여하고 있는지 확인할 수 있습니다",
+      "orgCount": "{count}개 단체",
+      "backToDashboard": "← 대시보드로 돌아가기",
+      "backToDashboardShort": "대시보드로 돌아가기",
+      "backToTop": "← 첫 화면으로 돌아가기",
+      "regionMatch": "당신의 지역을 담당하는 {count}개 단체를 상단에 표시하고 있습니다",
+      "regionBadge": "📍 내 지역",
+      "filterAll": "전체",
+      "errorTitle": "데이터 불러오기 오류",
+      "empty": "조건에 맞는 서포터를 찾지 못했습니다",
+      "resetFilter": "필터 초기화",
+      "othersSuffix": " 외",
+      "showMore": "더 보기 ({count}개 단체)"
+    },
+    "detail": {
+      "backToList": "← 서포터 목록으로 돌아가기",
+      "registeredYears": "등록 {years}년",
+      "website": "🌐 공식 사이트",
+      "statResolved": "해결한 상담",
+      "statResolvedUnit": "건",
+      "statBadges": "획득 배지",
+      "statBadgesUnit": "개",
+      "statAreas": "활동 지역",
+      "statAreasUnit": "개 지역",
+      "bioTitle": "소개",
+      "areasTitle": "활동 지역",
+      "nationwideBadge": "🗾 전국 대응",
+      "badgesTitle": "감사 배지",
+      "badgesSubtitle": "상담자들이 보낸 배지입니다",
+      "badgeCount": "{count}회",
+      "ctaTitle": "이 단체에 상담하고 싶으신가요?",
+      "ctaBody": "상담을 올리고 서포터를 선택하는 방식입니다. 승인 전까지 개인정보는 전달되지 않습니다.",
+      "ctaConsult": "무료로 상담해 보기 →",
+      "ctaDashboard": "대시보드로 →"
+    }
+  }
+}

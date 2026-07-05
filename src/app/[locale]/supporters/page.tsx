@@ -2,7 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/icons/Logo';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
 import { supabase } from '@/lib/supabase/client';
@@ -31,6 +32,11 @@ const getDashboardHref = (role: UserRole) => {
 };
 
 export default function SupportersPage() {
+  const t = useTranslations('supporter.public.list');
+  const tNav = useTranslations('landing.nav');
+  const tSection = useTranslations('landing.supportersSection');
+  const tSupporterType = useTranslations('common.supporterType');
+  const tForm = useTranslations('common.form');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [displayCount, setDisplayCount] = useState(20); // 最初は20件表示
   const [isLoading, setIsLoading] = useState(true);
@@ -108,13 +114,13 @@ export default function SupportersPage() {
           <div className="flex gap-3">
             {authChecked && dashboardHref ? (
               <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
-                ダッシュボードへ戻る
+                {t('backToDashboardShort')}
               </Link>
             ) : authChecked ? (
               <>
-                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">ログイン</Link>
+                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">{tNav('login')}</Link>
                 <Link href="/signup" className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
-                  相談する
+                  {tNav('consult')}
                 </Link>
               </>
             ) : null}
@@ -124,29 +130,29 @@ export default function SupportersPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-10">
         <Link href={dashboardHref ?? '/'} className="text-xs text-gray-400 hover:text-teal-500 transition-colors">
-          {dashboardHref ? '← ダッシュボードへ戻る' : '← トップに戻る'}
+          {dashboardHref ? t('backToDashboard') : t('backToTop')}
         </Link>
-        <h1 className="text-2xl font-black text-gray-800 mt-3">登録サポーター一覧</h1>
+        <h1 className="text-2xl font-black text-gray-800 mt-3">{t('title')}</h1>
         <p className="text-gray-500 text-sm mt-1">
-          相談前にどんな団体が参加しているか確認できます
-          {supporters.length > 0 && <span className="ml-2 text-teal-600 font-bold">{supporters.length}団体</span>}
+          {t('subtitle')}
+          {supporters.length > 0 && <span className="ml-2 text-teal-600 font-bold">{t('orgCount', { count: supporters.length })}</span>}
         </p>
 
         {userRegionCode && regionMatchCount > 0 && (
           <div className="mt-4 flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-xl px-4 py-2.5 text-sm text-teal-700">
             <span>📍</span>
-            <span>あなたの地域をカバーする <strong>{regionMatchCount}団体</strong> を上位に表示しています</span>
+            <span>{t('regionMatch', { count: regionMatchCount })}</span>
           </div>
         )}
 
         <div className="flex gap-2 mt-5 mb-6">
           {[
-            { key: null, label: 'すべて' },
-            { key: 'NPO', label: '🌿 NPO・支援団体' },
-            { key: 'CORPORATE', label: '🏢 企業' },
-            { key: 'GOVERNMENT', label: '🏛️ 行政・公共機関' },
+            { key: null, label: t('filterAll') },
+            { key: 'NPO', label: `🌿 ${tSupporterType('NPO')}` },
+            { key: 'CORPORATE', label: `🏢 ${tSupporterType('CORPORATE')}` },
+            { key: 'GOVERNMENT', label: `🏛️ ${tSupporterType('GOVERNMENT')}` },
           ].map(({ key, label }) => (
-            <button key={String(key)} onClick={() => setTypeFilter(key)}
+            <button key={String(key)} onClick={() => handleTypeFilter(key)}
               className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
                 ? 'bg-teal-500 text-white border-teal-500'
                 : 'bg-white text-gray-500 border-gray-200 hover:border-teal-300'}`}>
@@ -158,20 +164,20 @@ export default function SupportersPage() {
         {apiError ? (
           <div className="text-center py-20">
             <div className="text-3xl mb-3">⚠️</div>
-            <p className="text-red-500 font-bold mb-2">データ取得エラー</p>
+            <p className="text-red-500 font-bold mb-2">{t('errorTitle')}</p>
             <p className="text-xs text-gray-400 bg-gray-100 px-4 py-2 rounded-lg inline-block">{apiError}</p>
           </div>
         ) : isLoading ? (
           <div className="text-center py-20 text-gray-400">
             <div className="text-3xl mb-3">🔍</div>
-            <p>読み込み中...</p>
+            <p>{tForm('loading')}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <div className="text-3xl mb-3">😢</div>
-            <p>該当するサポーターが見つかりませんでした</p>
+            <p>{t('empty')}</p>
             <button onClick={() => handleTypeFilter(null)} className="mt-3 text-sm text-teal-500 hover:text-teal-600">
-              フィルターをリセット
+              {t('resetFilter')}
             </button>
           </div>
         ) : (
@@ -195,26 +201,32 @@ export default function SupportersPage() {
                         </h3>
                         {matched && (
                           <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium whitespace-nowrap">
-                            📍 あなたの地域
+                            {t('regionBadge')}
                           </span>
                         )}
                       </div>
                       <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${getSupporterTypeConfig(s.supporter_type).badgeClass} border`}>
-                        {getSupporterTypeConfig(s.supporter_type).label}
+                        {tSupporterType(s.supporter_type)}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-xs text-gray-400 mb-4">
                     📍 {s.service_area_nationwide
-                      ? '全国対応'
+                      ? tSection('nationwide')
                       : (s.service_areas || []).map(a => a.name_local).slice(0, 3).join(' · ')
-                        + ((s.service_areas || []).length > 3 ? ' 他' : '')}
+                        + ((s.service_areas || []).length > 3 ? t('othersSuffix') : '')}
                   </div>
 
                   <div className="flex gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                    <span>✅ 解決 <strong className="text-teal-600">{s.resolved_count}件</strong></span>
-                    <span>🏆 <strong className="text-amber-500">{s.badge_count}バッジ</strong></span>
+                    <span>{tSection.rich('resolvedStat', {
+                      count: s.resolved_count,
+                      strong: (chunks) => <strong className="text-teal-600">{chunks}</strong>,
+                    })}</span>
+                    <span>{tSection.rich('badgeStat', {
+                      count: s.badge_count,
+                      strong: (chunks) => <strong className="text-amber-500">{chunks}</strong>,
+                    })}</span>
                   </div>
                 </Link>
               );
@@ -226,7 +238,7 @@ export default function SupportersPage() {
                 onClick={() => setDisplayCount(c => c + 20)}
                 className="px-6 py-3 bg-white border border-teal-300 text-teal-600 rounded-full text-sm font-medium hover:bg-teal-50 transition-colors shadow-sm"
               >
-                さらに表示 ({filtered.length - displayCount}団体)
+                {t('showMore', { count: filtered.length - displayCount })}
               </button>
             </div>
           )}

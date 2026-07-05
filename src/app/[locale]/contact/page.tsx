@@ -1,33 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { supabase } from '@/lib/supabase/client';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/icons/Logo';
 
-
-
-const CATEGORIES = {
+// カテゴリはDB保存・管理画面表示のため日本語文字列を正本とする（valueは日本語のまま）。
+// 表示ラベルのみ landing.contact.categories.* で翻訳する。
+const CATEGORY_DEFS = {
   guest: [
-    'サービスについて知りたい',
-    '支援団体として参加したい',
-    '取材・メディア',
-    'その他',
+    { id: 'aboutService', ja: 'サービスについて知りたい' },
+    { id: 'joinAsSupporter', ja: '支援団体として参加したい' },
+    { id: 'media', ja: '取材・メディア' },
+    { id: 'other', ja: 'その他' },
   ],
   SOS: [
-    '使い方がわからない',
-    '相談が進まない・困っている',
-    'マッチングに不満がある',
-    '退会希望',
-    'その他',
+    { id: 'howto', ja: '使い方がわからない' },
+    { id: 'stuck', ja: '相談が進まない・困っている' },
+    { id: 'matchingComplaint', ja: 'マッチングに不満がある' },
+    { id: 'withdraw', ja: '退会希望' },
+    { id: 'other', ja: 'その他' },
   ],
   SUPPORTER: [
-    '使い方がわからない',
-    '案件・マッチングについて',
-    '退会希望',
-    'その他',
+    { id: 'howto', ja: '使い方がわからない' },
+    { id: 'aboutCases', ja: '案件・マッチングについて' },
+    { id: 'withdraw', ja: '退会希望' },
+    { id: 'other', ja: 'その他' },
   ],
-};
+} as const;
+
+const WITHDRAW_JA = '退会希望';
 
 type ContactUser = {
   role: 'SOS' | 'SUPPORTER' | 'ADMIN';
@@ -37,6 +40,8 @@ type ContactUser = {
 };
 
 export default function ContactPage() {
+  const t = useTranslations('landing.contact');
+  const tForm = useTranslations('common.form');
   const [userData, setUserData] = useState<ContactUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -77,20 +82,20 @@ export default function ContactPage() {
     userData?.role === 'SOS' ? 'SOS' :
     userData?.role === 'SUPPORTER' ? 'SUPPORTER' : 'guest';
 
-  const categories = CATEGORIES[role];
+  const categories = CATEGORY_DEFS[role];
 
-  const isRetirement = category === '退会希望';
+  const isRetirement = category === WITHDRAW_JA;
   const messagePlaceholder = isRetirement
-    ? '退会を希望される理由をお聞かせください（任意）'
-    : 'お問い合わせの詳細をご記入ください';
+    ? t('withdrawPlaceholder')
+    : t('detailPlaceholder');
 
   const handleSubmit = async () => {
     setError('');
-    if (role === 'guest' && !name.trim()) { setError('お名前を入力してください'); return; }
-    if (role === 'guest' && !guestEmail.trim()) { setError('メールアドレスを入力してください'); return; }
-    if (!category) { setError('お問い合わせの種類を選択してください'); return; }
-    if (!message.trim()) { setError('詳細を入力してください'); return; }
-    if (message.length > 1000) { setError('詳細は1000文字以内で入力してください'); return; }
+    if (role === 'guest' && !name.trim()) { setError(t('errorName')); return; }
+    if (role === 'guest' && !guestEmail.trim()) { setError(t('errorEmail')); return; }
+    if (!category) { setError(t('errorCategory')); return; }
+    if (!message.trim()) { setError(t('errorDetail')); return; }
+    if (message.length > 1000) { setError(t('errorDetailTooLong')); return; }
 
     setIsSending(true);
     const res = await fetch('/api/contact', {
@@ -107,7 +112,7 @@ export default function ContactPage() {
       }),
     });
     const result = await res.json();
-    if (!res.ok) { setError(result.error || '送信に失敗しました'); setIsSending(false); return; }
+    if (!res.ok) { setError(result.error || t('errorSend')); setIsSending(false); return; }
     setDoneId(result.display_id);
     setDone(true);
     setIsSending(false);
@@ -115,7 +120,7 @@ export default function ContactPage() {
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-400">読み込み中...</p>
+      <p className="text-gray-400">{tForm('loading')}</p>
     </div>
   );
 
@@ -129,7 +134,7 @@ export default function ContactPage() {
           </Link>
           {userData && (
             <span className="text-xs text-gray-400">
-              {userData.display_id || userData.email} でログイン中
+              {t('loggedInAs', { name: userData.display_id || userData.email })}
             </span>
           )}
         </div>
@@ -137,30 +142,30 @@ export default function ContactPage() {
 
       <main className="max-w-2xl mx-auto px-6 py-10">
         {/* 戻るリンク */}
-        {userData?.role === 'SOS' && <Link href="/sos/dashboard" className="text-xs text-gray-400 hover:text-teal-500">← ダッシュボードに戻る</Link>}
-        {userData?.role === 'SUPPORTER' && <Link href="/supporter/dashboard" className="text-xs text-gray-400 hover:text-teal-500">← ダッシュボードに戻る</Link>}
-        {!userData && <Link href="/" className="text-xs text-gray-400 hover:text-teal-500">← トップに戻る</Link>}
+        {userData?.role === 'SOS' && <Link href="/sos/dashboard" className="text-xs text-gray-400 hover:text-teal-500">{t('backToDashboard')}</Link>}
+        {userData?.role === 'SUPPORTER' && <Link href="/supporter/dashboard" className="text-xs text-gray-400 hover:text-teal-500">{t('backToDashboard')}</Link>}
+        {!userData && <Link href="/" className="text-xs text-gray-400 hover:text-teal-500">{t('backToTop')}</Link>}
 
-        <h1 className="text-2xl font-black text-gray-800 mt-3 mb-1">お問い合わせ</h1>
+        <h1 className="text-2xl font-black text-gray-800 mt-3 mb-1">{t('title')}</h1>
         <p className="text-sm text-gray-500 mb-8">
-          内容を確認後、ご登録のメールアドレスへご返信いたします。
+          {t('subtitle')}
         </p>
 
         {done ? (
           /* 完了画面 */
           <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
             <div className="text-5xl mb-4">✅</div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">送信が完了しました</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">{t('doneTitle')}</h2>
             <p className="text-sm text-gray-500 mb-4">
-              担当者よりご返信いたします。今しばらくお待ちください。
+              {t('doneBody')}
             </p>
             <div className="inline-block bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm text-gray-600 mb-6">
-              受付番号：<strong className="font-mono text-gray-800">{doneId}</strong>
+              {t('receiptNumber')}<strong className="font-mono text-gray-800">{doneId}</strong>
             </div>
             <div className="flex justify-center gap-3">
-              {userData?.role === 'SOS' && <Link href="/sos/dashboard" className="px-5 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600">ダッシュボードへ</Link>}
-              {userData?.role === 'SUPPORTER' && <Link href="/supporter/dashboard" className="px-5 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600">ダッシュボードへ</Link>}
-              {!userData && <Link href="/" className="px-5 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600">トップへ戻る</Link>}
+              {userData?.role === 'SOS' && <Link href="/sos/dashboard" className="px-5 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600">{t('toDashboard')}</Link>}
+              {userData?.role === 'SUPPORTER' && <Link href="/supporter/dashboard" className="px-5 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600">{t('toDashboard')}</Link>}
+              {!userData && <Link href="/" className="px-5 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600">{t('toTop')}</Link>}
             </div>
           </div>
         ) : (
@@ -170,7 +175,7 @@ export default function ContactPage() {
             {/* ログイン状態表示 */}
             {userData && (
               <div className="bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 text-sm text-teal-700">
-                <span className="font-medium">{userData.display_id || userData.email}</span> としてログイン中 — メールアドレスは自動的に使用されます
+                {t('loggedInNote', { name: userData.display_id || userData.email })}
               </div>
             )}
 
@@ -179,45 +184,45 @@ export default function ContactPage() {
               <>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    お名前 <span className="text-red-500">*</span>
+                    {t('nameLabel')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text" value={name} onChange={e => setName(e.target.value)}
-                    placeholder="山田 太郎"
+                    placeholder={t('namePlaceholder')}
                     maxLength={64}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    メールアドレス <span className="text-red-500">*</span>
+                    {tForm('email')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email" value={guestEmail}
                     onChange={e => setGuestEmail(e.target.value)}
-                    placeholder="example@email.com"
+                    placeholder={t('emailPlaceholder')}
                     maxLength={254}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    組織名 <span className="text-xs text-gray-400 font-normal">任意</span>
+                    {t('orgLabel')} <span className="text-xs text-gray-400 font-normal">{t('optional')}</span>
                   </label>
                   <input
                     type="text" value={organization} onChange={e => setOrganization(e.target.value)}
-                    placeholder="〇〇株式会社"
+                    placeholder={t('orgPlaceholder')}
                     maxLength={64}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    電話番号 <span className="text-xs text-gray-400 font-normal">任意</span>
+                    {t('phoneLabel')} <span className="text-xs text-gray-400 font-normal">{t('optional')}</span>
                   </label>
                   <input
                     type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                    placeholder="03-0000-0000"
+                    placeholder={t('phonePlaceholder')}
                     maxLength={20}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                   />
@@ -228,27 +233,27 @@ export default function ContactPage() {
             {/* カテゴリ */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                お問い合わせの種類 <span className="text-red-500">*</span>
+                {t('categoryLabel')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 bg-white appearance-none cursor-pointer"
               >
-                <option value="">選択してください</option>
+                <option value="">{t('categoryPlaceholder')}</option>
                 {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat.id} value={cat.ja}>{t(`categories.${cat.id}`)}</option>
                 ))}
               </select>
-              {category === '退会希望' && (
-                <p className="mt-2 text-xs text-red-500">※ 退会をご希望の場合、担当者より手続きのご案内をメールにてお送りします</p>
+              {isRetirement && (
+                <p className="mt-2 text-xs text-red-500">{t('withdrawNote')}</p>
               )}
             </div>
 
             {/* 詳細 */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                詳細 <span className="text-red-500">*</span>
+                {t('detailLabel')} <span className="text-red-500">*</span>
               </label>
 
               <textarea
@@ -272,7 +277,7 @@ export default function ContactPage() {
               disabled={isSending}
               className="w-full py-4 bg-gradient-to-r from-teal-500 to-blue-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 text-sm"
             >
-              {isSending ? '送信中...' : '送信する'}
+              {isSending ? tForm('submitting') : t('submit')}
             </button>
           </div>
         )}
