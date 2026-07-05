@@ -1,1 +1,41 @@
-{}
+{
+  "public": {
+    "list": {
+      "title": "Danh sách người hỗ trợ đã đăng ký",
+      "subtitle": "Bạn có thể xem những tổ chức nào tham gia trước khi tư vấn",
+      "orgCount": "{count} tổ chức",
+      "backToDashboard": "← Về bảng điều khiển",
+      "backToDashboardShort": "Về bảng điều khiển",
+      "backToTop": "← Về trang chủ",
+      "regionMatch": "Đang ưu tiên hiển thị {count} tổ chức hoạt động tại khu vực của bạn",
+      "regionBadge": "📍 Khu vực của bạn",
+      "filterAll": "Tất cả",
+      "errorTitle": "Lỗi tải dữ liệu",
+      "empty": "Không tìm thấy người hỗ trợ phù hợp",
+      "resetFilter": "Đặt lại bộ lọc",
+      "othersSuffix": " v.v.",
+      "showMore": "Hiển thị thêm ({count} tổ chức)"
+    },
+    "detail": {
+      "backToList": "← Quay lại danh sách người hỗ trợ",
+      "registeredYears": "Đã đăng ký {years} năm",
+      "website": "🌐 Trang web chính thức",
+      "statResolved": "Tư vấn đã giải quyết",
+      "statResolvedUnit": "",
+      "statBadges": "Huy hiệu nhận được",
+      "statBadgesUnit": "",
+      "statAreas": "Khu vực hoạt động",
+      "statAreasUnit": "",
+      "bioTitle": "Giới thiệu",
+      "areasTitle": "Khu vực hoạt động",
+      "nationwideBadge": "🗾 Toàn quốc",
+      "badgesTitle": "Huy hiệu cảm ơn",
+      "badgesSubtitle": "Huy hiệu do những người được hỗ trợ gửi tặng",
+      "badgeCount": "{count} lần",
+      "ctaTitle": "Bạn muốn tư vấn với tổ chức này?",
+      "ctaBody": "Cách hoạt động: đăng tư vấn rồi chọn người hỗ trợ. Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận.",
+      "ctaConsult": "Thử tư vấn miễn phí →",
+      "ctaDashboard": "Đến bảng điều khiển →"
+    }
+  }
+}
