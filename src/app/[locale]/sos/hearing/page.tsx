@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,24 @@ const CHAR_LIMITS = {
   want: 200,
 };
 
+const SUPPORTED_LOCALES = new Set(['ja', 'en', 'zh', 'ko', 'vi', 'id']);
+
+type QAOption = {
+  id: string;
+  text: string;
+  urgent?: boolean;
+  exclusive?: boolean;
+};
+
+type QAQuestion = {
+  id: number;
+  question: string;
+  options: QAOption[];
+  otherPlaceholder: string;
+};
+
 // ─── Q&A選択肢の定義 ────────────────────────────────────────
-const QA_QUESTIONS = [
+const QA_QUESTIONS: QAQuestion[] = [
   {
     id: 1,
     question: '生活に必要なものについて、困っていることはありますか？',
@@ -31,7 +47,7 @@ const QA_QUESTIONS = [
       { id: 'q1_2', text: '安全に暮らせる住まいがない' },
       { id: 'q1_3', text: '電気が使えない' },
       { id: 'q1_4', text: 'インターネットが使えない' },
-      { id: 'q1_5', text: '該当なし' },
+      { id: 'q1_5', text: '該当なし', exclusive: true },
     ],
     otherPlaceholder: '例：清潔な飲み水が手に入らない、冬に暖房がない',
   },
@@ -43,7 +59,7 @@ const QA_QUESTIONS = [
       { id: 'q2_2', text: 'いじめや嫌がらせを受けている' },
       { id: 'q2_3', text: '身体的・精神的・性的な暴力やハラスメントを受けている' },
       { id: 'q2_4', text: '最低賃金より低い賃金で働いている、またはサービス残業がある' },
-      { id: 'q2_5', text: '該当なし' },
+      { id: 'q2_5', text: '該当なし', exclusive: true },
     ],
     otherPlaceholder: '例：宗教的な理由で自由を奪われている、難民として差別を受けている',
   },
@@ -55,7 +71,7 @@ const QA_QUESTIONS = [
       { id: 'q3_2', text: '収入が少なく、最低限の生活を送ることができない' },
       { id: 'q3_3', text: '学校に通うことができない' },
       { id: 'q3_4', text: '15歳未満で働いている' },
-      { id: 'q3_5', text: '該当なし' },
+      { id: 'q3_5', text: '該当なし', exclusive: true },
     ],
     otherPlaceholder: '例：障害があり就職活動ができない、借金を返すために働き続けている',
   },
@@ -64,10 +80,10 @@ const QA_QUESTIONS = [
     question: '健康や心のことについて、現在困っていることはありますか？',
     options: [
       { id: 'q4_1', text: '体調が悪いが、金銭的な理由などで病院に行けない' },
-      { id: 'q4_2', text: '死にたいと思うことがある' },
+      { id: 'q4_2', text: '死にたいと思うことがある', urgent: true },
       { id: 'q4_3', text: 'たばこの煙による受動喫煙がつらい' },
       { id: 'q4_4', text: 'けがをしそうな危険な環境で働いていて不安がある' },
-      { id: 'q4_5', text: '該当なし' },
+      { id: 'q4_5', text: '該当なし', exclusive: true },
     ],
     otherPlaceholder: '例：精神的なケアが必要だが相談先がわからない、薬が手に入らない',
   },
@@ -80,7 +96,7 @@ const QA_QUESTIONS = [
       { id: 'q5_3', text: 'NPOや支援団体につながりたい' },
       { id: 'q5_4', text: '弁護士や医師などの専門家に相談したい' },
       { id: 'q5_5', text: '有料でもよいのでサポートを受けたい' },
-      { id: 'q5_6', text: '該当なし' },
+      { id: 'q5_6', text: '該当なし', exclusive: true },
     ],
     otherPlaceholder: '例：子どもの保護が必要、避難場所を探している',
   },
@@ -98,6 +114,7 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 // ─── メインコンポーネント ────────────────────────────────────
 export default function SOSHearingPage() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiStep, setAiStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +129,7 @@ export default function SOSHearingPage() {
   ];
 
   // 選択された回答（複数選択可）
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, Set<string>>>({});
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<number, Set<string>>>({});
 
   // Q1〜Q5の「その他」チェック状態 & テキスト
   const [otherChecked, setOtherChecked] = useState<Record<number, boolean>>({});
@@ -144,24 +161,26 @@ export default function SOSHearingPage() {
   }, [router]);
 
   // チェックボックスの変更（「該当なし」は排他制御）
-  const handleToggleOption = (questionId: number, optionText: string) => {
-    setSelectedAnswers(prev => {
+  const handleToggleOption = (question: QAQuestion, option: QAOption) => {
+    setSelectedOptionIds(prev => {
+      const questionId = question.id;
       const current = new Set(prev[questionId] || []);
-      if (optionText === '該当なし') {
+      const exclusiveOptionId = question.options.find(item => item.exclusive)?.id;
+      if (option.exclusive) {
         // 「該当なし」を選んだら他をすべて外し、その他もリセット
-        if (current.has('該当なし')) {
-          current.delete('該当なし');
+        if (current.has(option.id)) {
+          current.delete(option.id);
         } else {
           current.clear();
-          current.add('該当なし');
+          current.add(option.id);
           setOtherChecked(p => ({ ...p, [questionId]: false }));
           setOtherTexts(p => ({ ...p, [questionId]: '' }));
         }
       } else {
         // 他の選択肢を選んだら「該当なし」を外す
-        current.delete('該当なし');
-        if (current.has(optionText)) current.delete(optionText);
-        else current.add(optionText);
+        if (exclusiveOptionId) current.delete(exclusiveOptionId);
+        if (current.has(option.id)) current.delete(option.id);
+        else current.add(option.id);
       }
       return { ...prev, [questionId]: current };
     });
@@ -175,9 +194,11 @@ export default function SOSHearingPage() {
         setOtherTexts(p => ({ ...p, [questionId]: '' }));
       } else {
         // その他を選んだら「該当なし」を外す
-        setSelectedAnswers(p => {
+        setSelectedOptionIds(p => {
           const current = new Set(p[questionId] || []);
-          current.delete('該当なし');
+          const question = QA_QUESTIONS.find(item => item.id === questionId);
+          const exclusiveOptionId = question?.options.find(item => item.exclusive)?.id;
+          if (exclusiveOptionId) current.delete(exclusiveOptionId);
           return { ...p, [questionId]: current };
         });
       }
@@ -185,10 +206,19 @@ export default function SOSHearingPage() {
     });
   };
 
-  // 緊急ワード検知
+  // 自由記述専用の緊急語彙。機械翻訳だけで確定せず、ネイティブ/専門家確認が必要な暫定リスト。
   const detectUrgency = (text: string): boolean => {
-    const urgentWords = ['死にたい', '殺される', '消えたい', '限界', '助けて', '虐待', '暴力', '紛争', '戦争', '人身取引', 'suicide', 'kill', 'die', 'abuse', 'violence', 'war', 'trafficking'];
-    return urgentWords.some(word => text.toLowerCase().includes(word.toLowerCase()));
+    const urgentPhrases = [
+      '死にたい', '自殺', '殺される', '消えたい', '限界', '助けて', '虐待', '暴力', '人身取引', '監禁', '戦争', '紛争',
+      '想死', '不想活', '自杀', '自殺', '救命', '虐待', '暴力', '家暴', '人口贩卖', '人口販賣',
+      '죽고 싶', '죽고싶', '자살', '도와주세요', '살려주', '학대', '폭력', '가정폭력', '인신매매', '전쟁',
+      'want to die', 'kill myself', 'end my life', 'commit suicide', 'attempt suicide', 'suicidal thoughts',
+      'suicide', 'suicidal', 'abuse', 'abused', 'violence', 'trafficked', 'trafficking',
+      'muốn chết', 'muon chet', 'tự tử', 'tu tu', 'cứu tôi', 'cuu toi', 'bạo lực', 'bao luc', 'bạo hành', 'bao hanh', 'buôn người', 'buon nguoi', 'chiến tranh', 'chien tranh',
+      'bunuh diri', 'ingin mati', 'mau mati', 'ingin bunuh diri', 'tolong saya', 'kekerasan', 'perdagangan orang', 'kdrt', 'penganiayaan', 'diculik',
+    ];
+    const normalizedText = text.toLowerCase();
+    return urgentPhrases.some(phrase => normalizedText.includes(phrase.toLowerCase()));
   };
 
   const handleSubmit = async () => {
@@ -196,7 +226,7 @@ export default function SOSHearingPage() {
 
     // バリデーション
     for (const q of QA_QUESTIONS) {
-      const selected = selectedAnswers[q.id]?.size || 0;
+      const selected = selectedOptionIds[q.id]?.size || 0;
       const hasOther = otherChecked[q.id] && otherTexts[q.id]?.trim();
       if (selected === 0 && !hasOther) {
         setError(`Q${q.id} に少なくとも1つ回答してください`);
@@ -238,19 +268,31 @@ export default function SOSHearingPage() {
     }, 30000);
 
     try {
-      // 回答データ整形
+      // 回答データ整形: qaは従来通り表示用の文字列配列、qa_idsは言語横断集計用。
       const qaData: Record<number, string[]> = {};
+      const qaIds: Record<number, string[]> = {};
       for (const q of QA_QUESTIONS) {
-        const items = [...(selectedAnswers[q.id] || [])];
+        const selectedIds = [...(selectedOptionIds[q.id] || [])];
+        const items = selectedIds
+          .map(id => q.options.find(option => option.id === id)?.text)
+          .filter((text): text is string => Boolean(text));
         if (otherChecked[q.id] && otherTexts[q.id]?.trim()) {
           items.push(`その他: ${otherTexts[q.id].trim()}`);
+          selectedIds.push(`q${q.id}_other`);
         }
         qaData[q.id] = items;
+        qaIds[q.id] = selectedIds;
       }
 
-      // 緊急度判定
-      const allText = Object.values(qaData).flat().join(' ') + ' ' + Object.values(freeText).join(' ') + ' ' + Object.values(otherTexts).join(' ');
-      const isUrgent = detectUrgency(allText) || (selectedAnswers[4]?.has('死にたいと思うことがある'));
+      // 緊急度判定: 選択肢はurgentフラグ、自由記述と「その他」は語彙リストで判定する。
+      const hasUrgentChoice = QA_QUESTIONS.some(q =>
+        [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
+      );
+      const freeTextForUrgency = Object.values(freeText).join(' ') + ' ' + Object.values(otherTexts).join(' ');
+      const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
+      const currentLocale = typeof params.locale === 'string' && SUPPORTED_LOCALES.has(params.locale)
+        ? params.locale
+        : 'ja';
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -268,7 +310,7 @@ export default function SOSHearingPage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          intake_qna: { qa: qaData },
+          intake_qna: { qa: qaData, qa_ids: qaIds, locale: currentLocale },
           description_free: [
             freeText.what,
             freeText.when ? `いつから: ${freeText.when}` : '',
@@ -276,6 +318,7 @@ export default function SOSHearingPage() {
           ].filter(Boolean).join('\n'),
           title: freeText.what.slice(0, 50) || '相談',
           urgency: isUrgent ? 'High' : 'Medium',
+          locale: currentLocale,
           status: 'OPEN',
           region_country: 'ID',
         }),
@@ -325,8 +368,8 @@ export default function SOSHearingPage() {
               <CardContent>
                 <div className="space-y-2">
                   {question.options.map((option) => {
-                    const isChecked = selectedAnswers[question.id]?.has(option.text) || false;
-                    const isNone = option.text === '該当なし';
+                    const isChecked = selectedOptionIds[question.id]?.has(option.id) || false;
+                    const isNone = Boolean(option.exclusive);
                     return (
                       <label
                         key={option.id}
@@ -339,7 +382,7 @@ export default function SOSHearingPage() {
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => handleToggleOption(question.id, option.text)}
+                          onChange={() => handleToggleOption(question, option)}
                           className="mt-0.5 text-blue-600 rounded"
                         />
                         <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{option.text}</span>

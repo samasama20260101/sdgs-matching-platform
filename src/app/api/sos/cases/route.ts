@@ -7,6 +7,7 @@ const DESCRIPTION_FREE_MAX_LENGTH = 2000
 const TITLE_MAX_LENGTH = 80
 const ALLOWED_URGENCIES = new Set(['Low', 'Medium', 'High'])
 const ALLOWED_REGION_COUNTRIES = new Set(['JP', 'ID'])
+const ALLOWED_LOCALES = new Set(['ja', 'en', 'zh', 'ko', 'vi', 'id'])
 
 type CaseRow = {
     id: string
@@ -21,7 +22,11 @@ function sanitizeText(value: unknown, maxLength: number) {
     return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
 }
 
-function sanitizeIntakeQna(value: unknown) {
+function sanitizeLocale(value: unknown) {
+    return typeof value === 'string' && ALLOWED_LOCALES.has(value) ? value : null
+}
+
+function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null
     const qa = (value as { qa?: unknown }).qa
     if (!qa || typeof qa !== 'object' || Array.isArray(qa)) return null
@@ -37,7 +42,25 @@ function sanitizeIntakeQna(value: unknown) {
             .slice(0, 10)
     }
 
-    return { qa: sanitizedQa }
+    const sanitizedQaIds: Record<string, string[]> = {}
+    const qaIds = (value as { qa_ids?: unknown }).qa_ids
+    if (qaIds && typeof qaIds === 'object' && !Array.isArray(qaIds)) {
+        for (const [rawKey, rawIds] of Object.entries(qaIds as Record<string, unknown>)) {
+            if (!/^[1-5]$/.test(rawKey) && !/^q[1-5]$/.test(rawKey)) continue
+            if (!Array.isArray(rawIds)) continue
+            sanitizedQaIds[rawKey] = rawIds
+                .filter((id): id is string => typeof id === 'string')
+                .map((id) => id.trim())
+                .filter((id) => /^q[1-5]_(?:[1-9][0-9]*|other)$/.test(id))
+                .slice(0, 10)
+        }
+    }
+
+    return {
+        qa: sanitizedQa,
+        qa_ids: sanitizedQaIds,
+        locale: sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale,
+    }
 }
 
 export async function GET(request: Request) {
@@ -96,6 +119,7 @@ export async function POST(request: Request) {
     const regionCountry = typeof body.region_country === 'string' && ALLOWED_REGION_COUNTRIES.has(body.region_country)
         ? body.region_country
         : 'JP'
+    const locale = sanitizeLocale(body.locale) || sanitizeLocale(body.intake_qna?.locale) || 'ja'
 
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')
@@ -103,8 +127,9 @@ export async function POST(request: Request) {
             owner_user_id: userData.id,
             title,
             description_free: descriptionFree,
-            intake_qna: sanitizeIntakeQna(body.intake_qna),
+            intake_qna: sanitizeIntakeQna(body.intake_qna, locale),
             urgency,
+            locale,
             region_country: regionCountry,
             status: 'OPEN',
         }])
