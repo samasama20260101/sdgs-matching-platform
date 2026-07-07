@@ -1,38 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
-  <title id="title">Michiakari light trail</title>
-  <desc id="desc">A warm dotted light trail used as Namia's michiakari effect.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="t d">
+  <title id="t">みちあかり 単体素材</title>
+  <desc id="d">キャラを出しすぎずブランド感を添える、みちあかりの光の軌跡。</desc>
   <defs>
-    <filter id="softGlow" x="-20%" y="-80%" width="140%" height="260%">
-      <feGaussianBlur stdDeviation="9" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 1  0 0.74 0 0 0.55  0 0 0.2 0 0  0 0 0 0.75 0"/>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <linearGradient id="trail" x1="99" y1="236" x2="1090" y2="116" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ffd55e"/>
-      <stop offset="0.5" stop-color="#fff4b8"/>
-      <stop offset="1" stop-color="#ffd55e"/>
+    <linearGradient id="ltTrail" x1="60" y1="300" x2="1040" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE" stop-opacity="0"/>
+      <stop offset="0.25" stop-color="#36D6AE" stop-opacity="0.7"/>
+      <stop offset="0.75" stop-color="#21A5E2" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFD666"/>
     </linearGradient>
+    <radialGradient id="ltOrbGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3C4" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#FFF3C4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ltOrb" cx="42%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.6" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFE39A"/>
+    </radialGradient>
   </defs>
-  <rect width="1200" height="360" fill="none"/>
-  <path d="M94 235C257 314 392 291 520 201c139-98 294-129 585-75" fill="none" stroke="url(#trail)" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 33" filter="url(#softGlow)"/>
-  <g fill="#ffd55e" filter="url(#softGlow)">
-    <circle cx="88" cy="231" r="24"/>
-    <circle cx="274" cy="296" r="13"/>
-    <circle cx="435" cy="251" r="18"/>
-    <circle cx="617" cy="163" r="15"/>
-    <circle cx="782" cy="126" r="21"/>
-    <circle cx="961" cy="111" r="14"/>
-    <circle cx="1112" cy="129" r="23"/>
-  </g>
-  <g fill="#fff7c5" opacity="0.95">
-    <circle cx="181" cy="272" r="7"/>
-    <circle cx="354" cy="287" r="8"/>
-    <circle cx="544" cy="183" r="7"/>
-    <circle cx="703" cy="135" r="8"/>
-    <circle cx="875" cy="112" r="7"/>
-    <circle cx="1048" cy="117" r="8"/>
-  </g>
+
+  <!-- 光の軌跡（本線＋残像） -->
+  <path d="M40 302 C300 318 520 260 700 208 C830 170 940 148 1048 142"
+    fill="none" stroke="url(#ltTrail)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M120 322 C340 322 560 286 736 236 C860 202 950 182 1030 172"
+    fill="none" stroke="url(#ltTrail)" stroke-width="3.5" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- 軌跡に沿う光の粒（進むほど大きく・明るく） -->
+  <circle cx="250" cy="298" r="4" fill="#36D6AE" opacity="0.55"/>
+  <circle cx="430" cy="268" r="5" fill="#2BC0CE" opacity="0.65"/>
+  <circle cx="610" cy="230" r="6" fill="#21A5E2" opacity="0.75"/>
+  <circle cx="790" cy="188" r="7" fill="#8CC6EE" opacity="0.85"/>
+  <circle cx="930" cy="162" r="8" fill="#FFE9A8"/>
+
+  <!-- みちあかり本体（丸い灯・ロゴと同じ丸） -->
+  <circle cx="1064" cy="140" r="88" fill="url(#ltOrbGlow)"/>
+  <circle cx="1064" cy="140" r="40" fill="url(#ltOrb)"/>
+  <circle cx="1052" cy="128" r="10" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- こぼれる粒 -->
+  <circle cx="1128" cy="96" r="7" fill="#FFD666"/>
+  <circle cx="1146" cy="150" r="5" fill="#FFD666"/>
+  <circle cx="1112" cy="196" r="4" fill="#FFE9A8"/>
+  <circle cx="1160" cy="118" r="3" fill="#FFE9A8"/>
 </svg>

@@ -1,31 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Namia mini icon</title>
-  <desc id="desc">A balanced mini icon of Namia for small brand placements.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
+  <title id="t">なみあ ミニアイコン</title>
+  <desc id="d">SNSアイコンや資料の角に置ける、なみあの簡略版。涙型の体とみちあかり。</desc>
   <defs>
-    <linearGradient id="body" x1="148" y1="74" x2="355" y2="450" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#26dbc8"/>
-      <stop offset="1" stop-color="#1094d2"/>
+    <linearGradient id="mBody" x1="170" y1="60" x2="330" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE"/>
+      <stop offset="0.42" stop-color="#21A5E2"/>
+      <stop offset="1" stop-color="#1180CF"/>
     </linearGradient>
-    <radialGradient id="light" cx="50%" cy="48%" r="58%">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="0.62" stop-color="#f3ffff"/>
-      <stop offset="1" stop-color="#ffe39a"/>
+    <radialGradient id="mBelly" cx="46%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFEDB8"/>
     </radialGradient>
-    <filter id="lightGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+    <radialGradient id="mGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3C4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFF3C4" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <path d="M256 52c80 92 143 180 143 274 0 89-61 139-143 139s-143-50-143-139c0-94 63-182 143-274z" fill="url(#body)" stroke="#0876a7" stroke-width="9" stroke-linejoin="round"/>
-  <path d="M164 222c12-15 28-22 47-21" fill="none" stroke="#0a6e9b" stroke-width="7" stroke-linecap="round" opacity="0.62"/>
-  <path d="M301 201c19-1 35 6 47 21" fill="none" stroke="#0a6e9b" stroke-width="7" stroke-linecap="round" opacity="0.62"/>
-  <ellipse cx="188" cy="249" rx="18" ry="26" fill="#071d3f"/>
-  <ellipse cx="324" cy="249" rx="18" ry="26" fill="#071d3f"/>
-  <circle cx="195" cy="238" r="6.5" fill="#ffffff"/>
-  <circle cx="331" cy="238" r="6.5" fill="#ffffff"/>
-  <path d="M216 310c23 25 57 25 80 0" fill="none" stroke="#08213a" stroke-width="11" stroke-linecap="round"/>
-  <circle cx="256" cy="374" r="51" fill="url(#light)" filter="url(#lightGlow)"/>
+
+  <!-- 体（涙型） -->
+  <path d="M256 44 C256 44 122 208 122 356 C122 452 182 498 256 498 C330 498 390 452 390 356 C390 208 256 44 256 44 Z"
+    fill="url(#mBody)" stroke="#1467A8" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- ハイライト -->
+  <path d="M218 102 C194 138 176 172 168 204" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.28"/>
+
+  <!-- みちあかり -->
+  <circle cx="256" cy="392" r="84" fill="url(#mGlow)"/>
+  <circle cx="256" cy="392" r="56" fill="url(#mBelly)"/>
+
+  <!-- 顔 -->
+  <path d="M164 218 q20 -16 42 -10" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+  <path d="M306 208 q22 -6 42 10" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+  <ellipse cx="196" cy="256" rx="16" ry="23" fill="#0F1B2D"/>
+  <ellipse cx="316" cy="256" rx="16" ry="23" fill="#0F1B2D"/>
+  <circle cx="203" cy="245" r="5.5" fill="#FFFFFF"/>
+  <circle cx="190" cy="262" r="2.6" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="323" cy="245" r="5.5" fill="#FFFFFF"/>
+  <circle cx="310" cy="262" r="2.6" fill="#FFFFFF" opacity="0.9"/>
+  <ellipse cx="158" cy="294" rx="17" ry="10" fill="#A9DFF6" opacity="0.85"/>
+  <ellipse cx="354" cy="294" rx="17" ry="10" fill="#A9DFF6" opacity="0.85"/>
+  <path d="M230 300 q26 24 52 0" fill="none" stroke="#0D2B47" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- みちあかりの粒 -->
+  <circle cx="352" cy="418" r="6" fill="#FFD666"/>
+  <circle cx="372" cy="398" r="4" fill="#FFD666"/>
+  <circle cx="380" cy="432" r="3" fill="#FFE9A8"/>
 </svg>
