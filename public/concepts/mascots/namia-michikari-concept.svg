@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="t d" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <title id="t">みちあかり説明ビジュアル</title>
+  <desc id="d">相談者の声が、なみあのみちあかりに照らされて、NPO・行政・企業などの支援先へつながる流れの説明図。</desc>
+  <defs>
+    <linearGradient id="mcBody" x1="480" y1="120" x2="620" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE"/>
+      <stop offset="0.42" stop-color="#21A5E2"/>
+      <stop offset="1" stop-color="#1180CF"/>
+    </linearGradient>
+    <linearGradient id="mcSad" x1="120" y1="150" x2="200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B7C6D6"/>
+      <stop offset="1" stop-color="#8DA4BC"/>
+    </linearGradient>
+    <radialGradient id="mcBelly" cx="46%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFEDB8"/>
+    </radialGradient>
+    <radialGradient id="mcGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3C4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFF3C4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mcTrail" x1="230" y1="300" x2="1000" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8DA4BC" stop-opacity="0.6"/>
+      <stop offset="0.45" stop-color="#21A5E2" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFD666"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="500" rx="28" fill="#FBFFFE" stroke="#E2F4EC" stroke-width="3"/>
+
+  <!-- 見出し -->
+  <text x="600" y="72" text-anchor="middle" font-size="34" font-weight="800" fill="#0F172A">困りごとが、必要な支援へつながるまで</text>
+
+  <!-- つながる光の道 -->
+  <path d="M232 300 C330 350 430 356 520 330 C640 296 700 288 800 288 C880 288 940 284 1006 278"
+    fill="none" stroke="url(#mcTrail)" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 18"/>
+
+  <!-- ① 相談者（灯が消えかけた涙） -->
+  <g transform="translate(80,150) scale(0.34)">
+    <path d="M240 70 C240 70 92 252 92 416 C92 522 158 572 240 572 C322 572 388 522 388 416 C388 252 240 70 240 70 Z"
+      fill="url(#mcSad)" stroke="#64748B" stroke-width="10" stroke-linejoin="round"/>
+    <!-- とじた目・こまり眉 -->
+    <path d="M150 280 q26 -20 52 -6" fill="none" stroke="#3E4E63" stroke-width="9" stroke-linecap="round"/>
+    <path d="M278 274 q26 -14 52 6" fill="none" stroke="#3E4E63" stroke-width="9" stroke-linecap="round"/>
+    <path d="M162 322 q22 14 44 0" fill="none" stroke="#33415C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M274 322 q22 14 44 0" fill="none" stroke="#33415C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M216 372 q24 -14 48 0" fill="none" stroke="#33415C" stroke-width="9" stroke-linecap="round"/>
+    <!-- 消えかけの灯 -->
+    <circle cx="240" cy="456" r="52" fill="#EEF2F6" stroke="#C4D0DC" stroke-width="6"/>
+  </g>
+  <text x="160" y="420" text-anchor="middle" font-size="26" font-weight="700" fill="#475569">相談者</text>
+  <text x="160" y="452" text-anchor="middle" font-size="18" fill="#94A3B8">ひとりで抱えている状態</text>
+
+  <!-- ② なみあ（みちあかりで照らす） -->
+  <g transform="translate(468,120) scale(0.44)">
+    <path d="M116 456 C76 446 44 406 46 362 C47 338 62 322 82 328 C100 334 110 354 112 376 C114 400 122 428 134 444 Z"
+      fill="url(#mcBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M240 70 C240 70 92 252 92 416 C92 522 158 572 240 572 C322 572 388 522 388 416 C388 252 240 70 240 70 Z"
+      fill="url(#mcBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M178 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M250 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+    <circle cx="240" cy="456" r="100" fill="url(#mcGlow)"/>
+    <circle cx="240" cy="456" r="63" fill="url(#mcBelly)"/>
+    <path d="M366 428 C392 442 400 470 385 488 C370 505 342 502 327 487 C316 476 312 463 317 451 C324 435 347 418 366 428 Z"
+      fill="url(#mcBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M158 264 q22 -18 46 -11" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+    <path d="M276 253 q24 -7 46 11" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="185" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+    <ellipse cx="295" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+    <circle cx="192" cy="293" r="6" fill="#FFFFFF"/>
+    <circle cx="302" cy="293" r="6" fill="#FFFFFF"/>
+    <ellipse cx="143" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+    <ellipse cx="337" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+    <path d="M212 352 q28 26 56 0" fill="none" stroke="#0D2B47" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="56" cy="268" r="7" fill="#FFD666"/>
+    <circle cx="86" cy="246" r="4.5" fill="#FFD666"/>
+    <circle cx="324" cy="472" r="6" fill="#FFD666"/>
+  </g>
+  <text x="572" y="420" text-anchor="middle" font-size="26" font-weight="700" fill="#0D9488">なみあの「みちあかり」</text>
+  <text x="572" y="452" text-anchor="middle" font-size="18" fill="#64748B">次の一歩をそっと照らす</text>
+
+  <!-- ③ 支援先（NPO・行政・企業） -->
+  <g stroke-linejoin="round">
+    <!-- NPO: 家 -->
+    <path d="M902 262 l46 -38 46 38 v58 h-92 Z" fill="#E6FBF4" stroke="#0D9488" stroke-width="5"/>
+    <rect x="934" y="288" width="28" height="32" rx="4" fill="#0D9488" opacity="0.25"/>
+    <!-- 行政: 庁舎 -->
+    <path d="M1012 258 h96 M1018 258 l42 -30 42 30" fill="none" stroke="#1180CF" stroke-width="5"/>
+    <rect x="1018" y="258" width="96" height="62" fill="#EFF8FF" stroke="#1180CF" stroke-width="5"/>
+    <path d="M1036 268 v42 M1060 268 v42 M1084 268 v42" stroke="#1180CF" stroke-width="4" opacity="0.6"/>
+    <!-- 企業: ビル -->
+    <rect x="1128" y="238" width="52" height="82" rx="4" fill="#FFF8E8" stroke="#B7791F" stroke-width="5"/>
+    <path d="M1140 254 h10 M1158 254 h10 M1140 274 h10 M1158 274 h10 M1140 294 h10 M1158 294 h10" stroke="#B7791F" stroke-width="4"/>
+  </g>
+  <text x="1040" y="420" text-anchor="middle" font-size="26" font-weight="700" fill="#475569">支援先</text>
+  <text x="1040" y="452" text-anchor="middle" font-size="18" fill="#94A3B8">NPO・行政・企業</text>
+
+  <!-- 到達点の光 -->
+  <circle cx="1006" cy="278" r="26" fill="url(#mcGlow)"/>
+  <circle cx="1006" cy="278" r="9" fill="#FFE9A8"/>
+</svg>

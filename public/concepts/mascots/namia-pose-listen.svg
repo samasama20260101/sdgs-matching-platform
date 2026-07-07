@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="640" viewBox="0 0 480 640" role="img" aria-labelledby="t d">
+  <title id="t">なみあ きくポーズ</title>
+  <desc id="d">耳に手を当てて、話をきく姿勢のなみあ。相談入力や子ども向け説明の導線に。</desc>
+  <defs>
+    <linearGradient id="plBody" x1="150" y1="90" x2="340" y2="590" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE"/>
+      <stop offset="0.42" stop-color="#21A5E2"/>
+      <stop offset="1" stop-color="#1180CF"/>
+    </linearGradient>
+    <radialGradient id="plBelly" cx="46%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFEDB8"/>
+    </radialGradient>
+    <radialGradient id="plGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3C4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFF3C4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 体（涙型）・全体を少し右へかたむけて「きく」姿勢に -->
+  <g transform="rotate(4 240 400)">
+    <!-- 添えた手（向かって左・おなか側） -->
+    <path d="M114 428 C88 442 80 470 95 488 C110 505 138 502 153 487 C164 476 168 463 163 451 C156 435 133 418 114 428 Z"
+      fill="url(#plBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+
+    <path d="M240 70 C240 70 92 252 92 416 C92 522 158 572 240 572 C322 572 388 522 388 416 C388 252 240 70 240 70 Z"
+      fill="url(#plBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+
+    <path d="M178 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M250 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+
+    <path d="M198 134 C170 174 150 212 142 248" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" opacity="0.28"/>
+
+    <circle cx="240" cy="456" r="96" fill="url(#plGlow)"/>
+    <circle cx="240" cy="456" r="63" fill="url(#plBelly)"/>
+
+    <!-- 耳に当てた手（向かって右・上） -->
+    <path d="M362 300 C392 284 418 292 426 316 C433 338 420 358 396 362 C376 366 358 356 352 340 C347 326 350 308 362 300 Z"
+      fill="url(#plBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+
+    <!-- 顔（すこし右を向いて、きいている表情） -->
+    <path d="M162 262 q22 -16 46 -10" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+    <path d="M278 250 q24 -6 46 12" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="190" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+    <ellipse cx="300" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+    <circle cx="197" cy="293" r="6" fill="#FFFFFF"/>
+    <circle cx="184" cy="311" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="307" cy="293" r="6" fill="#FFFFFF"/>
+    <circle cx="294" cy="311" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+    <ellipse cx="148" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+    <ellipse cx="342" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+    <!-- 口はちいさめ（きく側なので） -->
+    <path d="M224 354 q20 16 40 0" fill="none" stroke="#0D2B47" stroke-width="9" stroke-linecap="round"/>
+  </g>
+
+  <!-- 「きこえてくる声」の波紋 -->
+  <g fill="none" stroke="#21A5E2" stroke-linecap="round" opacity="0.7">
+    <path d="M440 250 q14 22 0 44" stroke-width="7"/>
+    <path d="M462 232 q22 36 0 72" stroke-width="5" opacity="0.6"/>
+  </g>
+  <circle cx="430" cy="204" r="5" fill="#FFD666"/>
+  <circle cx="452" cy="330" r="4" fill="#FFE9A8"/>
+</svg>

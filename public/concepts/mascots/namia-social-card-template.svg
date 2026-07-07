@@ -1,54 +1,73 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Namia social card template - standard icon</title>
-  <desc id="desc">A social card template using the standard Namia character for awareness posts.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="t d" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <title id="t">なみあ SNSカード（通常）</title>
+  <desc id="d">なみあの存在感で認知を取りにいく1200x630のSNSカードテンプレート。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#062033"/>
-      <stop offset="0.58" stop-color="#0c5368"/>
-      <stop offset="1" stop-color="#12a8a0"/>
+    <linearGradient id="scBg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E9FCF6"/>
+      <stop offset="0.52" stop-color="#F3FAFF"/>
+      <stop offset="1" stop-color="#FFF3D6"/>
     </linearGradient>
-    <linearGradient id="drop" x1="740" y1="74" x2="992" y2="556" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#27dbc8"/>
-      <stop offset="1" stop-color="#1094d2"/>
+    <linearGradient id="scBody" x1="820" y1="90" x2="1020" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE"/>
+      <stop offset="0.42" stop-color="#21A5E2"/>
+      <stop offset="1" stop-color="#1180CF"/>
     </linearGradient>
-    <radialGradient id="light" cx="50%" cy="48%" r="58%">
-      <stop stop-color="#ffffff"/>
-      <stop offset="0.62" stop-color="#f3ffff"/>
-      <stop offset="1" stop-color="#ffe39a"/>
+    <radialGradient id="scBelly" cx="46%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFEDB8"/>
     </radialGradient>
-    <filter id="soft" x="-45%" y="-45%" width="190%" height="190%">
-      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#00131f" flood-opacity="0.3"/>
-    </filter>
-    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+    <radialGradient id="scGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3C4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFF3C4" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="106" cy="106" r="170" fill="#ffffff" opacity="0.05"/>
-  <circle cx="1074" cy="528" r="220" fill="#fff4b0" opacity="0.12"/>
-  <path d="M676 542c112-48 224-61 360-34" fill="none" stroke="#fff0a3" stroke-width="9" stroke-linecap="round" opacity="0.35"/>
-  <g filter="url(#soft)">
-    <path d="M866 74c96 110 166 208 166 308 0 101-70 159-166 159s-166-58-166-159c0-100 70-198 166-308z" fill="url(#drop)" stroke="#7de6ee" stroke-width="8" stroke-linejoin="round"/>
-    <path d="M762 285c-31 11-50 39-47 70 3 33 28 58 61 64" fill="none" stroke="#7de6ee" stroke-width="10" stroke-linecap="round"/>
-    <path d="M970 285c31 11 50 39 47 70-3 33-28 58-61 64" fill="none" stroke="#7de6ee" stroke-width="10" stroke-linecap="round"/>
-    <path d="M763 257c13-16 32-23 53-21" fill="none" stroke="#7de6ee" stroke-width="7" stroke-linecap="round" opacity="0.72"/>
-    <path d="M916 236c21-2 40 5 53 21" fill="none" stroke="#7de6ee" stroke-width="7" stroke-linecap="round" opacity="0.72"/>
-    <ellipse cx="807" cy="314" rx="18" ry="27" fill="#061c35"/>
-    <ellipse cx="925" cy="314" rx="18" ry="27" fill="#061c35"/>
-    <circle cx="814" cy="304" r="6.5" fill="#ffffff"/>
-    <circle cx="932" cy="304" r="6.5" fill="#ffffff"/>
-    <path d="M831 374c24 26 46 26 70 0" fill="none" stroke="#061c35" stroke-width="11" stroke-linecap="round"/>
-    <circle cx="866" cy="453" r="52" fill="url(#light)" filter="url(#glow)"/>
-    <path d="M805 541c-7 22 2 36 28 38h18" fill="none" stroke="#7de6ee" stroke-width="10" stroke-linecap="round"/>
-    <path d="M927 541c7 22-2 36-28 38h-18" fill="none" stroke="#7de6ee" stroke-width="10" stroke-linecap="round"/>
+
+  <rect width="1200" height="630" fill="url(#scBg)"/>
+  <circle cx="1080" cy="120" r="130" fill="#FFE9A8" opacity="0.35"/>
+  <circle cx="150" cy="560" r="110" fill="#BDEFFB" opacity="0.4"/>
+
+  <!-- ブランドチップ -->
+  <rect x="64" y="58" width="430" height="56" rx="28" fill="#FFFFFF"/>
+  <text x="92" y="95" font-size="26" font-weight="700" fill="#0D9488">明日もsamasama｜SDGs MATCH</text>
+
+  <!-- 差し替え用タイトル -->
+  <text x="64" y="268" font-size="64" font-weight="800" fill="#94A3B8">ここにタイトルを</text>
+  <text x="64" y="352" font-size="64" font-weight="800" fill="#94A3B8">入れてください</text>
+  <text x="64" y="430" font-size="30" fill="#64748B">サブコピーや日時・場所などはこの行に入れます。</text>
+
+  <!-- ハッシュタグ -->
+  <text x="64" y="560" font-size="28" font-weight="700" fill="#0D9488">#みちあかり　#ひとりにしない　#明日もsamasama</text>
+
+  <!-- なみあ（右） -->
+  <ellipse cx="965" cy="586" rx="180" ry="26" fill="#0A8FD4" opacity="0.12"/>
+  <g transform="translate(760,66) scale(0.86)">
+    <path d="M116 456 C76 446 44 406 46 362 C47 338 62 322 82 328 C100 334 110 354 112 376 C114 400 122 428 134 444 Z"
+      fill="url(#scBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M240 70 C240 70 92 252 92 416 C92 522 158 572 240 572 C322 572 388 522 388 416 C388 252 240 70 240 70 Z"
+      fill="url(#scBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M178 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M250 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M198 134 C170 174 150 212 142 248" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" opacity="0.28"/>
+    <circle cx="240" cy="456" r="96" fill="url(#scGlow)"/>
+    <circle cx="240" cy="456" r="63" fill="url(#scBelly)"/>
+    <path d="M366 428 C392 442 400 470 385 488 C370 505 342 502 327 487 C316 476 312 463 317 451 C324 435 347 418 366 428 Z"
+      fill="url(#scBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M158 264 q22 -18 46 -11" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+    <path d="M276 253 q24 -7 46 11" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="185" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+    <ellipse cx="295" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+    <circle cx="192" cy="293" r="6" fill="#FFFFFF"/>
+    <circle cx="179" cy="311" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="302" cy="293" r="6" fill="#FFFFFF"/>
+    <circle cx="289" cy="311" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+    <ellipse cx="143" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+    <ellipse cx="337" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+    <path d="M212 352 q28 26 56 0" fill="none" stroke="#0D2B47" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="56" cy="268" r="7" fill="#FFD666"/>
+    <circle cx="86" cy="246" r="4.5" fill="#FFD666"/>
+    <circle cx="44" cy="302" r="4" fill="#FFE9A8"/>
+    <circle cx="324" cy="472" r="6" fill="#FFD666"/>
+    <circle cx="344" cy="452" r="4" fill="#FFD666"/>
   </g>
-  <text x="92" y="167" fill="#b7fff3" font-family="sans-serif" font-size="24" font-weight="800" letter-spacing="6">NAMIA / MICHIAKARI</text>
-  <text x="88" y="275" fill="#ffffff" font-family="sans-serif" font-size="68" font-weight="900">声にならない気持ちにも、</text>
-  <text x="88" y="364" fill="#ffffff" font-family="sans-serif" font-size="68" font-weight="900">道はある。</text>
-  <text x="94" y="442" fill="#d7fdf7" font-family="sans-serif" font-size="31">なみあは、相談につながる最初の灯です。</text>
-  <text x="94" y="532" fill="#ffe6a6" font-family="sans-serif" font-size="28" font-weight="800">明日もsamasama | SDGs MATCH</text>
 </svg>
