@@ -587,21 +587,12 @@ export default function NamiaPage() {
             {assetItems.map((asset) => (
               <article key={asset.title} className="flex flex-col rounded-lg border border-amber-100 bg-white p-5 shadow-sm">
                 <div className="flex min-h-56 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_50%_75%,#fff9de_0%,#effffc_52%,#ffffff_80%)] p-4">
-                  {asset.preview === 'image' ? (
-                    <Image
-                      src={asset.src}
-                      alt={`なみあ素材: ${asset.title}`}
-                      width={asset.width ?? 900}
-                      height={asset.height ?? 900}
-                      className="max-h-52 w-auto object-contain drop-shadow-[0_12px_18px_rgba(10,143,212,0.16)]"
-                    />
-                  ) : (
-                    <div
-                      aria-label={`なみあ素材: ${asset.title}`}
-                      className={`w-full rounded-md bg-contain bg-center bg-no-repeat ${asset.preview === 'wide' ? 'h-36' : 'h-48'}`}
-                      style={{ backgroundImage: `url(${asset.src})` }}
-                    />
-                  )}
+                  {/* 素材は全点SVGのため background-image でプレビュー（'wide'=横長 / 'svg'=縦横比あり） */}
+                  <div
+                    aria-label={`なみあ素材: ${asset.title}`}
+                    className={`w-full rounded-md bg-contain bg-center bg-no-repeat ${asset.preview === 'wide' ? 'h-36' : 'h-48'}`}
+                    style={{ backgroundImage: `url(${asset.src})` }}
+                  />
                 </div>
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <h3 className="text-lg font-black text-slate-900">{asset.title}</h3>
