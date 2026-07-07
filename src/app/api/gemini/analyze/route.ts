@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireActiveAppUser } from '@/lib/api/auth';
 import { isUuid } from '@/lib/api/validation';
 import { classifySDGs } from '@/lib/gemini';
+import { translateText } from '@/lib/i18n/translate';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
 const MAX_DESCRIPTION_LENGTH = 10000;
@@ -207,16 +208,24 @@ export async function POST(request: NextRequest) {
 
         const analysis = normalizeAnalysis(result.data, caseLocale);
 
+        // cases.title の日本語正本を保証（設計§5.7）:
+        // 二言語出力で Gemini が title_ja を欠落させた場合は翻訳でフォールバックし、
+        // それも失敗したら title は更新しない（外国語タイトルが日本語正本へ混入するのを防ぐ）。
+        if (targetCaseId && caseLocale !== 'ja' && !analysis.title_ja && analysis.sdgs_goals.length > 0 && analysis.title) {
+            const translatedTitle = await translateText(analysis.title, 'ja');
+            if (translatedTitle) analysis.title_ja = translatedTitle.slice(0, 40);
+        }
+
         if (targetCaseId) {
+            const jaTitle = caseLocale === 'ja' ? analysis.title : analysis.title_ja;
+            const updatePayload: { ai_sdg_suggestion: NormalizedAnalysis; visibility: string; title?: string } = {
+                ai_sdg_suggestion: analysis,
+                visibility: 'LISTED',
+            };
+            if (jaTitle) updatePayload.title = jaTitle;
             const { error: updateError } = await supabaseAdmin
                 .from('cases')
-                .update({
-                    ai_sdg_suggestion: analysis,
-                    // cases.title は日本語を正とする（サポーター一覧・管理画面の可読性）。
-                    // 相談者言語のタイトルは ai_sdg_suggestion.title に保持し、SOS側画面はそちらを優先表示。
-                    title: analysis.title_ja || analysis.title,
-                    visibility: 'LISTED',
-                })
+                .update(updatePayload)
                 .eq('id', targetCaseId);
 
             if (updateError) {

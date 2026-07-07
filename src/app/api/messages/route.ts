@@ -4,7 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { isUuid } from '@/lib/api/validation'
 import { translateText, translationTarget, senderSourceLocale } from '@/lib/i18n/translate'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
+
+// 送信後翻訳（after()）がGemini遅延でも完走できるよう余裕を持たせる
+export const maxDuration = 60
 
 const MAX_MESSAGE_LENGTH = 5000
 
@@ -173,22 +176,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
 
-    let message = data
     if (targetLocale) {
-        // 同一リクエスト内で1回だけ即時リトライ。それでも失敗なら PENDING のまま
-        // /api/cron/retry-translations が回収する（送信は既に成立している）。
-        const translated = (await translateText(normalizedContent, targetLocale))
-            ?? (await translateText(normalizedContent, targetLocale))
-        if (translated) {
-            const { data: updated } = await supabaseAdmin
-                .from('messages')
-                .update({ translated_content: translated, translation_status: 'DONE' })
-                .eq('id', data.id)
-                .select()
-                .single()
-            if (updated) message = updated
-        }
+        // 翻訳はレスポンス送出後に実行し、送信を一切ブロックしない（設計§5.8）。
+        // 失敗時は PENDING のまま残り /api/cron/retry-translations（15分間隔）が回収する。
+        after(async () => {
+            const translated = await translateText(normalizedContent, targetLocale)
+            if (translated) {
+                await supabaseAdmin
+                    .from('messages')
+                    .update({ translated_content: translated, translation_status: 'DONE' })
+                    .eq('id', data.id)
+            }
+        })
     }
 
-    return NextResponse.json({ message })
+    return NextResponse.json({ message: data })
 }

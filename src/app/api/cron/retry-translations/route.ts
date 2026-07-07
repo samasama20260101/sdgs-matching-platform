@@ -7,8 +7,19 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { translateText, translationTarget } from '@/lib/i18n/translate'
 import { NextResponse } from 'next/server'
 
+// 直列だと最大40回のGemini呼び出しがデフォルトタイムアウトに収まらないため、
+// 実行上限を明示し、少数並列でバッチを消化する（行単位更新なので途中終了でも整合は保たれる）
+export const maxDuration = 300
+
 const BATCH_SIZE = 20
 const MAX_ATTEMPTS = 5
+const CONCURRENCY = 4
+
+async function inChunks<T>(items: T[], size: number, fn: (item: T) => Promise<void>) {
+    for (let i = 0; i < items.length; i += size) {
+        await Promise.all(items.slice(i, i + size).map(fn))
+    }
+}
 
 export async function GET(request: Request) {
     // Vercel Cronからのリクエストのみ許可
@@ -41,7 +52,7 @@ export async function GET(request: Request) {
             .from('cases').select('id, locale').in('id', caseIds)
         const caseLocaleMap = new Map((caseRows || []).map(c => [c.id, c.locale as string]))
 
-        for (const msg of pending) {
+        await inChunks(pending, CONCURRENCY, async (msg) => {
             const caseLocale = caseLocaleMap.get(msg.case_id) || 'ja'
             // 送信者がSOS（source=案件言語）なら ja へ、サポーター（source=ja）なら案件言語へ
             const target = translationTarget(caseLocale, msg.source_locale !== 'ja')
@@ -49,7 +60,7 @@ export async function GET(request: Request) {
                 // 案件がja等で翻訳不要になっていた場合はNONEへ戻す
                 await supabaseAdmin.from('messages')
                     .update({ translation_status: 'NONE' }).eq('id', msg.id)
-                continue
+                return
             }
 
             const translated = await translateText(msg.content, target)
@@ -68,7 +79,7 @@ export async function GET(request: Request) {
                     .eq('id', msg.id)
                 messagesFailed++
             }
-        }
+        })
     }
 
     // ── 2. description_free_ja 未生成の外国語案件の回収 ─────────
@@ -83,15 +94,15 @@ export async function GET(request: Request) {
     if (casesError) {
         console.error('[retry-translations] cases fetch error:', casesError)
     } else if (casesToFill && casesToFill.length > 0) {
-        for (const c of casesToFill) {
-            if (!c.description_free) continue
+        await inChunks(casesToFill, CONCURRENCY, async (c) => {
+            if (!c.description_free) return
             const translated = await translateText(c.description_free, 'ja')
             if (translated) {
                 await supabaseAdmin.from('cases')
                     .update({ description_free_ja: translated }).eq('id', c.id)
                 casesDone++
             }
-        }
+        })
     }
 
     console.log(`[retry-translations] messages: ${messagesDone} done / ${messagesFailed} retried, cases: ${casesDone} filled`)

@@ -68,7 +68,9 @@ export async function classifySDGs(consultationText: string, outputLocale: strin
       model: GEMINI_MODEL,
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: isBilingual ? 4096 : 2048,
+        // 二言語出力は本文が約2倍+CJK/ベトナム語のトークン効率を考慮して余裕を持たせる
+        // （不足すると途中切り捨て=JSONパース失敗で分析結果が全損する）
+        maxOutputTokens: isBilingual ? 8192 : 2048,
       },
     });
 

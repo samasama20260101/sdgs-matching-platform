@@ -216,15 +216,12 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
 
                         if (isSystem) {
                             // system_key があれば閲覧者の言語でレンダリング。
-                            // なければ旧形式（日本語文の焼き込み）にフォールバック。
-                            let systemText = msg.content.replace('__SYSTEM__', '');
-                            if (msg.system_key) {
-                                try {
-                                    systemText = tSystem(msg.system_key, msg.system_params ?? {});
-                                } catch {
-                                    // 未知のキー（新旧クライアント差など）は content にフォールバック
-                                }
-                            }
+                            // 未知のキー（新旧クライアント差など）は content（ja文）にフォールバック。
+                            // ※ next-intl の t() は未知キーで例外を投げずキーパス文字列を返すため、
+                            //   try/catch ではなく has() でガードする必要がある。
+                            const systemText = msg.system_key && tSystem.has(msg.system_key)
+                                ? tSystem(msg.system_key, msg.system_params ?? {})
+                                : msg.content.replace('__SYSTEM__', '');
                             return (
                                 <div key={msg.id} className="flex justify-center my-2">
                                     <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 max-w-[85%] text-center">
@@ -235,9 +232,11 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                             );
                         }
 
-                        // 閲覧者の言語に合わせて原文/訳文を選ぶ（設計§5.8）
+                        // 閲覧者の言語に合わせて原文/訳文を選ぶ（設計§5.8）。
+                        // 自分の送信メッセージは常に原文（訳文は case言語⇔ja のペア固定のため、
+                        // 第3言語UIの閲覧者に自分の発言が相手言語で表示される事故を防ぐ）。
                         const sourceLocale = msg.source_locale || 'ja';
-                        const isForeignToViewer = sourceLocale !== locale;
+                        const isForeignToViewer = !isMe && sourceLocale !== locale;
                         const showTranslated = isForeignToViewer && !!msg.translated_content;
                         const displayContent = showTranslated ? msg.translated_content! : msg.content;
                         const showOriginal = showOriginalIds.has(msg.id);

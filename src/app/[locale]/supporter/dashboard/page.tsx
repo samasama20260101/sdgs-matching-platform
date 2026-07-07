@@ -27,6 +27,7 @@ type Case = {
     sdgs_goals: number[];
     reasoning: string;
     keywords: string[];
+    keywords_ja?: string[];  // 外国語案件の日本語キーワード（サポーター表示はこちらを優先）
   } | null;
   users?: {
     display_name: string;
@@ -49,7 +50,9 @@ type UserData = {
 
 function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
   const sdgs = case_.ai_sdg_suggestion?.sdgs_goals || [];
-  const keywords = case_.ai_sdg_suggestion?.keywords || [];
+  const keywords = case_.ai_sdg_suggestion?.keywords_ja?.length
+    ? case_.ai_sdg_suggestion.keywords_ja
+    : (case_.ai_sdg_suggestion?.keywords || []);
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
     none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },

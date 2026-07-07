@@ -34,6 +34,7 @@ type CaseData = {
     sdgs_goals: number[];
     reasoning: string;
     keywords: string[];
+    keywords_ja?: string[];  // 外国語案件の日本語キーワード（設計§5.7・サポーター表示はこちらを優先）
   } | null;
   owner_user_id: string;
 };
@@ -413,7 +414,9 @@ export default function SupporterCaseDetailPage() {
                 </div>
                 {caseData.ai_sdg_suggestion.keywords && (
                   <div className="flex flex-wrap gap-2">
-                    {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                    {(caseData.ai_sdg_suggestion.keywords_ja?.length
+                      ? caseData.ai_sdg_suggestion.keywords_ja
+                      : caseData.ai_sdg_suggestion.keywords).map((kw, i) => (
                       <span key={i} className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">#{kw}</span>
                     ))}
                   </div>
