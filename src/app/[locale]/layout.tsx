@@ -38,13 +38,16 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     keywords: ["SDGs", "NPO", "支援", "マッチング", "相談", "社会課題"],
     icons: {
       icon: [
-        { url: "/favicon.ico" },
+        { url: "/favicon.ico", sizes: "48x48" },
+        { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
         { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       ],
       apple: [
         { url: "/apple-touch-icon.png", sizes: "180x180" },
       ],
     },
+    manifest: "/site.webmanifest",
     openGraph: {
       type: "website",
       locale: OG_LOCALES[resolvedLocale],
