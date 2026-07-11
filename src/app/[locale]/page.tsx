@@ -221,7 +221,7 @@ export default function HomePage() {
               height={941}
               className="hidden h-auto w-full md:block"
             />
-            <p className="mx-auto mt-7 max-w-3xl text-center text-2xl font-black leading-tight text-gray-900 sm:mt-8 sm:text-3xl md:absolute md:inset-x-0 md:bottom-[5%] md:mt-0 md:text-4xl">
+            <p className="mx-auto mt-7 max-w-3xl text-center text-2xl font-black leading-tight text-gray-900 sm:mt-8 sm:text-3xl md:-mt-[7%] md:text-4xl">
               {t.rich('concept.caption', {
                 accent: (chunks) => <span className="text-teal-600">{chunks}</span>,
               })}
