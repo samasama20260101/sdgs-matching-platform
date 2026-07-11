@@ -253,8 +253,8 @@ export default function StoryPage() {
                     <rect width="56" height="56" fill="#0a1628"/>
                     <path d="M28 5C28 5 9 24 9 37C9 47.5 17.5 52 28 52C38.5 52 47 47.5 47 37C47 24 28 5 28 5Z" fill="url(#tl-grad)"/>
                     <circle cx="28" cy="40" r="8" fill="white" opacity="0.22"/>
-                    <rect x="8" y="49" width="14" height="4" rx="2" fill="#0BC5A4"/>
-                    <rect x="25" y="49" width="14" height="4" rx="2" fill="#0A8FD4"/>
+                    {/* 海の水平線: ティール→ブルーの単一グラデーション（中央揃え）。本文「海の色」をそのまま表す */}
+                    <rect x="13" y="49.5" width="30" height="3.5" rx="1.75" fill="url(#tl-grad)"/>
                   </svg>
                 ),
               },

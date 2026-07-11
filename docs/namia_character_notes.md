@@ -44,17 +44,20 @@
 
 ## 現在ある主な画像
 
-- `namia-character-transparent-compact.png`: 基本立ち絵
-- `namia-michikari-concept-v1.png`: みちあかりの説明イメージ
-- `namia-pose-*-transparent-compact.png`: 手を振る、聞く、ジャンプ、光らせる、のぞく等のポーズ
-- `namia-fun-*-transparent-compact.png`: サッカー、転ぶ、ウインク、名刺向け、走る等のおちゃめなポーズ
-- `namia-mini-icon.svg`: A2方向で整理した、SNSアイコンや資料の小さな記憶点として使う簡略版
-- `namia-speech-bubble-template.svg`: 通常アイコン版の吹き出しテンプレート。なみあをしっかり見せたい啓発投稿・チラシ向け
-- `namia-speech-bubble-mini-template.svg`: ミニアイコン版の吹き出しテンプレート。コピーや案内文を主役にしたい紙面向け
-- `namia-social-card-template.svg`: 通常アイコン版のSNS認知投稿向け横長カード
-- `namia-social-card-mini-template.svg`: ミニアイコン版のSNS認知投稿向け横長カード。告知内容やコピーを主役にしやすい
+素材キット（/namia のダウンロードセクション）は 2026-07-07 に全点SVGへ刷新。
+共通パレット: 体 `#36D6AE→#21A5E2→#1180CF`／輪郭 `#1467A8`／みちあかり `#FFFBEA〜#FFEDB8`＋粒 `#FFD666`。
+
+- `namia-character.svg`: 基本立ち絵（マスター。他素材はこの座標系を流用）
+- `namia-mini-icon.svg`: SNSアイコンや資料の小さな記憶点として使う簡略版
+- `namia-pose-listen.svg`: きくポーズ（耳に手＋声の波紋）
+- `namia-card-corner.svg`: 名刺・スライドのフチからのぞく小さめ素材
+- `namia-speech-bubble-template.svg` / `-mini-`: 吹き出しテンプレート（通常／ミニ）
+- `namia-social-card-template.svg` / `-mini-`: 1200x630 SNSカード（通常／テキスト主役）
 - `namia-michikari-light-trail.svg`: キャラを出しすぎずブランド感だけ添える光の軌跡
+- `namia-michikari-concept.svg`: 相談者→なみあ→支援先の説明図（本文セクションでも使用）
 - `namia-line-art.svg`: 白黒印刷、行政資料、ワークシート向けの線画版
+- `namia-pose-*-transparent-compact.png` / `namia-fun-*`: ギャラリー用のAI生成ポーズ（PNGのまま）
+- `namia-character-transparent-compact.png`: 旧・基本立ち絵（ヒーローとギャラリーで使用中）
 
 ## 認知用途での使い方
 

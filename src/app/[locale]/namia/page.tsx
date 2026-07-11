@@ -185,13 +185,11 @@ const actionPoseItems = [
 const assetItems = [
   {
     title: '基本立ち絵',
-    kind: 'PNG',
-    src: '/concepts/mascots/namia-character-transparent-compact.png',
-    href: '/concepts/mascots/namia-character-transparent-compact.png',
-    body: '公式の標準ポーズ。資料表紙、Web、チラシのメインビジュアル向き。',
-    preview: 'image',
-    width: 910,
-    height: 1223,
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-character.svg',
+    href: '/concepts/mascots/namia-character.svg',
+    body: '公式の標準ポーズ。資料表紙、Web、チラシのメインビジュアル向き。拡大しても劣化しません。',
+    preview: 'svg',
   },
   {
     title: 'ミニアイコン',
@@ -251,33 +249,27 @@ const assetItems = [
   },
   {
     title: 'きくポーズ',
-    kind: 'PNG',
-    src: '/concepts/mascots/namia-pose-listen-transparent-compact.png',
-    href: '/concepts/mascots/namia-pose-listen-transparent-compact.png',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-pose-listen.svg',
+    href: '/concepts/mascots/namia-pose-listen.svg',
     body: '相談入力、話を聞く導線、子ども向け説明に使いやすいポーズ。',
-    preview: 'image',
-    width: 768,
-    height: 1227,
+    preview: 'svg',
   },
   {
     title: '名刺のすみ',
-    kind: 'PNG',
-    src: '/concepts/mascots/namia-fun-card-transparent-compact.png',
-    href: '/concepts/mascots/namia-fun-card-transparent-compact.png',
-    body: '名刺、スライド、案内カードの余白に置きやすい小さめ素材。',
-    preview: 'image',
-    width: 597,
-    height: 864,
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-card-corner.svg',
+    href: '/concepts/mascots/namia-card-corner.svg',
+    body: '名刺、スライド、案内カードのフチから、なみあがひょっこりのぞく小さめ素材。',
+    preview: 'svg',
   },
   {
     title: 'みちあかり説明',
-    kind: 'PNG',
-    src: '/concepts/mascots/namia-michikari-concept-v1.png',
-    href: '/concepts/mascots/namia-michikari-concept-v1.png',
+    kind: 'SVG',
+    src: '/concepts/mascots/namia-michikari-concept.svg',
+    href: '/concepts/mascots/namia-michikari-concept.svg',
     body: '相談者から支援先へつながるイメージを説明する横長ビジュアル。',
     preview: 'wide',
-    width: 1536,
-    height: 1024,
   },
 ];
 
@@ -399,10 +391,10 @@ export default function NamiaPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-lg bg-white/5 p-3">
             <Image
-              src="/concepts/mascots/namia-michikari-concept-v1.png"
+              src="/concepts/mascots/namia-michikari-concept.svg"
               alt="なみあの紹介イメージ。相談者から支援先へみちあかりが続く。"
-              width={1536}
-              height={1024}
+              width={1200}
+              height={500}
               className="h-auto w-full rounded-lg"
             />
           </div>
@@ -587,7 +579,7 @@ export default function NamiaPage() {
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-700">
               チラシ、SNS、名刺、説明資料に使いやすい素材をまとめました。
-              PNGはそのまま配置しやすく、SVGは拡大してもきれいに使えます。
+              すべてSVGなので、名刺の角から大判ポスターまで、拡大してもきれいに使えます。
             </p>
           </div>
 
@@ -595,21 +587,12 @@ export default function NamiaPage() {
             {assetItems.map((asset) => (
               <article key={asset.title} className="flex flex-col rounded-lg border border-amber-100 bg-white p-5 shadow-sm">
                 <div className="flex min-h-56 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_50%_75%,#fff9de_0%,#effffc_52%,#ffffff_80%)] p-4">
-                  {asset.preview === 'image' ? (
-                    <Image
-                      src={asset.src}
-                      alt={`なみあ素材: ${asset.title}`}
-                      width={asset.width ?? 900}
-                      height={asset.height ?? 900}
-                      className="max-h-52 w-auto object-contain drop-shadow-[0_12px_18px_rgba(10,143,212,0.16)]"
-                    />
-                  ) : (
-                    <div
-                      aria-label={`なみあ素材: ${asset.title}`}
-                      className={`w-full rounded-md bg-contain bg-center bg-no-repeat ${asset.preview === 'wide' ? 'h-36' : 'h-48'}`}
-                      style={{ backgroundImage: `url(${asset.src})` }}
-                    />
-                  )}
+                  {/* 素材は全点SVGのため background-image でプレビュー（'wide'=横長 / 'svg'=縦横比あり） */}
+                  <div
+                    aria-label={`なみあ素材: ${asset.title}`}
+                    className={`w-full rounded-md bg-contain bg-center bg-no-repeat ${asset.preview === 'wide' ? 'h-36' : 'h-48'}`}
+                    style={{ backgroundImage: `url(${asset.src})` }}
+                  />
                 </div>
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <h3 className="text-lg font-black text-slate-900">{asset.title}</h3>

@@ -1,49 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Namia speech bubble template - mini icon</title>
-  <desc id="desc">A speech bubble template using the Namia mini icon for compact awareness posts and flyers.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="t d" font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <title id="t">なみあ 吹き出しテンプレート（ミニ）</title>
+  <desc id="d">ミニアイコン版の吹き出しテンプレート。コピーや案内文を主役にしたい紙面向け。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#f1fffb"/>
-      <stop offset="0.56" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#fff8df"/>
+    <linearGradient id="smBody" x1="80" y1="380" x2="180" y2="580" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE"/>
+      <stop offset="0.42" stop-color="#21A5E2"/>
+      <stop offset="1" stop-color="#1180CF"/>
     </linearGradient>
-    <linearGradient id="body" x1="132" y1="114" x2="302" y2="420" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#26dbc8"/>
-      <stop offset="1" stop-color="#1094d2"/>
-    </linearGradient>
-    <radialGradient id="light" cx="50%" cy="48%" r="58%">
-      <stop stop-color="#ffffff"/>
-      <stop offset="0.62" stop-color="#f3ffff"/>
-      <stop offset="1" stop-color="#ffe39a"/>
+    <radialGradient id="smBelly" cx="46%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFEDB8"/>
     </radialGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="165%">
-      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#0a8fd4" flood-opacity="0.16"/>
-    </filter>
-    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="7" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
-  <rect width="1200" height="630" rx="36" fill="url(#bg)"/>
-  <circle cx="205" cy="314" r="176" fill="#e7fff9"/>
-  <circle cx="1014" cy="523" r="150" fill="#fff0a3" opacity="0.34"/>
-  <g filter="url(#shadow)">
-    <path d="M210 100c72 83 129 162 129 247 0 80-55 125-129 125S81 427 81 347c0-85 57-164 129-247z" fill="url(#body)" stroke="#0876a7" stroke-width="8" stroke-linejoin="round"/>
-    <path d="M128 253c11-13 25-20 42-19" fill="none" stroke="#0a6e9b" stroke-width="6" stroke-linecap="round" opacity="0.62"/>
-    <path d="M250 234c17-1 31 6 42 19" fill="none" stroke="#0a6e9b" stroke-width="6" stroke-linecap="round" opacity="0.62"/>
-    <ellipse cx="149" cy="277" rx="16" ry="23" fill="#071d3f"/>
-    <ellipse cx="271" cy="277" rx="16" ry="23" fill="#071d3f"/>
-    <circle cx="155" cy="267" r="5.8" fill="#ffffff"/>
-    <circle cx="277" cy="267" r="5.8" fill="#ffffff"/>
-    <path d="M174 333c21 22 51 22 72 0" fill="none" stroke="#08213a" stroke-width="10" stroke-linecap="round"/>
-    <circle cx="210" cy="390" r="46" fill="url(#light)" filter="url(#glow)"/>
+
+  <rect width="1200" height="630" fill="#FFFFFF"/>
+  <rect x="24" y="24" width="1152" height="582" rx="36" fill="#FBFFFE" stroke="#E2F4EC" stroke-width="3"/>
+
+  <!-- 吹き出し（大・テキスト主役） -->
+  <path d="M120 92 h960 a44 44 0 0 1 44 44 v250 a44 44 0 0 1 -44 44 h-830 l-72 74 8 -74 h-66 a44 44 0 0 1 -44 -44 v-250 a44 44 0 0 1 44 -44 Z"
+    fill="#FFFFFF" stroke="#BFE9DC" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- 差し替え用テキスト -->
+  <text x="600" y="212" text-anchor="middle" font-size="54" font-weight="700" fill="#94A3B8">ここにメインコピーを入れてください</text>
+  <text x="600" y="292" text-anchor="middle" font-size="32" fill="#94A3B8">説明文や案内文はこの行に。2行までを目安に。</text>
+  <text x="600" y="368" text-anchor="middle" font-size="28" fill="#0D9488">例：こまったら、まず はなしてみよう。</text>
+
+  <!-- ミニなみあ（左下・記憶点） -->
+  <g transform="translate(64,368) scale(0.42)">
+    <path d="M256 44 C256 44 122 208 122 356 C122 452 182 498 256 498 C330 498 390 452 390 356 C390 208 256 44 256 44 Z"
+      fill="url(#smBody)" stroke="#1467A8" stroke-width="10" stroke-linejoin="round"/>
+    <circle cx="256" cy="392" r="56" fill="url(#smBelly)"/>
+    <ellipse cx="196" cy="256" rx="16" ry="23" fill="#0F1B2D"/>
+    <ellipse cx="316" cy="256" rx="16" ry="23" fill="#0F1B2D"/>
+    <circle cx="203" cy="245" r="5.5" fill="#FFFFFF"/>
+    <circle cx="323" cy="245" r="5.5" fill="#FFFFFF"/>
+    <ellipse cx="158" cy="294" rx="17" ry="10" fill="#A9DFF6" opacity="0.85"/>
+    <ellipse cx="354" cy="294" rx="17" ry="10" fill="#A9DFF6" opacity="0.85"/>
+    <path d="M230 300 q26 24 52 0" fill="none" stroke="#0D2B47" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="352" cy="418" r="6" fill="#FFD666"/>
+    <circle cx="372" cy="398" r="4" fill="#FFD666"/>
   </g>
-  <path d="M425 103h515c64 0 116 52 116 116v150c0 64-52 116-116 116H651l-116 86 28-86H425c-64 0-116-52-116-116V219c0-64 52-116 116-116z" fill="#ffffff" stroke="#bdeee8" stroke-width="8"/>
-  <text x="468" y="246" fill="#0f2b3f" font-family="sans-serif" font-size="52" font-weight="800">ひとりで</text>
-  <text x="468" y="321" fill="#0f2b3f" font-family="sans-serif" font-size="52" font-weight="800">抱えこまないで。</text>
-  <text x="470" y="394" fill="#35606e" font-family="sans-serif" font-size="28">声にならない気持ちにも、道はある。</text>
-  <text x="468" y="520" fill="#0d9c9a" font-family="sans-serif" font-size="26" font-weight="700">明日もsamasama / なみあ</text>
+
+  <!-- ブランドフッター -->
+  <text x="1120" y="566" text-anchor="end" font-size="24" font-weight="700" fill="#64748B">明日もsamasama｜SDGs MATCH</text>
 </svg>
