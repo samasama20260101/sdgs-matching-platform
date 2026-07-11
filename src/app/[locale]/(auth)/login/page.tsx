@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { withLocalePath } from '@/i18n/routing';
 import { Logo } from '@/components/icons/Logo';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,10 +130,11 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <div className="mb-4">
+                <div className="mb-4 flex items-center justify-between">
                     <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600 transition-colors">
                         {tAuth('backToTop')}
                     </Link>
+                    <LanguageSwitcher />
                 </div>
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-3">

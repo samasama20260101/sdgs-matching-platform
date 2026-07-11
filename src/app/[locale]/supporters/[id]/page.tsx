@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { Logo } from '@/components/icons/Logo';
 import { supabase } from '@/lib/supabase/client';
 import { SUPPORTER_BADGES, type BadgeKey } from '@/lib/constants/sdgs';
@@ -138,7 +139,8 @@ export default function SupporterProfilePage() {
           <Link href={dashboardHref ?? '/'} className="flex items-center no-underline">
             <Logo variant="default" size="sm" showText={true} />
           </Link>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             {authChecked && dashboardHref ? (
               <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
                 {tList('backToDashboardShort')}
