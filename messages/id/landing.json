@@ -144,5 +144,12 @@
     "errorDetail": "Silakan isi detail",
     "errorDetailTooLong": "Detail maksimal 1000 karakter",
     "errorSend": "Gagal mengirim"
+  },
+  "share": {
+    "label": "Bagikan untuk mendukung",
+    "text": "Pintu menuju dukungan, agar tak seorang pun berjuang sendirian. 明日もsamasama | SDGs Match",
+    "shareOn": "Bagikan ke {network}",
+    "copy": "Salin tautan",
+    "copied": "Tautan disalin"
   }
 }

@@ -144,5 +144,12 @@
     "errorDetail": "詳細を入力してください",
     "errorDetailTooLong": "詳細は1000文字以内で入力してください",
     "errorSend": "送信に失敗しました"
+  },
+  "share": {
+    "label": "シェアして応援してください",
+    "text": "ひとりで悩まない、支援への入り口。明日もsamasama｜SDGs Match",
+    "shareOn": "{network}でシェア",
+    "copy": "リンクをコピー",
+    "copied": "リンクをコピーしました"
   }
 }

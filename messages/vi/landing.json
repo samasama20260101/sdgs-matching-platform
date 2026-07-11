@@ -144,5 +144,12 @@
     "errorDetail": "Vui lòng nhập chi tiết",
     "errorDetailTooLong": "Chi tiết tối đa 1000 ký tự",
     "errorSend": "Gửi thất bại"
+  },
+  "share": {
+    "label": "Chia sẻ để ủng hộ",
+    "text": "Cánh cửa dẫn đến hỗ trợ, để không ai phải một mình. 明日もsamasama | SDGs Match",
+    "shareOn": "Chia sẻ lên {network}",
+    "copy": "Sao chép liên kết",
+    "copied": "Đã sao chép liên kết"
   }
 }

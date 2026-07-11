@@ -144,5 +144,12 @@
     "errorDetail": "Please enter the details",
     "errorDetailTooLong": "Details must be 1000 characters or less",
     "errorSend": "Failed to send"
+  },
+  "share": {
+    "label": "Share to support us",
+    "text": "An entrance to support, so no one struggles alone. Ashita mo samasama | SDGs Match",
+    "shareOn": "Share on {network}",
+    "copy": "Copy link",
+    "copied": "Link copied"
   }
 }

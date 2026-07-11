@@ -144,5 +144,12 @@
     "errorDetail": "请输入详细内容",
     "errorDetailTooLong": "详细内容不能超过1000个字符",
     "errorSend": "发送失败"
+  },
+  "share": {
+    "label": "分享支持我们",
+    "text": "不再独自烦恼，通往支援的入口。明日もsamasama｜SDGs Match",
+    "shareOn": "分享到{network}",
+    "copy": "复制链接",
+    "copied": "已复制链接"
   }
 }
