@@ -4,11 +4,11 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { isAppLocale, locales, type AppLocale } from "@/i18n/routing";
+import { isAppLocale, locales, type SupportedLocale } from "@/i18n/routing";
 import "../globals.css";
 
-// OGP用のロケール表記（BCP47 → Open Graph形式）
-const OG_LOCALES: Record<AppLocale, string> = {
+// OGP用のロケール表記（BCP47 → Open Graph形式）。非公開ロケール分も保持しておく。
+const OG_LOCALES: Record<SupportedLocale, string> = {
   ja: "ja_JP",
   en: "en_US",
   zh: "zh_CN",
