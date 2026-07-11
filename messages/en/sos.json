@@ -217,6 +217,7 @@
     "toastStatusUpdateFailed": "Failed to update the status",
     "toastContinueRequested": "We asked the supporter to continue helping",
     "toastEvalFailed": "Failed to send your rating",
-    "toastEvalSent": "Your thanks have been sent to the supporters! Thank you 🎉"
+    "toastEvalSent": "Your thanks have been sent to the supporters! Thank you 🎉",
+    "fallbackTitle": "Please review again"
   }
 }

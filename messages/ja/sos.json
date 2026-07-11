@@ -217,6 +217,7 @@
     "toastStatusUpdateFailed": "ステータスの更新に失敗しました",
     "toastContinueRequested": "サポーターに対応継続を依頼しました",
     "toastEvalFailed": "評価の送信に失敗しました",
-    "toastEvalSent": "サポーターへの評価を送信しました！ありがとうございます 🎉"
+    "toastEvalSent": "サポーターへの評価を送信しました！ありがとうございます 🎉",
+    "fallbackTitle": "再度見直してください"
   }
 }
