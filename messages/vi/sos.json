@@ -217,6 +217,7 @@
     "toastStatusUpdateFailed": "Cập nhật trạng thái thất bại",
     "toastContinueRequested": "Đã đề nghị người hỗ trợ tiếp tục giúp đỡ",
     "toastEvalFailed": "Gửi đánh giá thất bại",
-    "toastEvalSent": "Đã gửi lời cảm ơn đến người hỗ trợ! Cảm ơn bạn 🎉"
+    "toastEvalSent": "Đã gửi lời cảm ơn đến người hỗ trợ! Cảm ơn bạn 🎉",
+    "fallbackTitle": "Vui lòng xem lại"
   }
 }

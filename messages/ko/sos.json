@@ -217,6 +217,7 @@
     "toastStatusUpdateFailed": "상태 업데이트에 실패했습니다",
     "toastContinueRequested": "서포터에게 계속 지원해 줄 것을 요청했습니다",
     "toastEvalFailed": "평가 전송에 실패했습니다",
-    "toastEvalSent": "서포터에게 평가를 보냈습니다! 감사합니다 🎉"
+    "toastEvalSent": "서포터에게 평가를 보냈습니다! 감사합니다 🎉",
+    "fallbackTitle": "다시 확인해 주세요"
   }
 }

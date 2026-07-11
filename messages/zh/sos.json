@@ -217,6 +217,7 @@
     "toastStatusUpdateFailed": "状态更新失败",
     "toastContinueRequested": "已请求支援者继续跟进",
     "toastEvalFailed": "评价发送失败",
-    "toastEvalSent": "已向支援者发送评价！谢谢您 🎉"
+    "toastEvalSent": "已向支援者发送评价！谢谢您 🎉",
+    "fallbackTitle": "请再次确认"
   }
 }

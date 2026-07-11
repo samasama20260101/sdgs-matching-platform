@@ -191,7 +191,7 @@ export default function SOSResultPage() {
       clearTimeout(step3);
       setAnalyzeStep(4);
       const analysisWithTitle = result.analysis;
-      const aiTitle = analysisWithTitle?.title || '再度見直してください';
+      const aiTitle = analysisWithTitle?.title || t('fallbackTitle');
       await new Promise(r => setTimeout(r, 800));
       setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
     } catch (err) {

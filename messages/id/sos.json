@@ -217,6 +217,7 @@
     "toastStatusUpdateFailed": "Gagal memperbarui status",
     "toastContinueRequested": "Kami meminta pendukung untuk terus membantu",
     "toastEvalFailed": "Gagal mengirim penilaian",
-    "toastEvalSent": "Terima kasih Anda telah dikirim ke pendukung! Terima kasih 🎉"
+    "toastEvalSent": "Terima kasih Anda telah dikirim ke pendukung! Terima kasih 🎉",
+    "fallbackTitle": "Silakan periksa kembali"
   }
 }

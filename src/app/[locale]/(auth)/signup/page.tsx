@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/navigation'
 import { Logo } from '@/components/icons/Logo'
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
 import { supabase } from '@/lib/supabase/client'
 
 const PENDING_SOS_SIGNUP_KEY = 'samasama_pending_sos_signup'
@@ -141,10 +142,11 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="mb-4 text-center">
+        <div className="mb-4 flex items-center justify-between">
           <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600 transition-colors">
             {tAuth('backToTop')}
           </Link>
+          <LanguageSwitcher />
         </div>
         <div className="flex justify-center mb-4">
           <Logo variant="default" size="md" showText={true} />

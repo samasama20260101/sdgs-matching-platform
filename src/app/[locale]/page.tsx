@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { Logo } from '@/components/icons/Logo';
 
@@ -119,6 +120,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Logo variant="default" size="sm" showText={true} />
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Link href="/supporters" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.supporters')}
             </Link>

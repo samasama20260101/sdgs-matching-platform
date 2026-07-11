@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { supabase } from '@/lib/supabase/client';
 import { Link } from '@/i18n/navigation';
-import { Logo } from '@/components/icons/Logo';
+import { Logo } from '@/components/icons/Logo'
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 // カテゴリはDB保存・管理画面表示のため日本語文字列を正本とする（valueは日本語のまま）。
 // 表示ラベルのみ landing.contact.categories.* で翻訳する。
@@ -132,11 +133,14 @@ export default function ContactPage() {
           <Link href="/" className="no-underline">
             <Logo variant="default" size="sm" showText={true} />
           </Link>
-          {userData && (
-            <span className="text-xs text-gray-400">
-              {t('loggedInAs', { name: userData.display_id || userData.email })}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {userData && (
+              <span className="text-xs text-gray-400">
+                {t('loggedInAs', { name: userData.display_id || userData.email })}
+              </span>
+            )}
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 

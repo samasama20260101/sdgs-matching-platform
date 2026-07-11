@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/icons/Logo';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { supabase } from '@/lib/supabase/client';
 
 type Supporter = {
@@ -111,7 +112,8 @@ export default function SupportersPage() {
           <Link href={dashboardHref ?? '/'} className="flex items-center no-underline">
             <Logo variant="default" size="sm" showText={true} />
           </Link>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             {authChecked && dashboardHref ? (
               <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
                 {t('backToDashboardShort')}
