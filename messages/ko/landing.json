@@ -144,5 +144,12 @@
     "errorDetail": "상세 내용을 입력해 주세요",
     "errorDetailTooLong": "상세 내용은 1000자 이내로 입력해 주세요",
     "errorSend": "전송에 실패했습니다"
+  },
+  "share": {
+    "label": "공유로 응원해 주세요",
+    "text": "혼자 고민하지 않는, 지원으로 가는 입구. 明日もsamasama｜SDGs Match",
+    "shareOn": "{network}에 공유",
+    "copy": "링크 복사",
+    "copied": "링크를 복사했습니다"
   }
 }

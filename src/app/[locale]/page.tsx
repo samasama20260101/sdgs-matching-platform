@@ -9,6 +9,7 @@ import { getSupporterTypeConfig } from '@/lib/supporterType';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { Logo } from '@/components/icons/Logo';
+import { ShareButtons } from '@/components/marketing/ShareButtons';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
 type Supporter = {
@@ -398,6 +399,9 @@ export default function HomePage() {
               {t('cta.login')}
             </Link>
           </div>
+
+          {/* シェア導線（マーケティング用） */}
+          <ShareButtons />
         </div>
       </section>
 
