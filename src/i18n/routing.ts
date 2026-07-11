@@ -1,12 +1,19 @@
 import { defineRouting } from 'next-intl/routing';
 
-export const locales = ['ja', 'en', 'zh', 'ko', 'vi', 'id'] as const;
+// 翻訳カタログ（messages/）・DBのCHECK制約に存在する全ロケール。
+// ko / vi / id はネイティブ確認が完了するまで非公開（カタログとDB定義は保持）。
+export const allLocales = ['ja', 'en', 'zh', 'ko', 'vi', 'id'] as const;
+
+export type SupportedLocale = (typeof allLocales)[number];
+
+// 現在ユーザーに公開しているロケール。公開拡大時はここに追加するだけでよい。
+export const locales = ['ja', 'en', 'zh'] as const;
 
 export type AppLocale = (typeof locales)[number];
 
 export const defaultLocale: AppLocale = 'ja';
 
-export const localeLabels: Record<AppLocale, string> = {
+export const localeLabels: Record<SupportedLocale, string> = {
   ja: '日本語',
   en: 'English',
   zh: '中文',

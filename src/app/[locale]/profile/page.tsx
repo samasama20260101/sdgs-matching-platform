@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddressForm, { AddressFormData } from '@/components/form/AddressForm';
 import ServiceAreaSelector, { ServiceArea } from '@/components/form/ServiceAreaSelector';
-import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
+import { isAppLocale, localeLabels, locales, type AppLocale } from '@/i18n/routing';
 
 type UserData = {
     id: string;
@@ -163,7 +163,8 @@ export default function ProfilePage() {
                 setRealName(data.real_name || '');
                 setDisplayName(data.display_name || '');
                 setPhone(data.phone || '');
-                setLocale(data.locale || requestLocale);
+                // 非公開ロケール（ko/vi/id 等）が保存済みの場合は表示中ロケールへ寄せる
+                setLocale(isAppLocale(data.locale) ? data.locale : requestLocale);
                 setOrganizationName(data.organization_name || '');
                 setOrganizationPhone(data.organization_phone || '');
                 setMembershipDepartment(data.membership_department || '');
