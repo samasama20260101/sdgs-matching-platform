@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowDown, ArrowUp, Building2, Loader2, Pencil, Plus, RefreshCw, Save, Trash2, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,10 +29,10 @@ type SortOrder = 'newest' | 'oldest';
 
 const TAB_CONFIG = {
   ORGANIZATION_ONLY: {
-    label: '自団体のみ',
-    description: 'この団体に所属するメンバーだけに表示されます',
-    placeholder: '自団体の担当者向けに記録する',
-    submitLabel: '自団体メモを追加',
+    labelKey: 'orgLabel',
+    descriptionKey: 'orgDesc',
+    placeholderKey: 'orgPlaceholder',
+    submitKey: 'orgSubmit',
     icon: Building2,
     card: 'border-amber-200 bg-amber-50/30',
     tab: 'bg-amber-100 text-amber-900',
@@ -41,10 +42,10 @@ const TAB_CONFIG = {
     note: 'border-amber-100',
   },
   APPROVED_SUPPORTERS: {
-    label: '担当サポーター間',
-    description: 'この案件で承認済みの他団体にも表示されます',
-    placeholder: '承認済みの担当サポーター間で共有する',
-    submitLabel: '共有メモを追加',
+    labelKey: 'sharedLabel',
+    descriptionKey: 'sharedDesc',
+    placeholderKey: 'sharedPlaceholder',
+    submitKey: 'sharedSubmit',
     icon: Users,
     card: 'border-blue-200 bg-blue-50/30',
     tab: 'bg-blue-100 text-blue-900',
@@ -56,6 +57,10 @@ const TAB_CONFIG = {
 } as const;
 
 export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelProps) {
+  const t = useTranslations('supporter.notes');
+  const tSupporter = useTranslations('supporter');
+  const tActions = useTranslations('common.actions');
+  const locale = useLocale();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<NoteVisibility>('ORGANIZATION_ONLY');
   const [notes, setNotes] = useState<InternalNote[]>([]);
@@ -77,7 +82,7 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
       const res = await fetch(`/api/supporter/cases/${caseId}/internal-notes`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      if (!res.ok) throw new Error('メモを取得できませんでした');
+      if (!res.ok) throw new Error('load failed');
       const data = await res.json();
       setNotes(data.notes || []);
     } catch (error) {
@@ -102,13 +107,13 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ visibility: activeTab, body: draft }),
       });
-      if (!res.ok) throw new Error('メモを登録できませんでした');
+      if (!res.ok) throw new Error('create failed');
       setDrafts((current) => ({ ...current, [activeTab]: '' }));
       await loadNotes();
-      toast.success('内部メモを追加しました');
+      toast.success(t('added'));
     } catch (error) {
       console.error('[InternalNotesPanel] submit error:', error);
-      toast.error('内部メモの登録に失敗しました');
+      toast.error(t('addFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -123,21 +128,21 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ note_id: editingId, body: editingBody }),
       });
-      if (!res.ok) throw new Error('メモを更新できませんでした');
+      if (!res.ok) throw new Error('update failed');
       setEditingId(null);
       setEditingBody('');
       await loadNotes();
-      toast.success('内部メモを更新しました');
+      toast.success(t('updated'));
     } catch (error) {
       console.error('[InternalNotesPanel] update error:', error);
-      toast.error('内部メモの更新に失敗しました');
+      toast.error(t('updateFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const deleteNote = async (noteId: string) => {
-    if (!window.confirm('この内部メモを削除しますか？') || isSubmitting) return;
+    if (!window.confirm(t('deleteConfirm')) || isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/supporter/cases/${caseId}/internal-notes`, {
@@ -145,12 +150,12 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ note_id: noteId }),
       });
-      if (!res.ok) throw new Error('メモを削除できませんでした');
+      if (!res.ok) throw new Error('delete failed');
       await loadNotes();
-      toast.success('内部メモを削除しました');
+      toast.success(t('deleted'));
     } catch (error) {
       console.error('[InternalNotesPanel] delete error:', error);
-      toast.error('内部メモの削除に失敗しました');
+      toast.error(t('deleteFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -165,19 +170,19 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
       return sortOrder === 'newest' ? difference : -difference;
     });
   const formatDateTime = (date: string) =>
-    new Date(date).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    new Date(date).toLocaleString(locale, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
     <Card className={`mb-6 transition-colors ${config.card}`}>
       <CardHeader className="gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base text-gray-800">内部メモ</CardTitle>
-            <p className="mt-1 text-xs text-gray-500">SOSユーザーには表示されません</p>
+            <CardTitle className="text-base text-gray-800">{t('title')}</CardTitle>
+            <p className="mt-1 text-xs text-gray-500">{t('subtitle')}</p>
           </div>
-          <Button size="sm" variant="outline" onClick={loadNotes} disabled={isLoading} title="内部メモを更新">
+          <Button size="sm" variant="outline" onClick={loadNotes} disabled={isLoading} title={t('refreshTitle')}>
             <RefreshCw className={isLoading ? 'animate-spin' : ''} />
-            更新
+            {t('refresh')}
           </Button>
         </div>
         <div className="flex w-full rounded-md border border-gray-200 bg-white p-1 sm:w-fit">
@@ -199,7 +204,7 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
             >
               <span className="inline-flex items-center gap-1.5">
                 <TabIcon className="size-3.5" />
-                {tab.label}
+                {t(tab.labelKey)}
               </span>
             </button>
             );
@@ -210,8 +215,8 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
         <div className={`flex items-start gap-2 rounded-md border px-3 py-2 ${config.notice}`}>
           <ActiveTabIcon className="mt-0.5 size-4 flex-shrink-0" />
           <div>
-            <p className="text-sm font-semibold">{config.label}</p>
-            <p className="text-xs">{config.description}</p>
+            <p className="text-sm font-semibold">{t(config.labelKey)}</p>
+            <p className="text-xs">{t(config.descriptionKey)}</p>
           </div>
         </div>
         <div className="space-y-2">
@@ -220,21 +225,21 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
             onChange={(event) => setDrafts((current) => ({ ...current, [activeTab]: event.target.value }))}
             rows={3}
             maxLength={3000}
-            placeholder={config.placeholder}
+            placeholder={t(config.placeholderKey)}
             className={`w-full resize-none rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 ${config.input}`}
           />
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-gray-400">{drafts[activeTab].length} / 3000</span>
             <Button size="sm" onClick={submitNote} disabled={!drafts[activeTab].trim() || isSubmitting} className={config.button}>
               {isSubmitting ? <Loader2 className="animate-spin" /> : <Plus />}
-              {config.submitLabel}
+              {t(config.submitKey)}
             </Button>
           </div>
         </div>
 
         <div className="space-y-2 border-t border-gray-200 pt-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-gray-500">{visibleNotes.length}件</p>
+            <p className="text-xs text-gray-500">{t('count', { count: visibleNotes.length })}</p>
             <div className="flex rounded-md border border-gray-200 bg-white p-0.5">
               <button
                 type="button"
@@ -242,7 +247,7 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
                 className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors ${sortOrder === 'newest' ? 'bg-gray-100 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <ArrowDown className="size-3" />
-                新しい順
+                {t('newest')}
               </button>
               <button
                 type="button"
@@ -250,19 +255,19 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
                 className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors ${sortOrder === 'oldest' ? 'bg-gray-100 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <ArrowUp className="size-3" />
-                古い順
+                {t('oldest')}
               </button>
             </div>
           </div>
           {isLoading ? (
             <div className="flex items-center justify-center py-5 text-gray-400">
               <Loader2 className="mr-2 size-4 animate-spin" />
-              <span className="text-sm">読み込み中...</span>
+              <span className="text-sm">{tSupporter('loading')}</span>
             </div>
           ) : loadError ? (
-            <p className="py-4 text-center text-sm text-red-500">内部メモの読み込みに失敗しました</p>
+            <p className="py-4 text-center text-sm text-red-500">{t('loadFailed')}</p>
           ) : visibleNotes.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-400">メモはまだありません</p>
+            <p className="py-4 text-center text-sm text-gray-400">{t('empty')}</p>
           ) : (
             visibleNotes.map((note) => (
               <div key={note.id} className={`rounded-md border bg-white p-3 ${config.note}`}>
@@ -278,11 +283,11 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => { setEditingId(null); setEditingBody(''); }}>
                         <X />
-                        戻る
+                        {tActions('back')}
                       </Button>
                       <Button size="sm" onClick={saveNote} disabled={!editingBody.trim() || isSubmitting} className={config.button}>
                         <Save />
-                        保存
+                        {t('save')}
                       </Button>
                     </div>
                   </div>
@@ -292,14 +297,14 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2">
                       <p className="text-xs text-gray-400">
                         {note.organization_name} / {note.author_display_name} / {formatDateTime(note.created_at)}
-                        {note.updated_at !== note.created_at ? ' 更新済み' : ''}
+                        {note.updated_at !== note.created_at ? t('edited') : ''}
                       </p>
                       {note.can_edit && (
                         <div className="flex gap-1">
-                          <Button size="icon-xs" variant="ghost" title="編集" onClick={() => { setEditingId(note.id); setEditingBody(note.body); }}>
+                          <Button size="icon-xs" variant="ghost" title={t('edit')} onClick={() => { setEditingId(note.id); setEditingBody(note.body); }}>
                             <Pencil />
                           </Button>
-                          <Button size="icon-xs" variant="ghost" title="削除" onClick={() => deleteNote(note.id)} className="text-red-500 hover:text-red-600">
+                          <Button size="icon-xs" variant="ghost" title={t('delete')} onClick={() => deleteNote(note.id)} className="text-red-500 hover:text-red-600">
                             <Trash2 />
                           </Button>
                         </div>

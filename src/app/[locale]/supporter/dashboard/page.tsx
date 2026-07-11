@@ -3,13 +3,14 @@
 import { isMinor } from '@/lib/utils/age'
 
 import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
+import { withLocalePath } from '@/i18n/routing';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { SDG_COLORS, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 
 type Case = {
   id: string;
@@ -46,21 +47,23 @@ type UserData = {
 };
 
 function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
+  const t = useTranslations('supporter.dashboard.card');
+  const tSdgs = useTranslations('sdgs');
   const sdgs = case_.ai_sdg_suggestion?.sdgs_goals || [];
   const keywords = case_.ai_sdg_suggestion?.keywords || [];
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
-    none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
-    PENDING: { label: '申し出中', color: 'bg-amber-50 text-amber-600', icon: '⏳', border: 'border-l-amber-400' },
-    ACCEPTED: { label: '承認済み', color: 'bg-teal-50 text-teal-600', icon: '✅', border: 'border-l-teal-500' },
-    WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
-    DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
+    none: { label: t('statusNone'), color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
+    PENDING: { label: t('statusPending'), color: 'bg-amber-50 text-amber-600', icon: '⏳', border: 'border-l-amber-400' },
+    ACCEPTED: { label: t('statusAccepted'), color: 'bg-teal-50 text-teal-600', icon: '✅', border: 'border-l-teal-500' },
+    WITHDRAWN: { label: t('statusWithdrawn'), color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
+    DECLINED: { label: t('statusDeclined'), color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
   };
   const caseStatusOverride: Record<string, { label: string; color: string; icon: string; border: string }> = {
-    MATCHED: { label: 'マッチ済み・支援中', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
-    RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-700', icon: '✅', border: 'border-l-teal-500' },
-    CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
-    CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
+    MATCHED: { label: t('statusMatched'), color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
+    RESOLVED: { label: t('statusResolved'), color: 'bg-teal-50 text-teal-700', icon: '✅', border: 'border-l-teal-500' },
+    CANCELLED: { label: t('statusCancelled'), color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
+    CLOSED: { label: t('statusClosed'), color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
   };
   const eng = (engagement === 'ACCEPTED' && caseStatusOverride[case_.status]) ? caseStatusOverride[case_.status] : engConfig[engagement] || engConfig.none;
 
@@ -74,10 +77,10 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
           </div>
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${eng.color}`}>{eng.icon} {eng.label}</span>
-            {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
+            {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 {t('urgent')}</span>}
             {isMinor(case_.users?.birth_date) && (
               <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
-                🔰 未成年
+                🔰 {t('minor')}
               </span>
             )}
           </div>
@@ -88,13 +91,13 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
           </div>
           <div className="flex gap-1">
-            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={SDG_NAMES[g]}>{g}</span>)}
+            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={tSdgs(`goal.${g}`)}>{g}</span>)}
           </div>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-gray-400">📅 {formatRelativeDate(case_.created_at)}</span>
           <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); onClick(); }}>
-            {engagement === 'none' ? '💬 詳細・申し出' : '詳細を見る'}
+            {engagement === 'none' ? `💬 ${t('detailOffer')}` : t('detail')}
           </Button>
         </div>
       </CardContent>
@@ -103,10 +106,11 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
 }
 
 function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (id: string) => void; }) {
+  const t = useTranslations('supporter.dashboard.grouped');
   const grouped: Record<string, { userName: string; items: Case[]; sdgs: Set<number> }> = {};
   cases.forEach((c) => {
     const uid = c.owner_user_id;
-    if (!grouped[uid]) grouped[uid] = { userName: c.users?.display_name || '不明', items: [], sdgs: new Set() };
+    if (!grouped[uid]) grouped[uid] = { userName: c.users?.display_name || t('unknown'), items: [], sdgs: new Set() };
     grouped[uid].items.push(c);
     (c.ai_sdg_suggestion?.sdgs_goals || []).forEach((s) => grouped[uid].sdgs.add(s));
   });
@@ -119,7 +123,7 @@ function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (
               <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">{group.userName.charAt(group.userName.length - 1)}</div>
               <div>
                 <span className="text-sm font-bold text-gray-800">👤 {group.userName}</span>
-                <div className="text-xs text-gray-500">相談 {group.items.length}件</div>
+                <div className="text-xs text-gray-500">{t('caseCount', { count: group.items.length })}</div>
               </div>
             </div>
             <div className="flex gap-1">
@@ -136,6 +140,7 @@ function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (
 }
 
 function RegionFilterDropdown({ allRegions, activityRegions, regionFilter, setRegionFilter, getCaseCount }: { allRegions: string[]; activityRegions: string[]; regionFilter: string | null; setRegionFilter: (v: string | null) => void; getCaseCount: (r: string) => number; }) {
+  const t = useTranslations('supporter.dashboard');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -148,20 +153,20 @@ function RegionFilterDropdown({ allRegions, activityRegions, regionFilter, setRe
   const isOtherSelected = regionFilter && !activityRegions.includes(regionFilter);
   return (
     <div className="flex gap-1.5 flex-wrap items-center relative" ref={ref}>
-      <span className="text-[11px] text-gray-400 font-semibold mr-0.5">📍 地域:</span>
-      <button onClick={() => { setRegionFilter(null); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${regionFilter === null ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>すべて</button>
+      <span className="text-[11px] text-gray-400 font-semibold mr-0.5">📍 {t('regionLabel')}</span>
+      <button onClick={() => { setRegionFilter(null); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${regionFilter === null ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>{t('regionAll')}</button>
       {activityRegions.map((r) => { const count = getCaseCount(r); if (count === 0) return null; return <button key={r} onClick={() => { setRegionFilter(regionFilter === r ? null : r); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${regionFilter === r ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-indigo-200 bg-indigo-50 text-indigo-600'}`}>📍 {r} ({count})</button>; })}
       {otherRegions.length > 0 && (
         <>
           <button onClick={() => setOpen(!open)} className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${isOtherSelected || open ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
-            {isOtherSelected ? `📍 ${regionFilter}` : `活動地域外 ${otherRegions.length}地域`}
+            {isOtherSelected ? `📍 ${regionFilter}` : t('outsideAreas', { count: otherRegions.length })}
             {!isOtherSelected && otherCount > 0 && <span className="text-gray-400">({otherCount})</span>}
             <span className={`text-[10px] transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
           </button>
           {open && (
             <div className="absolute top-full left-14 mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-xl p-4 min-w-[300px] max-w-[400px] max-h-[340px] overflow-y-auto">
-              <div className="text-xs font-bold text-gray-700 mb-1">活動地域外からの相談</div>
-              <div className="text-[11px] text-gray-400 mb-3">あなたの活動地域（{activityRegions.join("・")}）以外から届いている相談です</div>
+              <div className="text-xs font-bold text-gray-700 mb-1">{t('outsideTitle')}</div>
+              <div className="text-[11px] text-gray-400 mb-3">{t('outsideDesc', { areas: activityRegions.join('・') })}</div>
               {Object.entries(REGION_BLOCKS).map(([blockName, prefectures]) => {
                 const active = prefectures.filter((p) => otherRegions.includes(p));
                 if (active.length === 0) return null;
@@ -183,6 +188,10 @@ function RegionFilterDropdown({ allRegions, activityRegions, regionFilter, setRe
 }
 
 export default function SupporterDashboard() {
+  const t = useTranslations('supporter.dashboard');
+  const tSupporter = useTranslations('supporter');
+  const tSdgs = useTranslations('sdgs');
+  const locale = useLocale();
   const router = useRouter();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
@@ -246,7 +255,7 @@ export default function SupporterDashboard() {
     loadData();
   }, [router]);
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">読み込み中...</p></div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">{tSupporter('loading')}</p></div>;
 
   const getCaseDisplayStatus = (c: Case): string => {
     if (!c.my_offer_status) return 'none';
@@ -267,10 +276,10 @@ export default function SupporterDashboard() {
   const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
   const getCaseCount = (r: string) => cases.filter((c) => c.users?.prefecture === r).length;
   const stats = [
-    { label: '相談件数', value: cases.length, color: 'text-blue-600' },
-    { label: 'マッチ済み・支援中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
-    { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
-    { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
+    { label: t('statsTotal'), value: cases.length, color: 'text-blue-600' },
+    { label: t('statsActive'), value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
+    { label: t('statsResolved'), value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
+    { label: t('statsUrgent'), value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
   const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); };
   const hasActiveFilter = sdgFilter || engagementFilter || regionFilter;
@@ -283,40 +292,40 @@ export default function SupporterDashboard() {
         <div className="mb-6">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
-              <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
+              <h1 className="text-2xl font-bold text-gray-800">{t('greeting', { name: userData?.organization_name || userData?.display_name || '' })}</h1>
+              <p className="text-gray-500 mt-1">{t('subtitle')}</p>
             </div>
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-shrink-0">
-              <a href={`/supporters/${userData?.organization_id}`} target="_blank" rel="noopener noreferrer"
+              <a href={withLocalePath(locale, `/supporters/${userData?.organization_id}`)} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
-                🌐 団体公開ページ
+                🌐 {t('publicPage')}
               </a>
               <Link href="/profile"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
-                ✏️ プロフィール編集
+                ✏️ {t('editProfile')}
               </Link>
               <Link href="/supporter/members"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
-                👥 メンバー管理
+                👥 {t('members')}
               </Link>
               <Link href="/contact"
                 className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
-                📩 お問い合わせ
+                📩 {t('contact')}
               </Link>
             </div>
           </div>
           <div className="mt-3 flex items-start gap-2">
-            <span className="text-sm text-gray-600 flex-shrink-0">📍 活動地域:</span>
+            <span className="text-sm text-gray-600 flex-shrink-0">📍 {t('activityArea')}</span>
             {userData?.service_area_nationwide ? (
-              <span className="text-sm font-medium text-blue-600">全国対応</span>
+              <span className="text-sm font-medium text-blue-600">{t('nationwide')}</span>
             ) : activityRegions.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {activityRegions.map((r, i) => <span key={i} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">{r}</span>)}
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-orange-600">未設定</span>
-                <Link href="/profile" className="text-xs text-blue-600 hover:underline">→ 設定する</Link>
+                <span className="text-sm text-orange-600">{t('notSet')}</span>
+                <Link href="/profile" className="text-xs text-blue-600 hover:underline">{t('setNow')}</Link>
               </div>
             )}
           </div>
@@ -334,8 +343,8 @@ export default function SupporterDashboard() {
         {Object.keys(badgeCounts).length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-gray-700">🏆 いただいた評価</span>
-              <span className="text-xs text-gray-400">合計 {Object.values(badgeCounts).reduce((a, b) => a + b, 0)}件</span>
+              <span className="text-sm font-semibold text-gray-700">🏆 {t('badgesTitle')}</span>
+              <span className="text-xs text-gray-400">{t('badgesTotal', { count: Object.values(badgeCounts).reduce((a, b) => a + b, 0) })}</span>
             </div>
             <div className="flex flex-wrap gap-3">
               {(Object.keys(SUPPORTER_BADGES) as BadgeKey[]).map((key) => {
@@ -343,7 +352,7 @@ export default function SupporterDashboard() {
                 if (count === 0) return null;
                 const badge = SUPPORTER_BADGES[key];
                 return (
-                  <div key={key} className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 transition-colors rounded-full px-3 py-1.5 border border-gray-200" title={badge.label}>
+                  <div key={key} className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 transition-colors rounded-full px-3 py-1.5 border border-gray-200" title={tSdgs(`badge.${key}`)}>
                     <span className="text-lg">{badge.emoji}</span>
                     <span className="text-sm font-bold text-gray-700">{count}</span>
                   </div>
@@ -355,15 +364,15 @@ export default function SupporterDashboard() {
 
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold text-gray-700">🎯 SOS案件フィルター</span>
+            <span className="text-sm font-semibold text-gray-700">🎯 {t('filterTitle')}</span>
             <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-              {([{ id: 'flat', label: '📋 案件' }, { id: 'grouped', label: '👥 ユーザー' }] as const).map((v) => (
+              {([{ id: 'flat', label: `📋 ${t('viewFlat')}` }, { id: 'grouped', label: `👥 ${t('viewGrouped')}` }] as const).map((v) => (
                 <button key={v.id} onClick={() => setViewMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
               ))}
             </div>
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({cases.length})</button>
+            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>{t('filterAll', { count: cases.length })}</button>
             {allSdgs.map((s) => {
               const count = cases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
               return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
@@ -372,11 +381,11 @@ export default function SupporterDashboard() {
           {allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
           <div className="flex gap-1.5 flex-wrap">
             {[
-              { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
-              { key: 'none', label: '○ 未対応', color: 'border-slate-300 bg-slate-50 text-slate-600' },
-              { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
-              { key: 'active', label: '🤝 マッチ済み・支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
-              { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
+              { key: null, label: t('statusAll'), color: 'border-gray-300 bg-gray-50 text-gray-600' },
+              { key: 'none', label: `○ ${t('card.statusNone')}`, color: 'border-slate-300 bg-slate-50 text-slate-600' },
+              { key: 'pending', label: `⏳ ${t('card.statusPending')}`, color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'active', label: `🤝 ${t('card.statusMatched')}`, color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'resolved', label: `✅ ${t('card.statusResolved')}`, color: 'border-teal-300 bg-teal-50 text-teal-600' },
             ].map((f) => {
               const count = f.key === null ? cases.length : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
               return <button key={f.key || 'all'} onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>{f.label} ({count})</button>;
@@ -385,16 +394,16 @@ export default function SupporterDashboard() {
         </div>
 
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm text-gray-500">📋 {filteredCases.length}件 表示中{hasActiveFilter && <span className="text-gray-400"> / 全{cases.length}件</span>}</span>
-          {hasActiveFilter && <button onClick={clearFilters} className="text-xs text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50">✕ フィルターをクリア</button>}
+          <span className="text-sm text-gray-500">📋 {t('showing', { count: filteredCases.length })}{hasActiveFilter && <span className="text-gray-400">{t('showingTotal', { total: cases.length })}</span>}</span>
+          {hasActiveFilter && <button onClick={clearFilters} className="text-xs text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50">✕ {t('clearFilters')}</button>}
         </div>
 
         {filteredCases.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
             <div className="text-4xl mb-3">🔍</div>
-            <p className="text-gray-700 font-semibold mb-1">該当する相談が見つかりません</p>
-            <p className="text-sm text-gray-400 mb-4">フィルター条件を変更してみてください</p>
-            <Button size="sm" onClick={clearFilters}>フィルターをリセット</Button>
+            <p className="text-gray-700 font-semibold mb-1">{t('emptyTitle')}</p>
+            <p className="text-sm text-gray-400 mb-4">{t('emptyDesc')}</p>
+            <Button size="sm" onClick={clearFilters}>{t('emptyReset')}</Button>
           </div>
         ) : viewMode === 'flat' ? (
           <div className="space-y-3">
