@@ -113,7 +113,6 @@ export default function SupportersPage() {
             <Logo variant="default" size="sm" showText={true} />
           </Link>
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
             {authChecked && dashboardHref ? (
               <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
                 {t('backToDashboardShort')}
@@ -126,6 +125,7 @@ export default function SupportersPage() {
                 </Link>
               </>
             ) : null}
+            <LanguageSwitcher />
           </div>
         </div>
       </header>

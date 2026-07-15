@@ -108,10 +108,12 @@ export default function Header() {
           </nav>
         )}
 
-        {/* スマホ用ハンバーガー */}
+        {/* スマホ用: 言語切替 + ハンバーガー */}
         {!isLoading && (
+          <div className="md:hidden flex items-center gap-2">
+          <LanguageSwitcher />
           <button
-            className="md:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5"
+            className="flex flex-col justify-center items-center w-9 h-9 gap-1.5"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={t('menu')}
           >
@@ -119,6 +121,7 @@ export default function Header() {
             <span className={`block w-6 h-0.5 bg-gray-600 transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
             <span className={`block w-6 h-0.5 bg-gray-600 transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
+          </div>
         )}
       </div>
 
@@ -138,9 +141,6 @@ export default function Header() {
               {t('logout')}
             </button>
           )}
-          <div className="px-6 py-3">
-            <LanguageSwitcher />
-          </div>
         </div>
       )}
     </header>

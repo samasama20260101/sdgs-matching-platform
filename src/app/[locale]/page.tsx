@@ -121,7 +121,6 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Logo variant="default" size="sm" showText={true} />
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
             <Link href="/supporters" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.supporters')}
             </Link>
@@ -135,6 +134,7 @@ export default function HomePage() {
               className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
               {t('nav.consult')}
             </Link>
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
