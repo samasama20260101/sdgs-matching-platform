@@ -1,3 +1,14 @@
 {
-  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。"
+  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。",
+  "DESCRIPTION_REQUIRED": "Vui lòng nhập nội dung tư vấn",
+  "DESCRIPTION_TOO_LONG": "Nội dung tư vấn tối đa {max} ký tự",
+  "SERVER_ERROR": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau ít phút.",
+  "REQUIRED_FIELDS": "Thiếu các mục bắt buộc",
+  "AUTH_VERIFY_FAILED": "Xác minh thông tin đăng nhập thất bại. Vui lòng thử lại.",
+  "ALREADY_REGISTERED": "Tài khoản này đã được đăng ký",
+  "REGISTRATION_CLOSED": "Hiện tạm dừng tiếp nhận đăng ký mới. Vui lòng thử lại sau.",
+  "NAME_REQUIRED": "Vui lòng nhập họ tên",
+  "DISPLAY_NAME_REQUIRED": "Vui lòng nhập tên hiển thị",
+  "INVALID_LOCALE": "Ngôn ngữ hiển thị không hợp lệ",
+  "USER_NOT_FOUND": "Không tìm thấy người dùng"
 }

@@ -1,3 +1,14 @@
 {
-  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。"
+  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。",
+  "DESCRIPTION_REQUIRED": "相談内容を入力してください",
+  "DESCRIPTION_TOO_LONG": "相談内容は{max}文字以内で入力してください",
+  "SERVER_ERROR": "サーバーエラーが発生しました。時間をおいてもう一度お試しください。",
+  "REQUIRED_FIELDS": "必須項目が不足しています",
+  "AUTH_VERIFY_FAILED": "認証情報の確認に失敗しました。もう一度お試しください。",
+  "ALREADY_REGISTERED": "このアカウントは既に登録されています",
+  "REGISTRATION_CLOSED": "現在、新規登録の受付を一時停止しています。しばらく経ってからお試しください。",
+  "NAME_REQUIRED": "氏名を入力してください",
+  "DISPLAY_NAME_REQUIRED": "表示名を入力してください",
+  "INVALID_LOCALE": "表示言語が不正です",
+  "USER_NOT_FOUND": "ユーザーが見つかりません"
 }

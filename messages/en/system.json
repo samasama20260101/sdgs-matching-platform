@@ -1,1 +1,7 @@
-{}
+{
+  "offerWithdrawn": "{organizationName} has cancelled their support. Reason: {reason}",
+  "autoResolved": "14 days have passed since the supporter reported this as resolved, so it has been marked resolved automatically.",
+  "autoClosed": "There was no activity for 14 days since the last message, so this case has been closed automatically.",
+  "resolutionReported": "Your supporter has reported this as resolved. If your problem is solved, please choose \"Confirm resolution\". If you still have troubles, choose \"Not resolved yet\" and share your situation in the chat.",
+  "resolutionRejected": "The consulter has indicated that the problem is not yet resolved. This case remains in progress. Please check the remaining troubles and next steps in the chat."
+}

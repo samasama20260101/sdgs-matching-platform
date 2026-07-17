@@ -68,7 +68,12 @@
     "inputPlaceholder": "Nhập tin nhắn... (Shift+Enter để xuống dòng)",
     "errorLoad": "Không thể tải tin nhắn",
     "errorSend": "Gửi tin nhắn thất bại",
-    "errorGeneric": "Đã xảy ra lỗi"
+    "errorGeneric": "Đã xảy ra lỗi",
+    "translatedLabel": "Bản dịch AI",
+    "showOriginal": "Xem bản gốc",
+    "hideOriginal": "Ẩn bản gốc",
+    "translationPending": "Đang chuẩn bị bản dịch...",
+    "translationFailed": "Không thể dịch bằng AI (đang hiển thị bản gốc)"
   },
   "address": {
     "postalCode": "Mã bưu điện",

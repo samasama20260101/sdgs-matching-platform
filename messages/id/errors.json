@@ -1,3 +1,14 @@
 {
-  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。"
+  "UNKNOWN": "エラーが発生しました。時間をおいてもう一度お試しください。",
+  "DESCRIPTION_REQUIRED": "Silakan isi konsultasi Anda",
+  "DESCRIPTION_TOO_LONG": "Isi konsultasi maksimal {max} karakter",
+  "SERVER_ERROR": "Terjadi kesalahan server. Silakan coba lagi nanti.",
+  "REQUIRED_FIELDS": "Ada kolom wajib yang belum diisi",
+  "AUTH_VERIFY_FAILED": "Gagal memverifikasi autentikasi. Silakan coba lagi.",
+  "ALREADY_REGISTERED": "Akun ini sudah terdaftar",
+  "REGISTRATION_CLOSED": "Pendaftaran baru sedang dihentikan sementara. Silakan coba lagi nanti.",
+  "NAME_REQUIRED": "Silakan isi nama",
+  "DISPLAY_NAME_REQUIRED": "Silakan isi nama tampilan",
+  "INVALID_LOCALE": "Bahasa tampilan tidak valid",
+  "USER_NOT_FOUND": "Pengguna tidak ditemukan"
 }

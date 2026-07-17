@@ -15,6 +15,8 @@ type Case = {
   id: string;
   title: string;
   description_free: string;
+  description_free_ja?: string | null;  // 外国語相談の日本語訳（設計§5.8）
+  locale?: string | null;
   urgency: string;
   status: string;
   created_at: string;
@@ -25,6 +27,7 @@ type Case = {
     sdgs_goals: number[];
     reasoning: string;
     keywords: string[];
+    keywords_ja?: string[];  // 外国語案件の日本語キーワード（サポーター表示はこちらを優先）
   } | null;
   users?: {
     display_name: string;
@@ -47,7 +50,9 @@ type UserData = {
 
 function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
   const sdgs = case_.ai_sdg_suggestion?.sdgs_goals || [];
-  const keywords = case_.ai_sdg_suggestion?.keywords || [];
+  const keywords = case_.ai_sdg_suggestion?.keywords_ja?.length
+    ? case_.ai_sdg_suggestion.keywords_ja
+    : (case_.ai_sdg_suggestion?.keywords || []);
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
     none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
@@ -82,7 +87,12 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
             )}
           </div>
         </div>
-        <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+          {case_.locale && case_.locale !== 'ja' && (
+            <span className="mr-1 text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 align-middle">🌐</span>
+          )}
+          {case_.description_free_ja || case_.description_free}
+        </p>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex gap-1 flex-wrap">
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}

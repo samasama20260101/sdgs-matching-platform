@@ -13,6 +13,13 @@ type Message = {
     content: string;
     created_at: string;
     sender_user_id: string;
+    // システムメッセージのID＋パラメータ（設計§5.5。NULL=通常 or 旧形式）
+    system_key?: string | null;
+    system_params?: Record<string, string> | null;
+    // 送信時翻訳（設計§5.8）
+    source_locale?: string | null;
+    translated_content?: string | null;
+    translation_status?: 'NONE' | 'DONE' | 'PENDING' | 'FAILED' | null;
     sender?: {
         display_name: string;
         role: string;
@@ -31,8 +38,10 @@ const MESSAGE_POLL_INTERVAL_MS = 60_000;
 
 export default function MessageThread({ caseId, currentUserId, accessToken, readOnly = false }: Props) {
     const t = useTranslations('common.chat');
+    const tSystem = useTranslations('system');
     const locale = useLocale();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [showOriginalIds, setShowOriginalIds] = useState<Set<string>>(new Set());
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -203,19 +212,39 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                 ) : (
                     messages.map((msg) => {
                         const isMe = msg.sender_user_id === currentUserId;
-                        const isSystem = msg.content.startsWith('__SYSTEM__');
-                        const displayContent = isSystem ? msg.content.replace('__SYSTEM__', '') : msg.content;
+                        const isSystem = !!msg.system_key || msg.content.startsWith('__SYSTEM__');
 
                         if (isSystem) {
+                            // system_key があれば閲覧者の言語でレンダリング。
+                            // 未知のキー（新旧クライアント差など）は content（ja文）にフォールバック。
+                            // ※ next-intl の t() は未知キーで例外を投げずキーパス文字列を返すため、
+                            //   try/catch ではなく has() でガードする必要がある。
+                            const systemText = msg.system_key && tSystem.has(msg.system_key)
+                                ? tSystem(msg.system_key, msg.system_params ?? {})
+                                : msg.content.replace('__SYSTEM__', '');
                             return (
                                 <div key={msg.id} className="flex justify-center my-2">
                                     <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 max-w-[85%] text-center">
-                                        <p className="text-sm text-orange-700 font-medium">⚠️ {displayContent}</p>
+                                        <p className="text-sm text-orange-700 font-medium">⚠️ {systemText}</p>
                                         <p className="text-[10px] text-orange-400 mt-1">{formatTime(msg.created_at)}</p>
                                     </div>
                                 </div>
                             );
                         }
+
+                        // 閲覧者の言語に合わせて原文/訳文を選ぶ（設計§5.8）。
+                        // 自分の送信メッセージは常に原文（訳文は case言語⇔ja のペア固定のため、
+                        // 第3言語UIの閲覧者に自分の発言が相手言語で表示される事故を防ぐ）。
+                        const sourceLocale = msg.source_locale || 'ja';
+                        const isForeignToViewer = !isMe && sourceLocale !== locale;
+                        const showTranslated = isForeignToViewer && !!msg.translated_content;
+                        const displayContent = showTranslated ? msg.translated_content! : msg.content;
+                        const showOriginal = showOriginalIds.has(msg.id);
+                        const translationNote = isForeignToViewer && !msg.translated_content
+                            ? (msg.translation_status === 'PENDING' ? t('translationPending')
+                                : msg.translation_status === 'FAILED' ? t('translationFailed')
+                                    : null)
+                            : null;
 
                         return (
                             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -230,6 +259,30 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                                     <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isMe ? 'text-white' : 'text-gray-700'}`}>
                                         {displayContent}
                                     </p>
+                                    {showTranslated && (
+                                        <div className={`mt-1.5 flex items-center gap-2 text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
+                                            <span className={`px-1.5 py-0.5 rounded ${isMe ? 'bg-blue-500/40' : 'bg-gray-100'}`}>🌐 {t('translatedLabel')}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowOriginalIds(prev => {
+                                                    const next = new Set(prev);
+                                                    if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
+                                                    return next;
+                                                })}
+                                                className="underline underline-offset-2 hover:opacity-80"
+                                            >
+                                                {showOriginal ? t('hideOriginal') : t('showOriginal')}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {showTranslated && showOriginal && (
+                                        <p className={`mt-1.5 text-xs whitespace-pre-wrap leading-relaxed border-l-2 pl-2 ${isMe ? 'text-blue-100 border-blue-300/60' : 'text-gray-500 border-gray-200'}`}>
+                                            {msg.content}
+                                        </p>
+                                    )}
+                                    {translationNote && (
+                                        <p className={`mt-1 text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>{translationNote}</p>
+                                    )}
                                     <div className={`text-[10px] mt-1 ${isMe ? 'text-blue-200 text-right' : 'text-gray-400'}`}>
                                         {formatTime(msg.created_at)}
                                     </div>

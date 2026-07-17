@@ -68,7 +68,12 @@
     "inputPlaceholder": "Type a message... (Shift+Enter for a new line)",
     "errorLoad": "Failed to load messages",
     "errorSend": "Failed to send the message",
-    "errorGeneric": "Something went wrong"
+    "errorGeneric": "Something went wrong",
+    "translatedLabel": "AI translation",
+    "showOriginal": "Show original",
+    "hideOriginal": "Hide original",
+    "translationPending": "Preparing translation...",
+    "translationFailed": "AI translation unavailable (showing the original)"
   },
   "address": {
     "postalCode": "Postal code",

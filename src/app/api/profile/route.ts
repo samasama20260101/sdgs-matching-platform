@@ -87,7 +87,7 @@ function sanitizeServiceAreas(value: unknown): ServiceAreaInput[] | null {
 }
 
 function serverError() {
-    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    return NextResponse.json({ error: 'サーバーエラーが発生しました', code: 'SERVER_ERROR' }, { status: 500 })
 }
 
 export async function POST(request: Request) {
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     if (currentUserError || !currentUserData) {
         if (currentUserError) console.error('[profile] current user fetch error:', currentUserError)
-        return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 })
+        return NextResponse.json({ error: 'ユーザーが見つかりません', code: 'USER_NOT_FOUND' }, { status: 404 })
     }
 
     const organizationContext = currentUserData.role === 'SUPPORTER'
@@ -130,12 +130,12 @@ export async function POST(request: Request) {
     const updateData: Record<string, unknown> = {}
     if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'real_name')) {
         const realName = sanitizeRequiredText(rawUpdateData.real_name, 64)
-        if (!realName) return NextResponse.json({ error: '氏名を入力してください' }, { status: 400 })
+        if (!realName) return NextResponse.json({ error: '氏名を入力してください', code: 'NAME_REQUIRED' }, { status: 400 })
         updateData.real_name = realName
     }
     if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'display_name')) {
         const displayName = sanitizeRequiredText(rawUpdateData.display_name, 64)
-        if (!displayName) return NextResponse.json({ error: '表示名を入力してください' }, { status: 400 })
+        if (!displayName) return NextResponse.json({ error: '表示名を入力してください', code: 'DISPLAY_NAME_REQUIRED' }, { status: 400 })
         updateData.display_name = displayName
     }
     if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'phone')) {
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     }
     if (Object.prototype.hasOwnProperty.call(rawUpdateData, 'locale')) {
         if (!isAppLocale(rawUpdateData.locale)) {
-            return NextResponse.json({ error: '表示言語が不正です' }, { status: 400 })
+            return NextResponse.json({ error: '表示言語が不正です', code: 'INVALID_LOCALE' }, { status: 400 })
         }
         updateData.locale = rawUpdateData.locale
     }

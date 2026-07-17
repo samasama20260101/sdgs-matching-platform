@@ -28,6 +28,7 @@ export default function LoginPage() {
     const t = useTranslations('auth.login');
     const tAuth = useTranslations('auth.common');
     const tForm = useTranslations('common.form');
+    const tErrors = useTranslations('errors');
     const locale = useLocale();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -95,7 +96,12 @@ export default function LoginPage() {
                     })
                     if (!profileRes.ok) {
                         const profileData = await profileRes.json()
-                        setError(profileData.message || profileData.error || t('errorProfileSave'));
+                        const code = typeof profileData.code === 'string' ? profileData.code : ''
+                        setError(
+                            code && tErrors.has(code)
+                                ? tErrors(code)
+                                : (profileData.message || profileData.error || t('errorProfileSave'))
+                        );
                         return;
                     }
                     localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)

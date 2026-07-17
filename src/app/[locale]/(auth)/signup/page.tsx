@@ -14,6 +14,7 @@ export default function SignupPage() {
   const tAuth = useTranslations('auth.common')
   const tForm = useTranslations('common.form')
   const tActions = useTranslations('common.actions')
+  const tErrors = useTranslations('errors')
   const router = useRouter()
   const locale = useLocale()
 
@@ -114,8 +115,13 @@ export default function SignupPage() {
 
         if (!profileRes.ok) {
           const profileData = await profileRes.json()
-          // 登録上限エラーは専用メッセージを使用
-          throw new Error(profileData.message || profileData.error || t('errorProfileSave'))
+          // APIのエラーコード（設計§5.3）を閲覧者の言語で表示。未知コードはja文フォールバック
+          const code = typeof profileData.code === 'string' ? profileData.code : ''
+          throw new Error(
+            code && tErrors.has(code)
+              ? tErrors(code)
+              : (profileData.message || profileData.error || t('errorProfileSave'))
+          )
         }
         localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)
       } else {

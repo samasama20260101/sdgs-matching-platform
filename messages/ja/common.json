@@ -68,7 +68,12 @@
     "inputPlaceholder": "メッセージを入力... (Shift+Enterで改行)",
     "errorLoad": "メッセージの取得に失敗しました",
     "errorSend": "メッセージの送信に失敗しました",
-    "errorGeneric": "エラーが発生しました"
+    "errorGeneric": "エラーが発生しました",
+    "translatedLabel": "AI翻訳",
+    "showOriginal": "原文を表示",
+    "hideOriginal": "原文を閉じる",
+    "translationPending": "翻訳を準備中...",
+    "translationFailed": "AI翻訳できませんでした（原文を表示しています）"
   },
   "address": {
     "postalCode": "郵便番号",
