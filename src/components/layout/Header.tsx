@@ -75,6 +75,7 @@ export default function Header() {
       { href: '/sos/hearing', label: t('consult') },
       { href: '/sos/cases', label: t('caseHistory') },
     ] : []),
+    { href: '/supporters', label: t('supporters') },
     { href: '/profile', label: displayName || t('profile') },
     { href: '/contact', label: t('contact') },
   ] : [
