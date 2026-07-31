@@ -118,20 +118,22 @@ export default function HomePage() {
 
       {/* ── ヘッダー ── */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Logo variant="default" size="sm" showText={true} />
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          {/* スマホはアイコンのみ(テキスト込みだと言語スイッチャーと合わせて幅超過) */}
+          <span className="sm:hidden"><Logo variant="default" size="sm" showText={false} /></span>
+          <span className="hidden sm:block"><Logo variant="default" size="sm" showText={true} /></span>
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/supporters" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.supporters')}
             </Link>
             <Link href="/story" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.story')}
             </Link>
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
               {t('nav.login')}
             </Link>
             <Link href="/signup"
-              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-3 sm:px-4 py-1.5 rounded-full transition-colors font-medium whitespace-nowrap">
               {t('nav.consult')}
             </Link>
             <LanguageSwitcher />

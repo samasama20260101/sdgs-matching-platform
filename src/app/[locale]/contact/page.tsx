@@ -135,7 +135,7 @@ export default function ContactPage() {
           </Link>
           <div className="flex items-center gap-3">
             {userData && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 max-w-[35vw] truncate">
                 {t('loggedInAs', { name: userData.display_id || userData.email })}
               </span>
             )}

@@ -108,11 +108,13 @@ export default function SupportersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href={dashboardHref ?? '/'} className="flex items-center no-underline">
-            <Logo variant="default" size="sm" showText={true} />
+            {/* スマホはアイコンのみ(テキスト込みだと言語スイッチャーと合わせて幅超過) */}
+            <span className="sm:hidden"><Logo variant="default" size="sm" showText={false} /></span>
+            <span className="hidden sm:block"><Logo variant="default" size="sm" showText={true} /></span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {authChecked && dashboardHref ? (
               <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
                 {t('backToDashboardShort')}
@@ -120,7 +122,7 @@ export default function SupportersPage() {
             ) : authChecked ? (
               <>
                 <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">{tNav('login')}</Link>
-                <Link href="/signup" className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+                <Link href="/signup" className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-3 sm:px-4 py-1.5 rounded-full transition-colors font-medium whitespace-nowrap">
                   {tNav('consult')}
                 </Link>
               </>

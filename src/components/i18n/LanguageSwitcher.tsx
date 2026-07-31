@@ -34,7 +34,7 @@ export function LanguageSwitcher() {
 
   return (
     <label className="inline-flex items-center gap-2 text-sm text-gray-600">
-      <Languages className="h-4 w-4" aria-hidden="true" />
+      <Languages className="hidden sm:block h-4 w-4" aria-hidden="true" />
       <span className="sr-only">{t('label')}</span>
       <select
         value={locale}
