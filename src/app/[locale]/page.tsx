@@ -283,13 +283,20 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl font-black text-gray-900 mb-3">{t('sdgsSection.title')}</h2>
           <p className="text-gray-500 mb-8 text-sm">{t('sdgsSection.subtitle')}</p>
-          <div className="flex flex-wrap gap-2 justify-center">
+          {/* 国連公式アイコン(日本語版・国連広報センター配布)。PC 6列×3段・スマホ 3列×6段、18枚目はSDGsカラーホイール */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
             {Array.from({ length: 17 }, (_, i) => i + 1).map(g => (
-              <span key={g} style={{ background: SDG_COLORS[g] }}
-                className="text-white text-xs font-bold px-3 py-1.5 rounded-lg">
-                {g} {tGoalShort(String(g))}
-              </span>
+              <Image key={g}
+                src={`/sdgs/sdg-${String(g).padStart(2, '0')}-ja.webp`}
+                alt={`SDGs ${g} ${tGoalShort(String(g))}`}
+                width={320} height={320}
+                className="w-full h-auto rounded-md shadow-sm" />
             ))}
+            <div className="flex items-center justify-center p-1.5">
+              <Image src="/sdgs/sdg-wheel.webp" alt="SDGs"
+                width={320} height={320}
+                className="w-full h-auto" />
+            </div>
           </div>
         </div>
       </section>
