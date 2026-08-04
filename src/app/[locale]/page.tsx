@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { Instagram } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
@@ -10,6 +11,8 @@ import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { Logo } from '@/components/icons/Logo';
 import { ShareButtons } from '@/components/marketing/ShareButtons';
+
+const INSTAGRAM_URL = 'https://www.instagram.com/seeyou.samasama/';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
 type Supporter = {
@@ -411,6 +414,15 @@ export default function HomePage() {
 
           {/* シェア導線（マーケティング用） */}
           <ShareButtons />
+
+          {/* 公式Instagramフォロー導線（シェアとは別の行為なので列に混ぜず一段分ける） */}
+          <div className="mt-4 flex justify-center">
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
+              <Instagram className="h-4 w-4" aria-hidden="true" />
+              @seeyou.samasama
+            </a>
+          </div>
         </div>
       </section>
 
@@ -426,6 +438,11 @@ export default function HomePage() {
           <Link href="/terms" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.terms')}</Link>
           <Link href="/privacy" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.privacy')}</Link>
           <Link href="/login" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.login')}</Link>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:text-teal-400 transition-colors tracking-wide">
+            <Instagram className="h-3.5 w-3.5" aria-hidden="true" />
+            Instagram
+          </a>
         </div>
         <p>{t('footer.copyright')}</p>
       </footer>
