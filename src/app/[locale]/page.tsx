@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { Instagram } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
@@ -10,6 +11,8 @@ import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { Logo } from '@/components/icons/Logo';
 import { ShareButtons } from '@/components/marketing/ShareButtons';
+
+const INSTAGRAM_URL = 'https://www.instagram.com/seeyou.samasama/';
 
 type Stats = { resolvedCount: number; supporterCount: number; areaCount: number };
 type Supporter = {
@@ -118,20 +121,22 @@ export default function HomePage() {
 
       {/* ── ヘッダー ── */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Logo variant="default" size="sm" showText={true} />
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          {/* スマホはアイコンのみ(テキスト込みだと言語スイッチャーと合わせて幅超過) */}
+          <span className="sm:hidden"><Logo variant="default" size="sm" showText={false} /></span>
+          <span className="hidden sm:block"><Logo variant="default" size="sm" showText={true} /></span>
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/supporters" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.supporters')}
             </Link>
             <Link href="/story" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.story')}
             </Link>
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
               {t('nav.login')}
             </Link>
             <Link href="/signup"
-              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
+              className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-3 sm:px-4 py-1.5 rounded-full transition-colors font-medium whitespace-nowrap">
               {t('nav.consult')}
             </Link>
             <LanguageSwitcher />
@@ -283,13 +288,20 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl font-black text-gray-900 mb-3">{t('sdgsSection.title')}</h2>
           <p className="text-gray-500 mb-8 text-sm">{t('sdgsSection.subtitle')}</p>
-          <div className="flex flex-wrap gap-2 justify-center">
+          {/* 国連公式アイコン(日本語版・国連広報センター配布)。PC 6列×3段・スマホ 3列×6段、18枚目はSDGsカラーホイール */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
             {Array.from({ length: 17 }, (_, i) => i + 1).map(g => (
-              <span key={g} style={{ background: SDG_COLORS[g] }}
-                className="text-white text-xs font-bold px-3 py-1.5 rounded-lg">
-                {g} {tGoalShort(String(g))}
-              </span>
+              <Image key={g}
+                src={`/sdgs/sdg-${String(g).padStart(2, '0')}-ja.webp`}
+                alt={`SDGs ${g} ${tGoalShort(String(g))}`}
+                width={320} height={320}
+                className="w-full h-auto rounded-md shadow-sm" />
             ))}
+            <div className="flex items-center justify-center p-1.5">
+              <Image src="/sdgs/sdg-wheel.webp" alt="SDGs"
+                width={320} height={320}
+                className="w-full h-auto" />
+            </div>
           </div>
         </div>
       </section>
@@ -402,6 +414,15 @@ export default function HomePage() {
 
           {/* シェア導線（マーケティング用） */}
           <ShareButtons />
+
+          {/* 公式Instagramフォロー導線（シェアとは別の行為なので列に混ぜず一段分ける） */}
+          <div className="mt-4 flex justify-center">
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
+              <Instagram className="h-4 w-4" aria-hidden="true" />
+              @seeyou.samasama
+            </a>
+          </div>
         </div>
       </section>
 
@@ -417,6 +438,11 @@ export default function HomePage() {
           <Link href="/terms" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.terms')}</Link>
           <Link href="/privacy" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.privacy')}</Link>
           <Link href="/login" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.login')}</Link>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:text-teal-400 transition-colors tracking-wide">
+            <Instagram className="h-3.5 w-3.5" aria-hidden="true" />
+            Instagram
+          </a>
         </div>
         <p>{t('footer.copyright')}</p>
       </footer>

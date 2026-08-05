@@ -209,7 +209,7 @@ export default function PrivacyPage() {
           <Link href="/privacy" className="text-teal-600 font-medium">プライバシーポリシー</Link>
           <Link href="/contact" className="hover:text-teal-600 transition-colors">お問い合わせ</Link>
         </div>
-        <p>© 2026 明日もsamasama. All rights reserved.</p>
+        <p>© 2026 samasama, LLC. All rights reserved.</p>
       </footer>
     </div>
   )
