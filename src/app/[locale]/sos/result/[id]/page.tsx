@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
+import { getDisasterEvent } from '@/lib/constants/disaster';
 
 type CaseData = {
   id: string;
@@ -60,6 +61,7 @@ const MAX_ACTIVE_CASES = 3;
 
 export default function SOSResultPage() {
   const t = useTranslations('sos.result');
+  const tDisaster = useTranslations('sos.disaster');
   const tLimit = useTranslations('sos.limitModal');
   const tGoal = useTranslations('sdgs.goal');
   const tBadge = useTranslations('sdgs.badge');
@@ -398,6 +400,8 @@ export default function SOSResultPage() {
   const pendingOffers = offers.filter(o => o.status === 'PENDING');
   const acceptedOffers = offers.filter(o => o.status === 'ACCEPTED');
   const hasAccepted = acceptedOffers.length > 0;
+  // 災害SOS案件: AI提案がないため、相談内容カードと待機表示を別途出す
+  const disasterEvent = getDisasterEvent(caseData?.intake_qna?.disaster?.event_id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -441,6 +445,19 @@ export default function SOSResultPage() {
                   <div className="h-full bg-gradient-to-r from-blue-500 to-teal-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(analyzeStep * 25, 100)}%` }} />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 災害SOS案件: AI提案セクションの代わりに相談内容をそのまま表示 */}
+        {disasterEvent && caseData && (
+          <Card className="mb-6 border-rose-200 bg-rose-50/50">
+            <CardContent className="py-5">
+              <span className="inline-block text-xs font-bold text-rose-700 bg-rose-100 border border-rose-200 px-2.5 py-0.5 rounded-full mb-3">
+                🆘 {tDisaster(`events.${disasterEvent.i18nKey}`)}
+              </span>
+              <h2 className="text-base font-bold text-gray-800 mb-2">{caseData.title}</h2>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{caseData.description_free}</p>
             </CardContent>
           </Card>
         )}
@@ -685,7 +702,7 @@ export default function SOSResultPage() {
           </Card>
         )}
 
-        {offers.length === 0 && caseData?.ai_sdg_suggestion && (
+        {offers.length === 0 && (caseData?.ai_sdg_suggestion || disasterEvent) && (
           <Card className="mb-6">
             <CardContent className="py-8 text-center">
               <div className="text-4xl mb-3">⏳</div>
