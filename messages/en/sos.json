@@ -219,5 +219,44 @@
     "toastEvalFailed": "Failed to send your rating",
     "toastEvalSent": "Your thanks have been sent to the supporters! Thank you 🎉",
     "fallbackTitle": "Please review again"
+  },
+  "disaster": {
+    "banner": {
+      "title": "For those affected by the {event}",
+      "body": "Answer three simple questions to ask nonprofits, government, and companies for help.",
+      "cta": "Send a disaster SOS"
+    },
+    "events": {
+      "kumamotoEq2026": "Kumamoto Earthquake"
+    },
+    "form": {
+      "heading": "{event} Disaster SOS",
+      "lead": "Don't worry about writing it perfectly — fill in only what you can. What you write goes directly to supporters.",
+      "q1": "What is happening right now?",
+      "q1Placeholder": "e.g. My home was damaged and I am staying at a shelter",
+      "q2": "Since when have you been struggling?",
+      "q2Placeholder": "e.g. Since the day of the earthquake",
+      "q3": "What would you like to happen?",
+      "q3Placeholder": "e.g. I need temporary housing",
+      "exampleLabel": "Examples (tap to fill in)",
+      "q1Ex1": "My home is too damaged to live in and I am staying at a shelter",
+      "q1Ex2": "The water and power have been out and daily life is difficult",
+      "q1Ex3": "I have small children or elderly family members and shelter life is very hard",
+      "q2Ex1": "Ever since the earthquake",
+      "q2Ex2": "Things have been getting worse over the past few days",
+      "q3Ex1": "I need somewhere to stay for now",
+      "q3Ex2": "I need food and daily necessities",
+      "q3Ex3": "I want someone to listen and connect me with the right support",
+      "requiredError": "Please fill in at least \"What is happening right now?\"",
+      "submit": "Ask for help with this",
+      "submitting": "Sending…",
+      "note": "No AI analysis is applied — what you write is registered as-is and treated as urgent.",
+      "limitNotice": "You have reached the limit of active requests. Please check your existing requests on the dashboard.",
+      "backToDashboard": "Back to dashboard",
+      "doneTitle": "We received your SOS",
+      "doneBody": "Supporters or our team will contact you. You can check the status on your dashboard anytime.",
+      "doneCta": "Go to dashboard",
+      "submitError": "Failed to send. Please try again in a moment."
+    }
   }
 }

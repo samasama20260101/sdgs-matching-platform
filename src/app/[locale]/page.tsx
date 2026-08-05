@@ -8,6 +8,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
+import { ACTIVE_DISASTER_EVENT } from '@/lib/constants/disaster';
 import { Logo } from '@/components/icons/Logo';
 import { ShareButtons } from '@/components/marketing/ShareButtons';
 
@@ -65,6 +66,7 @@ function StatCard({ value, label, suffix = '', suffixSm }: { value: number; labe
 
 export default function HomePage() {
   const t = useTranslations('landing');
+  const tDisaster = useTranslations('sos.disaster');
   const tGoalShort = useTranslations('sdgs.goalShort');
   const tSupporterType = useTranslations('common.supporterType');
   const [stats, setStats] = useState<Stats | null>(null);
@@ -138,6 +140,22 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+
+      {/* ── 災害SOSバナー（受付中の災害イベントがあるときだけ表示） ── */}
+      {ACTIVE_DISASTER_EVENT && (
+        <div className="bg-rose-600 text-white px-4 py-3">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <p className="flex-1 text-sm font-bold leading-relaxed">
+              🆘 {tDisaster('banner.title', { event: tDisaster(`events.${ACTIVE_DISASTER_EVENT.i18nKey}`) })}
+              <span className="font-normal opacity-90 ml-2">{tDisaster('banner.body')}</span>
+            </p>
+            <Link href="/sos/disaster"
+              className="self-start sm:self-auto flex-shrink-0 text-sm font-bold bg-white text-rose-600 hover:bg-rose-50 px-4 py-1.5 rounded-full transition-colors whitespace-nowrap">
+              {tDisaster('banner.cta')}
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── ヒーロー ── */}
       <section className="bg-gradient-to-br from-teal-50 via-blue-50 to-white pt-14 sm:pt-20 pb-16 sm:pb-24 px-6">

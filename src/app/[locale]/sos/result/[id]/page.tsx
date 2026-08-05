@@ -25,7 +25,7 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
-  intake_qna: { qa: Record<string, string[]> } | null;
+  intake_qna: { qa: Record<string, string[]>; disaster?: { event_id?: string } } | null;
   ai_sdg_suggestion: {
     title?: string;
     sdgs_goals: number[];
@@ -138,8 +138,10 @@ export default function SOSResultPage() {
     setCaseData(caseResult);
 
     // ai_sdg_suggestion自体がない、またはai_sdg_suggestion内にtitleが未生成の場合は分析実行
-    const needsAnalysis = !caseResult.ai_sdg_suggestion
-      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>));
+    // 災害SOS案件はAI分析を行わない
+    const needsAnalysis = (!caseResult.ai_sdg_suggestion
+      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>)))
+      && !caseResult.intake_qna?.disaster;
     if (needsAnalysis) {
       await runAIAnalysis(caseResult);
     }

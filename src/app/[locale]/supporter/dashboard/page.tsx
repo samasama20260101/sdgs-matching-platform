@@ -10,6 +10,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { getDisasterEvent } from '@/lib/constants/disaster';
 
 type Case = {
   id: string;
@@ -21,6 +22,7 @@ type Case = {
   region_country: string;
   region_area: string | null;
   owner_user_id: string;
+  disaster_event_id?: string | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -63,9 +65,11 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
     CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
   };
   const eng = (engagement === 'ACCEPTED' && caseStatusOverride[case_.status]) ? caseStatusOverride[case_.status] : engConfig[engagement] || engConfig.none;
+  // 災害SOS案件は背景色とバッジで区別する(左ボーダーは対応状況表示に使用中のため維持)
+  const disasterEvent = getDisasterEvent(case_.disaster_event_id);
 
   return (
-    <Card className={`border-l-4 ${eng.border} hover:shadow-md transition-all cursor-pointer`} onClick={onClick}>
+    <Card className={`border-l-4 ${eng.border} ${disasterEvent ? 'bg-rose-50/60 ring-1 ring-rose-200' : ''} hover:shadow-md transition-all cursor-pointer`} onClick={onClick}>
       <CardContent className="p-5">
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="flex-1 min-w-0">
@@ -74,6 +78,11 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
           </div>
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${eng.color}`}>{eng.icon} {eng.label}</span>
+            {disasterEvent && (
+              <span className="text-[11px] font-bold text-rose-700 bg-rose-100 border border-rose-200 px-2 py-0.5 rounded">
+                🆘 {disasterEvent.nameJa}
+              </span>
+            )}
             {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
             {isMinor(case_.users?.birth_date) && (
               <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">

@@ -219,5 +219,44 @@
     "toastEvalFailed": "Gagal mengirim penilaian",
     "toastEvalSent": "Terima kasih Anda telah dikirim ke pendukung! Terima kasih 🎉",
     "fallbackTitle": "Silakan periksa kembali"
+  },
+  "disaster": {
+    "banner": {
+      "title": "Untuk Anda yang terdampak {event}",
+      "body": "Cukup jawab tiga pertanyaan untuk meminta bantuan kepada NPO, pemerintah, dan perusahaan.",
+      "cta": "Kirim SOS bencana"
+    },
+    "events": {
+      "kumamotoEq2026": "Gempa Kumamoto"
+    },
+    "form": {
+      "heading": "SOS Bencana {event}",
+      "lead": "Tidak perlu berpikir rumit — isi saja bagian yang Anda bisa. Apa yang Anda tulis akan langsung sampai ke organisasi pendukung.",
+      "q1": "Apa yang sedang terjadi sekarang?",
+      "q1Placeholder": "Contoh: Rumah saya rusak dan saya tinggal di pengungsian",
+      "q2": "Sejak kapan Anda mengalami kesulitan?",
+      "q2Placeholder": "Contoh: Sejak hari gempa terjadi",
+      "q3": "Apa yang Anda harapkan?",
+      "q3Placeholder": "Contoh: Saya butuh tempat tinggal sementara",
+      "exampleLabel": "Contoh (ketuk untuk mengisi)",
+      "q1Ex1": "Rumah saya rusak dan tidak bisa ditinggali, saya berada di pengungsian",
+      "q1Ex2": "Air dan listrik terputus, kehidupan sehari-hari sulit",
+      "q1Ex3": "Saya memiliki anak kecil atau keluarga lansia, kehidupan di pengungsian sangat berat",
+      "q2Ex1": "Sejak hari gempa terjadi",
+      "q2Ex2": "Keadaan memburuk dalam beberapa hari terakhir",
+      "q3Ex1": "Saya butuh tempat tinggal sementara",
+      "q3Ex2": "Saya membutuhkan makanan dan kebutuhan sehari-hari",
+      "q3Ex3": "Saya ingin didengarkan dan terhubung dengan bantuan yang diperlukan",
+      "requiredError": "Mohon isi setidaknya \"Apa yang sedang terjadi sekarang?\"",
+      "submit": "Minta bantuan dengan isi ini",
+      "submitting": "Mengirim…",
+      "note": "Tanpa analisis AI — apa yang Anda tulis didaftarkan apa adanya dan ditangani sebagai kasus mendesak.",
+      "limitNotice": "Konsultasi yang sedang berjalan telah mencapai batas. Silakan periksa konsultasi Anda di dasbor.",
+      "backToDashboard": "Kembali ke dasbor",
+      "doneTitle": "Telah kami terima",
+      "doneBody": "Mohon tunggu kontak dari pendukung atau tim operasional. Anda dapat memeriksa status kapan saja di dasbor.",
+      "doneCta": "Ke dasbor",
+      "submitError": "Gagal mengirim. Silakan coba lagi nanti."
+    }
   }
 }
