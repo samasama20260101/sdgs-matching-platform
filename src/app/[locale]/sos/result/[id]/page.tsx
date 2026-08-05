@@ -17,6 +17,7 @@ import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
 import { getDisasterEvent } from '@/lib/constants/disaster';
+import { CASE_PHOTO_ACCEPT_TYPES, MAX_CASE_PHOTOS } from '@/lib/constants/photos';
 
 type CaseData = {
   id: string;
@@ -90,6 +91,9 @@ export default function SOSResultPage() {
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [supporterBadges, setSupporterBadges] = useState<Record<string, Record<string, number>>>({});
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [casePhotos, setCasePhotos] = useState<Array<{ id: string; url: string }>>([]);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const tPhotos = useTranslations('sos.disaster.photos');
 
   useEffect(() => {
     loadData();
@@ -148,6 +152,10 @@ export default function SOSResultPage() {
       await runAIAnalysis(caseResult);
     }
 
+    if (caseResult.intake_qna?.disaster) {
+      await loadPhotos(caseResult.id);
+    }
+
     await loadOffers();
     setIsLoading(false);
   };
@@ -169,6 +177,55 @@ export default function SOSResultPage() {
         badgeMap[b.supporter_organization_id][b.badge_key] = (badgeMap[b.supporter_organization_id][b.badge_key] || 0) + 1;
       });
       setSupporterBadges(badgeMap);
+    }
+  };
+
+  // ── 案件写真(災害SOS) ──
+  const loadPhotos = async (caseId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch(`/api/cases/${caseId}/photos`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) return;
+    const { photos } = await res.json();
+    setCasePhotos(photos || []);
+  };
+
+  const handleAddPhoto = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0 || !caseData) return;
+    setPhotoBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const fd = new FormData();
+      fd.append('file', fileList[0]);
+      const res = await fetch(`/api/sos/cases/${caseData.id}/photos`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: fd,
+      });
+      if (!res.ok) { toast.error(tPhotos('uploadFailed')); return; }
+      await loadPhotos(caseData.id);
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!caseData) return;
+    setPhotoBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${caseData.id}/photos?photoId=${encodeURIComponent(photoId)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) { toast.error(tPhotos('deleteFailed')); return; }
+      await loadPhotos(caseData.id);
+    } finally {
+      setPhotoBusy(false);
     }
   };
 
@@ -458,6 +515,40 @@ export default function SOSResultPage() {
               </span>
               <h2 className="text-base font-bold text-gray-800 mb-2">{caseData.title}</h2>
               <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{caseData.description_free}</p>
+              {(() => {
+                const canEditPhotos = ['OPEN', 'MATCHED'].includes(caseData.status);
+                if (casePhotos.length === 0 && !canEditPhotos) return null;
+                return (
+                  <div className="mt-4 pt-4 border-t border-rose-100">
+                    <p className="text-xs font-medium text-gray-500 mb-2">📷 {tPhotos('sectionTitle')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {casePhotos.map((p) => (
+                        <div key={p.id} className="relative">
+                          <a href={p.url} target="_blank" rel="noopener noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- 署名付き一時URLのため next/image は使わない */}
+                            <img src={p.url} alt="" className="w-24 h-24 object-cover rounded-lg border border-rose-100" />
+                          </a>
+                          {canEditPhotos && (
+                            <button type="button" disabled={photoBusy} onClick={() => handleDeletePhoto(p.id)}
+                              aria-label={tPhotos('remove')}
+                              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-700 text-white text-xs leading-none hover:bg-gray-900 disabled:opacity-50">
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {canEditPhotos && casePhotos.length < MAX_CASE_PHOTOS && (
+                        <label className={`w-24 h-24 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-rose-200 text-rose-400 text-xs cursor-pointer hover:border-rose-400 transition-colors ${photoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <span className="text-lg leading-none">＋</span>
+                          <span>{tPhotos('add')}</span>
+                          <input type="file" accept={CASE_PHOTO_ACCEPT_TYPES.join(',')} className="hidden"
+                            onChange={(e) => { handleAddPhoto(e.target.files); e.target.value = ''; }} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         )}

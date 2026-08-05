@@ -14,6 +14,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ACTIVE_DISASTER_EVENT, buildDisasterDescription, type DisasterAnswers } from '@/lib/constants/disaster';
+import { CASE_PHOTO_ACCEPT_TYPES, CASE_PHOTO_MAX_UPLOAD_BYTES, MAX_CASE_PHOTOS } from '@/lib/constants/photos';
 
 const MAX_ACTIVE_CASES = 3;
 const ANSWER_MAX_LENGTH = 600;
@@ -39,6 +40,10 @@ export default function DisasterSosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoUploadFailed, setPhotoUploadFailed] = useState(false);
+  const tPhotos = useTranslations('sos.disaster.photos');
 
   const event = ACTIVE_DISASTER_EVENT;
 
@@ -71,6 +76,28 @@ export default function DisasterSosPage() {
 
   const setAnswer = (key: FieldKey, value: string) => {
     setAnswers((prev) => ({ ...prev, [key]: value.slice(0, ANSWER_MAX_LENGTH) }));
+  };
+
+  const addPhotos = (fileList: FileList | null) => {
+    if (!fileList) return;
+    setPhotoError(null);
+    setPhotoFiles((prev) => {
+      const next = [...prev];
+      for (const file of Array.from(fileList)) {
+        if (next.length >= MAX_CASE_PHOTOS) { setPhotoError(tPhotos('tooMany')); break; }
+        if (!CASE_PHOTO_ACCEPT_TYPES.includes(file.type)) { setPhotoError(tPhotos('invalidType')); continue; }
+        if (file.size > CASE_PHOTO_MAX_UPLOAD_BYTES) { setPhotoError(tPhotos('tooLarge')); continue; }
+        next.push({ file, previewUrl: URL.createObjectURL(file) });
+      }
+      return next;
+    });
+  };
+
+  const removePhoto = (previewUrl: string) => {
+    setPhotoFiles((prev) => {
+      URL.revokeObjectURL(previewUrl);
+      return prev.filter((p) => p.previewUrl !== previewUrl);
+    });
   };
 
   // 例文チップ: 未入力なら差し込み、入力済みなら改行して追記
@@ -118,6 +145,21 @@ export default function DisasterSosPage() {
         }),
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
+      const { case: createdCase } = await res.json();
+
+      // 写真アップロード(失敗しても案件登録自体は成立している)
+      let anyPhotoFailed = false;
+      for (const p of photoFiles) {
+        const fd = new FormData();
+        fd.append('file', p.file);
+        const up = await fetch(`/api/sos/cases/${createdCase.id}/photos`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+          body: fd,
+        }).catch(() => null);
+        if (!up || !up.ok) anyPhotoFailed = true;
+      }
+      setPhotoUploadFailed(anyPhotoFailed);
       setSubmitted(true);
       window.scrollTo({ top: 0 });
     } catch (error) {
@@ -139,7 +181,13 @@ export default function DisasterSosPage() {
             <CardContent className="py-12 text-center">
               <div className="text-4xl mb-4">✅</div>
               <h1 className="text-xl font-bold text-gray-800 mb-3">{t('doneTitle')}</h1>
-              <p className="text-sm text-gray-500 leading-relaxed mb-8">{t('doneBody')}</p>
+              <p className="text-sm text-gray-500 leading-relaxed mb-4">{t('doneBody')}</p>
+              {photoUploadFailed && (
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-block mb-4">
+                  {tPhotos('partialFailed')}
+                </p>
+              )}
+              <div className="mb-4" />
               <Button onClick={() => router.push('/sos/dashboard')} className="bg-rose-500 hover:bg-rose-600 text-white">
                 {t('doneCta')}
               </Button>
@@ -205,6 +253,38 @@ export default function DisasterSosPage() {
                     </CardContent>
                   </Card>
                 ))}
+
+                {/* 写真(任意・3枚まで) */}
+                <Card className="border-l-4 border-l-rose-400">
+                  <CardHeader>
+                    <CardTitle className="text-base font-medium">📷 {tPhotos('label')}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-gray-400 mb-3">{tPhotos('hint')}</p>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {photoFiles.map((p) => (
+                        <div key={p.previewUrl} className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.previewUrl} alt="" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                          <button type="button" onClick={() => removePhoto(p.previewUrl)}
+                            aria-label={tPhotos('remove')}
+                            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-700 text-white text-xs leading-none hover:bg-gray-900">
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      {photoFiles.length < MAX_CASE_PHOTOS && (
+                        <label className="w-20 h-20 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 text-xs cursor-pointer hover:border-rose-300 hover:text-rose-500 transition-colors">
+                          <span className="text-lg leading-none">＋</span>
+                          <span>{tPhotos('add')}</span>
+                          <input type="file" accept={CASE_PHOTO_ACCEPT_TYPES.join(',')} multiple className="hidden"
+                            onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
+                        </label>
+                      )}
+                    </div>
+                    {photoError && <p className="text-xs text-rose-600 mt-2">{photoError}</p>}
+                  </CardContent>
+                </Card>
 
                 {errorMessage && (
                   <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 text-sm">

@@ -257,6 +257,19 @@
       "doneBody": "Supporters or our team will contact you. You can check the status on your dashboard anytime.",
       "doneCta": "Go to dashboard",
       "submitError": "Failed to send. Please try again in a moment."
+    },
+    "photos": {
+      "label": "Photos (optional, up to 3)",
+      "hint": "Add photos that show your situation if you have any. Location data is removed automatically.",
+      "add": "Add photo",
+      "remove": "Remove",
+      "tooMany": "Up to 3 photos",
+      "tooLarge": "Each image must be 10MB or smaller",
+      "invalidType": "Please choose a JPEG / PNG / WebP image",
+      "uploadFailed": "Failed to upload the photo",
+      "partialFailed": "Some photos could not be uploaded. You can add them from the case page.",
+      "sectionTitle": "Photos",
+      "deleteFailed": "Failed to delete the photo"
     }
   }
 }

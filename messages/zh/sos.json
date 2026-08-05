@@ -257,6 +257,19 @@
       "doneBody": "请等待支援者或运营方与您联系。您可以随时在仪表板查看进展。",
       "doneCta": "前往仪表板",
       "submitError": "发送失败，请稍后重试。"
+    },
+    "photos": {
+      "label": "照片（可选，最多3张）",
+      "hint": "如有能说明情况的照片请添加。位置信息等数据会被自动删除。",
+      "add": "添加照片",
+      "remove": "删除",
+      "tooMany": "最多3张照片",
+      "tooLarge": "图片大小不能超过10MB",
+      "invalidType": "请选择 JPEG / PNG / WebP 格式的图片",
+      "uploadFailed": "照片上传失败",
+      "partialFailed": "部分照片未能上传。您可以在案件页面中添加。",
+      "sectionTitle": "照片",
+      "deleteFailed": "照片删除失败"
     }
   }
 }

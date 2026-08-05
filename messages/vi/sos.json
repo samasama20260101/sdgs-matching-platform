@@ -257,6 +257,19 @@
       "doneBody": "Vui lòng chờ liên hệ từ người hỗ trợ hoặc ban vận hành. Bạn có thể kiểm tra tình trạng trên bảng điều khiển bất cứ lúc nào.",
       "doneCta": "Đến bảng điều khiển",
       "submitError": "Gửi không thành công. Vui lòng thử lại sau."
+    },
+    "photos": {
+      "label": "Ảnh (không bắt buộc, tối đa 3)",
+      "hint": "Nếu có ảnh thể hiện tình trạng, hãy thêm vào. Dữ liệu vị trí sẽ được tự động xóa.",
+      "add": "Thêm ảnh",
+      "remove": "Xóa",
+      "tooMany": "Tối đa 3 ảnh",
+      "tooLarge": "Mỗi ảnh tối đa 10MB",
+      "invalidType": "Vui lòng chọn ảnh định dạng JPEG / PNG / WebP",
+      "uploadFailed": "Tải ảnh lên thất bại",
+      "partialFailed": "Một số ảnh không tải lên được. Bạn có thể thêm từ trang chi tiết.",
+      "sectionTitle": "Ảnh",
+      "deleteFailed": "Không thể xóa ảnh"
     }
   }
 }
