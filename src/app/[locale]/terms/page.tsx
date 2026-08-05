@@ -208,7 +208,7 @@ export default function TermsPage() {
           <Link href="/privacy" className="hover:text-teal-600 transition-colors">プライバシーポリシー</Link>
           <Link href="/contact" className="hover:text-teal-600 transition-colors">お問い合わせ</Link>
         </div>
-        <p>© 2026 明日もsamasama. All rights reserved.</p>
+        <p>© 2026 samasama, LLC. All rights reserved.</p>
       </footer>
     </div>
   )

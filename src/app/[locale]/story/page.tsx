@@ -482,7 +482,7 @@ export default function StoryPage() {
         <div className="flex items-center">
           <Logo variant="default" size="sm" showText={true} />
         </div>
-        <p className="text-xs text-slate-300 tracking-[2px]">© 2026 明日もsamasama. All rights reserved.</p>
+        <p className="text-xs text-slate-300 tracking-[2px]">© 2026 samasama, LLC. All rights reserved.</p>
         <p className="text-xs text-slate-300 tracking-[2px] uppercase">SDGs Match Platform</p>
       </footer>
     </div>
