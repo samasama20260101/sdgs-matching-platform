@@ -14,7 +14,8 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ACTIVE_DISASTER_EVENT, buildDisasterDescription, type DisasterAnswers } from '@/lib/constants/disaster';
-import { CASE_PHOTO_ACCEPT_TYPES, CASE_PHOTO_MAX_UPLOAD_BYTES, MAX_CASE_PHOTOS } from '@/lib/constants/photos';
+import { CASE_PHOTO_MAX_UPLOAD_BYTES, MAX_CASE_PHOTOS } from '@/lib/constants/photos';
+import { compressImageToJpeg } from '@/lib/utils/imageCompress';
 
 const MAX_ACTIVE_CASES = 3;
 const ANSWER_MAX_LENGTH = 600;
@@ -42,6 +43,7 @@ export default function DisasterSosPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [photoFiles, setPhotoFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoProcessing, setPhotoProcessing] = useState(false);
   const [photoUploadFailed, setPhotoUploadFailed] = useState(false);
   const tPhotos = useTranslations('sos.disaster.photos');
 
@@ -78,23 +80,28 @@ export default function DisasterSosPage() {
     setAnswers((prev) => ({ ...prev, [key]: value.slice(0, ANSWER_MAX_LENGTH) }));
   };
 
-  const addPhotos = (fileList: FileList | null) => {
+  const addPhotos = async (fileList: FileList | null) => {
     // FileListはinputと連動する生きたオブジェクトのため、inputクリア前に同期的にコピーする
     const incoming = fileList ? Array.from(fileList) : [];
     if (incoming.length === 0) return;
 
+    setPhotoProcessing(true);
     let nextError: string | null = null;
     const accepted: Array<{ file: File; previewUrl: string }> = [];
     let total = photoFiles.length;
     for (const file of incoming) {
       if (total >= MAX_CASE_PHOTOS) { nextError = tPhotos('tooMany'); break; }
-      if (!CASE_PHOTO_ACCEPT_TYPES.includes(file.type)) { nextError = tPhotos('invalidType'); continue; }
-      if (file.size > CASE_PHOTO_MAX_UPLOAD_BYTES) { nextError = tPhotos('tooLarge'); continue; }
-      accepted.push({ file, previewUrl: URL.createObjectURL(file) });
+      if (file.type && !file.type.startsWith('image/')) { nextError = tPhotos('invalidType'); continue; }
+      // 端末側で長辺1600pxのJPEGに圧縮(HEIC等の形式差・10MB超・GPS情報をここで吸収)
+      const compressed = await compressImageToJpeg(file);
+      if (!compressed) { nextError = tPhotos('invalidType'); continue; }
+      if (compressed.size > CASE_PHOTO_MAX_UPLOAD_BYTES) { nextError = tPhotos('tooLarge'); continue; }
+      accepted.push({ file: compressed, previewUrl: URL.createObjectURL(compressed) });
       total += 1;
     }
     setPhotoFiles((prev) => [...prev, ...accepted]);
     setPhotoError(nextError);
+    setPhotoProcessing(false);
   };
 
   const removePhoto = (previewUrl: string) => {
@@ -278,10 +285,10 @@ export default function DisasterSosPage() {
                         </div>
                       ))}
                       {photoFiles.length < MAX_CASE_PHOTOS && (
-                        <label className="w-20 h-20 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 text-xs cursor-pointer hover:border-rose-300 hover:text-rose-500 transition-colors">
-                          <span className="text-lg leading-none">＋</span>
+                        <label className={`w-20 h-20 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 text-xs cursor-pointer hover:border-rose-300 hover:text-rose-500 transition-colors ${photoProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <span className="text-lg leading-none">{photoProcessing ? '…' : '＋'}</span>
                           <span>{tPhotos('add')}</span>
-                          <input type="file" accept={CASE_PHOTO_ACCEPT_TYPES.join(',')} multiple className="hidden"
+                          <input type="file" accept="image/*" multiple className="hidden"
                             onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
                         </label>
                       )}

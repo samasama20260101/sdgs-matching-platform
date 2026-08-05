@@ -17,7 +17,8 @@ import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
 import { getDisasterEvent } from '@/lib/constants/disaster';
-import { CASE_PHOTO_ACCEPT_TYPES, MAX_CASE_PHOTOS } from '@/lib/constants/photos';
+import { MAX_CASE_PHOTOS } from '@/lib/constants/photos';
+import { compressImageToJpeg } from '@/lib/utils/imageCompress';
 
 type CaseData = {
   id: string;
@@ -198,10 +199,13 @@ export default function SOSResultPage() {
     if (!file || !caseData) return;
     setPhotoBusy(true);
     try {
+      // 端末側で長辺1600pxのJPEGに圧縮(HEIC等の形式差・10MB超・GPS情報をここで吸収)
+      const compressed = await compressImageToJpeg(file);
+      if (!compressed) { toast.error(tPhotos('uploadFailed')); return; }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressed);
       const res = await fetch(`/api/sos/cases/${caseData.id}/photos`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` },
@@ -543,7 +547,7 @@ export default function SOSResultPage() {
                         <label className={`w-24 h-24 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-rose-200 text-rose-400 text-xs cursor-pointer hover:border-rose-400 transition-colors ${photoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
                           <span className="text-lg leading-none">＋</span>
                           <span>{tPhotos('add')}</span>
-                          <input type="file" accept={CASE_PHOTO_ACCEPT_TYPES.join(',')} className="hidden"
+                          <input type="file" accept="image/*" className="hidden"
                             onChange={(e) => { handleAddPhoto(e.target.files); e.target.value = ''; }} />
                         </label>
                       )}
