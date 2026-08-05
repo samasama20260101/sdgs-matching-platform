@@ -193,13 +193,15 @@ export default function SOSResultPage() {
   };
 
   const handleAddPhoto = async (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0 || !caseData) return;
+    // FileListはinputと連動する生きたオブジェクトのため、awaitより先にFileを取り出す
+    const file = fileList?.[0];
+    if (!file || !caseData) return;
     setPhotoBusy(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const fd = new FormData();
-      fd.append('file', fileList[0]);
+      fd.append('file', file);
       const res = await fetch(`/api/sos/cases/${caseData.id}/photos`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` },

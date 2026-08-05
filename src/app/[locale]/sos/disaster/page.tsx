@@ -79,18 +79,22 @@ export default function DisasterSosPage() {
   };
 
   const addPhotos = (fileList: FileList | null) => {
-    if (!fileList) return;
-    setPhotoError(null);
-    setPhotoFiles((prev) => {
-      const next = [...prev];
-      for (const file of Array.from(fileList)) {
-        if (next.length >= MAX_CASE_PHOTOS) { setPhotoError(tPhotos('tooMany')); break; }
-        if (!CASE_PHOTO_ACCEPT_TYPES.includes(file.type)) { setPhotoError(tPhotos('invalidType')); continue; }
-        if (file.size > CASE_PHOTO_MAX_UPLOAD_BYTES) { setPhotoError(tPhotos('tooLarge')); continue; }
-        next.push({ file, previewUrl: URL.createObjectURL(file) });
-      }
-      return next;
-    });
+    // FileListはinputと連動する生きたオブジェクトのため、inputクリア前に同期的にコピーする
+    const incoming = fileList ? Array.from(fileList) : [];
+    if (incoming.length === 0) return;
+
+    let nextError: string | null = null;
+    const accepted: Array<{ file: File; previewUrl: string }> = [];
+    let total = photoFiles.length;
+    for (const file of incoming) {
+      if (total >= MAX_CASE_PHOTOS) { nextError = tPhotos('tooMany'); break; }
+      if (!CASE_PHOTO_ACCEPT_TYPES.includes(file.type)) { nextError = tPhotos('invalidType'); continue; }
+      if (file.size > CASE_PHOTO_MAX_UPLOAD_BYTES) { nextError = tPhotos('tooLarge'); continue; }
+      accepted.push({ file, previewUrl: URL.createObjectURL(file) });
+      total += 1;
+    }
+    setPhotoFiles((prev) => [...prev, ...accepted]);
+    setPhotoError(nextError);
   };
 
   const removePhoto = (previewUrl: string) => {
