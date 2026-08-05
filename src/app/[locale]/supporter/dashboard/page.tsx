@@ -23,6 +23,7 @@ type Case = {
   region_area: string | null;
   owner_user_id: string;
   disaster_event_id?: string | null;
+  photo_count?: number;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -81,6 +82,11 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
             {disasterEvent && (
               <span className="text-[11px] font-bold text-rose-700 bg-rose-100 border border-rose-200 px-2 py-0.5 rounded">
                 🆘 {disasterEvent.nameJa}
+              </span>
+            )}
+            {(case_.photo_count ?? 0) > 0 && (
+              <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                📷 {case_.photo_count}
               </span>
             )}
             {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}

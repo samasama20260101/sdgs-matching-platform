@@ -257,6 +257,19 @@
       "doneBody": "Mohon tunggu kontak dari pendukung atau tim operasional. Anda dapat memeriksa status kapan saja di dasbor.",
       "doneCta": "Ke dasbor",
       "submitError": "Gagal mengirim. Silakan coba lagi nanti."
+    },
+    "photos": {
+      "label": "Foto (opsional, maks. 3)",
+      "hint": "Tambahkan foto yang menunjukkan situasi Anda jika ada. Data lokasi dihapus secara otomatis.",
+      "add": "Tambah foto",
+      "remove": "Hapus",
+      "tooMany": "Maksimal 3 foto",
+      "tooLarge": "Ukuran gambar maksimal 10MB",
+      "invalidType": "Pilih gambar berformat JPEG / PNG / WebP",
+      "uploadFailed": "Gagal mengunggah foto",
+      "partialFailed": "Sebagian foto gagal diunggah. Anda dapat menambahkannya dari halaman detail.",
+      "sectionTitle": "Foto",
+      "deleteFailed": "Gagal menghapus foto"
     }
   }
 }

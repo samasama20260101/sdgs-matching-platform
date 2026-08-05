@@ -6,6 +6,10 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
 import { supabase } from '@/lib/supabase/client';
 
+// 多言語はまだ一般公開しない(後日大々的に公開予定)。公開時に true へ戻す。
+// あわせて src/i18n/routing.ts の localeDetection も戻すこと。
+const LANGUAGE_SWITCHER_ENABLED = false;
+
 export function LanguageSwitcher() {
   const locale = useLocale() as AppLocale;
   const pathname = usePathname();
@@ -13,6 +17,7 @@ export function LanguageSwitcher() {
   const t = useTranslations('common.locale');
 
   const handleChange = (nextLocale: AppLocale) => {
+    if (!LANGUAGE_SWITCHER_ENABLED) return;
     sessionStorage.setItem('localeRestored', '1');
     document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; samesite=lax`;
     router.replace(pathname, { locale: nextLocale });
@@ -31,6 +36,8 @@ export function LanguageSwitcher() {
       console.error('[LanguageSwitcher] locale save error:', error);
     });
   };
+
+  if (!LANGUAGE_SWITCHER_ENABLED) return null;
 
   return (
     <label className="inline-flex items-center gap-2 text-sm text-gray-600">

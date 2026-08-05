@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SDG_NAMES, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
 import { getDisasterEvent } from '@/lib/constants/disaster';
+import { isCasePhotosEnabled } from '@/lib/constants/photos';
 import { isMinor } from '@/lib/utils/age';
 
 type CaseData = {
@@ -79,6 +80,7 @@ export default function SupporterCaseDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [showQna, setShowQna] = useState(false);
+  const [casePhotos, setCasePhotos] = useState<Array<{ id: string; url: string }>>([]);
   const [offerMessage, setOfferMessage] = useState('');
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,6 +106,17 @@ export default function SupporterCaseDetailPage() {
     }
     const { case: caseResult, supporterUserId, supporterOrganizationId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
     setCaseData(caseResult);
+
+    // 案件写真(災害SOSのみ。マッチング前でも閲覧可)
+    if (isCasePhotosEnabled(caseResult?.intake_qna)) {
+      const photoRes = await fetch(`/api/cases/${params.id}/photos`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (photoRes.ok) {
+        const { photos } = await photoRes.json();
+        setCasePhotos(photos || []);
+      }
+    }
     setCurrentUserId(supporterUserId);
     setCurrentOrganizationId(supporterOrganizationId);
     setAcceptedOfferOrders(aOffers ?? []);
@@ -348,6 +361,21 @@ export default function SupporterCaseDetailPage() {
               <h3 className="text-sm font-medium text-gray-500 mb-2">詳細</h3>
               <p className="text-gray-700 whitespace-pre-line">{caseData?.description_free}</p>
             </div>
+
+            {/* 案件写真（クリックで原寸表示） */}
+            {casePhotos.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">📷 写真</h3>
+                <div className="flex flex-wrap gap-2">
+                  {casePhotos.map((p) => (
+                    <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- 署名付き一時URLのため next/image は使わない */}
+                      <img src={p.url} alt="" className="w-28 h-28 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Q1〜Q5 アンケート回答（折りたたみ） */}
             {caseData?.intake_qna?.qa && Object.keys(caseData.intake_qna.qa).length > 0 && (

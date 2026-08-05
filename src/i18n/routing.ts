@@ -26,6 +26,9 @@ export const routing = defineRouting({
   locales,
   defaultLocale,
   localePrefix: 'as-needed',
+  // 多言語の大々的公開までブラウザ言語による自動リダイレクトを止める(ja固定)。
+  // 公開時はこの行を削除し、LanguageSwitcher の LANGUAGE_SWITCHER_ENABLED も true へ。
+  localeDetection: false,
 });
 
 export function isAppLocale(locale: string | undefined): locale is AppLocale {
