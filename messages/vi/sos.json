@@ -219,5 +219,44 @@
     "toastEvalFailed": "Gửi đánh giá thất bại",
     "toastEvalSent": "Đã gửi lời cảm ơn đến người hỗ trợ! Cảm ơn bạn 🎉",
     "fallbackTitle": "Vui lòng xem lại"
+  },
+  "disaster": {
+    "banner": {
+      "title": "Dành cho những người bị ảnh hưởng bởi {event}",
+      "body": "Chỉ cần trả lời ba câu hỏi để yêu cầu NPO, chính quyền và doanh nghiệp giúp đỡ.",
+      "cta": "Gửi SOS thảm họa"
+    },
+    "events": {
+      "kumamotoEq2026": "Động đất Kumamoto"
+    },
+    "form": {
+      "heading": "SOS thảm họa {event}",
+      "lead": "Đừng lo lắng về cách viết — chỉ cần điền những gì bạn có thể. Nội dung bạn viết sẽ được gửi trực tiếp đến các tổ chức hỗ trợ.",
+      "q1": "Hiện tại điều gì đang xảy ra?",
+      "q1Placeholder": "VD: Nhà tôi bị hư hại và tôi đang ở nơi lánh nạn",
+      "q2": "Bạn gặp khó khăn từ khi nào?",
+      "q2Placeholder": "VD: Từ ngày xảy ra động đất",
+      "q3": "Bạn mong muốn điều gì?",
+      "q3Placeholder": "VD: Tôi cần chỗ ở tạm thời",
+      "exampleLabel": "Ví dụ (chạm để điền)",
+      "q1Ex1": "Nhà tôi bị hư hại không thể ở được, tôi đang ở nơi lánh nạn",
+      "q1Ex2": "Mất nước và mất điện kéo dài, sinh hoạt rất khó khăn",
+      "q1Ex3": "Tôi có con nhỏ hoặc người già trong gia đình, cuộc sống lánh nạn rất vất vả",
+      "q2Ex1": "Kể từ ngày xảy ra động đất",
+      "q2Ex2": "Tình hình xấu đi trong vài ngày gần đây",
+      "q3Ex1": "Tôi cần chỗ ở tạm thời",
+      "q3Ex2": "Tôi cần thực phẩm và nhu yếu phẩm",
+      "q3Ex3": "Tôi muốn được lắng nghe và kết nối với sự hỗ trợ cần thiết",
+      "requiredError": "Vui lòng điền ít nhất mục \"Hiện tại điều gì đang xảy ra?\"",
+      "submit": "Yêu cầu giúp đỡ với nội dung này",
+      "submitting": "Đang gửi…",
+      "note": "Không qua phân tích AI — nội dung bạn viết được đăng ký nguyên văn và xử lý như trường hợp khẩn cấp.",
+      "limitNotice": "Số yêu cầu đang tiến hành đã đạt giới hạn. Vui lòng kiểm tra các yêu cầu hiện có trên bảng điều khiển.",
+      "backToDashboard": "Quay lại bảng điều khiển",
+      "doneTitle": "Đã tiếp nhận",
+      "doneBody": "Vui lòng chờ liên hệ từ người hỗ trợ hoặc ban vận hành. Bạn có thể kiểm tra tình trạng trên bảng điều khiển bất cứ lúc nào.",
+      "doneCta": "Đến bảng điều khiển",
+      "submitError": "Gửi không thành công. Vui lòng thử lại sau."
+    }
   }
 }

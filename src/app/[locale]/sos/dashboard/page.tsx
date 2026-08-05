@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, formatRelativeDateIntl } from '@/lib/constants/sdgs';
+import { ACTIVE_DISASTER_EVENT, getDisasterEvent } from '@/lib/constants/disaster';
 
 const MAX_ACTIVE_CASES = 3;
 
@@ -21,6 +22,7 @@ type Case = {
   status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
   pending_offer_count?: number;
   created_at: string;
+  intake_qna?: { disaster?: { event_id?: string } } | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -36,6 +38,7 @@ type UserData = {
 
 export default function SOSDashboard() {
   const t = useTranslations('sos.dashboard');
+  const tDisaster = useTranslations('sos.disaster');
   const tStatus = useTranslations('sdgs.caseStatus');
   const tForm = useTranslations('common.form');
   const tActions = useTranslations('common.actions');
@@ -175,6 +178,26 @@ export default function SOSDashboard() {
           </p>
         </div>
 
+        {/* 災害SOSバナー（受付中の災害イベントがあるときだけ表示） */}
+        {ACTIVE_DISASTER_EVENT && (
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 bg-rose-50 border border-rose-200 rounded-xl px-5 py-4">
+            <div className="flex-1">
+              <p className="text-sm font-bold text-rose-700">
+                🆘 {tDisaster('banner.title', { event: tDisaster(`events.${ACTIVE_DISASTER_EVENT.i18nKey}`) })}
+              </p>
+              <p className="text-xs text-rose-600/90 leading-relaxed mt-1">
+                {tDisaster('banner.body')}
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/sos/disaster')}
+              className="flex-shrink-0 self-start sm:self-auto px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-lg transition-colors"
+            >
+              {tDisaster('banner.cta')}
+            </button>
+          </div>
+        )}
+
         {/* 地域未設定バナー */}
         {!userData?.sos_region_code && (
           <div className="mb-6 flex items-start gap-4 bg-amber-50 border border-amber-300 rounded-xl px-5 py-4">
@@ -288,6 +311,15 @@ export default function SOSDashboard() {
                             {t('urgencyLabel', { level: urgency.label })}
                           </span>
                         </div>
+                        {/* 災害SOSバッジ */}
+                        {(() => {
+                          const disasterEvent = getDisasterEvent(case_.intake_qna?.disaster?.event_id);
+                          return disasterEvent ? (
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full w-fit bg-rose-100 text-rose-700 font-medium">
+                              🆘 {tDisaster(`events.${disasterEvent.i18nKey}`)}
+                            </span>
+                          ) : null;
+                        })()}
                         {/* ステータスバッジ */}
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full w-fit ${case_.status === 'OPEN' ? 'bg-blue-100 text-blue-600' :
                           case_.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' :

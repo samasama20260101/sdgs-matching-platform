@@ -145,6 +145,15 @@ export async function POST(request: NextRequest) {
                 );
             }
 
+            // 災害SOS案件はAI分類の対象外(API直叩きでも分析させない)
+            const intake = caseData.intake_qna as { disaster?: unknown } | null
+            if (intake?.disaster) {
+                return NextResponse.json(
+                    { error: '災害SOS案件はAI分析の対象外です' },
+                    { status: 400 }
+                );
+            }
+
             analysisDescription = buildDescriptionFromCase(caseData as CaseForAnalysis);
             targetCaseId = caseData.id;
         } else {

@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SDG_NAMES, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
+import { getDisasterEvent } from '@/lib/constants/disaster';
 import { isMinor } from '@/lib/utils/age';
 
 type CaseData = {
@@ -27,7 +28,7 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
-  intake_qna: { qa: Record<string, string> };
+  intake_qna: { qa: Record<string, string>; disaster?: { event_id?: string } };
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -310,6 +311,14 @@ export default function SupporterCaseDetailPage() {
               <div className="flex-1">
                 <CardTitle className="text-xl mb-2">{caseData?.title}</CardTitle>
                 <div className="flex gap-2 flex-wrap">
+                  {(() => {
+                    const disasterEvent = getDisasterEvent(caseData?.intake_qna?.disaster?.event_id);
+                    return disasterEvent ? (
+                      <span className="text-xs px-2 py-1 rounded-full bg-rose-100 border border-rose-200 text-rose-700 font-bold">
+                        🆘 {disasterEvent.nameJa}
+                      </span>
+                    ) : null;
+                  })()}
                   {caseData?.urgency === 'High' && (
                     <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>
                   )}

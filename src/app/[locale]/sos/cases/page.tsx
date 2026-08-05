@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SDG_COLORS, CASE_STATUS, type CaseStatusKey } from '@/lib/constants/sdgs';
+import { getDisasterEvent } from '@/lib/constants/disaster';
 
 type Case = {
   id: string;
@@ -16,6 +17,7 @@ type Case = {
   urgency: string;
   status: string;
   created_at: string;
+  intake_qna?: { disaster?: { event_id?: string } } | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -25,6 +27,7 @@ type Case = {
 
 export default function SOSCasesPage() {
   const t = useTranslations('sos.casesList');
+  const tDisaster = useTranslations('sos.disaster');
   const tStatus = useTranslations('sdgs.caseStatus');
   const tForm = useTranslations('common.form');
   const locale = useLocale();
@@ -151,6 +154,15 @@ export default function SOSCasesPage() {
                       {c.title}
                     </CardTitle>
                     <div className="flex gap-2 flex-shrink-0">
+                      {/* 災害SOS */}
+                      {(() => {
+                        const disasterEvent = getDisasterEvent(c.intake_qna?.disaster?.event_id);
+                        return disasterEvent ? (
+                          <span className="text-xs px-2 py-1 rounded-full bg-rose-100 text-rose-700">
+                            🆘 {tDisaster(`events.${disasterEvent.i18nKey}`)}
+                          </span>
+                        ) : null;
+                      })()}
                       {/* 緊急度 */}
                       {c.urgency === 'High' && (
                         <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 
-const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id'
+const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id, intake_qna'
 
 export async function GET(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -103,12 +103,17 @@ export async function GET(request: Request) {
     const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE
     const enriched = mergedCases
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .map(c => ({
-            ...c,
-            my_offer_status: offerMap[c.id] || null,
-            users: userMap[c.owner_user_id] || null,
-            accepted_count: acceptedCountMap[c.id] || 0,
-        }))
+        .map(c => {
+            // 災害SOSの目印だけを渡し、intake_qna本体はレスポンスに含めない
+            const { intake_qna: intakeQna, ...rest } = c as typeof c & { intake_qna?: { disaster?: { event_id?: string } } | null }
+            return {
+                ...rest,
+                disaster_event_id: intakeQna?.disaster?.event_id || null,
+                my_offer_status: offerMap[c.id] || null,
+                users: userMap[c.owner_user_id] || null,
+                accepted_count: acceptedCountMap[c.id] || 0,
+            }
+        })
         .filter(c => {
             const myStatus = offerMap[c.id]
             const isFull = (acceptedCountMap[c.id] || 0) >= MAX_ACCEPTED

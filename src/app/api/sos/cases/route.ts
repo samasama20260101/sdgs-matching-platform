@@ -1,6 +1,7 @@
 // src/app/api/sos/cases/route.ts
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { DISASTER_EVENT_IDS } from '@/lib/constants/disaster'
 import { NextResponse } from 'next/server'
 
 const DESCRIPTION_FREE_MAX_LENGTH = 2000
@@ -26,10 +27,39 @@ function sanitizeLocale(value: unknown) {
     return typeof value === 'string' && ALLOWED_LOCALES.has(value) ? value : null
 }
 
+// 災害SOSフロー: intake_qna.disaster を検証して通す(event_idはホワイトリスト制)
+function sanitizeDisaster(value: unknown) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+    const eventId = (value as { event_id?: unknown }).event_id
+    if (typeof eventId !== 'string' || !DISASTER_EVENT_IDS.has(eventId)) return null
+
+    const answersRaw = (value as { answers?: unknown }).answers
+    const answers: Record<string, string> = {}
+    if (answersRaw && typeof answersRaw === 'object' && !Array.isArray(answersRaw)) {
+        for (const key of ['situation', 'since', 'wish']) {
+            const answer = (answersRaw as Record<string, unknown>)[key]
+            if (typeof answer === 'string' && answer.trim()) {
+                answers[key] = answer.trim().slice(0, 600)
+            }
+        }
+    }
+    return { event_id: eventId, answers }
+}
+
 function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+    const disaster = sanitizeDisaster((value as { disaster?: unknown }).disaster)
     const qa = (value as { qa?: unknown }).qa
-    if (!qa || typeof qa !== 'object' || Array.isArray(qa)) return null
+    if (!qa || typeof qa !== 'object' || Array.isArray(qa)) {
+        // 災害SOSはQ&Aなしで登録できる
+        if (!disaster) return null
+        return {
+            qa: {},
+            qa_ids: {},
+            disaster,
+            locale: sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale,
+        }
+    }
 
     const sanitizedQa: Record<string, string[]> = {}
     for (const [rawKey, rawAnswers] of Object.entries(qa as Record<string, unknown>)) {
@@ -59,6 +89,7 @@ function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {
     return {
         qa: sanitizedQa,
         qa_ids: sanitizedQaIds,
+        ...(disaster ? { disaster } : {}),
         locale: sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale,
     }
 }
