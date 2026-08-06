@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 import { getCasePhotos } from '@/lib/constants/photos'
+import { getDisasterNeeds } from '@/lib/constants/disaster'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id, intake_qna'
@@ -110,6 +111,7 @@ export async function GET(request: Request) {
             return {
                 ...rest,
                 disaster_event_id: intakeQna?.disaster?.event_id || null,
+                disaster_needs: getDisasterNeeds(intakeQna),
                 photo_count: getCasePhotos(intakeQna).length,
                 my_offer_status: offerMap[c.id] || null,
                 users: userMap[c.owner_user_id] || null,

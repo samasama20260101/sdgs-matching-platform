@@ -10,7 +10,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
-import { getDisasterEvent } from '@/lib/constants/disaster';
+import { getDisasterEvent, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey } from '@/lib/constants/disaster';
 
 type Case = {
   id: string;
@@ -23,6 +23,7 @@ type Case = {
   region_area: string | null;
   owner_user_id: string;
   disaster_event_id?: string | null;
+  disaster_needs?: string[];
   photo_count?: number;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
@@ -100,6 +101,16 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
         <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex gap-1 flex-wrap">
+            {/* 災害ニーズチップ(AIが後追い付与。分類前はタグなしのまま表示) */}
+            {(case_.disaster_needs || []).map((needKey) => {
+              const need = DISASTER_NEEDS[needKey as DisasterNeedKey];
+              if (!need) return null;
+              return (
+                <span key={needKey} className="text-[11px] px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-full">
+                  {need.emoji} {need.labelJa}
+                </span>
+              );
+            })}
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
           </div>
           <div className="flex gap-1">
@@ -205,6 +216,8 @@ export default function SupporterDashboard() {
   const [sdgFilter, setSdgFilter] = useState<number | null>(null);
   const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
+  const [disasterFilter, setDisasterFilter] = useState(false);
+  const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
 
@@ -274,8 +287,13 @@ export default function SupporterDashboard() {
     if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
     if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
     if (regionFilter && c.users?.prefecture !== regionFilter) return false;
+    if (disasterFilter && !c.disaster_event_id) return false;
+    if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
     return true;
   });
+
+  const disasterCaseCount = cases.filter((c) => c.disaster_event_id).length;
+  const needCaseCount = (needKey: DisasterNeedKey) => cases.filter((c) => (c.disaster_needs || []).includes(needKey)).length;
 
   const allSdgs = [...new Set(cases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
   const allRegions = [...new Set(cases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
@@ -287,8 +305,8 @@ export default function SupporterDashboard() {
     { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
-  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); };
-  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter;
+  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setDisasterFilter(false); setNeedFilter(null); };
+  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || disasterFilter || needFilter;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -384,6 +402,26 @@ export default function SupporterDashboard() {
               return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
             })}
           </div>
+          {/* 災害×ニーズフィルター(災害案件があるときだけ表示) */}
+          {disasterCaseCount > 0 && (
+            <div className="flex gap-1.5 flex-wrap">
+              <button onClick={() => { setDisasterFilter(!disasterFilter); }}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${disasterFilter ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100'}`}>
+                🆘 災害案件のみ ({disasterCaseCount})
+              </button>
+              {DISASTER_NEED_KEYS.map((needKey) => {
+                const count = needCaseCount(needKey);
+                if (count === 0) return null;
+                const need = DISASTER_NEEDS[needKey];
+                return (
+                  <button key={needKey} onClick={() => setNeedFilter(needFilter === needKey ? null : needKey)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${needFilter === needKey ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'}`}>
+                    {need.emoji} {need.labelJa} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
           <div className="flex gap-1.5 flex-wrap">
             {[

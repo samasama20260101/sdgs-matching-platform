@@ -23,6 +23,37 @@ export function getDisasterEvent(id: string | null | undefined): DisasterEvent |
   return DISASTER_EVENTS.find((e) => e.id === id) ?? null
 }
 
+// ─── 災害ニーズ分類(AIが登録後に後追いで付与する注釈) ───
+// AIは門番ではなく注釈者: 分類の成否・遅延は案件の公開に一切影響しない。
+// タグは cases.intake_qna.disaster.needs.tags に保存される。
+// sdgsGoals は将来のインパクト集計用の固定マッピング(AI再分類なしでSDGsに橋を架ける)。
+
+export type DisasterNeedKey =
+  | 'housing' | 'water_food' | 'supplies' | 'health'
+  | 'mental' | 'family' | 'money_admin' | 'lifeline_info'
+
+export const DISASTER_NEEDS: Record<DisasterNeedKey, { emoji: string; labelJa: string; sdgsGoals: number[] }> = {
+  housing: { emoji: '🏠', labelJa: '住まい・避難場所', sdgsGoals: [11] },
+  water_food: { emoji: '💧', labelJa: '水・食料', sdgsGoals: [2, 6] },
+  supplies: { emoji: '🧰', labelJa: '生活物資', sdgsGoals: [1] },
+  health: { emoji: '🏥', labelJa: '医療・健康・介護', sdgsGoals: [3] },
+  mental: { emoji: '🫂', labelJa: 'こころ・傾聴', sdgsGoals: [3] },
+  family: { emoji: '🧒', labelJa: '子ども・家族', sdgsGoals: [4, 10] },
+  money_admin: { emoji: '📄', labelJa: 'お金・手続き', sdgsGoals: [1, 8] },
+  lifeline_info: { emoji: '🔌', labelJa: 'ライフライン・情報', sdgsGoals: [9, 11] },
+}
+
+export const DISASTER_NEED_KEYS = Object.keys(DISASTER_NEEDS) as DisasterNeedKey[]
+export const MAX_DISASTER_NEEDS = 3
+
+export function getDisasterNeeds(intakeQna: unknown): DisasterNeedKey[] {
+  const tags = (intakeQna as { disaster?: { needs?: { tags?: unknown } } } | null)?.disaster?.needs?.tags
+  if (!Array.isArray(tags)) return []
+  return tags
+    .filter((tag): tag is DisasterNeedKey => typeof tag === 'string' && tag in DISASTER_NEEDS)
+    .slice(0, MAX_DISASTER_NEEDS)
+}
+
 // description_free に整形して保存する際の見出し(サポーターが読む想定のため日本語固定)
 export const DISASTER_DESCRIPTION_LABELS = {
   situation: '【いま起きていること】',
