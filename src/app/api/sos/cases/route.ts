@@ -152,17 +152,22 @@ export async function POST(request: Request) {
         : 'JP'
     const locale = sanitizeLocale(body.locale) || sanitizeLocale(body.intake_qna?.locale) || 'ja'
 
+    const intakeQna = sanitizeIntakeQna(body.intake_qna, locale)
+
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')
         .insert([{
             owner_user_id: userData.id,
             title,
             description_free: descriptionFree,
-            intake_qna: sanitizeIntakeQna(body.intake_qna, locale),
+            intake_qna: intakeQna,
             urgency,
             locale,
             region_country: regionCountry,
             status: 'OPEN',
+            // 通常案件はAI分析完了時(gemini/analyze)にLISTEDへ切り替わるが、
+            // 災害SOSはAI分析を通らないため登録時点で公開する
+            ...(intakeQna?.disaster ? { visibility: 'LISTED' } : {}),
         }])
         .select()
         .single()
