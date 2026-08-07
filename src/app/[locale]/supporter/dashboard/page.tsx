@@ -37,7 +37,22 @@ type Case = {
     birth_date?: string | null;
   };
   my_offer_status?: string | null;
+  accepted_count?: number;
 };
+
+// 待機滞留: OPENのまま誰の支援も確定していない案件の、登録からの経過時間。
+// 6時間未満=グレー / 6〜24時間=アンバー / 24時間超=赤 でエスカレーション表示する。
+function waitingInfo(case_: Case) {
+  if (case_.status !== 'OPEN' || (case_.accepted_count ?? 0) > 0) return null;
+  const hours = Math.floor((Date.now() - new Date(case_.created_at).getTime()) / 3_600_000);
+  const label = hours < 1 ? '1時間未満'
+    : hours < 24 ? `${hours}時間`
+    : `${Math.floor(hours / 24)}日${hours % 24 > 0 ? `${hours % 24}時間` : ''}`;
+  const cls = hours < 6 ? 'bg-gray-100 text-gray-500 border-gray-200'
+    : hours < 24 ? 'bg-amber-50 text-amber-700 border-amber-300'
+    : 'bg-red-50 text-red-600 border-red-300';
+  return { label, cls, hours };
+}
 
 type UserData = {
   id: string;
@@ -92,6 +107,14 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
               </span>
             )}
             {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
+            {(() => {
+              const waiting = waitingInfo(case_);
+              return waiting ? (
+                <span className={`text-[11px] font-bold border px-2 py-0.5 rounded ${waiting.cls}`}>
+                  ⏳ {waiting.label} 待機中
+                </span>
+              ) : null;
+            })()}
             {isMinor(case_.users?.birth_date) && (
               <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                 🔰 未成年
@@ -227,6 +250,7 @@ export default function SupporterDashboard() {
   const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
   const [muniFilter, setMuniFilter] = useState<string | null>(null);
   const [areaFilter, setAreaFilter] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<'newest' | 'waiting'>('newest');
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
 
@@ -323,6 +347,18 @@ export default function SupporterDashboard() {
     { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
+  // 待機が長い順: 未対応のOPEN案件を古い順で先頭に、それ以外は新着順で後ろへ
+  const sortedCases = sortMode === 'waiting'
+    ? [...filteredCases].sort((a, b) => {
+        const wa = waitingInfo(a);
+        const wb = waitingInfo(b);
+        if (wa && wb) return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        if (wa) return -1;
+        if (wb) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+    : filteredCases;
+
   const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setDisasterFilter(false); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); };
   const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || disasterFilter || needFilter || muniFilter || areaFilter;
 
@@ -405,12 +441,19 @@ export default function SupporterDashboard() {
         )}
 
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <span className="text-sm font-semibold text-gray-700">🎯 SOS案件フィルター</span>
+            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+              {([{ id: 'newest', label: '🆕 新着順' }, { id: 'waiting', label: '⏳ 待機が長い順' }] as const).map((v) => (
+                <button key={v.id} onClick={() => setSortMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${sortMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
+              ))}
+            </div>
             <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
               {([{ id: 'flat', label: '📋 案件' }, { id: 'grouped', label: '👥 ユーザー' }] as const).map((v) => (
                 <button key={v.id} onClick={() => setViewMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
               ))}
+            </div>
             </div>
           </div>
           <div className="flex gap-1.5 flex-wrap">
@@ -486,10 +529,10 @@ export default function SupporterDashboard() {
           </div>
         ) : viewMode === 'flat' ? (
           <div className="space-y-3">
-            {filteredCases.map((c) => <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />)}
+            {sortedCases.map((c) => <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />)}
           </div>
         ) : (
-          <UserGroupedView cases={filteredCases} onCaseClick={(id) => router.push(`/supporter/case/${id}`)} />
+          <UserGroupedView cases={sortedCases} onCaseClick={(id) => router.push(`/supporter/case/${id}`)} />
         )}
       </main>
     </div>
