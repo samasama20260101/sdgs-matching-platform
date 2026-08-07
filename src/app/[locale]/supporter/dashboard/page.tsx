@@ -354,12 +354,14 @@ export default function SupporterDashboard() {
   // 待機中=誰の支援も確定していない案件(全体視点)。タブ赤バッジと統計に使用
   const disasterWaitingCount = disasterCases.filter((c) => waitingInfo(c)).length;
   const normalWaitingCount = normalCases.filter((c) => waitingInfo(c)).length;
-  // 統計は表示中のタブの数字に合わせる。災害タブは全件Highのため「緊急案件」の代わりに「待機中」を出す
+  // 統計は表示中のタブの数字に合わせる。
+  // 災害タブは全体視点で統一(相談件数 = 待機中 + 支援中 + 解決 と足し算が合うように)。
+  // 通常タブは従来どおり(マッチ済み・解決済みは自団体視点)。
   const stats = effectiveTab === 'disaster' ? [
     { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
     { label: '⏳ 待機中(未マッチ)', value: disasterWaitingCount, color: 'text-red-500' },
-    { label: 'マッチ済み・支援中', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
-    { label: '解決済み', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
+    { label: '🤝 マッチ済み・支援中', value: scopedCases.filter((c) => c.status === 'MATCHED' || (c.status === 'OPEN' && (c.accepted_count ?? 0) > 0)).length, color: 'text-amber-600' },
+    { label: '✅ 解決済み', value: scopedCases.filter((c) => c.status === 'RESOLVED').length, color: 'text-teal-600' },
   ] : [
     { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
     { label: 'マッチ済み・支援中', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
