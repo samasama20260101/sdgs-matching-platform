@@ -1,9 +1,8 @@
 // src/app/api/supporter/dashboard/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
 import { getCasePhotos } from '@/lib/constants/photos'
-import { getDisasterNeeds, getDisasterLocation } from '@/lib/constants/disaster'
+import { getDisasterNeeds, getDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id, intake_qna'
@@ -102,7 +101,7 @@ export async function GET(request: Request) {
 
     // 6. enriched（my_offer_status + users + accepted_count 付与）
     //    未オファーのサポーターには承認上限に達した案件を除外する
-    const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE
+    // 承認上限は案件ごと(災害イベント指定があればその値。熊本地震=1 → マッチ済みは未関与の団体から自動的に消える)
     const enriched = mergedCases
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .map(c => {
@@ -113,6 +112,7 @@ export async function GET(request: Request) {
                 disaster_event_id: intakeQna?.disaster?.event_id || null,
                 disaster_needs: getDisasterNeeds(intakeQna),
                 disaster_location: getDisasterLocation(intakeQna),
+                max_supporters: getMaxSupportersForCase(intakeQna),
                 photo_count: getCasePhotos(intakeQna).length,
                 my_offer_status: offerMap[c.id] || null,
                 users: userMap[c.owner_user_id] || null,
@@ -121,7 +121,7 @@ export async function GET(request: Request) {
         })
         .filter(c => {
             const myStatus = offerMap[c.id]
-            const isFull = (acceptedCountMap[c.id] || 0) >= MAX_ACCEPTED
+            const isFull = (acceptedCountMap[c.id] || 0) >= c.max_supporters
 
             if (myStatus === 'ACCEPTED' || myStatus === 'PENDING') {
                 // 担当中・承認待ちは常に表示

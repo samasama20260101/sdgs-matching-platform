@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
-import { getDisasterEvent, getDisasterLocation, formatDisasterLocation } from '@/lib/constants/disaster';
+import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { MAX_CASE_PHOTOS } from '@/lib/constants/photos';
 import { compressImageToJpeg } from '@/lib/utils/imageCompress';
 
@@ -322,7 +322,7 @@ export default function SOSResultPage() {
       const offerResult = await offerRes.json();
       if (!offerRes.ok) {
         if (offerResult.error === 'MAX_REACHED') {
-          toast.error(t('toastMaxReached', { max: MAX_SUPPORTERS_PER_CASE }));
+          toast.error(t('toastMaxReached', { max: caseMaxSupporters }));
         } else if (offerResult.error === 'OFFER_NOT_PENDING') {
           toast.error(t('toastOfferNotPending'));
           await loadData();
@@ -336,7 +336,7 @@ export default function SOSResultPage() {
       setSelectedOffer(null);
       await loadData();
       if (offerResult.auto_declined) {
-        toast.success(t('toastAcceptedAutoDeclined', { max: MAX_SUPPORTERS_PER_CASE }));
+        toast.success(t('toastAcceptedAutoDeclined', { max: caseMaxSupporters }));
       } else {
         toast.success(t('toastAccepted'));
       }
@@ -501,6 +501,8 @@ export default function SOSResultPage() {
   const hasAccepted = acceptedOffers.length > 0;
   // 災害SOS案件: AI提案がないため、相談内容カードと待機表示を別途出す
   const disasterEvent = getDisasterEvent(caseData?.intake_qna?.disaster?.event_id);
+  // 承認上限は案件ごと(災害イベント指定があればその値。熊本地震=1)
+  const caseMaxSupporters = getMaxSupportersForCase(caseData?.intake_qna);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -904,14 +906,14 @@ export default function SOSResultPage() {
           ) : (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
               <p className="text-sm text-blue-700">
-                {t('chatShareInfo', { max: MAX_SUPPORTERS_PER_CASE })}
+                {t('chatShareInfo', { max: caseMaxSupporters })}
               </p>
             </div>
           )}
-          {acceptedOffers.length === MAX_SUPPORTERS_PER_CASE - 1 && (
+          {acceptedOffers.length === caseMaxSupporters - 1 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
               <p className="text-sm font-medium text-orange-800">{t('limitReachTitle')}</p>
-              <p className="text-sm text-orange-700">{t('limitReachBody', { max: MAX_SUPPORTERS_PER_CASE })}</p>
+              <p className="text-sm text-orange-700">{t('limitReachBody', { max: caseMaxSupporters })}</p>
             </div>
           )}
           <div className="flex gap-3">

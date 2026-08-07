@@ -3,6 +3,8 @@
 // バナー表示・専用フォーム・タイル装飾が有効になる。災害が落ち着いたら null に戻す。
 // event_id は cases.intake_qna.disaster.event_id として保存される(DBマイグレーション不要)。
 
+import { MAX_SUPPORTERS_PER_CASE } from './sdgs'
+
 // 地域のローカル区分(市町村ごとの独自区分)。
 // 呼び名(label)ごと設定値: 八代市は「校区」、別の市は「地区」「町内会」等でもよい。
 // 共通の地域マスタ(regions)には混ぜない — 標準コードのない自治体独自区分は
@@ -16,6 +18,7 @@ export type DisasterEvent = {
   titlePrefix: string // 案件タイトルの接頭辞
   municipalities?: string[]                       // 対象市町村(選択肢。任意入力)
   localAreas?: Record<string, DisasterLocalAreas> // 市町村ごとの独自区分(エントリがある市のみ二段目を表示)
+  maxSupporters?: number                          // 1案件あたりの承認上限(未指定なら共通の MAX_SUPPORTERS_PER_CASE)
 }
 
 // 熊本県の45市町村(JISコード順)
@@ -45,6 +48,8 @@ export const DISASTER_EVENTS: DisasterEvent[] = [
     localAreas: {
       '八代市': { label: '校区', options: YATSUSHIRO_SCHOOL_DISTRICTS },
     },
+    // 災害時は「1つのSOSに窓口は1団体」。マッチした案件は他団体の一覧から消える
+    maxSupporters: 1,
   },
 ]
 
@@ -110,6 +115,12 @@ export function getDisasterNeeds(intakeQna: unknown): DisasterNeedKey[] {
   return tags
     .filter((tag): tag is DisasterNeedKey => typeof tag === 'string' && tag in DISASTER_NEEDS)
     .slice(0, MAX_DISASTER_NEEDS)
+}
+
+// 案件ごとの承認上限。災害イベントに指定があればそれを、なければ共通値を使う
+export function getMaxSupportersForCase(intakeQna: unknown): number {
+  const event = getDisasterEvent((intakeQna as { disaster?: { event_id?: string } } | null)?.disaster?.event_id)
+  return event?.maxSupporters ?? MAX_SUPPORTERS_PER_CASE
 }
 
 // description_free に整形して保存する際の見出し(サポーターが読む想定のため日本語固定)

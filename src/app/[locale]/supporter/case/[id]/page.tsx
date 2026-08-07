@@ -16,8 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SDG_NAMES, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
-import { getDisasterEvent, getDisasterLocation, formatDisasterLocation } from '@/lib/constants/disaster';
+import { SDG_COLORS, SDG_NAMES } from '@/lib/constants/sdgs';
+import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { isCasePhotosEnabled } from '@/lib/constants/photos';
 import { isMinor } from '@/lib/utils/age';
 
@@ -184,7 +184,7 @@ export default function SupporterCaseDetailPage() {
       if (!res.ok) {
         const data = await res.json();
         if (data.error === 'MAX_REACHED') {
-          toast.error(`この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されています。申し出はできません。`);
+          toast.error(`この案件はすでに${MAX_ACCEPTED}名のサポーターが承認されています。申し出はできません。`);
           setShowOfferModal(false);
           await loadData(); // 表示を最新化
         } else {
@@ -283,7 +283,8 @@ export default function SupporterCaseDetailPage() {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE
+  // 承認上限は案件ごと(災害イベント指定があればその値。熊本地震=1)
+  const MAX_ACCEPTED = getMaxSupportersForCase(caseData?.intake_qna)
   const caseIsFull = acceptedOfferOrders.length >= MAX_ACCEPTED
   // DECLINED の場合でも、案件が満員なら再申し出不可
   const canSendOffer = (!myOffer || myOffer.status === 'WITHDRAWN' || myOffer.status === 'DECLINED') && !caseIsFull;
@@ -607,7 +608,7 @@ export default function SupporterCaseDetailPage() {
           <Card className="mb-6 border-gray-200">
             <CardContent className="py-6 text-center">
               <p className="text-2xl mb-2">🔒</p>
-              <p className="text-sm font-medium text-gray-600">この案件はすでに{MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されています</p>
+              <p className="text-sm font-medium text-gray-600">この案件はすでに{MAX_ACCEPTED}名のサポーターが承認されています</p>
               <p className="text-xs text-gray-400 mt-1">新たな申し出はできません</p>
             </CardContent>
           </Card>
