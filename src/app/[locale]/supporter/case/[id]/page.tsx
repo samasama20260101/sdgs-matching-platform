@@ -626,9 +626,10 @@ export default function SupporterCaseDetailPage() {
           </div>
         )}
 
-        {/* 担当者メモは複数団体連携用のため、1案件1団体制の災害案件では非表示 */}
-        {isAccepted && accessToken && !caseData?.intake_qna?.disaster && (
-          <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken} />
+        {/* 災害案件(1案件1団体制)では他団体との共有メモタブのみ隠す。自団体メモは利用可 */}
+        {isAccepted && accessToken && (
+          <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken}
+            hideSharedTab={Boolean(caseData?.intake_qna?.disaster)} />
         )}
       </main>
 
