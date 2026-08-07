@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SDG_NAMES, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
-import { getDisasterEvent } from '@/lib/constants/disaster';
+import { getDisasterEvent, getDisasterLocation, formatDisasterLocation } from '@/lib/constants/disaster';
 import { isCasePhotosEnabled } from '@/lib/constants/photos';
 import { isMinor } from '@/lib/utils/age';
 
@@ -326,11 +326,20 @@ export default function SupporterCaseDetailPage() {
                 <div className="flex gap-2 flex-wrap">
                   {(() => {
                     const disasterEvent = getDisasterEvent(caseData?.intake_qna?.disaster?.event_id);
-                    return disasterEvent ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-rose-100 border border-rose-200 text-rose-700 font-bold">
-                        🆘 {disasterEvent.nameJa}
-                      </span>
-                    ) : null;
+                    if (!disasterEvent) return null;
+                    const location = formatDisasterLocation(disasterEvent.id, getDisasterLocation(caseData?.intake_qna));
+                    return (
+                      <>
+                        <span className="text-xs px-2 py-1 rounded-full bg-rose-100 border border-rose-200 text-rose-700 font-bold">
+                          🆘 {disasterEvent.nameJa}
+                        </span>
+                        {location && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-600 font-medium">
+                            📍 {location}
+                          </span>
+                        )}
+                      </>
+                    );
                   })()}
                   {caseData?.urgency === 'High' && (
                     <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>

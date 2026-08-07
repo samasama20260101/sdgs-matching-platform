@@ -270,6 +270,12 @@
       "partialFailed": "部分照片未能上传。您可以在案件页面中添加。",
       "sectionTitle": "照片",
       "deleteFailed": "照片删除失败"
+    },
+    "location": {
+      "title": "所在地区（可选）",
+      "lead": "便于附近的支援团体找到您。不想填写可以跳过。",
+      "municipality": "市町村",
+      "none": "不选择"
     }
   }
 }

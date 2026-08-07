@@ -270,6 +270,12 @@
       "partialFailed": "Một số ảnh không tải lên được. Bạn có thể thêm từ trang chi tiết.",
       "sectionTitle": "Ảnh",
       "deleteFailed": "Không thể xóa ảnh"
+    },
+    "location": {
+      "title": "Khu vực của bạn (không bắt buộc)",
+      "lead": "Giúp các tổ chức hỗ trợ gần bạn dễ tìm thấy bạn hơn. Bạn có thể bỏ qua nếu muốn.",
+      "municipality": "Thành phố / thị trấn",
+      "none": "Không chọn"
     }
   }
 }

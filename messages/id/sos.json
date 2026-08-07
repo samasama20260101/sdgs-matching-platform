@@ -270,6 +270,12 @@
       "partialFailed": "Sebagian foto gagal diunggah. Anda dapat menambahkannya dari halaman detail.",
       "sectionTitle": "Foto",
       "deleteFailed": "Gagal menghapus foto"
+    },
+    "location": {
+      "title": "Wilayah Anda (opsional)",
+      "lead": "Membantu organisasi pendukung terdekat menemukan Anda. Boleh dilewati.",
+      "municipality": "Kota / kecamatan",
+      "none": "Tidak memilih"
     }
   }
 }

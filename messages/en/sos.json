@@ -270,6 +270,12 @@
       "partialFailed": "Some photos could not be uploaded. You can add them from the case page.",
       "sectionTitle": "Photos",
       "deleteFailed": "Failed to delete the photo"
+    },
+    "location": {
+      "title": "Your area (optional)",
+      "lead": "This helps nearby supporters find you. You can skip it if you prefer.",
+      "municipality": "Municipality",
+      "none": "Not selected"
     }
   }
 }

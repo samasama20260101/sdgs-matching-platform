@@ -45,7 +45,10 @@ export default function DisasterSosPage() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoProcessing, setPhotoProcessing] = useState(false);
   const [photoUploadFailed, setPhotoUploadFailed] = useState(false);
+  const [municipality, setMunicipality] = useState('');
+  const [localArea, setLocalArea] = useState('');
   const tPhotos = useTranslations('sos.disaster.photos');
+  const tLocation = useTranslations('sos.disaster.location');
 
   const event = ACTIVE_DISASTER_EVENT;
 
@@ -151,7 +154,12 @@ export default function DisasterSosPage() {
           locale,
           intake_qna: {
             locale,
-            disaster: { event_id: event.id, answers: trimmed },
+            disaster: {
+              event_id: event.id,
+              answers: trimmed,
+              // 地域は任意入力。未選択なら送らない
+              ...(municipality ? { location: { municipality, ...(localArea ? { area: localArea } : {}) } } : {}),
+            },
           },
         }),
       });
@@ -231,6 +239,44 @@ export default function DisasterSosPage() {
             ) : (
               /* ── 3問フォーム ── */
               <div className="space-y-5">
+                {/* お住まいの地域(任意)。市町村→独自区分(校区等)の二段。全てスキップ可能 */}
+                {(event.municipalities?.length ?? 0) > 0 && (
+                  <Card className="border-l-4 border-l-rose-400">
+                    <CardHeader>
+                      <CardTitle className="text-base font-medium">📍 {tLocation('title')}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-gray-400 mb-3">{tLocation('lead')}</p>
+                      <div className="flex flex-wrap gap-4">
+                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                          {tLocation('municipality')}
+                          <select
+                            value={municipality}
+                            onChange={(e) => { setMunicipality(e.target.value); setLocalArea(''); }}
+                            className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                          >
+                            <option value="">{tLocation('none')}</option>
+                            {(event.municipalities ?? []).map((m) => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </label>
+                        {event.localAreas?.[municipality] && (
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            {event.localAreas[municipality].label}
+                            <select
+                              value={localArea}
+                              onChange={(e) => setLocalArea(e.target.value)}
+                              className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                            >
+                              <option value="">{tLocation('none')}</option>
+                              {event.localAreas[municipality].options.map((a) => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {FIELDS.map((field, index) => (
                   <Card key={field.key} className="border-l-4 border-l-rose-400">
                     <CardHeader>

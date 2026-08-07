@@ -1,7 +1,7 @@
 // src/app/api/sos/cases/route.ts
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { DISASTER_EVENT_IDS } from '@/lib/constants/disaster'
+import { DISASTER_EVENT_IDS, getDisasterEvent } from '@/lib/constants/disaster'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
 import { NextResponse, after } from 'next/server'
 
@@ -44,7 +44,22 @@ function sanitizeDisaster(value: unknown) {
             }
         }
     }
-    return { event_id: eventId, answers }
+
+    // 地域(任意)。市町村・区分ともイベント設定のホワイトリストと照合する
+    const event = getDisasterEvent(eventId)
+    const locationRaw = (value as { location?: unknown }).location
+    let location: { municipality: string; area?: string } | null = null
+    if (event && locationRaw && typeof locationRaw === 'object' && !Array.isArray(locationRaw)) {
+        const municipality = (locationRaw as { municipality?: unknown }).municipality
+        if (typeof municipality === 'string' && (event.municipalities || []).includes(municipality)) {
+            const areaRaw = (locationRaw as { area?: unknown }).area
+            const areaOptions = event.localAreas?.[municipality]?.options || []
+            const area = typeof areaRaw === 'string' && areaOptions.includes(areaRaw) ? areaRaw : undefined
+            location = { municipality, ...(area ? { area } : {}) }
+        }
+    }
+
+    return { event_id: eventId, answers, ...(location ? { location } : {}) }
 }
 
 function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {

@@ -10,7 +10,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
-import { getDisasterEvent, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey } from '@/lib/constants/disaster';
+import { getDisasterEvent, formatDisasterLocation, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey, type DisasterLocation } from '@/lib/constants/disaster';
 
 type Case = {
   id: string;
@@ -24,6 +24,7 @@ type Case = {
   owner_user_id: string;
   disaster_event_id?: string | null;
   disaster_needs?: string[];
+  disaster_location?: DisasterLocation | null;
   photo_count?: number;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
@@ -101,6 +102,12 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
         <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex gap-1 flex-wrap">
+            {/* 災害案件の地域(市町村・校区等) */}
+            {case_.disaster_location && (
+              <span className="text-[11px] px-2 py-0.5 bg-gray-100 border border-gray-200 text-gray-600 rounded-full font-medium">
+                📍 {formatDisasterLocation(case_.disaster_event_id, case_.disaster_location)}
+              </span>
+            )}
             {/* 災害ニーズチップ(AIが後追い付与。分類前はタグなしのまま表示) */}
             {(case_.disaster_needs || []).map((needKey) => {
               const need = DISASTER_NEEDS[needKey as DisasterNeedKey];
@@ -218,6 +225,8 @@ export default function SupporterDashboard() {
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [disasterFilter, setDisasterFilter] = useState(false);
   const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
+  const [muniFilter, setMuniFilter] = useState<string | null>(null);
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
 
@@ -289,11 +298,20 @@ export default function SupporterDashboard() {
     if (regionFilter && c.users?.prefecture !== regionFilter) return false;
     if (disasterFilter && !c.disaster_event_id) return false;
     if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
+    if (muniFilter && c.disaster_location?.municipality !== muniFilter) return false;
+    if (areaFilter && c.disaster_location?.area !== areaFilter) return false;
     return true;
   });
 
   const disasterCaseCount = cases.filter((c) => c.disaster_event_id).length;
   const needCaseCount = (needKey: DisasterNeedKey) => cases.filter((c) => (c.disaster_needs || []).includes(needKey)).length;
+  // 災害案件に実際に存在する市町村・区分だけをフィルター候補に出す
+  const disasterMunicipalities = [...new Set(cases.map((c) => c.disaster_location?.municipality).filter(Boolean) as string[])].sort();
+  const muniCaseCount = (m: string) => cases.filter((c) => c.disaster_location?.municipality === m).length;
+  const disasterAreas = muniFilter
+    ? [...new Set(cases.filter((c) => c.disaster_location?.municipality === muniFilter).map((c) => c.disaster_location?.area).filter(Boolean) as string[])].sort()
+    : [];
+  const areaCaseCount = (a: string) => cases.filter((c) => c.disaster_location?.municipality === muniFilter && c.disaster_location?.area === a).length;
 
   const allSdgs = [...new Set(cases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
   const allRegions = [...new Set(cases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
@@ -305,8 +323,8 @@ export default function SupporterDashboard() {
     { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
     { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
-  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setDisasterFilter(false); setNeedFilter(null); };
-  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || disasterFilter || needFilter;
+  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setDisasterFilter(false); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); };
+  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || disasterFilter || needFilter || muniFilter || areaFilter;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -420,6 +438,23 @@ export default function SupporterDashboard() {
                   </button>
                 );
               })}
+            </div>
+          )}
+          {/* 災害案件の地域フィルター(市町村 → 選択時は校区等の区分) */}
+          {disasterMunicipalities.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap">
+              {disasterMunicipalities.map((m) => (
+                <button key={m} onClick={() => { setMuniFilter(muniFilter === m ? null : m); setAreaFilter(null); }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${muniFilter === m ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}>
+                  📍 {m} ({muniCaseCount(m)})
+                </button>
+              ))}
+              {disasterAreas.map((a) => (
+                <button key={a} onClick={() => setAreaFilter(areaFilter === a ? null : a)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${areaFilter === a ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
+                  {a} ({areaCaseCount(a)})
+                </button>
+              ))}
             </div>
           )}
           {allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
