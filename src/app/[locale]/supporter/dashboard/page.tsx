@@ -351,16 +351,21 @@ export default function SupporterDashboard() {
   const allRegions = [...new Set(normalCases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
   const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
   const getCaseCount = (r: string) => normalCases.filter((c) => c.users?.prefecture === r).length;
-  // 統計は表示中のタブの数字に合わせる
-  const stats = [
+  // 待機中=誰の支援も確定していない案件(全体視点)。タブ赤バッジと統計に使用
+  const disasterWaitingCount = disasterCases.filter((c) => waitingInfo(c)).length;
+  const normalWaitingCount = normalCases.filter((c) => waitingInfo(c)).length;
+  // 統計は表示中のタブの数字に合わせる。災害タブは全件Highのため「緊急案件」の代わりに「待機中」を出す
+  const stats = effectiveTab === 'disaster' ? [
+    { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
+    { label: '⏳ 待機中(未マッチ)', value: disasterWaitingCount, color: 'text-red-500' },
+    { label: 'マッチ済み・支援中', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
+    { label: '解決済み', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
+  ] : [
     { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
     { label: 'マッチ済み・支援中', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
     { label: '解決済み', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
     { label: '緊急案件', value: scopedCases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
-  // 未対応バッジ用(見ていない側のタブへの気づき)
-  const disasterWaitingCount = disasterCases.filter((c) => waitingInfo(c)).length;
-  const normalWaitingCount = normalCases.filter((c) => waitingInfo(c)).length;
   // 待機が長い順: 未対応のOPEN案件を古い順で先頭に、それ以外は新着順で後ろへ
   const sortedCases = effectiveSort === 'waiting'
     ? [...filteredCases].sort((a, b) => {
@@ -474,7 +479,8 @@ export default function SupporterDashboard() {
                   : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
                 {t.label}
                 {t.waiting > 0 && effectiveTab !== t.id && (
-                  <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
+                  <span title="誰の支援も確定していない待機中の案件数"
+                    className="absolute -top-2 -right-2 min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
                     {t.waiting}
                   </span>
                 )}
@@ -546,7 +552,7 @@ export default function SupporterDashboard() {
           <div className="flex gap-1.5 flex-wrap">
             {[
               { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
-              { key: 'none', label: '○ 未対応', color: 'border-slate-300 bg-slate-50 text-slate-600' },
+              { key: 'none', label: '○ 未対応(自団体)', color: 'border-slate-300 bg-slate-50 text-slate-600' },
               { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'active', label: '🤝 マッチ済み・支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
