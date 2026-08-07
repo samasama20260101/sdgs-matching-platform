@@ -626,7 +626,8 @@ export default function SupporterCaseDetailPage() {
           </div>
         )}
 
-        {isAccepted && accessToken && (
+        {/* 担当者メモは複数団体連携用のため、1案件1団体制の災害案件では非表示 */}
+        {isAccepted && accessToken && !caseData?.intake_qna?.disaster && (
           <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken} />
         )}
       </main>
