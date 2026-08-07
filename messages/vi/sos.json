@@ -275,7 +275,10 @@
       "title": "Khu vực của bạn (không bắt buộc)",
       "lead": "Giúp các tổ chức hỗ trợ gần bạn dễ tìm thấy bạn hơn. Bạn có thể bỏ qua nếu muốn.",
       "municipality": "Thành phố / thị trấn",
-      "none": "Không chọn"
+      "none": "Không chọn",
+      "save": "Lưu",
+      "saved": "Đã lưu khu vực",
+      "notSet": "Chưa chọn"
     }
   }
 }

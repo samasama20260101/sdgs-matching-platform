@@ -275,7 +275,10 @@
       "title": "Wilayah Anda (opsional)",
       "lead": "Membantu organisasi pendukung terdekat menemukan Anda. Boleh dilewati.",
       "municipality": "Kota / kecamatan",
-      "none": "Tidak memilih"
+      "none": "Tidak memilih",
+      "save": "Simpan",
+      "saved": "Wilayah tersimpan",
+      "notSet": "Belum dipilih"
     }
   }
 }

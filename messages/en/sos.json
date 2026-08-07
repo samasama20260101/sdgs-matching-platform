@@ -275,7 +275,10 @@
       "title": "Your area (optional)",
       "lead": "This helps nearby supporters find you. You can skip it if you prefer.",
       "municipality": "Municipality",
-      "none": "Not selected"
+      "none": "Not selected",
+      "save": "Save",
+      "saved": "Your area has been saved",
+      "notSet": "Not set"
     }
   }
 }

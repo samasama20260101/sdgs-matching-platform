@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
 import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey, MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs';
-import { getDisasterEvent } from '@/lib/constants/disaster';
+import { getDisasterEvent, getDisasterLocation, formatDisasterLocation } from '@/lib/constants/disaster';
 import { MAX_CASE_PHOTOS } from '@/lib/constants/photos';
 import { compressImageToJpeg } from '@/lib/utils/imageCompress';
 
@@ -28,7 +28,7 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
-  intake_qna: { qa: Record<string, string[]>; disaster?: { event_id?: string } } | null;
+  intake_qna: { qa: Record<string, string[]>; disaster?: { event_id?: string; location?: { municipality?: string; area?: string } } } | null;
   ai_sdg_suggestion: {
     title?: string;
     sdgs_goals: number[];
@@ -94,6 +94,9 @@ export default function SOSResultPage() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [casePhotos, setCasePhotos] = useState<Array<{ id: string; url: string }>>([]);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [locMunicipality, setLocMunicipality] = useState('');
+  const [locArea, setLocArea] = useState('');
+  const [locSaving, setLocSaving] = useState(false);
   const tPhotos = useTranslations('sos.disaster.photos');
 
   useEffect(() => {
@@ -178,6 +181,39 @@ export default function SOSResultPage() {
         badgeMap[b.supporter_organization_id][b.badge_key] = (badgeMap[b.supporter_organization_id][b.badge_key] || 0) + 1;
       });
       setSupporterBadges(badgeMap);
+    }
+  };
+
+  // ── 地域(災害SOS): 保存値をフォーム状態に反映(案件が変わったときのみ) ──
+  useEffect(() => {
+    const location = caseData?.intake_qna?.disaster?.location;
+    setLocMunicipality(location?.municipality ?? '');
+    setLocArea(location?.area ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseData?.id]);
+
+  const handleSaveLocation = async () => {
+    if (!caseData) return;
+    setLocSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${caseData.id}/location`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ municipality: locMunicipality || null, area: locArea || null }),
+      });
+      if (!res.ok) { toast.error(tDisaster('form.submitError')); return; }
+      const { location } = await res.json();
+      setCaseData((prev) => prev ? {
+        ...prev,
+        intake_qna: prev.intake_qna
+          ? { ...prev.intake_qna, disaster: { ...prev.intake_qna.disaster, location: location ?? undefined } }
+          : prev.intake_qna,
+      } : prev);
+      toast.success(tDisaster('location.saved'));
+    } finally {
+      setLocSaving(false);
     }
   };
 
@@ -555,6 +591,45 @@ export default function SOSResultPage() {
                   </div>
                 );
               })()}
+              {/* 地域(市町村・校区)の確認と修正。間違えて設定した場合に本人が直せる */}
+              {(disasterEvent.municipalities?.length ?? 0) > 0 && (
+                <div className="mt-4 pt-4 border-t border-rose-100">
+                  <p className="text-xs font-medium text-gray-500 mb-2">📍 {tDisaster('location.title')}</p>
+                  {['OPEN', 'MATCHED'].includes(caseData.status) ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <select
+                        value={locMunicipality}
+                        onChange={(e) => { setLocMunicipality(e.target.value); setLocArea(''); }}
+                        className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                      >
+                        <option value="">{tDisaster('location.none')}</option>
+                        {(disasterEvent.municipalities ?? []).map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      {disasterEvent.localAreas?.[locMunicipality] && (
+                        <select
+                          value={locArea}
+                          onChange={(e) => setLocArea(e.target.value)}
+                          className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                        >
+                          <option value="">{tDisaster('location.none')}</option>
+                          {disasterEvent.localAreas[locMunicipality].options.map((a) => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      )}
+                      {((caseData.intake_qna?.disaster?.location?.municipality ?? '') !== locMunicipality
+                        || (caseData.intake_qna?.disaster?.location?.area ?? '') !== locArea) && (
+                        <Button size="sm" disabled={locSaving} onClick={handleSaveLocation}
+                          className="bg-rose-500 hover:bg-rose-600 text-white">
+                          {tDisaster('location.save')}
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      {formatDisasterLocation(disasterEvent.id, getDisasterLocation(caseData.intake_qna)) ?? tDisaster('location.notSet')}
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
