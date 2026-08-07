@@ -70,7 +70,7 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
   const keywords = case_.ai_sdg_suggestion?.keywords || [];
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
-    none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
+    none: { label: '未関与', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
     PENDING: { label: '申し出中', color: 'bg-amber-50 text-amber-600', icon: '⏳', border: 'border-l-amber-400' },
     ACCEPTED: { label: '承認済み', color: 'bg-teal-50 text-teal-600', icon: '✅', border: 'border-l-teal-500' },
     WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
@@ -251,6 +251,8 @@ export default function SupporterDashboard() {
   const [areaFilter, setAreaFilter] = useState<string | null>(null);
   // 災害/通常タブ。null=未選択(災害案件があれば災害タブを初期表示)
   const [caseTab, setCaseTab] = useState<'disaster' | 'normal' | null>(null);
+  // 🌏全体視点のトグル: 誰の支援も確定していない案件だけを表示
+  const [waitingOnly, setWaitingOnly] = useState(false);
   // 並び順。null=タブごとの既定(災害=待機が長い順 / 通常=新着順)
   const [sortMode, setSortMode] = useState<'newest' | 'waiting' | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
@@ -326,6 +328,7 @@ export default function SupporterDashboard() {
   const effectiveSort: 'newest' | 'waiting' = sortMode ?? (effectiveTab === 'disaster' ? 'waiting' : 'newest');
 
   const filteredCases = scopedCases.filter((c) => {
+    if (waitingOnly && !waitingInfo(c)) return false;
     if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
     if (effectiveTab === 'normal') {
       if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
@@ -351,9 +354,8 @@ export default function SupporterDashboard() {
   const allRegions = [...new Set(normalCases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
   const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
   const getCaseCount = (r: string) => normalCases.filter((c) => c.users?.prefecture === r).length;
-  // 待機中=誰の支援も確定していない案件(全体視点)。タブ赤バッジと統計に使用
+  // 待機中=誰の支援も確定していない案件(全体視点)。統計カードと🌏トグルに使用
   const disasterWaitingCount = disasterCases.filter((c) => waitingInfo(c)).length;
-  const normalWaitingCount = normalCases.filter((c) => waitingInfo(c)).length;
   // 統計は表示中のタブの数字に合わせる。
   // 災害タブは全体視点で統一(相談件数 = 待機中 + 支援中 + 解決 と足し算が合うように)。
   // 通常タブは従来どおり(マッチ済み・解決済みは自団体視点)。
@@ -380,8 +382,8 @@ export default function SupporterDashboard() {
       })
     : filteredCases;
 
-  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); };
-  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter;
+  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
+  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter || waitingOnly;
 
   // タブ切替: フィルターと並び順をタブ既定にリセット
   const switchTab = (tab: 'disaster' | 'normal') => {
@@ -437,6 +439,9 @@ export default function SupporterDashboard() {
           </div>
         </div>
 
+        {effectiveTab === 'disaster' && (
+          <p className="text-xs font-semibold text-gray-500 mb-2">📊 全体の状況(すべてのサポーター・運営を合わせた数字)</p>
+        )}
         <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
@@ -472,20 +477,14 @@ export default function SupporterDashboard() {
         {disasterCases.length > 0 && (
           <div className="flex gap-2 mb-4">
             {([
-              { id: 'disaster' as const, label: `🆘 災害案件 (${disasterCases.length})`, waiting: disasterWaitingCount },
-              { id: 'normal' as const, label: `通常案件 (${normalCases.length})`, waiting: normalWaitingCount },
+              { id: 'disaster' as const, label: `🆘 災害案件 (${disasterCases.length})` },
+              { id: 'normal' as const, label: `通常案件 (${normalCases.length})` },
             ]).map((t) => (
               <button key={t.id} onClick={() => switchTab(t.id)}
-                className={`relative px-5 py-2.5 rounded-xl text-sm font-bold border-2 transition-colors ${effectiveTab === t.id
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold border-2 transition-colors ${effectiveTab === t.id
                   ? (t.id === 'disaster' ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-700 bg-gray-700 text-white')
                   : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
                 {t.label}
-                {t.waiting > 0 && effectiveTab !== t.id && (
-                  <span title="誰の支援も確定していない待機中の案件数"
-                    className="absolute -top-2 -right-2 min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
-                    {t.waiting}
-                  </span>
-                )}
               </button>
             ))}
           </div>
@@ -509,7 +508,8 @@ export default function SupporterDashboard() {
           </div>
           {/* 通常タブ: SDGsフィルター */}
           {effectiveTab === 'normal' && (
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-gray-400 mr-1">SDGs:</span>
             <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
             {allSdgs.map((s) => {
               const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
@@ -519,7 +519,8 @@ export default function SupporterDashboard() {
           )}
           {/* 災害タブ: ニーズフィルター */}
           {effectiveTab === 'disaster' && (
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">ニーズ:</span>
               {DISASTER_NEED_KEYS.map((needKey) => {
                 const count = needCaseCount(needKey);
                 if (count === 0) return null;
@@ -535,7 +536,8 @@ export default function SupporterDashboard() {
           )}
           {/* 災害タブ: 地域フィルター(市町村 → 選択時は校区等の区分) */}
           {effectiveTab === 'disaster' && disasterMunicipalities.length > 0 && (
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">地域:</span>
               {disasterMunicipalities.map((m) => (
                 <button key={m} onClick={() => { setMuniFilter(muniFilter === m ? null : m); setAreaFilter(null); }}
                   className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${muniFilter === m ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}>
@@ -551,12 +553,24 @@ export default function SupporterDashboard() {
             </div>
           )}
           {effectiveTab === 'normal' && allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
-          <div className="flex gap-1.5 flex-wrap">
+          {/* 🌏全体視点: 誰の支援も確定していない案件だけを見るトグル */}
+          {effectiveTab === 'disaster' && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">🌏 全体:</span>
+              <button onClick={() => setWaitingOnly(!waitingOnly)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${waitingOnly ? 'border-red-500 bg-red-500 text-white' : 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'}`}>
+                ⏳ 待機中だけ見る ({disasterWaitingCount})
+              </button>
+            </div>
+          )}
+          {/* 🏢自団体視点: 自団体の関わりで絞る */}
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-gray-400 mr-1">🏢 自団体の関わり:</span>
             {[
-              { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
-              { key: 'none', label: '○ 未対応(自団体)', color: 'border-slate-300 bg-slate-50 text-slate-600' },
+              { key: null, label: 'すべて', color: 'border-gray-300 bg-gray-50 text-gray-600' },
+              { key: 'none', label: '○ 未関与', color: 'border-slate-300 bg-slate-50 text-slate-600' },
               { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
-              { key: 'active', label: '🤝 マッチ済み・支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'active', label: '🤝 支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
             ].map((f) => {
               const count = f.key === null ? scopedCases.length : scopedCases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
