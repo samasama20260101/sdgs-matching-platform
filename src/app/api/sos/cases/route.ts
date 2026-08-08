@@ -2,7 +2,8 @@
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { DISASTER_EVENT_IDS } from '@/lib/constants/disaster'
-import { NextResponse } from 'next/server'
+import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
+import { NextResponse, after } from 'next/server'
 
 const DESCRIPTION_FREE_MAX_LENGTH = 2000
 const TITLE_MAX_LENGTH = 80
@@ -174,6 +175,15 @@ export async function POST(request: Request) {
     if (caseError) {
         console.error('[sos/cases] case insert error:', caseError)
         return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
+
+    // 災害案件: 応答を返した後にバックグラウンドでニーズ分類(AIは注釈者。失敗しても案件は公開済みのまま・夜間cronが再試行)
+    if (intakeQna?.disaster && caseData) {
+        after(() =>
+            classifyDisasterNeedsForCase(caseData.id).catch((error) => {
+                console.error('[sos/cases] needs classify error:', error)
+            })
+        )
     }
 
     return NextResponse.json({ case: caseData })

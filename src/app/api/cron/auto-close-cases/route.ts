@@ -3,6 +3,7 @@
 // 1. サポーター解決報告から14日後に自動RESOLVED
 // 2. MATCHEDのまま最終メッセージから14日間無活動 → 自動CLOSED
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -134,9 +135,34 @@ export async function GET(request: Request) {
         }
     }
 
+    // ─────────────────────────────────────────────────────
+    // 処理3: 災害案件のニーズ分類の取りこぼし再試行(登録直後の分類が失敗した分)
+    // ─────────────────────────────────────────────────────
+    let needsClassifiedCount = 0
+    const { data: unclassified, error: unclassifiedError } = await supabaseAdmin
+        .from('cases')
+        .select('id')
+        .in('status', ['OPEN', 'MATCHED'])
+        .not('intake_qna->disaster', 'is', null)
+        .is('intake_qna->disaster->needs', null)
+        .order('created_at', { ascending: false })
+        .limit(10)
+    if (unclassifiedError) {
+        console.error('[auto-close] needs sweep fetch error:', unclassifiedError)
+    } else {
+        for (const c of unclassified || []) {
+            const ok = await classifyDisasterNeedsForCase(c.id).catch(() => false)
+            if (ok) needsClassifiedCount += 1
+        }
+        if ((unclassified || []).length > 0) {
+            console.log(`[auto-close] 災害ニーズ分類: ${needsClassifiedCount}/${unclassified?.length}件`)
+        }
+    }
+
     return NextResponse.json({
-        message: `自動処理完了: RESOLVED ${resolvedCount}件 / CLOSED ${closedCount}件`,
+        message: `自動処理完了: RESOLVED ${resolvedCount}件 / CLOSED ${closedCount}件 / ニーズ分類 ${needsClassifiedCount}件`,
         resolved: resolvedCount,
         closed: closedCount,
+        needsClassified: needsClassifiedCount,
     })
 }
