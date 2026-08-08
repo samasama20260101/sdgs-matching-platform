@@ -80,14 +80,6 @@ export default function SignupPage() {
 
     try {
       // 1. Supabase Auth にサインアップ
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (authError) throw authError
-      if (!authData.user) throw new Error(t('errorSignupFailed'))
-
       const pendingProfile = {
         email: email.trim().toLowerCase(),
         real_name: realName,
@@ -97,6 +89,17 @@ export default function SignupPage() {
         birth_date: birthDate,
         locale,
       }
+
+      // プロフィールを認証メタデータ(options.data)にも保存する。
+      // メール確認後に別ブラウザ・別端末でログインしても、サーバー側で登録を完成できる
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: pendingProfile },
+      })
+
+      if (authError) throw authError
+      if (!authData.user) throw new Error(t('errorSignupFailed'))
 
       if (authData.session?.access_token) {
         // 2. users テーブルにレコード作成（APIルート経由 / supabaseAdmin使用）
