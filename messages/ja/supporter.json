@@ -1,0 +1,41 @@
+{
+  "public": {
+    "list": {
+      "title": "登録サポーター一覧",
+      "subtitle": "相談前にどんな団体が参加しているか確認できます",
+      "orgCount": "{count}団体",
+      "backToDashboard": "← ダッシュボードへ戻る",
+      "backToDashboardShort": "ダッシュボードへ戻る",
+      "backToTop": "← トップに戻る",
+      "regionMatch": "あなたの地域をカバーする {count}団体 を上位に表示しています",
+      "regionBadge": "📍 あなたの地域",
+      "filterAll": "すべて",
+      "errorTitle": "データ取得エラー",
+      "empty": "該当するサポーターが見つかりませんでした",
+      "resetFilter": "フィルターをリセット",
+      "othersSuffix": " 他",
+      "showMore": "さらに表示 ({count}団体)"
+    },
+    "detail": {
+      "backToList": "← サポーター一覧に戻る",
+      "registeredYears": "登録 {years}年",
+      "website": "🌐 公式サイト",
+      "statResolved": "解決した相談",
+      "statResolvedUnit": "件",
+      "statBadges": "獲得バッジ",
+      "statBadgesUnit": "個",
+      "statAreas": "活動エリア",
+      "statAreasUnit": "都道府県",
+      "bioTitle": "自己紹介",
+      "areasTitle": "活動エリア",
+      "nationwideBadge": "🗾 全国対応",
+      "badgesTitle": "感謝バッジ",
+      "badgesSubtitle": "相談者から贈られたバッジです",
+      "badgeCount": "{count}回",
+      "ctaTitle": "この団体に相談したいですか？",
+      "ctaBody": "相談を投稿してサポーターを選ぶ仕組みです。承認するまで個人情報は渡りません。",
+      "ctaConsult": "無料で相談してみる →",
+      "ctaDashboard": "ダッシュボードへ →"
+    }
+  }
+}

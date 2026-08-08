@@ -1,7 +1,10 @@
-// src/proxy.ts (Next.js 16: middleware.ts → proxy.ts)
+// src/proxy.ts (Next.js 16: middleware.ts -> proxy.ts)
+import createIntlMiddleware from 'next-intl/middleware'
 import { NextRequest, NextResponse } from 'next/server'
+import { routing, stripLocalePrefix } from './i18n/routing'
 
 const PUBLIC_FILE_PATTERN = /\.(.*)$/
+const handleI18nRouting = createIntlMiddleware(routing)
 
 function isMaintenanceEnabled() {
     return process.env.MAINTENANCE_MODE === 'true'
@@ -25,9 +28,10 @@ function isMaintenanceAllowedPath(pathname: string) {
 
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl
+    const logicalPathname = stripLocalePrefix(pathname)
 
-    if (isMaintenanceEnabled() && !hasMaintenanceBypass(request) && !isMaintenanceAllowedPath(pathname)) {
-        if (pathname.startsWith('/api/')) {
+    if (isMaintenanceEnabled() && !hasMaintenanceBypass(request) && !isMaintenanceAllowedPath(logicalPathname)) {
+        if (logicalPathname.startsWith('/api/')) {
             return NextResponse.json(
                 { error: 'Service is under maintenance', code: 'MAINTENANCE_MODE' },
                 { status: 503, headers: { 'Retry-After': '600' } }
@@ -45,10 +49,10 @@ export async function proxy(request: NextRequest) {
         const devPassword = process.env.DEV_PASSWORD
         if (devPassword) {
             if (
-                pathname !== '/dev-login'
-                && !pathname.startsWith('/api/dev-auth')
-                && !pathname.startsWith('/api/cron/')
-                && !isMaintenanceAllowedPath(pathname)
+                logicalPathname !== '/dev-login'
+                && !logicalPathname.startsWith('/api/dev-auth')
+                && !logicalPathname.startsWith('/api/cron/')
+                && !isMaintenanceAllowedPath(logicalPathname)
             ) {
                 const authCookie = request.cookies.get('dev-auth')
                 if (authCookie?.value !== devPassword) {
@@ -60,11 +64,15 @@ export async function proxy(request: NextRequest) {
         }
     }
 
-    return NextResponse.next()
+    if (logicalPathname.startsWith('/api/')) {
+        return NextResponse.next()
+    }
+
+    return handleI18nRouting(request)
 }
 
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico).*)',
+        '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
     ],
 }

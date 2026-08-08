@@ -1,0 +1,41 @@
+{
+  "public": {
+    "list": {
+      "title": "Daftar pendukung terdaftar",
+      "subtitle": "Anda dapat melihat organisasi mana saja yang berpartisipasi sebelum berkonsultasi",
+      "orgCount": "{count} organisasi",
+      "backToDashboard": "← Kembali ke dasbor",
+      "backToDashboardShort": "Kembali ke dasbor",
+      "backToTop": "← Kembali ke beranda",
+      "regionMatch": "Menampilkan lebih dulu {count} organisasi yang mencakup daerah Anda",
+      "regionBadge": "📍 Daerah Anda",
+      "filterAll": "Semua",
+      "errorTitle": "Gagal memuat data",
+      "empty": "Tidak ditemukan pendukung yang sesuai",
+      "resetFilter": "Atur ulang filter",
+      "othersSuffix": " dll.",
+      "showMore": "Tampilkan lebih banyak ({count} organisasi)"
+    },
+    "detail": {
+      "backToList": "← Kembali ke daftar pendukung",
+      "registeredYears": "Terdaftar {years} thn",
+      "website": "🌐 Situs resmi",
+      "statResolved": "Konsultasi terselesaikan",
+      "statResolvedUnit": "",
+      "statBadges": "Lencana diperoleh",
+      "statBadgesUnit": "",
+      "statAreas": "Wilayah aktif",
+      "statAreasUnit": "",
+      "bioTitle": "Tentang",
+      "areasTitle": "Wilayah aktif",
+      "nationwideBadge": "🗾 Seluruh Jepang",
+      "badgesTitle": "Lencana terima kasih",
+      "badgesSubtitle": "Lencana yang dikirim oleh orang-orang yang pernah dibantu",
+      "badgeCount": "{count} kali",
+      "ctaTitle": "Ingin berkonsultasi dengan organisasi ini?",
+      "ctaBody": "Caranya: kirim konsultasi lalu pilih pendukung Anda. Informasi pribadi tidak dibagikan sampai Anda menyetujui.",
+      "ctaConsult": "Coba konsultasi gratis →",
+      "ctaDashboard": "Ke dasbor →"
+    }
+  }
+}

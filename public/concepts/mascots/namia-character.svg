@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="640" viewBox="0 0 480 640" role="img" aria-labelledby="t d">
+  <title id="t">なみあ 基本立ち絵</title>
+  <desc id="d">涙型の体にみちあかりを灯した、明日もsamasamaの案内役なみあ。片手を上げてあいさつしている。</desc>
+  <defs>
+    <linearGradient id="nBody" x1="150" y1="90" x2="340" y2="590" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36D6AE"/>
+      <stop offset="0.42" stop-color="#21A5E2"/>
+      <stop offset="1" stop-color="#1180CF"/>
+    </linearGradient>
+    <radialGradient id="nBelly" cx="46%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFFBEA"/>
+      <stop offset="1" stop-color="#FFEDB8"/>
+    </radialGradient>
+    <radialGradient id="nGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#FFF3C4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFF3C4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 上げた手（向かって左）: 体の後ろに配置 -->
+  <path d="M116 456 C76 446 44 406 46 362 C47 338 62 322 82 328 C100 334 110 354 112 376 C114 400 122 428 134 444 Z"
+    fill="url(#nBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+
+  <!-- 体（涙型） -->
+  <path d="M240 70 C240 70 92 252 92 416 C92 522 158 572 240 572 C322 572 388 522 388 416 C388 252 240 70 240 70 Z"
+    fill="url(#nBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+
+  <!-- 足 -->
+  <path d="M178 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M250 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z" fill="#1E96DC" stroke="#1467A8" stroke-width="8" stroke-linejoin="round"/>
+
+  <!-- 体のハイライト -->
+  <path d="M198 134 C170 174 150 212 142 248" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" opacity="0.28"/>
+
+  <!-- みちあかり（おなかの丸い光） -->
+  <circle cx="240" cy="456" r="96" fill="url(#nGlow)"/>
+  <circle cx="240" cy="456" r="63" fill="url(#nBelly)"/>
+
+  <!-- 添えた手（向かって右） -->
+  <path d="M366 428 C392 442 400 470 385 488 C370 505 342 502 327 487 C316 476 312 463 317 451 C324 435 347 418 366 428 Z"
+    fill="url(#nBody)" stroke="#1467A8" stroke-width="9" stroke-linejoin="round"/>
+
+  <!-- 顔 -->
+  <path d="M158 264 q22 -18 46 -11" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+  <path d="M276 253 q24 -7 46 11" fill="none" stroke="#0E3A5E" stroke-width="7" stroke-linecap="round"/>
+  <ellipse cx="185" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+  <ellipse cx="295" cy="304" rx="17" ry="24" fill="#0F1B2D"/>
+  <circle cx="192" cy="293" r="6" fill="#FFFFFF"/>
+  <circle cx="179" cy="311" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="302" cy="293" r="6" fill="#FFFFFF"/>
+  <circle cx="289" cy="311" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+  <ellipse cx="143" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+  <ellipse cx="337" cy="345" rx="19" ry="11" fill="#A9DFF6" opacity="0.85"/>
+  <path d="M212 352 q28 26 56 0" fill="none" stroke="#0D2B47" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- みちあかりの粒（上げた手のまわり／おなかの横） -->
+  <circle cx="56" cy="268" r="7" fill="#FFD666"/>
+  <circle cx="86" cy="246" r="4.5" fill="#FFD666"/>
+  <circle cx="44" cy="302" r="4" fill="#FFE9A8"/>
+  <circle cx="94" cy="288" r="3" fill="#FFE9A8"/>
+  <circle cx="324" cy="472" r="6" fill="#FFD666"/>
+  <circle cx="344" cy="452" r="4" fill="#FFD666"/>
+  <circle cx="354" cy="488" r="3.5" fill="#FFE9A8"/>
+  <circle cx="370" cy="470" r="2.5" fill="#FFE9A8"/>
+</svg>

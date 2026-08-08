@@ -1,0 +1,1004 @@
+// ─────────────────────────────────────────────────────────────
+// 📂 src/app/sos/result/[id]/page.tsx
+// SOS相談結果ページ（AI分析・オファー管理・メッセージ）
+// ─────────────────────────────────────────────────────────────
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
+import { supabase } from '@/lib/supabase/client';
+import Header from '@/components/layout/Header';
+import MessageThread from '@/components/chat/MessageThread';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/toast';
+import { Modal } from '@/components/ui/modal';
+import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
+import { MAX_CASE_PHOTOS } from '@/lib/constants/photos';
+import { compressImageToJpeg } from '@/lib/utils/imageCompress';
+
+type CaseData = {
+  id: string;
+  title: string;
+  description_free: string;
+  urgency: string;
+  status: string;
+  created_at: string;
+  supporter_resolved_at: string | null;
+  intake_qna: { qa: Record<string, string[]>; disaster?: { event_id?: string; location?: { municipality?: string; area?: string } } } | null;
+  ai_sdg_suggestion: {
+    title?: string;
+    sdgs_goals: number[];
+    reasoning?: string;
+    summary?: string;
+    per_goal?: Array<{
+      goal: number;
+      title: string;
+      explanation: string;
+    }>;
+    keywords: string[];
+  } | null;
+};
+
+type OfferData = {
+  id: string;
+  message: string;
+  status: string;
+  created_at: string;
+  accepted_order: number | null;
+  supporter: {
+    id: string;
+    organization_id: string;
+    display_name: string;
+    organization_name: string | null;
+    supporter_type: string;
+  };
+};
+
+const CASE_POLL_INTERVAL_MS = 60_000;
+const MAX_ACTIVE_CASES = 3;
+
+export default function SOSResultPage() {
+  const t = useTranslations('sos.result');
+  const tDisaster = useTranslations('sos.disaster');
+  const tLimit = useTranslations('sos.limitModal');
+  const tGoal = useTranslations('sdgs.goal');
+  const tBadge = useTranslations('sdgs.badge');
+  const tSupporterType = useTranslations('common.supporterType');
+  const tForm = useTranslations('common.form');
+  const tActions = useTranslations('common.actions');
+  const locale = useLocale();
+  const router = useRouter();
+  const params = useParams();
+  const toast = useToast();
+
+  const [caseData, setCaseData] = useState<CaseData | null>(null);
+  const [offers, setOffers] = useState<OfferData[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeStep, setAnalyzeStep] = useState(0);
+  const [limitModal, setLimitModal] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<OfferData | null>(null);
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [selectedBadges, setSelectedBadges] = useState<Set<BadgeKey>>(new Set());
+  const [isSubmittingBadges, setIsSubmittingBadges] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [supporterBadges, setSupporterBadges] = useState<Record<string, Record<string, number>>>({});
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [casePhotos, setCasePhotos] = useState<Array<{ id: string; url: string }>>([]);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [locMunicipality, setLocMunicipality] = useState('');
+  const [locArea, setLocArea] = useState('');
+  const [locSaving, setLocSaving] = useState(false);
+  const tPhotos = useTranslations('sos.disaster.photos');
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void loadData();
+    };
+    const intervalId = window.setInterval(refreshIfVisible, CASE_POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
+
+  const loadData = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/login'); return; }
+
+    setAccessToken(session.access_token);
+
+    const caseRes = await fetch(`/api/sos/cases/${params.id}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    if (!caseRes.ok) {
+      toast.error(t('toastCaseNotFound'));
+      router.push('/sos/dashboard');
+      return;
+    }
+    const { case: caseResult } = await caseRes.json();
+
+    const roleRes = await fetch('/api/auth/get-role', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    const roleData = await roleRes.json();
+    if (!roleData.user || caseResult.owner_user_id !== roleData.user.id) {
+      toast.error(t('toastNoAccess'));
+      router.push('/sos/dashboard');
+      return;
+    }
+    setCurrentUserId(roleData.user.id);
+    setCaseData(caseResult);
+
+    // ai_sdg_suggestion自体がない、またはai_sdg_suggestion内にtitleが未生成の場合は分析実行
+    // 災害SOS案件はAI分析を行わない
+    const needsAnalysis = (!caseResult.ai_sdg_suggestion
+      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>)))
+      && !caseResult.intake_qna?.disaster;
+    if (needsAnalysis) {
+      await runAIAnalysis(caseResult);
+    }
+
+    if (caseResult.intake_qna?.disaster) {
+      await loadPhotos(caseResult.id);
+    }
+
+    await loadOffers();
+    setIsLoading(false);
+  };
+
+  // ── loadOffers: API経由でRLSをバイパス ──
+  const loadOffers = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch(`/api/sos/cases/${params.id}/offers`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) return;
+    const { offers: fetchedOffers, badges } = await res.json();
+    setOffers(fetchedOffers as OfferData[]);
+    if (badges && badges.length > 0) {
+      const badgeMap: Record<string, Record<string, number>> = {};
+      badges.forEach((b: { supporter_organization_id: string; badge_key: string }) => {
+        if (!badgeMap[b.supporter_organization_id]) badgeMap[b.supporter_organization_id] = {};
+        badgeMap[b.supporter_organization_id][b.badge_key] = (badgeMap[b.supporter_organization_id][b.badge_key] || 0) + 1;
+      });
+      setSupporterBadges(badgeMap);
+    }
+  };
+
+  // ── 地域(災害SOS): 保存値をフォーム状態に反映(案件が変わったときのみ) ──
+  useEffect(() => {
+    const location = caseData?.intake_qna?.disaster?.location;
+    setLocMunicipality(location?.municipality ?? '');
+    setLocArea(location?.area ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseData?.id]);
+
+  const handleSaveLocation = async () => {
+    if (!caseData) return;
+    setLocSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${caseData.id}/location`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ municipality: locMunicipality || null, area: locArea || null }),
+      });
+      if (!res.ok) { toast.error(tDisaster('form.submitError')); return; }
+      const { location } = await res.json();
+      setCaseData((prev) => prev ? {
+        ...prev,
+        intake_qna: prev.intake_qna
+          ? { ...prev.intake_qna, disaster: { ...prev.intake_qna.disaster, location: location ?? undefined } }
+          : prev.intake_qna,
+      } : prev);
+      toast.success(tDisaster('location.saved'));
+    } finally {
+      setLocSaving(false);
+    }
+  };
+
+  // ── 案件写真(災害SOS) ──
+  const loadPhotos = async (caseId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch(`/api/cases/${caseId}/photos`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) return;
+    const { photos } = await res.json();
+    setCasePhotos(photos || []);
+  };
+
+  const handleAddPhoto = async (fileList: FileList | null) => {
+    // FileListはinputと連動する生きたオブジェクトのため、awaitより先にFileを取り出す
+    const file = fileList?.[0];
+    if (!file || !caseData) return;
+    setPhotoBusy(true);
+    try {
+      // 端末側で長辺1600pxのJPEGに圧縮(HEIC等の形式差・10MB超・GPS情報をここで吸収)
+      const compressed = await compressImageToJpeg(file);
+      if (!compressed) { toast.error(tPhotos('uploadFailed')); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const fd = new FormData();
+      fd.append('file', compressed);
+      const res = await fetch(`/api/sos/cases/${caseData.id}/photos`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: fd,
+      });
+      if (!res.ok) { toast.error(tPhotos('uploadFailed')); return; }
+      await loadPhotos(caseData.id);
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!caseData) return;
+    setPhotoBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${caseData.id}/photos?photoId=${encodeURIComponent(photoId)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) { toast.error(tPhotos('deleteFailed')); return; }
+      await loadPhotos(caseData.id);
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const runAIAnalysis = async (cd: CaseData) => {
+    setIsAnalyzing(true);
+    setAnalyzeStep(1);
+    const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
+    const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/gemini/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ caseId: cd.id }),
+      });
+      if (!response.ok) { toast.error(t('toastAnalyzeFailed')); return; }
+      const result = await response.json();
+      clearTimeout(step2);
+      clearTimeout(step3);
+      setAnalyzeStep(4);
+      const analysisWithTitle = result.analysis;
+      const aiTitle = analysisWithTitle?.title || t('fallbackTitle');
+      await new Promise(r => setTimeout(r, 800));
+      setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
+    } catch (err) {
+      console.error('AI analysis error:', err);
+      toast.error(t('toastAnalyzeFailed'));
+    } finally {
+      setIsAnalyzing(false);
+      setAnalyzeStep(0);
+    }
+  };
+
+  const handleAcceptOffer = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      if (!selectedOffer) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // オファーを承認
+      const offerRes = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'ACCEPTED', accepted_at: new Date().toISOString() }),
+      });
+      const offerResult = await offerRes.json();
+      if (!offerRes.ok) {
+        if (offerResult.error === 'MAX_REACHED') {
+          toast.error(t('toastMaxReached', { max: caseMaxSupporters }));
+        } else if (offerResult.error === 'OFFER_NOT_PENDING') {
+          toast.error(t('toastOfferNotPending'));
+          await loadData();
+        } else {
+          toast.error(t('toastAcceptFailed'));
+        }
+        setShowAcceptModal(false);
+        return;
+      }
+      setShowAcceptModal(false);
+      setSelectedOffer(null);
+      await loadData();
+      if (offerResult.auto_declined) {
+        toast.success(t('toastAcceptedAutoDeclined', { max: caseMaxSupporters }));
+      } else {
+        toast.success(t('toastAccepted'));
+      }
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleDeclineOffer = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      if (!selectedOffer) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/offers/${selectedOffer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'DECLINED', declined_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error(t('toastDeclineFailed')); return; }
+      setShowDeclineModal(false);
+      setSelectedOffer(null);
+      await loadOffers();
+      toast.success(t('toastDeclined'));
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleResolveCase = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: 'RESOLVED', resolved_at: new Date().toISOString() }),
+      });
+      if (!res.ok) { toast.error(t('toastStatusUpdateFailed')); return; }
+      setShowResolveModal(false);
+      await loadData();
+      setShowEvalModal(true);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleRejectResolution = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      // supporter_resolved_atをリセット
+      const res = await fetch(`/api/sos/cases/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ supporter_resolved_at: null }),
+      });
+      if (!res.ok) { toast.error(t('toastStatusUpdateFailed')); return; }
+      toast.success(t('toastContinueRequested'));
+      await loadData();
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleSubmitBadges = async () => {
+    const accepted = offers.filter(o => o.status === 'ACCEPTED');
+    if (accepted.length === 0 || !currentUserId) return;
+    setIsSubmittingBadges(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setIsSubmittingBadges(false); return; }
+    const badgeRows = accepted.flatMap((offer) =>
+      [...selectedBadges].map((badgeKey) => ({
+        case_id: params.id as string,
+        supporter_organization_id: offer.supporter.organization_id,
+        badge_key: badgeKey,
+      }))
+    );
+    if (badgeRows.length > 0) {
+      const res = await fetch('/api/sos/badges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ badges: badgeRows }),
+      });
+      if (!res.ok) { toast.error(t('toastEvalFailed')); setIsSubmittingBadges(false); return; }
+    }
+    setIsSubmittingBadges(false);
+    setShowEvalModal(false);
+    toast.success(t('toastEvalSent'));
+  };
+
+  const toggleBadge = (key: BadgeKey) => {
+    setSelectedBadges(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const handleNewConsultation = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/login'); return; }
+    const casesRes = await fetch('/api/sos/cases', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    const casesData = await casesRes.json();
+    const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
+    if ((userCases?.length || 0) >= MAX_ACTIVE_CASES) { setLimitModal(true); return; }
+    router.push('/sos/hearing');
+  };
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const badgeLabel = (key: string) => tBadge(key);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-gray-400">{tForm('loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAnalyzing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-teal-50">
+        <div className="text-center space-y-6">
+          <div className="relative w-20 h-20 mx-auto">
+            <div className="absolute inset-0 rounded-full bg-blue-100 animate-ping opacity-20" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-teal-400 opacity-10 animate-pulse" />
+            <div className="relative w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center">
+              <span className="text-3xl animate-bounce">🤖</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-gray-700 font-medium">{t('preparing')}</p>
+            <div className="flex justify-center gap-1">
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+          <p className="text-xs text-gray-400">{t('pleaseWait')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const pendingOffers = offers.filter(o => o.status === 'PENDING');
+  const acceptedOffers = offers.filter(o => o.status === 'ACCEPTED');
+  const hasAccepted = acceptedOffers.length > 0;
+  // 災害SOS案件: AI提案がないため、相談内容カードと待機表示を別途出す
+  const disasterEvent = getDisasterEvent(caseData?.intake_qna?.disaster?.event_id);
+  // 承認上限は案件ごと(災害イベント指定があればその値。熊本地震=1)
+  const caseMaxSupporters = getMaxSupportersForCase(caseData?.intake_qna);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <Button variant="outline" onClick={() => router.push('/sos/dashboard')} className="mb-4">
+          {t('backToDashboard')}
+        </Button>
+
+        {isAnalyzing && (
+          <Card className="mb-6 overflow-hidden">
+            <CardContent className="py-8">
+              <div className="max-w-md mx-auto space-y-4">
+                {[
+                  { step: 1, icon: '📨', text: t('analyzeStep1') },
+                  { step: 2, icon: '🔍', text: t('analyzeStep2') },
+                  { step: 3, icon: '🌍', text: t('analyzeStep3') },
+                  { step: 4, icon: '✨', text: t('analyzeStep4') },
+                ].map((s) => {
+                  const isActive = analyzeStep >= s.step;
+                  const isCurrent = analyzeStep === s.step && s.step < 4;
+                  return (
+                    <div key={s.step} className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'} ${s.step === 4 ? 'bg-teal-50 border border-teal-200' : ''}`}>
+                      {isActive && !isCurrent ? <span className="text-teal-500 text-lg flex-shrink-0">✅</span>
+                        : isCurrent ? <span className="text-lg flex-shrink-0 animate-pulse">{s.icon}</span>
+                          : <span className="text-gray-300 text-lg flex-shrink-0">○</span>}
+                      <span className={`text-sm ${isActive ? (s.step === 4 ? 'text-teal-700 font-medium' : 'text-gray-700') : 'text-gray-300'}`}>{s.text}</span>
+                      {isCurrent && (
+                        <div className="ml-auto flex gap-1">
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-6 mx-auto max-w-md">
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-blue-500 to-teal-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(analyzeStep * 25, 100)}%` }} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 災害SOS案件: AI提案セクションの代わりに相談内容をそのまま表示 */}
+        {disasterEvent && caseData && (
+          <Card className="mb-6 border-rose-200 bg-rose-50/50">
+            <CardContent className="py-5">
+              <span className="inline-block text-xs font-bold text-rose-700 bg-rose-100 border border-rose-200 px-2.5 py-0.5 rounded-full mb-3">
+                🆘 {tDisaster(`events.${disasterEvent.i18nKey}`)}
+              </span>
+              <h2 className="text-base font-bold text-gray-800 mb-2">{caseData.title}</h2>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{caseData.description_free}</p>
+              {(() => {
+                const canEditPhotos = ['OPEN', 'MATCHED'].includes(caseData.status);
+                if (casePhotos.length === 0 && !canEditPhotos) return null;
+                return (
+                  <div className="mt-4 pt-4 border-t border-rose-100">
+                    <p className="text-xs font-medium text-gray-500 mb-2">📷 {tPhotos('sectionTitle')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {casePhotos.map((p) => (
+                        <div key={p.id} className="relative">
+                          <a href={p.url} target="_blank" rel="noopener noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- 署名付き一時URLのため next/image は使わない */}
+                            <img src={p.url} alt="" className="w-24 h-24 object-cover rounded-lg border border-rose-100" />
+                          </a>
+                          {canEditPhotos && (
+                            <button type="button" disabled={photoBusy} onClick={() => handleDeletePhoto(p.id)}
+                              aria-label={tPhotos('remove')}
+                              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-700 text-white text-xs leading-none hover:bg-gray-900 disabled:opacity-50">
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {canEditPhotos && casePhotos.length < MAX_CASE_PHOTOS && (
+                        <label className={`w-24 h-24 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-rose-200 text-rose-400 text-xs cursor-pointer hover:border-rose-400 transition-colors ${photoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <span className="text-lg leading-none">＋</span>
+                          <span>{tPhotos('add')}</span>
+                          <input type="file" accept="image/*" className="hidden"
+                            onChange={(e) => { handleAddPhoto(e.target.files); e.target.value = ''; }} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* 地域(市町村・校区)の確認と修正。間違えて設定した場合に本人が直せる */}
+              {(disasterEvent.municipalities?.length ?? 0) > 0 && (
+                <div className="mt-4 pt-4 border-t border-rose-100">
+                  <p className="text-xs font-medium text-gray-500 mb-2">📍 {tDisaster('location.title')}</p>
+                  {['OPEN', 'MATCHED'].includes(caseData.status) ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <select
+                        value={locMunicipality}
+                        onChange={(e) => { setLocMunicipality(e.target.value); setLocArea(''); }}
+                        className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                      >
+                        <option value="">{tDisaster('location.none')}</option>
+                        {(disasterEvent.municipalities ?? []).map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      {disasterEvent.localAreas?.[locMunicipality] && (
+                        <select
+                          value={locArea}
+                          onChange={(e) => setLocArea(e.target.value)}
+                          className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                        >
+                          <option value="">{tDisaster('location.none')}</option>
+                          {disasterEvent.localAreas[locMunicipality].options.map((a) => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      )}
+                      {((caseData.intake_qna?.disaster?.location?.municipality ?? '') !== locMunicipality
+                        || (caseData.intake_qna?.disaster?.location?.area ?? '') !== locArea) && (
+                        <Button size="sm" disabled={locSaving} onClick={handleSaveLocation}
+                          className="bg-rose-500 hover:bg-rose-600 text-white">
+                          {tDisaster('location.save')}
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      {formatDisasterLocation(disasterEvent.id, getDisasterLocation(caseData.intake_qna)) ?? tDisaster('location.notSet')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {!isAnalyzing && caseData?.ai_sdg_suggestion ? (
+          <div className="mb-6 space-y-4">
+            <div className="text-center py-2">
+              <h2 className="text-lg font-bold text-gray-800">{t('aiSectionTitle')}</h2>
+              <p className="text-xs text-gray-500 mt-1">{t('aiSectionSubtitle')}</p>
+            </div>
+
+            {/* SDGsが分類できなかった場合 */}
+            {(!caseData.ai_sdg_suggestion.sdgs_goals || caseData.ai_sdg_suggestion.sdgs_goals.length === 0) ? (
+              <Card className="border-none bg-amber-50 shadow-sm">
+                <CardContent className="py-5">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">💬</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 mb-1">{t('noGoalsTitle')}</p>
+                      <p className="text-sm text-amber-700 leading-relaxed">
+                        {caseData.ai_sdg_suggestion.summary || t('noGoalsFallback')}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
+                  <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
+                    <CardContent className="py-4">
+                      <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
+                    </CardContent>
+                  </Card>
+                )}
+                {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
+                  <div className="space-y-3">
+                    {caseData.ai_sdg_suggestion.per_goal.map((pg) => (
+                      <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
+                        <div className="flex">
+                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
+                          <div className="flex-1 p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
+                              <span className="text-xs text-gray-500">{tGoal(String(pg.goal))}</span>
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
+                      <Card key={goalId} className="border-none shadow-sm overflow-hidden">
+                        <div className="flex">
+                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
+                          <div className="flex-1 p-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
+                              <span className="text-sm font-medium">{tGoal(String(goalId))}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-1">
+                    {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                      <span key={i} className="text-xs px-2.5 py-1 bg-white border border-gray-200 rounded-full text-gray-600 shadow-sm">#{kw}</span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {hasAccepted && (
+          <div className="mb-6 space-y-4">
+            <Card className="border-none bg-white shadow-sm">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-700">{t('progressTitle')}</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${caseData?.supporter_resolved_at ? 'bg-emerald-100 text-emerald-600' : caseData?.status === 'MATCHED' ? 'bg-amber-100 text-amber-600' : caseData?.status === 'RESOLVED' ? 'bg-teal-50 text-teal-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && t('statusMatchedActive')}
+                    {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && t('statusReported')}
+                    {caseData?.status === 'RESOLVED' && t('statusResolved')}
+                    {caseData?.status === 'OPEN' && t('statusOpen')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[t('step1'), t('step2'), t('step3')].map((step, i) => {
+                    const stepNum = i + 1;
+                    const currentStep = caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at ? 1 : caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at ? 2 : caseData?.status === 'RESOLVED' ? 3 : 0;
+                    const isActive = stepNum <= currentStep;
+                    const isCurrent = stepNum === currentStep;
+                    return (
+                      <div key={step} className="flex-1 flex flex-col items-center">
+                        <div className={`w-full h-2 rounded-full ${isActive ? 'bg-gradient-to-r from-blue-500 to-teal-500' : 'bg-gray-200'}`} />
+                        <span className={`text-[11px] mt-1 ${isCurrent ? 'font-bold text-gray-800' : isActive ? 'text-gray-600' : 'text-gray-400'}`}>{step}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4">
+                  {caseData?.status === 'MATCHED' && !caseData?.supporter_resolved_at && (
+                    <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-center">
+                      <p className="text-sm text-amber-700">{t('matchedNote')}</p>
+                    </div>
+                  )}
+                  {caseData?.status === 'MATCHED' && caseData?.supporter_resolved_at && (
+                    <div className="space-y-3">
+                      <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-center">
+                        <p className="text-sm text-emerald-700 font-medium">{t('reportedTitle')}</p>
+                        <p className="text-xs text-emerald-600 mt-1">{t('reportedBody')}</p>
+                        {caseData?.supporter_resolved_at && (() => {
+                          const deadline = new Date(new Date(caseData.supporter_resolved_at).getTime() + 14 * 24 * 60 * 60 * 1000);
+                          const daysLeft = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                          return <p className="text-[11px] text-gray-400 mt-2">{t('autoResolveNote', { days: daysLeft })}</p>;
+                        })()}
+                      </div>
+                      <Button onClick={() => setShowResolveModal(true)} className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white">{t('confirmResolve')}</Button>
+                      <Button onClick={handleRejectResolution} variant="outline" className="w-full text-orange-600 border-orange-300 hover:bg-orange-50">{t('notResolved')}</Button>
+                    </div>
+                  )}
+                  {caseData?.status === 'RESOLVED' && (
+                    <div className="bg-teal-50 p-3 rounded-lg border border-teal-200 text-center">
+                      <p className="text-sm text-teal-700 font-medium">{t('resolvedNote')}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-teal-200 bg-teal-50">
+              <CardHeader>
+                <CardTitle className="text-base text-teal-800">{t('acceptedTitle', { count: acceptedOffers.length })}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {acceptedOffers.map((offer) => {
+                  const badges = supporterBadges[offer.supporter.organization_id] || {};
+                  return (
+                    <div key={offer.id} className="bg-white p-4 rounded-lg border border-teal-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <a href={`/supporters/${offer.supporter.id}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+                            {offer.supporter.organization_name || offer.supporter.display_name}
+                            <span className="text-[10px]">↗</span>
+                          </a>
+                          <p className="text-xs text-gray-500">{tSupporterType(offer.supporter.supporter_type)}</p>
+                        </div>
+                        <span className="text-xs text-teal-600">{formatDate(offer.created_at)}</span>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
+                      {badges && Object.keys(badges).length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-teal-100">
+                          <p className="text-[11px] text-gray-400 mb-1.5">{t('badgesCumulative')}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {Object.entries(badges).map(([bk, count]) => {
+                              const b = SUPPORTER_BADGES[bk as BadgeKey];
+                              if (!b) return null;
+                              return (
+                                <span key={bk} className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-amber-50 border border-amber-200 rounded-full" title={badgeLabel(bk)}>
+                                  <span>{b.emoji}</span><span className="text-amber-700">{badgeLabel(bk)}</span>
+                                  {count > 1 && <span className="text-amber-500 font-medium">×{count}</span>}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {currentUserId && (
+              <MessageThread
+                caseId={caseData!.id}
+                currentUserId={currentUserId}
+                accessToken={accessToken || ''}
+                readOnly={caseData?.status === 'RESOLVED' || caseData?.status === 'CLOSED' || caseData?.status === 'CANCELLED'}
+              />
+            )}
+          </div>
+        )}
+
+        {pendingOffers.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">{t('pendingTitle', { count: pendingOffers.length })}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pendingOffers.map((offer) => {
+                const badges = supporterBadges[offer.supporter.organization_id] || {};
+                const badgeEntries = Object.entries(badges);
+                return (
+                  <div key={offer.id} className="border border-gray-200 p-4 rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <a href={`/supporters/${offer.supporter.id}`} target="_blank" rel="noopener noreferrer"
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+                          {offer.supporter.organization_name || offer.supporter.display_name}
+                          <span className="text-xs">↗</span>
+                        </a>
+                        <p className="text-xs text-gray-500">{tSupporterType(offer.supporter.supporter_type)}</p>
+                      </div>
+                      <span className="text-xs text-gray-500">{formatDate(offer.created_at)}</span>
+                    </div>
+                    {badgeEntries.length > 0 && (
+                      <div className="mb-3 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
+                        <p className="text-[11px] text-amber-600 mb-1.5">{t('pastRating')}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {badgeEntries.map(([bk, count]) => {
+                            const b = SUPPORTER_BADGES[bk as BadgeKey];
+                            if (!b) return null;
+                            return (
+                              <span key={bk} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-white border border-amber-200 rounded-full">
+                                <span>{b.emoji}</span><span className="text-amber-700">{badgeLabel(bk)}</span>
+                                {count > 1 && <span className="text-amber-500 font-medium">×{count}</span>}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    <div className="bg-gray-50 p-3 rounded mb-3"><p className="text-sm text-gray-700 break-all whitespace-pre-wrap">{offer.message}</p></div>
+                    <div className="flex gap-2">
+                      <Button onClick={async () => { await loadOffers(); setSelectedOffer(offer); setShowAcceptModal(true); }} className="flex-1 bg-teal-600 hover:bg-teal-700">{t('acceptAction')}</Button>
+                      <Button onClick={() => { setSelectedOffer(offer); setShowDeclineModal(true); }} variant="outline" className="flex-1 text-red-600 hover:bg-red-50">{t('declineAction')}</Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {offers.length === 0 && (caseData?.ai_sdg_suggestion || disasterEvent) && (
+          <Card className="mb-6">
+            <CardContent className="py-8 text-center">
+              <div className="text-4xl mb-3">⏳</div>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">{t('waitingTitle')}</h3>
+              <p className="text-sm text-gray-500">{t('waitingBody')}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="flex gap-3">
+          <Button onClick={handleNewConsultation} variant="outline" className="flex-1">{t('newConsultation')}</Button>
+          <Button onClick={() => router.push('/sos/dashboard')} className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">{t('toDashboard')}</Button>
+        </div>
+      </main>
+
+      <Modal isOpen={showAcceptModal} onClose={() => setShowAcceptModal(false)} title={t('acceptModalTitle')} type="info">
+        <div className="space-y-4">
+          <p className="text-gray-700">{t('acceptModalBody', { name: selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name || '' })}</p>
+          <p className="text-sm text-gray-500">{t('acceptModalNote')}</p>
+          {acceptedOffers.length > 0 ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+              <p className="text-sm font-medium text-amber-800">{t('chatHistoryWarnTitle')}</p>
+              <p className="text-sm text-amber-700">
+                {t('chatHistoryWarnBody', { count: acceptedOffers.length })}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+              <p className="text-sm text-blue-700">
+                {t('chatShareInfo', { max: caseMaxSupporters })}
+              </p>
+            </div>
+          )}
+          {acceptedOffers.length === caseMaxSupporters - 1 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-orange-800">{t('limitReachTitle')}</p>
+              <p className="text-sm text-orange-700">{t('limitReachBody', { max: caseMaxSupporters })}</p>
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button onClick={() => setShowAcceptModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{tActions('cancel')}</button>
+            <button onClick={handleAcceptOffer} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">{t('acceptConfirm')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showDeclineModal} onClose={() => setShowDeclineModal(false)} title={t('declineModalTitle')} type="warning">
+        <div className="space-y-4">
+          <p className="text-gray-700">{t('declineModalBody', { name: selectedOffer?.supporter.organization_name || selectedOffer?.supporter.display_name || '' })}</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowDeclineModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{tActions('cancel')}</button>
+            <button onClick={handleDeclineOffer} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">{t('declineConfirm')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={limitModal} onClose={() => setLimitModal(false)} title={tLimit('title')} type="warning">
+        <div className="text-center py-4">
+          <div className="text-4xl mb-4">⚠️</div>
+          <p className="text-gray-700 mb-4 font-medium">{tLimit('heading')}</p>
+          <p className="text-sm text-gray-600 mb-6">{tLimit('body')}</p>
+          <button onClick={() => router.push('/sos/dashboard')} className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">{tLimit('backToDashboard')}</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showResolveModal} onClose={() => setShowResolveModal(false)} title={t('resolveModalTitle')} type="info">
+        <div className="space-y-4">
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+            <p className="text-sm text-teal-700">{t('resolveModalInfo')}</p>
+          </div>
+          <p className="text-sm text-gray-500">{t('resolveModalNote')}</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowResolveModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t('resolveNotYet')}</button>
+            <button onClick={handleResolveCase} className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">{t('resolveConfirm')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} title={t('evalModalTitle')} type="info">
+        <div className="space-y-5">
+          <div className="text-center">
+            <div className="text-5xl mb-2">🎊</div>
+            <p className="text-sm text-gray-600">{t('evalCongrats')}</p>
+          </div>
+          <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <p className="text-xs text-amber-600 font-medium mb-2">{t('evalAutoGrant')}</p>
+            <div className="flex gap-3 flex-wrap">
+              {offers.filter(o => o.status === 'ACCEPTED').map((offer, i) => (
+                <div key={offer.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-amber-200">
+                  <span className="text-lg">{i === 0 ? '🥇' : '🥈'}</span>
+                  <a href={`/supporters/${offer.supporter.id}`} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline">
+                    {offer.supporter.organization_name || offer.supporter.display_name}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-3">{t('evalSelectPrompt')}</p>
+            <div className="grid grid-cols-1 gap-2">
+              {SELECTABLE_BADGES.map((key) => {
+                const badge = SUPPORTER_BADGES[key];
+                const isSelected = selectedBadges.has(key);
+                return (
+                  <button key={key} onClick={() => toggleBadge(key)} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}>
+                    <span className="text-2xl">{badge.emoji}</span>
+                    <span className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>{badgeLabel(key)}</span>
+                    {isSelected && <span className="ml-auto text-blue-500 text-lg">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <button onClick={handleSubmitBadges} disabled={isSubmittingBadges || selectedBadges.size === 0} className="w-full px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 text-sm font-medium disabled:opacity-50">
+            {isSubmittingBadges ? tForm('submitting') : t('evalSend', { count: selectedBadges.size })}
+          </button>
+          {selectedBadges.size === 0 && <p className="text-xs text-center text-gray-400">{t('evalSelectAtLeast')}</p>}
+        </div>
+      </Modal>
+
+      <toast.ToastContainer />
+    </div>
+  );
+}

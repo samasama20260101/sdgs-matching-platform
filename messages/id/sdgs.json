@@ -1,0 +1,68 @@
+{
+  "goal": {
+    "1": "Tanpa Kemiskinan",
+    "2": "Tanpa Kelaparan",
+    "3": "Kehidupan Sehat dan Sejahtera",
+    "4": "Pendidikan Berkualitas",
+    "5": "Kesetaraan Gender",
+    "6": "Air Bersih dan Sanitasi Layak",
+    "7": "Energi Bersih dan Terjangkau",
+    "8": "Pekerjaan Layak dan Pertumbuhan Ekonomi",
+    "9": "Industri, Inovasi dan Infrastruktur",
+    "10": "Berkurangnya Kesenjangan",
+    "11": "Kota dan Permukiman yang Berkelanjutan",
+    "12": "Konsumsi dan Produksi yang Bertanggung Jawab",
+    "13": "Penanganan Perubahan Iklim",
+    "14": "Ekosistem Lautan",
+    "15": "Ekosistem Daratan",
+    "16": "Perdamaian, Keadilan dan Kelembagaan yang Tangguh",
+    "17": "Kemitraan untuk Mencapai Tujuan"
+  },
+  "caseStatus": {
+    "OPEN": "Menunggu pendukung",
+    "MATCHED": "Sudah dicocokkan・sedang didukung",
+    "RESOLVED": "Terselesaikan",
+    "CANCELLED": "Dibatalkan",
+    "CLOSED": "Selesai"
+  },
+  "offerStatus": {
+    "PENDING": "Menunggu persetujuan",
+    "ACCEPTED": "Disetujui",
+    "DECLINED": "Ditolak dengan hormat",
+    "WITHDRAWN": "Ditarik kembali"
+  },
+  "statusSteps": {
+    "waiting": "Menunggu",
+    "matched": "Dicocokkan",
+    "reported": "Laporan penyelesaian",
+    "resolved": "Selesai"
+  },
+  "badge": {
+    "gold_medal": "Terima kasih（utama）",
+    "silver_medal": "Terima kasih（pendamping）",
+    "very_satisfied": "Sangat puas",
+    "quick_response": "Respons cepat",
+    "sincere_support": "Dukungan yang tulus",
+    "problem_solved": "Masalah yang hampir saya menyerah terselesaikan",
+    "grateful_partner": "Menghadapinya bersama, sangat berterima kasih"
+  },
+  "goalShort": {
+    "1": "Kemiskinan",
+    "2": "Kelaparan",
+    "3": "Kesehatan",
+    "4": "Pendidikan",
+    "5": "Gender",
+    "6": "Air",
+    "7": "Energi",
+    "8": "Ekonomi",
+    "9": "Industri",
+    "10": "Kesenjangan",
+    "11": "Kota",
+    "12": "Konsumsi",
+    "13": "Iklim",
+    "14": "Laut",
+    "15": "Darat",
+    "16": "Perdamaian",
+    "17": "Kemitraan"
+  }
+}

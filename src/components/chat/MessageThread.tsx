@@ -6,6 +6,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 type Message = {
     id: string;
@@ -29,6 +30,8 @@ type Props = {
 const MESSAGE_POLL_INTERVAL_MS = 60_000;
 
 export default function MessageThread({ caseId, currentUserId, accessToken, readOnly = false }: Props) {
+    const t = useTranslations('common.chat');
+    const locale = useLocale();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -52,7 +55,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                 headers: { 'Authorization': `Bearer ${accessToken}` },
             });
             if (!res.ok) {
-                setError('メッセージの取得に失敗しました');
+                setError(t('errorLoad'));
                 setIsLoading(false);
                 return;
             }
@@ -62,10 +65,11 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
             setError(null);
         } catch (err) {
             console.error('Load messages error:', err);
-            setError('メッセージの取得に失敗しました');
+            setError(t('errorLoad'));
         } finally {
             setIsLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [caseId, accessToken, isNearBottom]);
 
     useEffect(() => { loadMessages(); }, [loadMessages]);
@@ -109,7 +113,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                 body: JSON.stringify({ case_id: caseId, content }),
             });
             if (!res.ok) {
-                setError('メッセージの送信に失敗しました');
+                setError(t('errorSend'));
                 return;
             }
             setNewMessage('');
@@ -117,7 +121,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
             await loadMessages({ forceScroll: true });
         } catch (err) {
             console.error('Send error:', err);
-            setError('エラーが発生しました');
+            setError(t('errorGeneric'));
         } finally {
             setIsSending(false);
         }
@@ -138,17 +142,17 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
         const d = new Date(dateStr);
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-        const time = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        const time = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
         if (diffDays === 0) return time;
-        if (diffDays === 1) return `昨日 ${time}`;
-        if (diffDays < 7) return `${diffDays}日前 ${time}`;
-        return d.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) + ` ${time}`;
+        if (diffDays === 1) return `${t('yesterday')} ${time}`;
+        if (diffDays < 7) return `${t('daysAgo', { days: diffDays })} ${time}`;
+        return d.toLocaleDateString(locale, { month: 'short', day: 'numeric' }) + ` ${time}`;
     };
 
     const getSenderLabel = (msg: Message) => {
-        if (!msg.sender) return '不明';
+        if (!msg.sender) return t('unknown');
         if (msg.sender.role === 'SUPPORTER' && msg.sender.organization_name) {
-            return `${msg.sender.organization_name} / 担当: ${msg.sender.display_name}`;
+            return t('staffLabel', { org: msg.sender.organization_name, name: msg.sender.display_name });
         }
         return msg.sender.display_name;
     };
@@ -156,9 +160,9 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
     const getSenderRoleBadge = (msg: Message) => {
         if (!msg.sender) return null;
         if (msg.sender.role === 'SOS') {
-            return <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">相談者</span>;
+            return <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">{t('roleSos')}</span>;
         }
-        return <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 font-medium">サポーター</span>;
+        return <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 font-medium">{t('roleSupporter')}</span>;
     };
 
     if (isLoading) {
@@ -179,11 +183,11 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className="text-base">💬</span>
-                        <h3 className="text-sm font-bold text-gray-800">メッセージ</h3>
-                        {messages.length > 0 && <span className="text-[11px] text-gray-400">{messages.length}件</span>}
+                        <h3 className="text-sm font-bold text-gray-800">{t('title')}</h3>
+                        {messages.length > 0 && <span className="text-[11px] text-gray-400">{t('count', { count: messages.length })}</span>}
                     </div>
-                    <button onClick={() => { void loadMessages(); }} className="text-xs text-gray-400 hover:text-blue-500 transition-colors" title="更新">
-                        🔄 更新
+                    <button onClick={() => { void loadMessages(); }} className="text-xs text-gray-400 hover:text-blue-500 transition-colors">
+                        {t('refresh')}
                     </button>
                 </div>
             </div>
@@ -193,8 +197,8 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <div className="text-3xl mb-2 opacity-50">💬</div>
-                        <p className="text-sm text-gray-400">まだメッセージはありません</p>
-                        <p className="text-xs text-gray-300 mt-1">最初のメッセージを送って、やり取りを始めましょう</p>
+                        <p className="text-sm text-gray-400">{t('empty')}</p>
+                        <p className="text-xs text-gray-300 mt-1">{t('emptyHint')}</p>
                     </div>
                 ) : (
                     messages.map((msg) => {
@@ -246,7 +250,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
             {/* 入力エリア */}
             {readOnly ? (
                 <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-center">
-                    <p className="text-xs text-gray-400">✅ この相談は解決済みです。メッセージ履歴は閲覧できます。</p>
+                    <p className="text-xs text-gray-400">{t('readOnlyNote')}</p>
                 </div>
             ) : (
                 <div className="px-4 py-3 bg-white border-t border-gray-100">
@@ -256,7 +260,7 @@ export default function MessageThread({ caseId, currentUserId, accessToken, read
                             value={newMessage}
                             onChange={handleTextareaInput}
                             onKeyDown={handleKeyDown}
-                            placeholder="メッセージを入力... (Shift+Enterで改行)"
+                            placeholder={t('inputPlaceholder')}
                             rows={1}
                             className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm
                 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300

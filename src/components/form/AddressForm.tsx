@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { fetchAddressFromZipcode, formatZipcode, isValidJapanZipcode } from '@/lib/utils/zipcode';
@@ -34,6 +35,7 @@ export default function AddressForm({
     initialData = {},
     requiredFields = {}
 }: AddressFormProps) {
+    const t = useTranslations('common.address');
     const [formData, setFormData] = useState<AddressFormData>({
         postalCode: initialData.postalCode || '',
         prefecture: initialData.prefecture || '',
@@ -66,7 +68,7 @@ export default function AddressForm({
 
         // 郵便番号の妥当性チェック（日本の場合）
         if (countryCode === 'JP' && !isValidJapanZipcode(formData.postalCode)) {
-            setSearchError('郵便番号は7桁の数字で入力してください');
+            setSearchError(t('errorZipFormat'));
             return;
         }
 
@@ -78,7 +80,7 @@ export default function AddressForm({
                 const cleanZip = formData.postalCode.replace(/[^0-9]/g, '');
                 const res = await fetch(`/api/zipcode?zipcode=${cleanZip}`);
                 if (!res.ok) {
-                    setSearchError('この郵便番号は自動入力に対応していません。手動で住所を入力してください。');
+                    setSearchError(t('errorZipNotFound'));
                     return;
                 }
                 const addressData = await res.json();
@@ -104,11 +106,11 @@ export default function AddressForm({
                     setFormData(newData);
                     onChange(newData);
                 } else {
-                    setSearchError('この郵便番号は自動入力に対応していません。手動で住所を入力してください。');
+                    setSearchError(t('errorZipNotFound'));
                 }
             }
-        } catch (error) {
-            setSearchError('住所の取得に失敗しました');
+        } catch {
+            setSearchError(t('errorZipFetch'));
         } finally {
             setIsSearching(false);
         }
@@ -119,7 +121,7 @@ export default function AddressForm({
             {/* 郵便番号 */}
             <div className="space-y-2">
                 <Label htmlFor="postalCode">
-                    郵便番号 {fieldRequired.postalCode && <span className="text-red-500">*</span>}
+                    {t('postalCode')} {fieldRequired.postalCode && <span className="text-red-500">*</span>}
                 </Label>
                 <div className="flex gap-2">
                     <input
@@ -138,7 +140,7 @@ export default function AddressForm({
                         disabled={isSearching || !formData.postalCode}
                         className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
                     >
-                        {isSearching ? '検索中...' : '住所検索'}
+                        {isSearching ? t('searching') : t('search')}
                     </Button>
                 </div>
                 {searchError && (
@@ -146,7 +148,7 @@ export default function AddressForm({
                 )}
                 {countryCode === 'JP' && (
                     <p className="text-xs text-gray-400">
-                        ハイフンあり/なし どちらでも入力できます
+                        {t('postalHint')}
                     </p>
                 )}
             </div>
@@ -154,7 +156,7 @@ export default function AddressForm({
             {/* 都道府県 */}
             <div className="space-y-2">
                 <Label htmlFor="prefecture">
-                    {countryCode === 'JP' ? '都道府県' : 'Province'}
+                    {countryCode === 'JP' ? t('prefecture') : 'Province'}
                     {fieldRequired.prefecture && <span className="text-red-500">*</span>}
                 </Label>
                 <input
@@ -172,7 +174,7 @@ export default function AddressForm({
             {/* 市区町村 */}
             <div className="space-y-2">
                 <Label htmlFor="city">
-                    {countryCode === 'JP' ? '市区町村' : 'City'}
+                    {countryCode === 'JP' ? t('city') : 'City'}
                     {fieldRequired.city && <span className="text-red-500">*</span>}
                 </Label>
                 <input
@@ -190,7 +192,7 @@ export default function AddressForm({
             {/* 番地・建物名 */}
             <div className="space-y-2">
                 <Label htmlFor="addressLine1">
-                    番地・ビル名
+                    {t('line1')}
                     {fieldRequired.addressLine1 && (
                         <span className="text-red-500">*</span>
                     )}
@@ -207,7 +209,7 @@ export default function AddressForm({
                 />
                 {!fieldRequired.addressLine1 && (
                     <p className="text-xs text-gray-500">
-                        ※詳細な住所は任意です。都道府県・市区町村だけでもマッチング可能です
+                        {t('line1Hint')}
                     </p>
                 )}
             </div>
@@ -215,7 +217,7 @@ export default function AddressForm({
             {/* 建物名・部屋番号（常に任意） */}
             <div className="space-y-2">
                 <Label htmlFor="addressLine2">
-                    部屋番号
+                    {t('line2')}
                 </Label>
                 <input
                     id="addressLine2"

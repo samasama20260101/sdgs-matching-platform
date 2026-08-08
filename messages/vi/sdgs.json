@@ -1,0 +1,68 @@
+{
+  "goal": {
+    "1": "Xóa nghèo",
+    "2": "Không còn nạn đói",
+    "3": "Sức khỏe và cuộc sống tốt",
+    "4": "Giáo dục có chất lượng",
+    "5": "Bình đẳng giới",
+    "6": "Nước sạch và vệ sinh",
+    "7": "Năng lượng sạch với giá hợp lý",
+    "8": "Việc làm bền vững và tăng trưởng kinh tế",
+    "9": "Công nghiệp, sáng tạo và hạ tầng",
+    "10": "Giảm bất bình đẳng",
+    "11": "Thành phố và cộng đồng bền vững",
+    "12": "Tiêu dùng và sản xuất có trách nhiệm",
+    "13": "Hành động vì khí hậu",
+    "14": "Tài nguyên và môi trường biển",
+    "15": "Tài nguyên và môi trường đất liền",
+    "16": "Hòa bình, công lý và thể chế vững mạnh",
+    "17": "Quan hệ đối tác vì các mục tiêu"
+  },
+  "caseStatus": {
+    "OPEN": "Đang chờ người hỗ trợ",
+    "MATCHED": "Đã ghép nối・đang hỗ trợ",
+    "RESOLVED": "Đã giải quyết",
+    "CANCELLED": "Đã hủy",
+    "CLOSED": "Đã kết thúc"
+  },
+  "offerStatus": {
+    "PENDING": "Chờ phê duyệt",
+    "ACCEPTED": "Đã chấp nhận",
+    "DECLINED": "Đã từ chối",
+    "WITHDRAWN": "Đã rút lại"
+  },
+  "statusSteps": {
+    "waiting": "Đang chờ",
+    "matched": "Đã ghép nối",
+    "reported": "Báo cáo giải quyết",
+    "resolved": "Giải quyết"
+  },
+  "badge": {
+    "gold_medal": "Cảm ơn（chính）",
+    "silver_medal": "Cảm ơn（phụ）",
+    "very_satisfied": "Rất hài lòng",
+    "quick_response": "Phản hồi nhanh",
+    "sincere_support": "Hỗ trợ tận tâm",
+    "problem_solved": "Đã giải quyết vấn đề tôi từng bỏ cuộc",
+    "grateful_partner": "Cùng nhau đối mặt, vô cùng biết ơn"
+  },
+  "goalShort": {
+    "1": "Nghèo đói",
+    "2": "Nạn đói",
+    "3": "Sức khỏe",
+    "4": "Giáo dục",
+    "5": "Giới",
+    "6": "Nước sạch",
+    "7": "Năng lượng",
+    "8": "Kinh tế",
+    "9": "Công nghiệp",
+    "10": "Bất bình đẳng",
+    "11": "Đô thị",
+    "12": "Tiêu dùng",
+    "13": "Khí hậu",
+    "14": "Biển",
+    "15": "Đất liền",
+    "16": "Hòa bình",
+    "17": "Đối tác"
+  }
+}

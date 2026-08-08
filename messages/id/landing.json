@@ -1,0 +1,155 @@
+{
+  "meta": {
+    "title": "明日もsamasama | SDGs Match",
+    "description": "Platform pencocokan bertenaga AI yang menganalisis kesulitan Anda dan menghubungkan dengan NPO, organisasi pendukung, perusahaan, dan lembaga pemerintah yang ahli."
+  },
+  "nav": {
+    "supporters": "Daftar pendukung",
+    "story": "Kisah kami",
+    "login": "Masuk",
+    "consult": "Konsultasi"
+  },
+  "hero": {
+    "badge": "Platform yang menghubungkan Anda dengan NPO dan organisasi pendukung",
+    "title": "Jangan pikul sendirian,<br></br>mari selesaikan <accent>bersama seseorang</accent>",
+    "description": "Kesulitan hidup, pendidikan, lingkungan, diskriminasi, keterasingan — AI menganalisis masalah sosial Anda dan menghubungkan dengan NPO serta organisasi pendukung yang ahli.",
+    "ctaConsult": "Konsultasi gratis →",
+    "ctaSupporters": "Lihat pendukung",
+    "note": "Pendaftaran gratis・Informasi pribadi tidak dibagikan sampai Anda menyetujui",
+    "haveAccount": "Sudah punya akun?",
+    "loginHere": "Masuk di sini →",
+    "readStory": "Baca kisah kami"
+  },
+  "stats": {
+    "resolved": "Konsultasi terselesaikan",
+    "resolvedSuffix": "",
+    "supporters": "Organisasi pendukung terdaftar",
+    "supportersSuffix": "",
+    "areas": "Prefektur aktif",
+    "areasSuffix": "",
+    "areasSuffixSm": ""
+  },
+  "concept": {
+    "kicker": "HOW IT WORKS",
+    "title": "Mekanisme yang menghubungkan suara minta tolong dengan dukungan",
+    "description": "Kami tidak meminta Anda melakukan klasifikasi yang rumit. AI dan tim operasional memastikan suara Anda sampai ke dukungan yang diperlukan.",
+    "caption": "Pintu masuk dukungan agar <accent>tidak ada yang berjuang sendirian</accent>",
+    "imageAltMobile": "Gambaran 明日もsamasama SDGs MATCH untuk ponsel: seseorang mengirim SOS dan terhubung dengan organisasi yang ingin membantu melalui platform.",
+    "imageAltDesktop": "Gambaran 明日もsamasama SDGs MATCH: seseorang mengirim SOS, dan platform menghubungkannya dengan organisasi pendukung melalui konsultasi, pencocokan, informasi, dan visualisasi.",
+    "point1Title": "Kirim SOS apa adanya",
+    "point1Desc": "Tanpa perlu memahami SDGs, ceritakan kesulitan Anda dengan bahasa sehari-hari.",
+    "point2Title": "AI menyusun di balik layar",
+    "point2Desc": "Isi konsultasi diklasifikasikan agar mudah terhubung dengan dukungan yang sesuai daerah dan masalahnya.",
+    "point3Title": "Terhubung dengan pendukung dan pengelola",
+    "point3Desc": "Selain pencocokan dengan NPO, pemerintah, dan perusahaan, selalu ada jalur ke pengelola saat Anda kesulitan."
+  },
+  "steps": {
+    "title": "Alur penggunaan",
+    "subtitle": "Proses yang transparan agar Anda dapat menggunakan layanan dengan tenang",
+    "label": "STEP {n}",
+    "step1Title": "Kirim konsultasi",
+    "step1Desc": "Tulis kesulitan Anda dengan bebas. Informasi pribadi cukup seminimal mungkin",
+    "step2Title": "AI menganalisis",
+    "step2Desc": "AI menganalisis isi konsultasi dan menentukan kategori SDGs yang paling sesuai",
+    "step3Title": "Pendukung menawarkan bantuan",
+    "step3Desc": "NPO dan organisasi pendukung di bidang terkait mengangkat tangan untuk konsultasi Anda",
+    "step4Title": "Anda yang memilih",
+    "step4Desc": "Periksa informasi organisasi sebelum menyetujui. Bebas juga untuk menolak",
+    "step5Title": "Selesai・dukungan tuntas",
+    "step5Desc": "Konfirmasi saat masalah terselesaikan. Sampaikan terima kasih dengan lencana",
+    "privacyNote": "🔒 Informasi pribadi tidak dibagikan sampai Anda menyetujui"
+  },
+  "sdgsSection": {
+    "title": "Tujuan SDGs yang dicakup",
+    "subtitle": "Organisasi pendukung yang ahli aktif di seluruh 17 tujuan"
+  },
+  "supportersSection": {
+    "title": "Pendukung yang berpartisipasi",
+    "subtitleFeatured": "Pilihan organisasi yang direkomendasikan",
+    "subtitleDefault": "Anda dapat memeriksanya sebelum berkonsultasi",
+    "viewAll": "Lihat semua {count} organisasi →",
+    "nationwide": "Seluruh Jepang",
+    "resolvedStat": "✅ Terselesaikan <strong>{count}</strong>",
+    "badgeStat": "🏆 <strong>{count} lencana</strong>"
+  },
+  "faq": {
+    "title": "Kekhawatiran dan pertanyaan umum",
+    "q1": "Apakah informasi pribadi saya aman?",
+    "a1": "Sampai Anda menyetujui pendukung, tidak ada informasi yang dapat mengidentifikasi pribadi yang dibagikan sama sekali. Setelah disetujui pun hanya informasi minimum yang diperlukan yang dibagikan.",
+    "q2": "Bisakah saya menolak tawaran dari pendukung?",
+    "a2": "Ya, Anda bebas menolak. Anda yang memutuskan menerima tawaran atau tidak, dan boleh menunggu sampai merasa yakin.",
+    "q3": "Benar-benar gratis?",
+    "a3": "Sepenuhnya gratis untuk pencari bantuan. NPO dan perusahaan pendukung juga tidak dikenai biaya pendaftaran.",
+    "q4": "Bagaimana jika ada organisasi yang mencurigakan?",
+    "a4": "Semua organisasi pendukung diseleksi saat pendaftaran. Anda juga dapat memeriksa rekam jejak dan profil mereka terlebih dahulu.",
+    "q5": "Apakah saya boleh berkonsultasi tentang apa saja?",
+    "a5": "Sasarannya adalah kesulitan sosial yang terkait SDGs — mencakup kesulitan hidup, pendidikan, lingkungan, diskriminasi, keterasingan, dan banyak lagi."
+  },
+  "cta": {
+    "title": "Mau mencoba melangkah?",
+    "body": "Para ahli yang dapat menyelesaikan kesulitan Anda sedang menunggu. Konsultasi gratis. Informasi pribadi tidak dibagikan sampai Anda menyetujui.",
+    "consult": "Konsultasi gratis →",
+    "login": "Masuk"
+  },
+  "footer": {
+    "story": "Kisah kami",
+    "supporters": "Daftar pendukung",
+    "contact": "Kontak",
+    "terms": "Syarat Layanan",
+    "privacy": "Kebijakan Privasi",
+    "login": "Masuk",
+    "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "contact": {
+    "title": "Hubungi kami",
+    "subtitle": "Setelah memeriksa isi pesan, kami akan membalas ke alamat email terdaftar Anda.",
+    "loggedInAs": "Masuk sebagai {name}",
+    "loggedInNote": "Masuk sebagai {name} — alamat email akan digunakan secara otomatis",
+    "backToDashboard": "← Kembali ke dasbor",
+    "backToTop": "← Kembali ke beranda",
+    "nameLabel": "Nama",
+    "namePlaceholder": "Budi Santoso",
+    "emailPlaceholder": "example@email.com",
+    "orgLabel": "Nama organisasi",
+    "orgPlaceholder": "PT Contoh",
+    "phoneLabel": "Nomor telepon",
+    "phonePlaceholder": "03-0000-0000",
+    "optional": "Opsional",
+    "categoryLabel": "Jenis pertanyaan",
+    "categoryPlaceholder": "Silakan pilih",
+    "categories": {
+      "aboutService": "Ingin tahu tentang layanan",
+      "joinAsSupporter": "Ingin bergabung sebagai organisasi pendukung",
+      "media": "Liputan / media",
+      "howto": "Tidak tahu cara menggunakannya",
+      "stuck": "Konsultasi tidak berjalan / sedang kesulitan",
+      "matchingComplaint": "Tidak puas dengan pencocokan",
+      "aboutCases": "Tentang kasus / pencocokan",
+      "withdraw": "Ingin berhenti (hapus akun)",
+      "other": "Lainnya"
+    },
+    "withdrawNote": "※ Jika ingin berhenti, staf kami akan mengirimkan panduan prosedurnya melalui email",
+    "detailLabel": "Detail",
+    "detailPlaceholder": "Silakan tulis detail pertanyaan Anda",
+    "withdrawPlaceholder": "Mohon beri tahu alasan Anda ingin berhenti (opsional)",
+    "submit": "Kirim",
+    "doneTitle": "Pesan telah terkirim",
+    "doneBody": "Staf kami akan membalas. Mohon tunggu beberapa saat.",
+    "receiptNumber": "Nomor tanda terima: ",
+    "toDashboard": "Ke dasbor",
+    "toTop": "Kembali ke beranda",
+    "errorName": "Silakan isi nama",
+    "errorEmail": "Silakan isi alamat email",
+    "errorCategory": "Silakan pilih jenis pertanyaan",
+    "errorDetail": "Silakan isi detail",
+    "errorDetailTooLong": "Detail maksimal 1000 karakter",
+    "errorSend": "Gagal mengirim"
+  },
+  "share": {
+    "label": "Bagikan untuk mendukung",
+    "text": "Pintu menuju dukungan, agar tak seorang pun berjuang sendirian. 明日もsamasama | SDGs Match",
+    "shareOn": "Bagikan ke {network}",
+    "copy": "Salin tautan",
+    "copied": "Tautan disalin"
+  }
+}

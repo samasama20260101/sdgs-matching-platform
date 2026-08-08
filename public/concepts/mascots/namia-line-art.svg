@@ -1,16 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Namia line art</title>
-  <desc id="desc">A monochrome line art version of Namia for print materials and worksheets.</desc>
-  <rect width="512" height="512" fill="none"/>
-  <path d="M256 54c82 94 146 183 146 278 0 91-62 143-146 143s-146-52-146-143c0-95 64-184 146-278z" fill="#fffef3" stroke="#0f2b3f" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M165 320c-24-5-43-27-43-54 0-24 16-45 38-53" fill="none" stroke="#0f2b3f" stroke-width="9" stroke-linecap="round"/>
-  <path d="M347 320c24-5 43-27 43-54 0-24-16-45-38-53" fill="none" stroke="#0f2b3f" stroke-width="9" stroke-linecap="round"/>
-  <path d="M164 222c12-15 28-22 47-21" fill="none" stroke="#0f2b3f" stroke-width="7" stroke-linecap="round"/>
-  <path d="M301 201c19-1 35 6 47 21" fill="none" stroke="#0f2b3f" stroke-width="7" stroke-linecap="round"/>
-  <ellipse cx="188" cy="249" rx="17" ry="25" fill="#0f2b3f"/>
-  <ellipse cx="324" cy="249" rx="17" ry="25" fill="#0f2b3f"/>
-  <path d="M216 310c23 25 57 25 80 0" fill="none" stroke="#0f2b3f" stroke-width="11" stroke-linecap="round"/>
-  <circle cx="256" cy="374" r="51" fill="#fffaf0" stroke="#0f2b3f" stroke-width="9"/>
-  <path d="M202 472c-7 18-2 31 17 33h25" fill="none" stroke="#0f2b3f" stroke-width="9" stroke-linecap="round"/>
-  <path d="M310 472c7 18 2 31-17 33h-25" fill="none" stroke="#0f2b3f" stroke-width="9" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="640" viewBox="0 0 480 640" role="img" aria-labelledby="t d">
+  <title id="t">なみあ 線画版</title>
+  <desc id="d">白黒印刷・行政資料・ワークシート向けの、なみあの単色線画。</desc>
+  <g fill="none" stroke="#1F2937" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- 上げた手（向かって左） -->
+    <path d="M116 456 C76 446 44 406 46 362 C47 338 62 322 82 328 C100 334 110 354 112 376 C114 400 122 428 134 444"/>
+    <!-- 体（涙型） -->
+    <path d="M240 70 C240 70 92 252 92 416 C92 522 158 572 240 572 C322 572 388 522 388 416 C388 252 240 70 240 70 Z"/>
+    <!-- 足 -->
+    <path d="M178 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z"/>
+    <path d="M250 566 c0 -8 12 -14 26 -14 s26 6 26 14 v22 c0 9 -11 16 -26 16 s-26 -7 -26 -16 Z"/>
+    <!-- 添えた手（向かって右） -->
+    <path d="M366 428 C392 442 400 470 385 488 C370 505 342 502 327 487 C316 476 312 463 317 451 C324 435 347 418 366 428 Z"/>
+    <!-- みちあかり（輪郭のみ） -->
+    <circle cx="240" cy="456" r="63" stroke-width="6"/>
+    <!-- まゆ -->
+    <path d="M158 264 q22 -18 46 -11" stroke-width="6"/>
+    <path d="M276 253 q24 -7 46 11" stroke-width="6"/>
+    <!-- 口 -->
+    <path d="M212 352 q28 26 56 0"/>
+  </g>
+  <!-- 目（単色塗り） -->
+  <ellipse cx="185" cy="304" rx="17" ry="24" fill="#1F2937"/>
+  <ellipse cx="295" cy="304" rx="17" ry="24" fill="#1F2937"/>
+  <circle cx="192" cy="293" r="6" fill="#FFFFFF"/>
+  <circle cx="302" cy="293" r="6" fill="#FFFFFF"/>
+  <!-- みちあかりの粒（キラッと十字） -->
+  <g stroke="#1F2937" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M62 268 v18 M53 277 h18"/>
+    <path d="M338 458 v14 M331 465 h14"/>
+  </g>
 </svg>

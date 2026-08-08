@@ -1,0 +1,155 @@
+{
+  "meta": {
+    "title": "明日もsamasama | SDGs Match",
+    "description": "An AI-powered matching platform that analyzes your troubles and connects you with specialized NPOs, support organizations, companies, and government agencies."
+  },
+  "nav": {
+    "supporters": "Supporters",
+    "story": "Our story",
+    "login": "Log in",
+    "consult": "Ask for help"
+  },
+  "hero": {
+    "badge": "A platform that connects you with NPOs and support organizations",
+    "title": "Don't carry it alone —<br></br>let's solve it <accent>together</accent>",
+    "description": "Whether it's poverty, education, the environment, discrimination, or isolation — AI analyzes your situation and connects you with specialized NPOs and support organizations.",
+    "ctaConsult": "Get help for free →",
+    "ctaSupporters": "See supporters",
+    "note": "Free to register. No personal information is shared until you approve.",
+    "haveAccount": "Already have an account?",
+    "loginHere": "Log in here →",
+    "readStory": "Read our story"
+  },
+  "stats": {
+    "resolved": "Consultations resolved",
+    "resolvedSuffix": "",
+    "supporters": "Registered supporter organizations",
+    "supportersSuffix": "",
+    "areas": "Active prefectures",
+    "areasSuffix": "",
+    "areasSuffixSm": ""
+  },
+  "concept": {
+    "kicker": "HOW IT WORKS",
+    "title": "Turning calls for help into real support",
+    "description": "We never ask you to categorize your problems. AI and our team make sure your voice reaches the right support.",
+    "caption": "An entrance to support, so <accent>no one struggles alone</accent>",
+    "imageAltMobile": "Overview of 明日もsamasama SDGs MATCH for smartphones: a person sends an SOS, and through the platform they are connected with organizations that want to help.",
+    "imageAltDesktop": "Overview of 明日もsamasama SDGs MATCH: a person sends an SOS, and the platform connects them with supporting organizations through consultation, matching, information, and visibility.",
+    "point1Title": "Post your SOS as it is",
+    "point1Desc": "No need to know anything about SDGs — describe your trouble in your own words.",
+    "point2Title": "AI organizes it behind the scenes",
+    "point2Desc": "Your consultation is classified so it can reach support that fits your area and issue.",
+    "point3Title": "Connected to supporters and our team",
+    "point3Desc": "Beyond matching with NPOs, government, and companies, you can always reach our team when in trouble."
+  },
+  "steps": {
+    "title": "How it works",
+    "subtitle": "A transparent process, so you can use the service with peace of mind",
+    "label": "STEP {n}",
+    "step1Title": "Post a consultation",
+    "step1Desc": "Describe your trouble freely. Minimal personal information is enough",
+    "step2Title": "AI analyzes it",
+    "step2Desc": "AI analyzes your consultation and identifies the best-fit SDGs categories",
+    "step3Title": "Supporters offer help",
+    "step3Desc": "Specialized NPOs and support organizations raise their hands for your consultation",
+    "step4Title": "You choose",
+    "step4Desc": "Review each organization before approving. You are free to decline",
+    "step5Title": "Resolved — support complete",
+    "step5Desc": "Confirm when your problem is solved. Express your thanks with badges",
+    "privacyNote": "🔒 No personal information is shared until you approve"
+  },
+  "sdgsSection": {
+    "title": "SDGs goals we cover",
+    "subtitle": "Specialized support organizations are active across all 17 goals"
+  },
+  "supportersSection": {
+    "title": "Participating supporters",
+    "subtitleFeatured": "A selection of recommended organizations",
+    "subtitleDefault": "You can check them out before you consult",
+    "viewAll": "See all {count} organizations →",
+    "nationwide": "Nationwide",
+    "resolvedStat": "✅ Resolved <strong>{count}</strong>",
+    "badgeStat": "🏆 <strong>{count} badges</strong>"
+  },
+  "faq": {
+    "title": "Common questions and worries",
+    "q1": "Is my personal information safe?",
+    "a1": "Until you approve a supporter, no personally identifiable information is shared at all. Even after approval, only the minimum necessary information is shared.",
+    "q2": "Can I decline an offer from a supporter?",
+    "a2": "Yes, you are completely free to decline. You decide whether to accept an offer, and you can wait until you feel comfortable.",
+    "q3": "Is it really free?",
+    "a3": "It is completely free for people seeking help. Supporter NPOs and companies also pay no registration fees.",
+    "q4": "What if a suspicious organization contacts me?",
+    "a4": "All supporter organizations are screened at registration. You can also review their track record and profile in advance.",
+    "q5": "Can I ask about anything?",
+    "a5": "We cover social troubles related to the SDGs — a wide range including financial hardship, education, environment, discrimination, and isolation."
+  },
+  "cta": {
+    "title": "Ready to take the first step?",
+    "body": "Experts who can help with your trouble are waiting. Consultation is free, and no personal information is shared until you approve.",
+    "consult": "Get help for free →",
+    "login": "Log in"
+  },
+  "footer": {
+    "story": "Our story",
+    "supporters": "Supporters",
+    "contact": "Contact",
+    "terms": "Terms of Service",
+    "privacy": "Privacy",
+    "login": "Log in",
+    "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "contact": {
+    "title": "Contact us",
+    "subtitle": "After reviewing your message, we will reply to your registered email address.",
+    "loggedInAs": "Logged in as {name}",
+    "loggedInNote": "Logged in as {name} — your email address will be used automatically",
+    "backToDashboard": "← Back to dashboard",
+    "backToTop": "← Back to top",
+    "nameLabel": "Your name",
+    "namePlaceholder": "Taro Yamada",
+    "emailPlaceholder": "example@email.com",
+    "orgLabel": "Organization",
+    "orgPlaceholder": "Example Inc.",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "03-0000-0000",
+    "optional": "Optional",
+    "categoryLabel": "Type of inquiry",
+    "categoryPlaceholder": "Please select",
+    "categories": {
+      "aboutService": "I want to know about the service",
+      "joinAsSupporter": "I want to join as a supporter organization",
+      "media": "Press / media",
+      "howto": "I don't know how to use it",
+      "stuck": "My consultation is stuck / I need help",
+      "matchingComplaint": "I have a complaint about matching",
+      "aboutCases": "About cases / matching",
+      "withdraw": "I want to delete my account",
+      "other": "Other"
+    },
+    "withdrawNote": "* If you wish to delete your account, our staff will email you instructions",
+    "detailLabel": "Details",
+    "detailPlaceholder": "Please describe your inquiry",
+    "withdrawPlaceholder": "Please tell us why you wish to leave (optional)",
+    "submit": "Send",
+    "doneTitle": "Your message has been sent",
+    "doneBody": "Our staff will get back to you. Please wait a little while.",
+    "receiptNumber": "Reference number: ",
+    "toDashboard": "To dashboard",
+    "toTop": "Back to top",
+    "errorName": "Please enter your name",
+    "errorEmail": "Please enter your email address",
+    "errorCategory": "Please select the type of inquiry",
+    "errorDetail": "Please enter the details",
+    "errorDetailTooLong": "Details must be 1000 characters or less",
+    "errorSend": "Failed to send"
+  },
+  "share": {
+    "label": "Share to support us",
+    "text": "An entrance to support, so no one struggles alone. Ashita mo samasama | SDGs Match",
+    "shareOn": "Share on {network}",
+    "copy": "Copy link",
+    "copied": "Link copied"
+  }
+}

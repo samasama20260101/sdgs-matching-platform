@@ -1,0 +1,41 @@
+{
+  "public": {
+    "list": {
+      "title": "Registered supporters",
+      "subtitle": "See which organizations participate before you consult",
+      "orgCount": "{count} organizations",
+      "backToDashboard": "← Back to dashboard",
+      "backToDashboardShort": "Back to dashboard",
+      "backToTop": "← Back to top",
+      "regionMatch": "Showing {count} organizations covering your area first",
+      "regionBadge": "📍 Your area",
+      "filterAll": "All",
+      "errorTitle": "Failed to load data",
+      "empty": "No matching supporters found",
+      "resetFilter": "Reset filter",
+      "othersSuffix": " and more",
+      "showMore": "Show more ({count} organizations)"
+    },
+    "detail": {
+      "backToList": "← Back to supporter list",
+      "registeredYears": "Registered {years} yr",
+      "website": "🌐 Official website",
+      "statResolved": "Consultations resolved",
+      "statResolvedUnit": "",
+      "statBadges": "Badges earned",
+      "statBadgesUnit": "",
+      "statAreas": "Active areas",
+      "statAreasUnit": "",
+      "bioTitle": "About",
+      "areasTitle": "Active areas",
+      "nationwideBadge": "🗾 Nationwide",
+      "badgesTitle": "Thank-you badges",
+      "badgesSubtitle": "Badges sent by people they supported",
+      "badgeCount": "{count} times",
+      "ctaTitle": "Want to consult this organization?",
+      "ctaBody": "Post a consultation and choose your supporter. No personal information is shared until you approve.",
+      "ctaConsult": "Try a free consultation →",
+      "ctaDashboard": "To dashboard →"
+    }
+  }
+}

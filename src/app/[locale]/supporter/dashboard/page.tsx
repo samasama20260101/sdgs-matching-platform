@@ -1,0 +1,604 @@
+// src/app/supporter/dashboard/page.tsx
+'use client';
+import { isMinor } from '@/lib/utils/age'
+
+import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
+import Header from '@/components/layout/Header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { getDisasterEvent, formatDisasterLocation, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey, type DisasterLocation } from '@/lib/constants/disaster';
+
+type Case = {
+  id: string;
+  title: string;
+  description_free: string;
+  urgency: string;
+  status: string;
+  created_at: string;
+  region_country: string;
+  region_area: string | null;
+  owner_user_id: string;
+  disaster_event_id?: string | null;
+  disaster_needs?: string[];
+  disaster_location?: DisasterLocation | null;
+  photo_count?: number;
+  ai_sdg_suggestion: {
+    sdgs_goals: number[];
+    reasoning: string;
+    keywords: string[];
+  } | null;
+  users?: {
+    display_name: string;
+    prefecture?: string | null;
+    birth_date?: string | null;
+  };
+  my_offer_status?: string | null;
+  accepted_count?: number;
+};
+
+// 待機滞留: OPENのまま誰の支援も確定していない案件の、登録からの経過時間。
+// 6時間未満=グレー / 6〜24時間=アンバー / 24時間超=赤 でエスカレーション表示する。
+function waitingInfo(case_: Case) {
+  if (case_.status !== 'OPEN' || (case_.accepted_count ?? 0) > 0) return null;
+  const hours = Math.floor((Date.now() - new Date(case_.created_at).getTime()) / 3_600_000);
+  const label = hours < 1 ? '1時間未満'
+    : hours < 24 ? `${hours}時間`
+    : `${Math.floor(hours / 24)}日${hours % 24 > 0 ? `${hours % 24}時間` : ''}`;
+  const cls = hours < 6 ? 'bg-gray-100 text-gray-500 border-gray-200'
+    : hours < 24 ? 'bg-amber-50 text-amber-700 border-amber-300'
+    : 'bg-red-50 text-red-600 border-red-300';
+  return { label, cls, hours };
+}
+
+type UserData = {
+  id: string;
+  organization_id: string;
+  display_name: string;
+  organization_name: string | null;
+  role: string;
+  organization_role?: 'OWNER' | 'ADMIN' | 'MEMBER' | null;
+  service_area_nationwide?: boolean;
+  service_areas?: Array<{ region_code: string; name_local: string; name_en: string }>;
+};
+
+function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
+  const sdgs = case_.ai_sdg_suggestion?.sdgs_goals || [];
+  const keywords = case_.ai_sdg_suggestion?.keywords || [];
+  const engagement = case_.my_offer_status || 'none';
+  const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
+    none: { label: '未関与', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
+    PENDING: { label: '申し出中', color: 'bg-amber-50 text-amber-600', icon: '⏳', border: 'border-l-amber-400' },
+    ACCEPTED: { label: '承認済み', color: 'bg-teal-50 text-teal-600', icon: '✅', border: 'border-l-teal-500' },
+    WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
+    DECLINED: { label: '辞退', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
+  };
+  const caseStatusOverride: Record<string, { label: string; color: string; icon: string; border: string }> = {
+    MATCHED: { label: 'マッチ済み・支援中', color: 'bg-amber-50 text-amber-600', icon: '🤝', border: 'border-l-amber-400' },
+    RESOLVED: { label: '解決済み', color: 'bg-teal-50 text-teal-700', icon: '✅', border: 'border-l-teal-500' },
+    CANCELLED: { label: '取消済み', color: 'bg-gray-100 text-gray-400', icon: '✕', border: 'border-l-gray-300' },
+    CLOSED: { label: '終了', color: 'bg-gray-100 text-gray-400', icon: '📁', border: 'border-l-gray-300' },
+  };
+  const eng = (engagement === 'ACCEPTED' && caseStatusOverride[case_.status]) ? caseStatusOverride[case_.status] : engConfig[engagement] || engConfig.none;
+  // 災害SOS案件は背景色とバッジで区別する(左ボーダーは対応状況表示に使用中のため維持)
+  const disasterEvent = getDisasterEvent(case_.disaster_event_id);
+
+  return (
+    <Card className={`border-l-4 ${eng.border} ${disasterEvent ? 'bg-rose-50/60 ring-1 ring-rose-200' : ''} hover:shadow-md transition-all cursor-pointer`} onClick={onClick}>
+      <CardContent className="p-5">
+        <div className="flex justify-between items-start mb-2 gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[15px] font-bold text-gray-800 leading-snug truncate">{case_.title}</h3>
+            {showUser && case_.users && <span className="text-xs text-gray-500">👤 {case_.users.display_name}</span>}
+          </div>
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${eng.color}`}>{eng.icon} {eng.label}</span>
+            {disasterEvent && (
+              <span className="text-[11px] font-bold text-rose-700 bg-rose-100 border border-rose-200 px-2 py-0.5 rounded">
+                🆘 {disasterEvent.nameJa}
+              </span>
+            )}
+            {(case_.photo_count ?? 0) > 0 && (
+              <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                📷 {case_.photo_count}
+              </span>
+            )}
+            {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
+            {(() => {
+              const waiting = waitingInfo(case_);
+              return waiting ? (
+                <span className={`text-[11px] font-bold border px-2 py-0.5 rounded ${waiting.cls}`}>
+                  ⏳ {waiting.label} 待機中
+                </span>
+              ) : null;
+            })()}
+            {isMinor(case_.users?.birth_date) && (
+              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                🔰 未成年
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
+        <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <div className="flex gap-1 flex-wrap">
+            {/* 災害案件の地域(市町村・校区等) */}
+            {case_.disaster_location && (
+              <span className="text-[11px] px-2 py-0.5 bg-gray-100 border border-gray-200 text-gray-600 rounded-full font-medium">
+                📍 {formatDisasterLocation(case_.disaster_event_id, case_.disaster_location)}
+              </span>
+            )}
+            {/* 災害ニーズチップ(AIが後追い付与。分類前はタグなしのまま表示) */}
+            {(case_.disaster_needs || []).map((needKey) => {
+              const need = DISASTER_NEEDS[needKey as DisasterNeedKey];
+              if (!need) return null;
+              return (
+                <span key={needKey} className="text-[11px] px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-full">
+                  {need.emoji} {need.labelJa}
+                </span>
+              );
+            })}
+            {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
+          </div>
+          <div className="flex gap-1">
+            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={SDG_NAMES[g]}>{g}</span>)}
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-gray-400">📅 {formatRelativeDate(case_.created_at)}</span>
+          <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); onClick(); }}>
+            {engagement === 'none' ? '💬 詳細・申し出' : '詳細を見る'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (id: string) => void; }) {
+  const grouped: Record<string, { userName: string; items: Case[]; sdgs: Set<number> }> = {};
+  cases.forEach((c) => {
+    const uid = c.owner_user_id;
+    if (!grouped[uid]) grouped[uid] = { userName: c.users?.display_name || '不明', items: [], sdgs: new Set() };
+    grouped[uid].items.push(c);
+    (c.ai_sdg_suggestion?.sdgs_goals || []).forEach((s) => grouped[uid].sdgs.add(s));
+  });
+  return (
+    <div className="space-y-5">
+      {Object.entries(grouped).map(([uid, group]) => (
+        <div key={uid} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50/30 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">{group.userName.charAt(group.userName.length - 1)}</div>
+              <div>
+                <span className="text-sm font-bold text-gray-800">👤 {group.userName}</span>
+                <div className="text-xs text-gray-500">相談 {group.items.length}件</div>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="w-6 h-6 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[s] }}>{s}</span>)}
+            </div>
+          </div>
+          <div className="p-3 space-y-2">
+            {group.items.map((c) => <SupporterCaseCard key={c.id} case_={c} showUser={false} onClick={() => onCaseClick(c.id)} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RegionFilterDropdown({ allRegions, activityRegions, regionFilter, setRegionFilter, getCaseCount }: { allRegions: string[]; activityRegions: string[]; regionFilter: string | null; setRegionFilter: (v: string | null) => void; getCaseCount: (r: string) => number; }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  const otherRegions = allRegions.filter((r) => !activityRegions.includes(r));
+  const otherCount = otherRegions.reduce((sum, r) => sum + getCaseCount(r), 0);
+  const isOtherSelected = regionFilter && !activityRegions.includes(regionFilter);
+  return (
+    <div className="flex gap-1.5 flex-wrap items-center relative" ref={ref}>
+      <span className="text-[11px] text-gray-400 font-semibold mr-0.5">📍 地域:</span>
+      <button onClick={() => { setRegionFilter(null); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${regionFilter === null ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>すべて</button>
+      {activityRegions.map((r) => { const count = getCaseCount(r); if (count === 0) return null; return <button key={r} onClick={() => { setRegionFilter(regionFilter === r ? null : r); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${regionFilter === r ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-indigo-200 bg-indigo-50 text-indigo-600'}`}>📍 {r} ({count})</button>; })}
+      {otherRegions.length > 0 && (
+        <>
+          <button onClick={() => setOpen(!open)} className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${isOtherSelected || open ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+            {isOtherSelected ? `📍 ${regionFilter}` : `活動地域外 ${otherRegions.length}地域`}
+            {!isOtherSelected && otherCount > 0 && <span className="text-gray-400">({otherCount})</span>}
+            <span className={`text-[10px] transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+          {open && (
+            <div className="absolute top-full left-14 mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-xl p-4 min-w-[300px] max-w-[400px] max-h-[340px] overflow-y-auto">
+              <div className="text-xs font-bold text-gray-700 mb-1">活動地域外からの相談</div>
+              <div className="text-[11px] text-gray-400 mb-3">あなたの活動地域（{activityRegions.join("・")}）以外から届いている相談です</div>
+              {Object.entries(REGION_BLOCKS).map(([blockName, prefectures]) => {
+                const active = prefectures.filter((p) => otherRegions.includes(p));
+                if (active.length === 0) return null;
+                return (
+                  <div key={blockName} className="mb-3">
+                    <div className="text-[11px] font-semibold text-gray-400 mb-1">{blockName}</div>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {active.map((p) => <button key={p} onClick={() => { setRegionFilter(regionFilter === p ? null : p); setOpen(false); }} className={`px-2.5 py-0.5 rounded-full text-xs border transition-colors ${regionFilter === p ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>📍 {p} <span className="text-gray-400">({getCaseCount(p)})</span></button>)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function SupporterDashboard() {
+  const router = useRouter();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sdgFilter, setSdgFilter] = useState<number | null>(null);
+  const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
+  const [regionFilter, setRegionFilter] = useState<string | null>(null);
+  const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
+  const [muniFilter, setMuniFilter] = useState<string | null>(null);
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
+  // 災害/通常タブ。null=未選択(災害案件があれば災害タブを初期表示)
+  const [caseTab, setCaseTab] = useState<'disaster' | 'normal' | null>(null);
+  // 🌏全体視点のトグル: 誰の支援も確定していない案件だけを表示
+  const [waitingOnly, setWaitingOnly] = useState(false);
+  // 並び順。null=タブごとの既定(災害=待機が長い順 / 通常=新着順)
+  const [sortMode, setSortMode] = useState<'newest' | 'waiting' | null>(null);
+  const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/login'); return; }
+
+      // API経由でロール確認（RLSをバイパス）
+      const roleRes = await fetch('/api/auth/get-role', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+
+      // 停止済みアカウントは強制ログアウト
+      if (roleRes.status === 403) {
+        await supabase.auth.signOut();
+        router.push('/login?reason=suspended');
+        return;
+      }
+
+      const roleData = await roleRes.json();
+      if (roleData.role !== 'SUPPORTER') { router.push('/'); return; }
+      if (!roleData.user) { router.push('/'); return; }
+      if (!roleData.user.organization_id) { router.push('/supporter/no-organization'); return; }
+
+      // 活動地域は専用APIから直接取得（確実に最新データを得るため）
+      const [dashRes, areaRes] = await Promise.all([
+        fetch('/api/supporter/dashboard', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        }),
+        fetch('/api/supporter/service-areas', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        }),
+      ]);
+
+      // ユーザーデータに活動地域を上書きマージ
+      const userDataWithAreas = { ...roleData.user };
+      if (areaRes.ok) {
+        const areaData = await areaRes.json();
+        userDataWithAreas.service_areas = areaData.service_areas || [];
+        userDataWithAreas.service_area_nationwide = areaData.service_area_nationwide || false;
+      }
+      setUserData(userDataWithAreas);
+
+      // API経由で案件・オファー・バッジを一括取得（RLSバイパス）
+      if (dashRes.ok) {
+        const { cases: enriched, badgeCounts } = await dashRes.json();
+        setCases(enriched || []);
+        setBadgeCounts(badgeCounts || {});
+      }
+
+      setIsLoading(false);
+    };
+    loadData();
+  }, [router]);
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">読み込み中...</p></div>;
+
+  const getCaseDisplayStatus = (c: Case): string => {
+    if (!c.my_offer_status) return 'none';
+    if (c.my_offer_status === 'PENDING') return 'pending';
+    if (c.my_offer_status === 'ACCEPTED') { if (c.status === 'RESOLVED' || c.status === 'CLOSED') return 'resolved'; return 'active'; }
+    return 'other';
+  };
+
+  // ── 災害/通常のタブ分割(フィルターの語彙が違うため一覧ごと分ける) ──
+  const disasterCases = cases.filter((c) => c.disaster_event_id);
+  const normalCases = cases.filter((c) => !c.disaster_event_id);
+  const effectiveTab: 'disaster' | 'normal' = caseTab ?? (disasterCases.length > 0 ? 'disaster' : 'normal');
+  const scopedCases = effectiveTab === 'disaster' ? disasterCases : normalCases;
+  const effectiveSort: 'newest' | 'waiting' = sortMode ?? (effectiveTab === 'disaster' ? 'waiting' : 'newest');
+
+  const filteredCases = scopedCases.filter((c) => {
+    if (waitingOnly && !waitingInfo(c)) return false;
+    if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
+    if (effectiveTab === 'normal') {
+      if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
+      if (regionFilter && c.users?.prefecture !== regionFilter) return false;
+    } else {
+      if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
+      if (muniFilter && c.disaster_location?.municipality !== muniFilter) return false;
+      if (areaFilter && c.disaster_location?.area !== areaFilter) return false;
+    }
+    return true;
+  });
+
+  const needCaseCount = (needKey: DisasterNeedKey) => disasterCases.filter((c) => (c.disaster_needs || []).includes(needKey)).length;
+  // 災害案件に実際に存在する市町村・区分だけをフィルター候補に出す
+  const disasterMunicipalities = [...new Set(disasterCases.map((c) => c.disaster_location?.municipality).filter(Boolean) as string[])].sort();
+  const muniCaseCount = (m: string) => disasterCases.filter((c) => c.disaster_location?.municipality === m).length;
+  const disasterAreas = muniFilter
+    ? [...new Set(disasterCases.filter((c) => c.disaster_location?.municipality === muniFilter).map((c) => c.disaster_location?.area).filter(Boolean) as string[])].sort()
+    : [];
+  const areaCaseCount = (a: string) => disasterCases.filter((c) => c.disaster_location?.municipality === muniFilter && c.disaster_location?.area === a).length;
+
+  const allSdgs = [...new Set(normalCases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
+  const allRegions = [...new Set(normalCases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
+  const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
+  const getCaseCount = (r: string) => normalCases.filter((c) => c.users?.prefecture === r).length;
+  // 待機中=誰の支援も確定していない案件(全体視点)。統計カードと🌏トグルに使用
+  const disasterWaitingCount = disasterCases.filter((c) => waitingInfo(c)).length;
+  // 統計は表示中のタブの数字に合わせる。
+  // 災害タブは全体視点で統一(相談件数 = 待機中 + 支援中 + 解決 と足し算が合うように)。
+  // 通常タブは従来どおり(マッチ済み・解決済みは自団体視点)。
+  const stats = effectiveTab === 'disaster' ? [
+    { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
+    { label: '⏳ 待機中(未マッチ)', value: disasterWaitingCount, color: 'text-red-500' },
+    { label: '🤝 マッチ済み・支援中', value: scopedCases.filter((c) => c.status === 'MATCHED' || (c.status === 'OPEN' && (c.accepted_count ?? 0) > 0)).length, color: 'text-amber-600' },
+    { label: '✅ 解決済み', value: scopedCases.filter((c) => c.status === 'RESOLVED').length, color: 'text-teal-600' },
+  ] : [
+    { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
+    { label: 'マッチ済み・支援中', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
+    { label: '解決済み', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
+    { label: '緊急案件', value: scopedCases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
+  ];
+  // 待機が長い順: 未対応のOPEN案件を古い順で先頭に、それ以外は新着順で後ろへ
+  const sortedCases = effectiveSort === 'waiting'
+    ? [...filteredCases].sort((a, b) => {
+        const wa = waitingInfo(a);
+        const wb = waitingInfo(b);
+        if (wa && wb) return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        if (wa) return -1;
+        if (wb) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+    : filteredCases;
+
+  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
+  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter || waitingOnly;
+
+  // タブ切替: フィルターと並び順をタブ既定にリセット
+  const switchTab = (tab: 'disaster' | 'normal') => {
+    setCaseTab(tab);
+    setSortMode(null);
+    clearFilters();
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">こんにちは、{userData?.organization_name || userData?.display_name} さん 👋</h1>
+              <p className="text-gray-500 mt-1">支援を必要としている方々の相談を確認できます</p>
+            </div>
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-shrink-0">
+              <a href={`/supporters/${userData?.organization_id}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                🌐 団体公開ページ
+              </a>
+              <Link href="/profile"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                ✏️ プロフィール編集
+              </Link>
+              <Link href="/supporter/members"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                👥 メンバー管理
+              </Link>
+              <Link href="/contact"
+                className="flex items-center gap-1.5 text-xs text-gray-600 bg-white border border-gray-200 hover:border-teal-400 hover:text-teal-600 px-3 py-2 rounded-xl transition-colors shadow-sm">
+                📩 お問い合わせ
+              </Link>
+            </div>
+          </div>
+          <div className="mt-3 flex items-start gap-2">
+            <span className="text-sm text-gray-600 flex-shrink-0">📍 活動地域:</span>
+            {userData?.service_area_nationwide ? (
+              <span className="text-sm font-medium text-blue-600">全国対応</span>
+            ) : activityRegions.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {activityRegions.map((r, i) => <span key={i} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">{r}</span>)}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-orange-600">未設定</span>
+                <Link href="/profile" className="text-xs text-blue-600 hover:underline">→ 設定する</Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {effectiveTab === 'disaster' && (
+          <p className="text-xs font-semibold text-gray-500 mb-2">📊 全体の状況(すべてのサポーター・運営を合わせた数字)</p>
+        )}
+        <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
+              <div className="text-[11px] text-gray-400 mb-1">{s.label}</div>
+              <div className={`text-xl font-extrabold ${s.color}`}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {Object.keys(badgeCounts).length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-semibold text-gray-700">🏆 いただいた評価</span>
+              <span className="text-xs text-gray-400">合計 {Object.values(badgeCounts).reduce((a, b) => a + b, 0)}件</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {(Object.keys(SUPPORTER_BADGES) as BadgeKey[]).map((key) => {
+                const count = badgeCounts[key] || 0;
+                if (count === 0) return null;
+                const badge = SUPPORTER_BADGES[key];
+                return (
+                  <div key={key} className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 transition-colors rounded-full px-3 py-1.5 border border-gray-200" title={badge.label}>
+                    <span className="text-lg">{badge.emoji}</span>
+                    <span className="text-sm font-bold text-gray-700">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 災害/通常タブ(災害案件があるときだけ表示。0件なら平時のUIそのまま) */}
+        {disasterCases.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            {([
+              { id: 'disaster' as const, label: `🆘 災害案件 (${disasterCases.length})` },
+              { id: 'normal' as const, label: `通常案件 (${normalCases.length})` },
+            ]).map((t) => (
+              <button key={t.id} onClick={() => switchTab(t.id)}
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold border-2 transition-colors ${effectiveTab === t.id
+                  ? (t.id === 'disaster' ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-700 bg-gray-700 text-white')
+                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <span className="text-sm font-semibold text-gray-700">🎯 SOS案件フィルター</span>
+            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+              {([{ id: 'newest', label: '🆕 新着順' }, { id: 'waiting', label: '⏳ 待機が長い順' }] as const).map((v) => (
+                <button key={v.id} onClick={() => setSortMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${effectiveSort === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
+              ))}
+            </div>
+            <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+              {([{ id: 'flat', label: '📋 案件' }, { id: 'grouped', label: '👥 ユーザー' }] as const).map((v) => (
+                <button key={v.id} onClick={() => setViewMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
+              ))}
+            </div>
+            </div>
+          </div>
+          {/* 通常タブ: SDGsフィルター */}
+          {effectiveTab === 'normal' && (
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-gray-400 mr-1">SDGs:</span>
+            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
+            {allSdgs.map((s) => {
+              const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
+              return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
+            })}
+          </div>
+          )}
+          {/* 災害タブ: ニーズフィルター */}
+          {effectiveTab === 'disaster' && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">ニーズ:</span>
+              {DISASTER_NEED_KEYS.map((needKey) => {
+                const count = needCaseCount(needKey);
+                if (count === 0) return null;
+                const need = DISASTER_NEEDS[needKey];
+                return (
+                  <button key={needKey} onClick={() => setNeedFilter(needFilter === needKey ? null : needKey)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${needFilter === needKey ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50'}`}>
+                    {need.emoji} {need.labelJa} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {/* 災害タブ: 地域フィルター(市町村 → 選択時は校区等の区分) */}
+          {effectiveTab === 'disaster' && disasterMunicipalities.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">地域:</span>
+              {disasterMunicipalities.map((m) => (
+                <button key={m} onClick={() => { setMuniFilter(muniFilter === m ? null : m); setAreaFilter(null); }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${muniFilter === m ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}>
+                  📍 {m} ({muniCaseCount(m)})
+                </button>
+              ))}
+              {disasterAreas.map((a) => (
+                <button key={a} onClick={() => setAreaFilter(areaFilter === a ? null : a)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${areaFilter === a ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
+                  {a} ({areaCaseCount(a)})
+                </button>
+              ))}
+            </div>
+          )}
+          {effectiveTab === 'normal' && allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
+          {/* 🌏全体視点: 誰の支援も確定していない案件だけを見るトグル */}
+          {effectiveTab === 'disaster' && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">🌏 全体:</span>
+              <button onClick={() => setWaitingOnly(!waitingOnly)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${waitingOnly ? 'border-red-500 bg-red-500 text-white' : 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'}`}>
+                ⏳ 待機中だけ見る ({disasterWaitingCount})
+              </button>
+            </div>
+          )}
+          {/* 🏢自団体視点: 自団体の関わりで絞る */}
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-gray-400 mr-1">🏢 自団体の関わり:</span>
+            {[
+              { key: null, label: 'すべて', color: 'border-gray-300 bg-gray-50 text-gray-600' },
+              { key: 'none', label: '○ 未関与', color: 'border-slate-300 bg-slate-50 text-slate-600' },
+              { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'active', label: '🤝 支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
+            ].map((f) => {
+              const count = f.key === null ? scopedCases.length : scopedCases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
+              return <button key={f.key || 'all'} onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>{f.label} ({count})</button>;
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-gray-500">📋 {filteredCases.length}件 表示中{hasActiveFilter && <span className="text-gray-400"> / 全{scopedCases.length}件</span>}</span>
+          {hasActiveFilter && <button onClick={clearFilters} className="text-xs text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50">✕ フィルターをクリア</button>}
+        </div>
+
+        {filteredCases.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <div className="text-4xl mb-3">🔍</div>
+            <p className="text-gray-700 font-semibold mb-1">該当する相談が見つかりません</p>
+            <p className="text-sm text-gray-400 mb-4">フィルター条件を変更してみてください</p>
+            <Button size="sm" onClick={clearFilters}>フィルターをリセット</Button>
+          </div>
+        ) : viewMode === 'flat' ? (
+          <div className="space-y-3">
+            {sortedCases.map((c) => <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />)}
+          </div>
+        ) : (
+          <UserGroupedView cases={sortedCases} onCaseClick={(id) => router.push(`/supporter/case/${id}`)} />
+        )}
+      </main>
+    </div>
+  );
+}
