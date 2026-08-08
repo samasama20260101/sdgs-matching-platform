@@ -224,7 +224,8 @@
     "banner": {
       "title": "For those affected by the {event}",
       "body": "Answer three simple questions to ask nonprofits, government, and companies for help.",
-      "cta": "Send a disaster SOS"
+      "cta": "Send a disaster SOS",
+      "specialNote": "A limited-time special response to the 2026 Kumamoto Earthquake. Replies may take some time."
     },
     "events": {
       "kumamotoEq2026": "Kumamoto Earthquake"
@@ -256,7 +257,10 @@
       "doneTitle": "We received your SOS",
       "doneBody": "Supporters or our team will contact you. You can check the status on your dashboard anytime.",
       "doneCta": "Go to dashboard",
-      "submitError": "Failed to send. Please try again in a moment."
+      "submitError": "Failed to send. Please try again in a moment.",
+      "supplyNotice": "As this service has just launched, there are not yet many local supporter organizations. Replies may take some time, but our team reviews every request and works to connect you with support.",
+      "specialNotice": "This Disaster SOS is a limited-time special response for those affected by the 2026 Kumamoto Earthquake. For other difficulties, you can always use our regular consultation service (also free).",
+      "doneWaitNote": "Replies may take some time. Please rest assured that our team reviews every request."
     },
     "photos": {
       "label": "Photos (optional, up to 3)",

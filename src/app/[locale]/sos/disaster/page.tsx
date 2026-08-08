@@ -200,7 +200,9 @@ export default function DisasterSosPage() {
             <CardContent className="py-12 text-center">
               <div className="text-4xl mb-4">✅</div>
               <h1 className="text-xl font-bold text-gray-800 mb-3">{t('doneTitle')}</h1>
-              <p className="text-sm text-gray-500 leading-relaxed mb-4">{t('doneBody')}</p>
+              <p className="text-sm text-gray-500 leading-relaxed mb-2">{t('doneBody')}</p>
+              {/* ギャップが生まれる場所=完了画面で、返答時間の期待値と運営の約束を伝える */}
+              <p className="text-xs text-gray-400 leading-relaxed mb-4">{t('doneWaitNote')}</p>
               {photoUploadFailed && (
                 <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-block mb-4">
                   {tPhotos('partialFailed')}
@@ -222,6 +224,11 @@ export default function DisasterSosPage() {
               <h1 className="text-2xl font-bold text-gray-800">{t('heading', { event: eventName })}</h1>
               <p className="text-gray-500 mt-2 text-sm leading-relaxed">{t('lead')}</p>
               <p className="text-xs text-gray-400 mt-2">{t('note')}</p>
+              {/* 期待値の管理: サポーター供給の現状(案A)+特別措置の告知 */}
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+                <p className="text-xs text-amber-800 leading-relaxed">{t('supplyNotice')}</p>
+                <p className="text-xs text-amber-700/90 leading-relaxed">{t('specialNotice')}</p>
+              </div>
             </div>
 
             {isLoading ? (
