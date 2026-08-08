@@ -149,15 +149,21 @@ export default function HomePage() {
       {/* ── 災害SOSバナー（受付中の災害イベントがあるときだけ表示） ── */}
       {ACTIVE_DISASTER_EVENT && (
         <div className="bg-rose-600 text-white px-4 py-3">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <p className="flex-1 text-sm font-bold leading-relaxed">
-              🆘 {tDisaster('banner.title', { event: tDisaster(`events.${ACTIVE_DISASTER_EVENT.i18nKey}`) })}
-              <span className="font-normal opacity-90 ml-2">{tDisaster('banner.body')}</span>
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <p className="flex-1 text-sm font-bold leading-relaxed">
+                🆘 {tDisaster('banner.title', { event: tDisaster(`events.${ACTIVE_DISASTER_EVENT.i18nKey}`) })}
+                <span className="font-normal opacity-90 ml-2">{tDisaster('banner.body')}</span>
+              </p>
+              <Link href="/sos/disaster"
+                className="self-start sm:self-auto flex-shrink-0 text-sm font-bold bg-white text-rose-600 hover:bg-rose-50 px-4 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                {tDisaster('banner.cta')}
+              </Link>
+            </div>
+            {/* 特別措置であること+返答時間の期待値(1行に抑えてCTAを弱めない) */}
+            <p className="text-[11px] sm:text-xs opacity-85 mt-1.5 leading-relaxed">
+              {tDisaster('banner.specialNote')}
             </p>
-            <Link href="/sos/disaster"
-              className="self-start sm:self-auto flex-shrink-0 text-sm font-bold bg-white text-rose-600 hover:bg-rose-50 px-4 py-1.5 rounded-full transition-colors whitespace-nowrap">
-              {tDisaster('banner.cta')}
-            </Link>
           </div>
         </div>
       )}

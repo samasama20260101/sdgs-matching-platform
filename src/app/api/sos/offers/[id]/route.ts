@@ -4,9 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
-import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
-
-const MAX_ACCEPTED = MAX_SUPPORTERS_PER_CASE  // 1案件あたりの承認上限
+import { getMaxSupportersForCase } from '@/lib/constants/disaster'
 
 function serverError() {
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
@@ -30,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!offer) return NextResponse.json({ error: 'Offer not found' }, { status: 404 })
 
     const { data: caseData } = await supabaseAdmin
-        .from('cases').select('id, owner_user_id').eq('id', offer.case_id).single()
+        .from('cases').select('id, owner_user_id, intake_qna').eq('id', offer.case_id).single()
 
     if (!caseData || caseData.owner_user_id !== userData.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -51,7 +49,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         const { data: result, error: acceptError } = await supabaseAdmin.rpc('accept_sos_offer', {
             p_offer_id: id,
             p_sos_user_id: userData.id,
-            p_max_accepted: MAX_ACCEPTED,
+            // 承認上限は案件ごと(災害イベントの指定があればその値。熊本地震=1)
+            p_max_accepted: getMaxSupportersForCase(caseData.intake_qna),
         })
         if (acceptError) {
             console.error('[sos/offers] accept_sos_offer error:', acceptError)

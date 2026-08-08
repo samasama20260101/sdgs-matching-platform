@@ -10,7 +10,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
-import { getDisasterEvent, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey } from '@/lib/constants/disaster';
+import { getDisasterEvent, formatDisasterLocation, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey, type DisasterLocation } from '@/lib/constants/disaster';
 
 type Case = {
   id: string;
@@ -24,6 +24,7 @@ type Case = {
   owner_user_id: string;
   disaster_event_id?: string | null;
   disaster_needs?: string[];
+  disaster_location?: DisasterLocation | null;
   photo_count?: number;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
@@ -36,7 +37,22 @@ type Case = {
     birth_date?: string | null;
   };
   my_offer_status?: string | null;
+  accepted_count?: number;
 };
+
+// 待機滞留: OPENのまま誰の支援も確定していない案件の、登録からの経過時間。
+// 6時間未満=グレー / 6〜24時間=アンバー / 24時間超=赤 でエスカレーション表示する。
+function waitingInfo(case_: Case) {
+  if (case_.status !== 'OPEN' || (case_.accepted_count ?? 0) > 0) return null;
+  const hours = Math.floor((Date.now() - new Date(case_.created_at).getTime()) / 3_600_000);
+  const label = hours < 1 ? '1時間未満'
+    : hours < 24 ? `${hours}時間`
+    : `${Math.floor(hours / 24)}日${hours % 24 > 0 ? `${hours % 24}時間` : ''}`;
+  const cls = hours < 6 ? 'bg-gray-100 text-gray-500 border-gray-200'
+    : hours < 24 ? 'bg-amber-50 text-amber-700 border-amber-300'
+    : 'bg-red-50 text-red-600 border-red-300';
+  return { label, cls, hours };
+}
 
 type UserData = {
   id: string;
@@ -54,7 +70,7 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
   const keywords = case_.ai_sdg_suggestion?.keywords || [];
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
-    none: { label: '未対応', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
+    none: { label: '未関与', color: 'bg-slate-100 text-slate-500', icon: '○', border: 'border-l-slate-300' },
     PENDING: { label: '申し出中', color: 'bg-amber-50 text-amber-600', icon: '⏳', border: 'border-l-amber-400' },
     ACCEPTED: { label: '承認済み', color: 'bg-teal-50 text-teal-600', icon: '✅', border: 'border-l-teal-500' },
     WITHDRAWN: { label: '取り下げ済', color: 'bg-gray-100 text-gray-400', icon: '↩', border: 'border-l-gray-300' },
@@ -91,6 +107,14 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
               </span>
             )}
             {case_.urgency === 'High' && <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">🔴 緊急</span>}
+            {(() => {
+              const waiting = waitingInfo(case_);
+              return waiting ? (
+                <span className={`text-[11px] font-bold border px-2 py-0.5 rounded ${waiting.cls}`}>
+                  ⏳ {waiting.label} 待機中
+                </span>
+              ) : null;
+            })()}
             {isMinor(case_.users?.birth_date) && (
               <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                 🔰 未成年
@@ -101,6 +125,12 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
         <p className="text-sm text-gray-500 line-clamp-2 mb-2">{case_.description_free}</p>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex gap-1 flex-wrap">
+            {/* 災害案件の地域(市町村・校区等) */}
+            {case_.disaster_location && (
+              <span className="text-[11px] px-2 py-0.5 bg-gray-100 border border-gray-200 text-gray-600 rounded-full font-medium">
+                📍 {formatDisasterLocation(case_.disaster_event_id, case_.disaster_location)}
+              </span>
+            )}
             {/* 災害ニーズチップ(AIが後追い付与。分類前はタグなしのまま表示) */}
             {(case_.disaster_needs || []).map((needKey) => {
               const need = DISASTER_NEEDS[needKey as DisasterNeedKey];
@@ -216,8 +246,15 @@ export default function SupporterDashboard() {
   const [sdgFilter, setSdgFilter] = useState<number | null>(null);
   const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
-  const [disasterFilter, setDisasterFilter] = useState(false);
   const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
+  const [muniFilter, setMuniFilter] = useState<string | null>(null);
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
+  // 災害/通常タブ。null=未選択(災害案件があれば災害タブを初期表示)
+  const [caseTab, setCaseTab] = useState<'disaster' | 'normal' | null>(null);
+  // 🌏全体視点のトグル: 誰の支援も確定していない案件だけを表示
+  const [waitingOnly, setWaitingOnly] = useState(false);
+  // 並び順。null=タブごとの既定(災害=待機が長い順 / 通常=新着順)
+  const [sortMode, setSortMode] = useState<'newest' | 'waiting' | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
 
@@ -283,30 +320,77 @@ export default function SupporterDashboard() {
     return 'other';
   };
 
-  const filteredCases = cases.filter((c) => {
-    if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
+  // ── 災害/通常のタブ分割(フィルターの語彙が違うため一覧ごと分ける) ──
+  const disasterCases = cases.filter((c) => c.disaster_event_id);
+  const normalCases = cases.filter((c) => !c.disaster_event_id);
+  const effectiveTab: 'disaster' | 'normal' = caseTab ?? (disasterCases.length > 0 ? 'disaster' : 'normal');
+  const scopedCases = effectiveTab === 'disaster' ? disasterCases : normalCases;
+  const effectiveSort: 'newest' | 'waiting' = sortMode ?? (effectiveTab === 'disaster' ? 'waiting' : 'newest');
+
+  const filteredCases = scopedCases.filter((c) => {
+    if (waitingOnly && !waitingInfo(c)) return false;
     if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
-    if (regionFilter && c.users?.prefecture !== regionFilter) return false;
-    if (disasterFilter && !c.disaster_event_id) return false;
-    if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
+    if (effectiveTab === 'normal') {
+      if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
+      if (regionFilter && c.users?.prefecture !== regionFilter) return false;
+    } else {
+      if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
+      if (muniFilter && c.disaster_location?.municipality !== muniFilter) return false;
+      if (areaFilter && c.disaster_location?.area !== areaFilter) return false;
+    }
     return true;
   });
 
-  const disasterCaseCount = cases.filter((c) => c.disaster_event_id).length;
-  const needCaseCount = (needKey: DisasterNeedKey) => cases.filter((c) => (c.disaster_needs || []).includes(needKey)).length;
+  const needCaseCount = (needKey: DisasterNeedKey) => disasterCases.filter((c) => (c.disaster_needs || []).includes(needKey)).length;
+  // 災害案件に実際に存在する市町村・区分だけをフィルター候補に出す
+  const disasterMunicipalities = [...new Set(disasterCases.map((c) => c.disaster_location?.municipality).filter(Boolean) as string[])].sort();
+  const muniCaseCount = (m: string) => disasterCases.filter((c) => c.disaster_location?.municipality === m).length;
+  const disasterAreas = muniFilter
+    ? [...new Set(disasterCases.filter((c) => c.disaster_location?.municipality === muniFilter).map((c) => c.disaster_location?.area).filter(Boolean) as string[])].sort()
+    : [];
+  const areaCaseCount = (a: string) => disasterCases.filter((c) => c.disaster_location?.municipality === muniFilter && c.disaster_location?.area === a).length;
 
-  const allSdgs = [...new Set(cases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
-  const allRegions = [...new Set(cases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
+  const allSdgs = [...new Set(normalCases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
+  const allRegions = [...new Set(normalCases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
   const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
-  const getCaseCount = (r: string) => cases.filter((c) => c.users?.prefecture === r).length;
-  const stats = [
-    { label: '相談件数', value: cases.length, color: 'text-blue-600' },
-    { label: 'マッチ済み・支援中', value: cases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
-    { label: '解決済み', value: cases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
-    { label: '緊急案件', value: cases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
+  const getCaseCount = (r: string) => normalCases.filter((c) => c.users?.prefecture === r).length;
+  // 待機中=誰の支援も確定していない案件(全体視点)。統計カードと🌏トグルに使用
+  const disasterWaitingCount = disasterCases.filter((c) => waitingInfo(c)).length;
+  // 統計は表示中のタブの数字に合わせる。
+  // 災害タブは全体視点で統一(相談件数 = 待機中 + 支援中 + 解決 と足し算が合うように)。
+  // 通常タブは従来どおり(マッチ済み・解決済みは自団体視点)。
+  const stats = effectiveTab === 'disaster' ? [
+    { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
+    { label: '⏳ 待機中(未マッチ)', value: disasterWaitingCount, color: 'text-red-500' },
+    { label: '🤝 マッチ済み・支援中', value: scopedCases.filter((c) => c.status === 'MATCHED' || (c.status === 'OPEN' && (c.accepted_count ?? 0) > 0)).length, color: 'text-amber-600' },
+    { label: '✅ 解決済み', value: scopedCases.filter((c) => c.status === 'RESOLVED').length, color: 'text-teal-600' },
+  ] : [
+    { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
+    { label: 'マッチ済み・支援中', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'active').length, color: 'text-amber-600' },
+    { label: '解決済み', value: scopedCases.filter((c) => getCaseDisplayStatus(c) === 'resolved').length, color: 'text-teal-600' },
+    { label: '緊急案件', value: scopedCases.filter((c) => c.urgency === 'High').length, color: 'text-red-500' },
   ];
-  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setDisasterFilter(false); setNeedFilter(null); };
-  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || disasterFilter || needFilter;
+  // 待機が長い順: 未対応のOPEN案件を古い順で先頭に、それ以外は新着順で後ろへ
+  const sortedCases = effectiveSort === 'waiting'
+    ? [...filteredCases].sort((a, b) => {
+        const wa = waitingInfo(a);
+        const wb = waitingInfo(b);
+        if (wa && wb) return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        if (wa) return -1;
+        if (wb) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+    : filteredCases;
+
+  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
+  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter || waitingOnly;
+
+  // タブ切替: フィルターと並び順をタブ既定にリセット
+  const switchTab = (tab: 'disaster' | 'normal') => {
+    setCaseTab(tab);
+    setSortMode(null);
+    clearFilters();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -355,6 +439,9 @@ export default function SupporterDashboard() {
           </div>
         </div>
 
+        {effectiveTab === 'disaster' && (
+          <p className="text-xs font-semibold text-gray-500 mb-2">📊 全体の状況(すべてのサポーター・運営を合わせた数字)</p>
+        )}
         <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
@@ -386,29 +473,54 @@ export default function SupporterDashboard() {
           </div>
         )}
 
+        {/* 災害/通常タブ(災害案件があるときだけ表示。0件なら平時のUIそのまま) */}
+        {disasterCases.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            {([
+              { id: 'disaster' as const, label: `🆘 災害案件 (${disasterCases.length})` },
+              { id: 'normal' as const, label: `通常案件 (${normalCases.length})` },
+            ]).map((t) => (
+              <button key={t.id} onClick={() => switchTab(t.id)}
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold border-2 transition-colors ${effectiveTab === t.id
+                  ? (t.id === 'disaster' ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-700 bg-gray-700 text-white')
+                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <span className="text-sm font-semibold text-gray-700">🎯 SOS案件フィルター</span>
+            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+              {([{ id: 'newest', label: '🆕 新着順' }, { id: 'waiting', label: '⏳ 待機が長い順' }] as const).map((v) => (
+                <button key={v.id} onClick={() => setSortMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${effectiveSort === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
+              ))}
+            </div>
             <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
               {([{ id: 'flat', label: '📋 案件' }, { id: 'grouped', label: '👥 ユーザー' }] as const).map((v) => (
                 <button key={v.id} onClick={() => setViewMode(v.id)} className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${viewMode === v.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{v.label}</button>
               ))}
             </div>
+            </div>
           </div>
-          <div className="flex gap-1.5 flex-wrap">
-            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({cases.length})</button>
+          {/* 通常タブ: SDGsフィルター */}
+          {effectiveTab === 'normal' && (
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-gray-400 mr-1">SDGs:</span>
+            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
             {allSdgs.map((s) => {
-              const count = cases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
+              const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
               return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
             })}
           </div>
-          {/* 災害×ニーズフィルター(災害案件があるときだけ表示) */}
-          {disasterCaseCount > 0 && (
-            <div className="flex gap-1.5 flex-wrap">
-              <button onClick={() => { setDisasterFilter(!disasterFilter); }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${disasterFilter ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100'}`}>
-                🆘 災害案件のみ ({disasterCaseCount})
-              </button>
+          )}
+          {/* 災害タブ: ニーズフィルター */}
+          {effectiveTab === 'disaster' && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">ニーズ:</span>
               {DISASTER_NEED_KEYS.map((needKey) => {
                 const count = needCaseCount(needKey);
                 if (count === 0) return null;
@@ -422,23 +534,53 @@ export default function SupporterDashboard() {
               })}
             </div>
           )}
-          {allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
-          <div className="flex gap-1.5 flex-wrap">
+          {/* 災害タブ: 地域フィルター(市町村 → 選択時は校区等の区分) */}
+          {effectiveTab === 'disaster' && disasterMunicipalities.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">地域:</span>
+              {disasterMunicipalities.map((m) => (
+                <button key={m} onClick={() => { setMuniFilter(muniFilter === m ? null : m); setAreaFilter(null); }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${muniFilter === m ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}>
+                  📍 {m} ({muniCaseCount(m)})
+                </button>
+              ))}
+              {disasterAreas.map((a) => (
+                <button key={a} onClick={() => setAreaFilter(areaFilter === a ? null : a)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${areaFilter === a ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
+                  {a} ({areaCaseCount(a)})
+                </button>
+              ))}
+            </div>
+          )}
+          {effectiveTab === 'normal' && allRegions.length > 0 && <RegionFilterDropdown allRegions={allRegions} activityRegions={activityRegions} regionFilter={regionFilter} setRegionFilter={setRegionFilter} getCaseCount={getCaseCount} />}
+          {/* 🌏全体視点: 誰の支援も確定していない案件だけを見るトグル */}
+          {effectiveTab === 'disaster' && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-xs text-gray-400 mr-1">🌏 全体:</span>
+              <button onClick={() => setWaitingOnly(!waitingOnly)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${waitingOnly ? 'border-red-500 bg-red-500 text-white' : 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'}`}>
+                ⏳ 待機中だけ見る ({disasterWaitingCount})
+              </button>
+            </div>
+          )}
+          {/* 🏢自団体視点: 自団体の関わりで絞る */}
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-gray-400 mr-1">🏢 自団体の関わり:</span>
             {[
-              { key: null, label: '全ステータス', color: 'border-gray-300 bg-gray-50 text-gray-600' },
-              { key: 'none', label: '○ 未対応', color: 'border-slate-300 bg-slate-50 text-slate-600' },
+              { key: null, label: 'すべて', color: 'border-gray-300 bg-gray-50 text-gray-600' },
+              { key: 'none', label: '○ 未関与', color: 'border-slate-300 bg-slate-50 text-slate-600' },
               { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
-              { key: 'active', label: '🤝 マッチ済み・支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
+              { key: 'active', label: '🤝 支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
             ].map((f) => {
-              const count = f.key === null ? cases.length : cases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
+              const count = f.key === null ? scopedCases.length : scopedCases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
               return <button key={f.key || 'all'} onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>{f.label} ({count})</button>;
             })}
           </div>
         </div>
 
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm text-gray-500">📋 {filteredCases.length}件 表示中{hasActiveFilter && <span className="text-gray-400"> / 全{cases.length}件</span>}</span>
+          <span className="text-sm text-gray-500">📋 {filteredCases.length}件 表示中{hasActiveFilter && <span className="text-gray-400"> / 全{scopedCases.length}件</span>}</span>
           {hasActiveFilter && <button onClick={clearFilters} className="text-xs text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50">✕ フィルターをクリア</button>}
         </div>
 
@@ -451,10 +593,10 @@ export default function SupporterDashboard() {
           </div>
         ) : viewMode === 'flat' ? (
           <div className="space-y-3">
-            {filteredCases.map((c) => <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />)}
+            {sortedCases.map((c) => <SupporterCaseCard key={c.id} case_={c} onClick={() => router.push(`/supporter/case/${c.id}`)} />)}
           </div>
         ) : (
-          <UserGroupedView cases={filteredCases} onCaseClick={(id) => router.push(`/supporter/case/${id}`)} />
+          <UserGroupedView cases={sortedCases} onCaseClick={(id) => router.push(`/supporter/case/${id}`)} />
         )}
       </main>
     </div>

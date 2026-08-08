@@ -22,6 +22,8 @@ type InternalNote = {
 type InternalNotesPanelProps = {
   caseId: string;
   accessToken: string;
+  // 他団体との共有メモタブを隠す(1案件1団体制の災害案件用。自団体メモは使える)
+  hideSharedTab?: boolean;
 };
 
 type SortOrder = 'newest' | 'oldest';
@@ -55,7 +57,7 @@ const TAB_CONFIG = {
   },
 } as const;
 
-export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelProps) {
+export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false }: InternalNotesPanelProps) {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<NoteVisibility>('ORGANIZATION_ONLY');
   const [notes, setNotes] = useState<InternalNote[]>([]);
@@ -181,7 +183,9 @@ export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelPr
           </Button>
         </div>
         <div className="flex w-full rounded-md border border-gray-200 bg-white p-1 sm:w-fit">
-          {(Object.keys(TAB_CONFIG) as NoteVisibility[]).map((tabId) => {
+          {(Object.keys(TAB_CONFIG) as NoteVisibility[])
+            .filter((tabId) => !(hideSharedTab && tabId === 'APPROVED_SUPPORTERS'))
+            .map((tabId) => {
             const tab = TAB_CONFIG[tabId];
             const TabIcon = tab.icon;
             return (
