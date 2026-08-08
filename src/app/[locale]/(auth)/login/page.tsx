@@ -82,27 +82,28 @@ export default function LoginPage() {
             const result = await res.json();
 
             if (!result.role) {
+                // プロフィール未作成(メール確認後の初ログイン等)。
+                // localStorageの一時保管があればそれを、無ければ認証メタデータからサーバー側で復元する
                 const pendingRaw = localStorage.getItem(PENDING_SOS_SIGNUP_KEY)
                 const pendingProfile = pendingRaw ? JSON.parse(pendingRaw) as PendingSosSignupProfile : null
-                if (pendingProfile?.email === formData.email.trim().toLowerCase()) {
-                    const profileRes = await fetch('/api/auth/signup', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${data.session.access_token}`,
-                        },
-                        body: JSON.stringify(pendingProfile),
-                    })
-                    if (!profileRes.ok) {
-                        const profileData = await profileRes.json()
-                        setError(profileData.message || profileData.error || t('errorProfileSave'));
-                        return;
-                    }
-                    localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)
-                    window.location.href = withLocalePath(locale, '/sos/dashboard');
+                const profileBody = pendingProfile?.email === formData.email.trim().toLowerCase()
+                    ? pendingProfile
+                    : {}
+                const profileRes = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${data.session.access_token}`,
+                    },
+                    body: JSON.stringify(profileBody),
+                })
+                if (!profileRes.ok) {
+                    const profileData = await profileRes.json()
+                    setError(profileData.message || profileData.error || t('errorUserFetch'));
                     return;
                 }
-                setError(t('errorUserFetch'));
+                localStorage.removeItem(PENDING_SOS_SIGNUP_KEY)
+                window.location.href = withLocalePath(locale, '/sos/dashboard');
                 return;
             }
 

@@ -8,13 +8,8 @@ const MAX_SOS_USERS = 1000  // SOSユーザー登録上限（将来変更する�
 
 export async function POST(request: Request) {
   try {
-    const { auth_user_id, email, real_name, display_name, phone, gender, birth_date, locale } = await request.json()
-    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
-    const userLocale = isAppLocale(locale) ? locale : defaultLocale
-
-    if (!normalizedEmail || !real_name) {
-      return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
-    }
+    const body = await request.json().catch(() => ({}))
+    const { auth_user_id } = body
 
     const bearerToken = getBearerToken(request)
     if (!bearerToken) {
@@ -26,6 +21,25 @@ export async function POST(request: Request) {
     }
     if (auth_user_id && auth_user_id !== user.id) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    // プロフィール項目: リクエストbody → 認証ユーザーのメタデータ の順で解決する。
+    // メタデータは登録時に signUp の options.data で保存されるため、
+    // 別ブラウザ・別端末でメール確認/ログインしても登録を完成できる(localStorage非依存)。
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+    const email = body.email ?? user.email
+    const real_name = body.real_name ?? meta.real_name
+    const display_name = body.display_name ?? meta.display_name
+    const phone = body.phone ?? meta.phone
+    const gender = body.gender ?? meta.gender
+    const birth_date = body.birth_date ?? meta.birth_date
+    const locale = body.locale ?? meta.locale
+
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
+    const userLocale = isAppLocale(locale) ? locale : defaultLocale
+
+    if (!normalizedEmail || !real_name) {
+      return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
     }
 
     const authUserId = user.id

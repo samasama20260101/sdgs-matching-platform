@@ -91,10 +91,23 @@ export default function HomePage() {
           headers: { 'Authorization': `Bearer ${session.access_token}` },
         })
           .then(r => r.json())
-          .then(d => {
+          .then(async (d) => {
             if (d.role === 'SOS') router.replace('/sos/dashboard');
             else if (d.role === 'SUPPORTER') router.replace('/supporter/dashboard');
             else if (d.role === 'ADMIN') router.replace('/admin/dashboard');
+            else if (!d.role && session.user.user_metadata?.real_name) {
+              // メール確認リンクからの着地: ログイン済みだがプロフィール未作成の状態。
+              // 認証メタデータから登録を完成させてそのままダッシュボードへ
+              const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({}),
+              }).catch(() => null);
+              if (res?.ok) router.replace('/sos/dashboard');
+            }
           });
       });
     });
