@@ -224,7 +224,8 @@
     "banner": {
       "title": "Dành cho những người bị ảnh hưởng bởi {event}",
       "body": "Chỉ cần trả lời ba câu hỏi để yêu cầu NPO, chính quyền và doanh nghiệp giúp đỡ.",
-      "cta": "Gửi SOS thảm họa"
+      "cta": "Gửi SOS thảm họa",
+      "specialNote": "Biện pháp đặc biệt có thời hạn dành cho trận động đất Kumamoto 2026. Việc phản hồi có thể mất thời gian."
     },
     "events": {
       "kumamotoEq2026": "Động đất Kumamoto"
@@ -256,7 +257,10 @@
       "doneTitle": "Đã tiếp nhận",
       "doneBody": "Vui lòng chờ liên hệ từ người hỗ trợ hoặc ban vận hành. Bạn có thể kiểm tra tình trạng trên bảng điều khiển bất cứ lúc nào.",
       "doneCta": "Đến bảng điều khiển",
-      "submitError": "Gửi không thành công. Vui lòng thử lại sau."
+      "submitError": "Gửi không thành công. Vui lòng thử lại sau.",
+      "supplyNotice": "Vì dịch vụ mới ra mắt, các tổ chức hỗ trợ tại địa phương còn chưa nhiều. Phản hồi có thể mất thời gian, nhưng ban vận hành sẽ xem xét mọi yêu cầu và nỗ lực kết nối bạn với sự hỗ trợ.",
+      "specialNotice": "SOS thảm họa này là biện pháp đặc biệt có thời hạn dành cho những người bị ảnh hưởng bởi trận động đất Kumamoto 2026. Với những khó khăn khác, bạn luôn có thể sử dụng tư vấn thông thường (cũng miễn phí).",
+      "doneWaitNote": "Phản hồi có thể mất thời gian. Mọi yêu cầu đều được ban vận hành xem xét, xin bạn yên tâm."
     },
     "photos": {
       "label": "Ảnh (không bắt buộc, tối đa 3)",
@@ -270,6 +274,15 @@
       "partialFailed": "Một số ảnh không tải lên được. Bạn có thể thêm từ trang chi tiết.",
       "sectionTitle": "Ảnh",
       "deleteFailed": "Không thể xóa ảnh"
+    },
+    "location": {
+      "title": "Khu vực của bạn (không bắt buộc)",
+      "lead": "Giúp các tổ chức hỗ trợ gần bạn dễ tìm thấy bạn hơn. Bạn có thể bỏ qua nếu muốn.",
+      "municipality": "Thành phố / thị trấn",
+      "none": "Không chọn",
+      "save": "Lưu",
+      "saved": "Đã lưu khu vực",
+      "notSet": "Chưa chọn"
     }
   }
 }

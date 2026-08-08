@@ -224,7 +224,8 @@
     "banner": {
       "title": "Untuk Anda yang terdampak {event}",
       "body": "Cukup jawab tiga pertanyaan untuk meminta bantuan kepada NPO, pemerintah, dan perusahaan.",
-      "cta": "Kirim SOS bencana"
+      "cta": "Kirim SOS bencana",
+      "specialNote": "Tanggapan khusus berbatas waktu untuk Gempa Kumamoto 2026. Balasan mungkin membutuhkan waktu."
     },
     "events": {
       "kumamotoEq2026": "Gempa Kumamoto"
@@ -256,7 +257,10 @@
       "doneTitle": "Telah kami terima",
       "doneBody": "Mohon tunggu kontak dari pendukung atau tim operasional. Anda dapat memeriksa status kapan saja di dasbor.",
       "doneCta": "Ke dasbor",
-      "submitError": "Gagal mengirim. Silakan coba lagi nanti."
+      "submitError": "Gagal mengirim. Silakan coba lagi nanti.",
+      "supplyNotice": "Karena layanan ini baru diluncurkan, organisasi pendukung lokal masih sedikit. Balasan mungkin butuh waktu, tetapi tim operasional memeriksa setiap permintaan dan berupaya menghubungkan Anda dengan bantuan.",
+      "specialNotice": "SOS Bencana ini adalah tanggapan khusus berbatas waktu bagi yang terdampak Gempa Kumamoto 2026. Untuk kesulitan lain, Anda selalu dapat menggunakan konsultasi biasa (juga gratis).",
+      "doneWaitNote": "Balasan mungkin membutuhkan waktu. Semua permintaan diperiksa oleh tim operasional, jadi jangan khawatir."
     },
     "photos": {
       "label": "Foto (opsional, maks. 3)",
@@ -270,6 +274,15 @@
       "partialFailed": "Sebagian foto gagal diunggah. Anda dapat menambahkannya dari halaman detail.",
       "sectionTitle": "Foto",
       "deleteFailed": "Gagal menghapus foto"
+    },
+    "location": {
+      "title": "Wilayah Anda (opsional)",
+      "lead": "Membantu organisasi pendukung terdekat menemukan Anda. Boleh dilewati.",
+      "municipality": "Kota / kecamatan",
+      "none": "Tidak memilih",
+      "save": "Simpan",
+      "saved": "Wilayah tersimpan",
+      "notSet": "Belum dipilih"
     }
   }
 }

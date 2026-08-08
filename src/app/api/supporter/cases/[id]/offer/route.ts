@@ -5,7 +5,7 @@ import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
-import { MAX_SUPPORTERS_PER_CASE } from '@/lib/constants/sdgs'
+import { getMaxSupportersForCase } from '@/lib/constants/disaster'
 
 const MAX_OFFER_MESSAGE_LENGTH = 1000
 
@@ -83,7 +83,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     const { data: caseData } = await supabaseAdmin
         .from('cases')
-        .select('id, status, visibility')
+        .select('id, status, visibility, intake_qna')
         .eq('id', id)
         .single()
     if (!caseData || !['OPEN', 'MATCHED'].includes(caseData.status)) {
@@ -109,9 +109,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         .select('id')
         .eq('case_id', id)
         .eq('status', 'ACCEPTED')
-    if ((acceptedOffers?.length ?? 0) >= MAX_SUPPORTERS_PER_CASE) {
+    const maxSupporters = getMaxSupportersForCase(caseData.intake_qna)
+    if ((acceptedOffers?.length ?? 0) >= maxSupporters) {
         return NextResponse.json(
-            { error: 'MAX_REACHED', message: `この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されているため、申し出できません` },
+            { error: 'MAX_REACHED', message: `この案件はすでに${maxSupporters}名のサポーターが承認されているため、申し出できません` },
             { status: 400 }
         )
     }
@@ -168,7 +169,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { data: caseData } = await supabaseAdmin
         .from('cases')
-        .select('id, status, supporter_resolved_at, visibility')
+        .select('id, status, supporter_resolved_at, visibility, intake_qna')
         .eq('id', id)
         .single()
     if (!caseData) {
@@ -185,9 +186,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             .select('id')
             .eq('case_id', id)
             .eq('status', 'ACCEPTED')
-        if ((acceptedOffers?.length ?? 0) >= MAX_SUPPORTERS_PER_CASE) {
+        const maxSupportersReoffer = getMaxSupportersForCase(caseData.intake_qna)
+        if ((acceptedOffers?.length ?? 0) >= maxSupportersReoffer) {
             return NextResponse.json(
-                { error: 'MAX_REACHED', message: `この案件はすでに${MAX_SUPPORTERS_PER_CASE}名のサポーターが承認されているため、申し出できません` },
+                { error: 'MAX_REACHED', message: `この案件はすでに${maxSupportersReoffer}名のサポーターが承認されているため、申し出できません` },
                 { status: 400 }
             )
         }

@@ -45,7 +45,10 @@ export default function DisasterSosPage() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoProcessing, setPhotoProcessing] = useState(false);
   const [photoUploadFailed, setPhotoUploadFailed] = useState(false);
+  const [municipality, setMunicipality] = useState('');
+  const [localArea, setLocalArea] = useState('');
   const tPhotos = useTranslations('sos.disaster.photos');
+  const tLocation = useTranslations('sos.disaster.location');
 
   const event = ACTIVE_DISASTER_EVENT;
 
@@ -151,7 +154,12 @@ export default function DisasterSosPage() {
           locale,
           intake_qna: {
             locale,
-            disaster: { event_id: event.id, answers: trimmed },
+            disaster: {
+              event_id: event.id,
+              answers: trimmed,
+              // 地域は任意入力。未選択なら送らない
+              ...(municipality ? { location: { municipality, ...(localArea ? { area: localArea } : {}) } } : {}),
+            },
           },
         }),
       });
@@ -192,7 +200,9 @@ export default function DisasterSosPage() {
             <CardContent className="py-12 text-center">
               <div className="text-4xl mb-4">✅</div>
               <h1 className="text-xl font-bold text-gray-800 mb-3">{t('doneTitle')}</h1>
-              <p className="text-sm text-gray-500 leading-relaxed mb-4">{t('doneBody')}</p>
+              <p className="text-sm text-gray-500 leading-relaxed mb-2">{t('doneBody')}</p>
+              {/* ギャップが生まれる場所=完了画面で、返答時間の期待値と運営の約束を伝える */}
+              <p className="text-xs text-gray-400 leading-relaxed mb-4">{t('doneWaitNote')}</p>
               {photoUploadFailed && (
                 <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-block mb-4">
                   {tPhotos('partialFailed')}
@@ -214,6 +224,11 @@ export default function DisasterSosPage() {
               <h1 className="text-2xl font-bold text-gray-800">{t('heading', { event: eventName })}</h1>
               <p className="text-gray-500 mt-2 text-sm leading-relaxed">{t('lead')}</p>
               <p className="text-xs text-gray-400 mt-2">{t('note')}</p>
+              {/* 期待値の管理: サポーター供給の現状(案A)+特別措置の告知 */}
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+                <p className="text-xs text-amber-800 leading-relaxed">{t('supplyNotice')}</p>
+                <p className="text-xs text-amber-700/90 leading-relaxed">{t('specialNotice')}</p>
+              </div>
             </div>
 
             {isLoading ? (
@@ -231,6 +246,44 @@ export default function DisasterSosPage() {
             ) : (
               /* ── 3問フォーム ── */
               <div className="space-y-5">
+                {/* お住まいの地域(任意)。市町村→独自区分(校区等)の二段。全てスキップ可能 */}
+                {(event.municipalities?.length ?? 0) > 0 && (
+                  <Card className="border-l-4 border-l-rose-400">
+                    <CardHeader>
+                      <CardTitle className="text-base font-medium">📍 {tLocation('title')}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-gray-400 mb-3">{tLocation('lead')}</p>
+                      <div className="flex flex-wrap gap-4">
+                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                          {tLocation('municipality')}
+                          <select
+                            value={municipality}
+                            onChange={(e) => { setMunicipality(e.target.value); setLocalArea(''); }}
+                            className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                          >
+                            <option value="">{tLocation('none')}</option>
+                            {(event.municipalities ?? []).map((m) => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </label>
+                        {event.localAreas?.[municipality] && (
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            {event.localAreas[municipality].label}
+                            <select
+                              value={localArea}
+                              onChange={(e) => setLocalArea(e.target.value)}
+                              className="rounded-lg border border-gray-200 bg-white p-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
+                            >
+                              <option value="">{tLocation('none')}</option>
+                              {event.localAreas[municipality].options.map((a) => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {FIELDS.map((field, index) => (
                   <Card key={field.key} className="border-l-4 border-l-rose-400">
                     <CardHeader>

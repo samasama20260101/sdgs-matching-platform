@@ -90,10 +90,25 @@ export async function classifyDisasterNeedsForCase(caseId: string): Promise<bool
   const tags = await classifyDisasterNeedsText(caseData.description_free || '')
   if (tags === null) return false             // 失敗: cronが後で拾い直す
 
+  // 競合対策: Gemini呼び出し中(数秒)に写真追加・地域修正などが intake_qna を
+  // 更新している可能性があるため、保存直前に最新を読み直し、needs だけを差し込む。
+  // 古いスナップショットで書き戻すと並行更新(写真参照など)を消してしまう(実バグ実績あり)。
+  const { data: freshCase, error: freshError } = await supabaseAdmin
+    .from('cases')
+    .select('intake_qna')
+    .eq('id', caseData.id)
+    .maybeSingle()
+  if (freshError || !freshCase) {
+    if (freshError) console.error('[disasterNeeds] fresh fetch error:', freshError)
+    return false
+  }
+  const freshIntake = freshCase.intake_qna as { disaster?: Record<string, unknown> } | null
+  if (!freshIntake?.disaster) return false
+
   const nextIntake = {
-    ...intake,
+    ...freshIntake,
     disaster: {
-      ...intake.disaster,
+      ...freshIntake.disaster,
       needs: { tags, classified_at: new Date().toISOString() },
     },
   }
