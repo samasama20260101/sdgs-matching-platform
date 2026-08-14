@@ -41,7 +41,8 @@
   "supporterType": {
     "NPO": "NPO／支援团体",
     "CORPORATE": "企业",
-    "GOVERNMENT": "政府・公共机构"
+    "GOVERNMENT": "政府・公共机构",
+    "OTHER": "其他"
   },
   "jaOnlyNotice": "本页面目前仅提供日语版本。",
   "maintenance": {

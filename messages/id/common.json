@@ -41,7 +41,8 @@
   "supporterType": {
     "NPO": "NPO / organisasi pendukung",
     "CORPORATE": "Perusahaan",
-    "GOVERNMENT": "Pemerintah / lembaga publik"
+    "GOVERNMENT": "Pemerintah / lembaga publik",
+    "OTHER": "Lainnya"
   },
   "jaOnlyNotice": "Halaman ini saat ini hanya tersedia dalam bahasa Jepang.",
   "maintenance": {

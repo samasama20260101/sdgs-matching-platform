@@ -511,7 +511,8 @@ export default function SupporterCaseDetailPage() {
                         {o.profile?.supporter_type && (
                           <p className="text-xs text-gray-400 mt-0.5">{
                             o.profile.supporter_type === 'NPO' ? 'NPO' :
-                            o.profile.supporter_type === 'CORPORATE' ? '企業' : '行政・公共機関'
+                            o.profile.supporter_type === 'CORPORATE' ? '企業' :
+                            o.profile.supporter_type === 'GOVERNMENT' ? '行政・公共機関' : 'その他'
                           }</p>
                         )}
                       </div>
