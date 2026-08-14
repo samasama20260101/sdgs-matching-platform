@@ -20,7 +20,8 @@ export const SDG_NAMES: Record<number, string> = {
 };
 
 // ─── サポーター上限（この値を変えるだけで全体に反映される） ──────
-export const MAX_SUPPORTERS_PER_CASE = 2
+// 通常・災害とも1案件1団体制。2団体目以降は将来「マッチ済みサポーターによる招待」方式で入れる予定のため、並列マッチングは開かない
+export const MAX_SUPPORTERS_PER_CASE = 1
 
 // ─── ケースのステータス ─────────────────────────────────────
 export const CASE_STATUS = {

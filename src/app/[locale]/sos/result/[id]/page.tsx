@@ -903,13 +903,13 @@ export default function SOSResultPage() {
                 {t('chatHistoryWarnBody', { count: acceptedOffers.length })}
               </p>
             </div>
-          ) : (
+          ) : caseMaxSupporters > 1 ? (
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
               <p className="text-sm text-blue-700">
                 {t('chatShareInfo', { max: caseMaxSupporters })}
               </p>
             </div>
-          )}
+          ) : null}
           {acceptedOffers.length === caseMaxSupporters - 1 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
               <p className="text-sm font-medium text-orange-800">{t('limitReachTitle')}</p>
