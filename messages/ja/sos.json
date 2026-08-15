@@ -124,6 +124,7 @@
     "emptyPast": "過去の相談はありません",
     "cancelModalTitle": "相談を取り消しますか？",
     "cancelModalBody": "「{title}」を取り消すと、サポーターからは見えなくなります。",
+    "cancelModalBodyMatched": "「{title}」を取り消すと支援は終了し、担当サポーターに取り消したことが伝わります。チャットもできなくなります。",
     "cancelModalNote": "※ 取り消し後、新しい相談を登録できるようになります",
     "cancelConfirm": "取り消す",
     "toastCancelFailed": "取消に失敗しました",

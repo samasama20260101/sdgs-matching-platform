@@ -55,11 +55,13 @@ export default function SOSDashboard() {
   const [cancelModal, setCancelModal] = useState<{
     isOpen: boolean;
     caseId: string;
-    title: string
+    title: string;
+    isMatched: boolean;
   }>({
     isOpen: false,
     caseId: '',
     title: '',
+    isMatched: false,
   });
 
   async function loadData() {
@@ -105,8 +107,8 @@ export default function SOSDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, []);
 
-  const handleCancelCase = (caseId: string, title: string) => {
-    setCancelModal({ isOpen: true, caseId, title });
+  const handleCancelCase = (caseId: string, title: string, isMatched: boolean) => {
+    setCancelModal({ isOpen: true, caseId, title, isMatched });
   };
 
   const confirmCancel = async () => {
@@ -126,7 +128,7 @@ export default function SOSDashboard() {
         toast.error(t('toastCancelFailed'));
         return;
       }
-      setCancelModal({ isOpen: false, caseId: '', title: '' });
+      setCancelModal({ isOpen: false, caseId: '', title: '', isMatched: false });
       await loadData();
       toast.success(t('toastCancelled'));
     } finally {
@@ -369,7 +371,7 @@ export default function SOSDashboard() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCancelCase(case_.id, case_.title)}
+                            onClick={() => handleCancelCase(case_.id, case_.title, case_.status === 'MATCHED')}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             {t('cancelAction')}
@@ -406,7 +408,7 @@ export default function SOSDashboard() {
                               ? 'bg-teal-50 text-teal-700'
                               : 'bg-gray-100 text-gray-600'
                               }`}>
-                              {case_.status === 'RESOLVED' ? `✓ ${tStatus('RESOLVED')}` : tStatus('CANCELLED')}
+                              {case_.status === 'RESOLVED' ? `✓ ${tStatus('RESOLVED')}` : tStatus(case_.status)}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 line-clamp-1 mb-2">
@@ -436,19 +438,19 @@ export default function SOSDashboard() {
       {/* 取消確認モーダル */}
       <Modal
         isOpen={cancelModal.isOpen}
-        onClose={() => setCancelModal({ isOpen: false, caseId: '', title: '' })}
+        onClose={() => setCancelModal({ isOpen: false, caseId: '', title: '', isMatched: false })}
         title={t('cancelModalTitle')}
         type="warning"
       >
         <p className="text-gray-700 mb-4">
-          {t('cancelModalBody', { title: cancelModal.title })}
+          {t(cancelModal.isMatched ? 'cancelModalBodyMatched' : 'cancelModalBody', { title: cancelModal.title })}
         </p>
         <p className="text-sm text-gray-500 mb-6">
           {t('cancelModalNote')}
         </p>
         <div className="flex gap-3">
           <button
-            onClick={() => setCancelModal({ isOpen: false, caseId: '', title: '' })}
+            onClick={() => setCancelModal({ isOpen: false, caseId: '', title: '', isMatched: false })}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             {tActions('cancel')}

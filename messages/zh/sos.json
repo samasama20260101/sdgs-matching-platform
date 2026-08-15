@@ -124,6 +124,7 @@
     "emptyPast": "没有过去的咨询",
     "cancelModalTitle": "要取消这个咨询吗？",
     "cancelModalBody": "取消「{title}」后，支援者将无法再看到它。",
+    "cancelModalBodyMatched": "取消「{title}」后，支援将结束，负责的支援者会收到取消通知，聊天也将无法使用。",
     "cancelModalNote": "※ 取消后可以登记新的咨询",
     "cancelConfirm": "取消咨询",
     "toastCancelFailed": "取消失败",
