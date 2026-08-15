@@ -1,17 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Building2, Loader2, Pencil, Plus, RefreshCw, Save, Trash2, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Building2, Loader2, Pencil, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 
-type NoteVisibility = 'ORGANIZATION_ONLY' | 'APPROVED_SUPPORTERS';
-
+// 1案件1団体制のため、メモは自団体内の引き継ぎ用(ORGANIZATION_ONLY)のみ。
+// 他団体との共有メモ(APPROVED_SUPPORTERS)は廃止。過去データはDBに残るが表示しない。
 type InternalNote = {
   id: string;
   body: string;
-  visibility: NoteVisibility;
   author_display_name: string;
   organization_name: string;
   created_at: string;
@@ -22,49 +21,14 @@ type InternalNote = {
 type InternalNotesPanelProps = {
   caseId: string;
   accessToken: string;
-  // 他団体との共有メモタブを隠す(1案件1団体制の災害案件用。自団体メモは使える)
-  hideSharedTab?: boolean;
 };
 
 type SortOrder = 'newest' | 'oldest';
 
-const TAB_CONFIG = {
-  ORGANIZATION_ONLY: {
-    label: '自団体のみ',
-    description: 'この団体に所属するメンバーだけに表示されます',
-    placeholder: '自団体の担当者向けに記録する',
-    submitLabel: '自団体メモを追加',
-    icon: Building2,
-    card: 'border-amber-200 bg-amber-50/30',
-    tab: 'bg-amber-100 text-amber-900',
-    notice: 'border-amber-200 bg-amber-50 text-amber-800',
-    input: 'border-amber-200 focus:ring-amber-300',
-    button: 'bg-amber-600 text-white hover:bg-amber-700',
-    note: 'border-amber-100',
-  },
-  APPROVED_SUPPORTERS: {
-    label: '担当サポーター間',
-    description: 'この案件で承認済みの他団体にも表示されます',
-    placeholder: '承認済みの担当サポーター間で共有する',
-    submitLabel: '共有メモを追加',
-    icon: Users,
-    card: 'border-blue-200 bg-blue-50/30',
-    tab: 'bg-blue-100 text-blue-900',
-    notice: 'border-blue-200 bg-blue-50 text-blue-800',
-    input: 'border-blue-200 focus:ring-blue-300',
-    button: 'bg-blue-600 text-white hover:bg-blue-700',
-    note: 'border-blue-100',
-  },
-} as const;
-
-export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false }: InternalNotesPanelProps) {
+export function InternalNotesPanel({ caseId, accessToken }: InternalNotesPanelProps) {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<NoteVisibility>('ORGANIZATION_ONLY');
   const [notes, setNotes] = useState<InternalNote[]>([]);
-  const [drafts, setDrafts] = useState<Record<NoteVisibility, string>>({
-    ORGANIZATION_ONLY: '',
-    APPROVED_SUPPORTERS: '',
-  });
+  const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -95,17 +59,16 @@ export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false 
   }, [loadNotes]);
 
   const submitNote = async () => {
-    const draft = drafts[activeTab];
     if (!draft.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/supporter/cases/${caseId}/internal-notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ visibility: activeTab, body: draft }),
+        body: JSON.stringify({ visibility: 'ORGANIZATION_ONLY', body: draft }),
       });
       if (!res.ok) throw new Error('メモを登録できませんでした');
-      setDrafts((current) => ({ ...current, [activeTab]: '' }));
+      setDraft('');
       await loadNotes();
       toast.success('内部メモを追加しました');
     } catch (error) {
@@ -158,23 +121,19 @@ export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false 
     }
   };
 
-  const config = TAB_CONFIG[activeTab];
-  const ActiveTabIcon = config.icon;
-  const visibleNotes = notes
-    .filter((note) => note.visibility === activeTab)
-    .sort((a, b) => {
-      const difference = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      return sortOrder === 'newest' ? difference : -difference;
-    });
+  const visibleNotes = [...notes].sort((a, b) => {
+    const difference = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return sortOrder === 'newest' ? difference : -difference;
+  });
   const formatDateTime = (date: string) =>
     new Date(date).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
-    <Card className={`mb-6 transition-colors ${config.card}`}>
+    <Card className="mb-6 border-amber-200 bg-amber-50/30 transition-colors">
       <CardHeader className="gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base text-gray-800">内部メモ</CardTitle>
+            <CardTitle className="text-base text-gray-800">内部メモ（自団体のみ）</CardTitle>
             <p className="mt-1 text-xs text-gray-500">SOSユーザーには表示されません</p>
           </div>
           <Button size="sm" variant="outline" onClick={loadNotes} disabled={isLoading} title="内部メモを更新">
@@ -182,56 +141,29 @@ export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false 
             更新
           </Button>
         </div>
-        <div className="flex w-full rounded-md border border-gray-200 bg-white p-1 sm:w-fit">
-          {(Object.keys(TAB_CONFIG) as NoteVisibility[])
-            .filter((tabId) => !(hideSharedTab && tabId === 'APPROVED_SUPPORTERS'))
-            .map((tabId) => {
-            const tab = TAB_CONFIG[tabId];
-            const TabIcon = tab.icon;
-            return (
-            <button
-              key={tabId}
-              type="button"
-              onClick={() => {
-                setActiveTab(tabId);
-                setEditingId(null);
-                setEditingBody('');
-              }}
-              className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none ${
-                activeTab === tabId ? tab.tab : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <TabIcon className="size-3.5" />
-                {tab.label}
-              </span>
-            </button>
-            );
-          })}
-        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className={`flex items-start gap-2 rounded-md border px-3 py-2 ${config.notice}`}>
-          <ActiveTabIcon className="mt-0.5 size-4 flex-shrink-0" />
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+          <Building2 className="mt-0.5 size-4 flex-shrink-0" />
           <div>
-            <p className="text-sm font-semibold">{config.label}</p>
-            <p className="text-xs">{config.description}</p>
+            <p className="text-sm font-semibold">自団体のみ</p>
+            <p className="text-xs">この団体に所属するメンバーだけに表示されます。担当引き継ぎの記録にご利用ください</p>
           </div>
         </div>
         <div className="space-y-2">
           <textarea
-            value={drafts[activeTab]}
-            onChange={(event) => setDrafts((current) => ({ ...current, [activeTab]: event.target.value }))}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
             rows={3}
             maxLength={3000}
-            placeholder={config.placeholder}
-            className={`w-full resize-none rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 ${config.input}`}
+            placeholder="自団体の担当者向けに記録する"
+            className="w-full resize-none rounded-md border border-amber-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
           />
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-400">{drafts[activeTab].length} / 3000</span>
-            <Button size="sm" onClick={submitNote} disabled={!drafts[activeTab].trim() || isSubmitting} className={config.button}>
+            <span className="text-xs text-gray-400">{draft.length} / 3000</span>
+            <Button size="sm" onClick={submitNote} disabled={!draft.trim() || isSubmitting} className="bg-amber-600 text-white hover:bg-amber-700">
               {isSubmitting ? <Loader2 className="animate-spin" /> : <Plus />}
-              {config.submitLabel}
+              自団体メモを追加
             </Button>
           </div>
         </div>
@@ -269,7 +201,7 @@ export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false 
             <p className="py-4 text-center text-sm text-gray-400">メモはまだありません</p>
           ) : (
             visibleNotes.map((note) => (
-              <div key={note.id} className={`rounded-md border bg-white p-3 ${config.note}`}>
+              <div key={note.id} className="rounded-md border border-amber-100 bg-white p-3">
                 {editingId === note.id ? (
                   <div className="space-y-2">
                     <textarea
@@ -277,14 +209,14 @@ export function InternalNotesPanel({ caseId, accessToken, hideSharedTab = false 
                       onChange={(event) => setEditingBody(event.target.value)}
                       rows={3}
                       maxLength={3000}
-                      className={`w-full resize-none rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${config.input}`}
+                      className="w-full resize-none rounded-md border border-amber-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
                     />
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => { setEditingId(null); setEditingBody(''); }}>
                         <X />
                         戻る
                       </Button>
-                      <Button size="sm" onClick={saveNote} disabled={!editingBody.trim() || isSubmitting} className={config.button}>
+                      <Button size="sm" onClick={saveNote} disabled={!editingBody.trim() || isSubmitting} className="bg-amber-600 text-white hover:bg-amber-700">
                         <Save />
                         保存
                       </Button>

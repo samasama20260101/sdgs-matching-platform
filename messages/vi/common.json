@@ -41,7 +41,8 @@
   "supporterType": {
     "NPO": "NPO / tổ chức hỗ trợ",
     "CORPORATE": "Doanh nghiệp",
-    "GOVERNMENT": "Cơ quan hành chính / công"
+    "GOVERNMENT": "Cơ quan hành chính / công",
+    "OTHER": "Khác"
   },
   "jaOnlyNotice": "Trang này hiện chỉ có bản tiếng Nhật.",
   "maintenance": {

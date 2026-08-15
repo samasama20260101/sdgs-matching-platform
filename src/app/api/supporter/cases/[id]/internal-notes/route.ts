@@ -3,10 +3,11 @@ import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
-const NOTE_VISIBILITIES = new Set(['ORGANIZATION_ONLY', 'APPROVED_SUPPORTERS'])
+// 1案件1団体制のため自団体内メモのみ。APPROVED_SUPPORTERS(他団体共有)は廃止(過去データはDBに残るが返さない)
+const NOTE_VISIBILITIES = new Set(['ORGANIZATION_ONLY'])
 const MAX_NOTE_LENGTH = 3000
 
-type NoteVisibility = 'ORGANIZATION_ONLY' | 'APPROVED_SUPPORTERS'
+type NoteVisibility = 'ORGANIZATION_ONLY'
 
 type SupporterContext = {
     userId: string
@@ -110,8 +111,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     const visibleNotes = ((notes || []) as InternalNoteRow[]).filter((note) =>
-        note.visibility === 'APPROVED_SUPPORTERS'
-        || (note.visibility === 'ORGANIZATION_ONLY' && note.organization_id === context.organizationId)
+        note.visibility === 'ORGANIZATION_ONLY' && note.organization_id === context.organizationId
     )
 
     const authorIds = [...new Set(visibleNotes.map((note) => note.author_user_id).filter(Boolean))]

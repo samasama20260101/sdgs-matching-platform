@@ -40,7 +40,10 @@ export async function classifySDGs(consultationText: string) {
       model: GEMINI_MODEL,
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 2048,
+        // gemini-2.5-flash は思考トークンが maxOutputTokens を内側から消費する(実測1,400〜1,700)。
+        // 2048 だと本文が途中で切れて JSON パースに失敗するため余裕を持たせる(disasterNeeds.ts と同じ教訓)
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
       },
     });
 
