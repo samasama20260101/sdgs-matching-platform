@@ -408,7 +408,7 @@ export default function SOSDashboard() {
                               ? 'bg-teal-50 text-teal-700'
                               : 'bg-gray-100 text-gray-600'
                               }`}>
-                              {case_.status === 'RESOLVED' ? `✓ ${tStatus('RESOLVED')}` : tStatus('CANCELLED')}
+                              {case_.status === 'RESOLVED' ? `✓ ${tStatus('RESOLVED')}` : tStatus(case_.status)}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 line-clamp-1 mb-2">

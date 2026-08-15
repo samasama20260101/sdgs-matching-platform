@@ -316,7 +316,11 @@ export default function SupporterDashboard() {
   const getCaseDisplayStatus = (c: Case): string => {
     if (!c.my_offer_status) return 'none';
     if (c.my_offer_status === 'PENDING') return 'pending';
-    if (c.my_offer_status === 'ACCEPTED') { if (c.status === 'RESOLVED' || c.status === 'CLOSED') return 'resolved'; return 'active'; }
+    if (c.my_offer_status === 'ACCEPTED') {
+      if (c.status === 'RESOLVED' || c.status === 'CLOSED') return 'resolved';
+      if (c.status === 'CANCELLED') return 'cancelled';
+      return 'active';
+    }
     return 'other';
   };
 
@@ -359,8 +363,10 @@ export default function SupporterDashboard() {
   // 統計は表示中のタブの数字に合わせる。
   // 災害タブは全体視点で統一(相談件数 = 待機中 + 支援中 + 解決 と足し算が合うように)。
   // 通常タブは従来どおり(マッチ済み・解決済みは自団体視点)。
+  // 取消・自然クローズはどの内訳タイルにも入らないため、相談件数からも除いて足し算を保つ
+  const disasterCountedTotal = scopedCases.filter((c) => c.status !== 'CANCELLED' && c.status !== 'CLOSED').length;
   const stats = effectiveTab === 'disaster' ? [
-    { label: '相談件数', value: scopedCases.length, color: 'text-blue-600' },
+    { label: '相談件数', value: disasterCountedTotal, color: 'text-blue-600' },
     { label: '⏳ 待機中(未マッチ)', value: disasterWaitingCount, color: 'text-red-500' },
     { label: '🤝 マッチ済み・支援中', value: scopedCases.filter((c) => c.status === 'MATCHED' || (c.status === 'OPEN' && (c.accepted_count ?? 0) > 0)).length, color: 'text-amber-600' },
     { label: '✅ 解決済み', value: scopedCases.filter((c) => c.status === 'RESOLVED').length, color: 'text-teal-600' },
@@ -572,8 +578,10 @@ export default function SupporterDashboard() {
               { key: 'pending', label: '⏳ 申し出中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'active', label: '🤝 支援中', color: 'border-amber-300 bg-amber-50 text-amber-600' },
               { key: 'resolved', label: '✅ 解決済み', color: 'border-teal-300 bg-teal-50 text-teal-600' },
+              { key: 'cancelled', label: '✕ 取消済み', color: 'border-gray-300 bg-gray-100 text-gray-500' },
             ].map((f) => {
               const count = f.key === null ? scopedCases.length : scopedCases.filter((c) => getCaseDisplayStatus(c) === f.key).length;
+              if (f.key === 'cancelled' && count === 0) return null;
               return <button key={f.key || 'all'} onClick={() => setEngagementFilter(engagementFilter === f.key ? null : f.key)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${engagementFilter === f.key ? f.color : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}>{f.label} ({count})</button>;
             })}
           </div>
