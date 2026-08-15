@@ -14,6 +14,7 @@
 - PR #26(devマージ済み・ビルド検証済み): 通常フローの承認上限2→1 / サポーター種別 OTHER 追加(6言語)/ 通常フローAI分析修正(gemini maxOutputTokens 8192 + responseMimeType)/ 他団体共有メモ廃止(自団体引き継ぎメモは存続)
 - PR #27(未マージ・ビルド検証済み): MATCHED案件取消時にチャットへシステムメッセージ / 取消確認モーダルのマッチ済み用文言(6言語)/ 終了案件へのメッセージ送信を409ブロック / サポーターダッシュボードに「取消済み」バケット新設(支援中への混入を修正、災害・通常両タブ)/ 災害タブ統計の足し算修復 / SOS側でCLOSEDが「取消済み」と誤表示される問題修正
 - AI分析失敗の原因特定: 実APIで3/3再現→対策設定で2/2成功を実測確認
+- display_id形式統一(2026-08-16 Staging・本番とも実行済み・検証済み): 旧形式(A-/S-/P-)を現行形式(ADM-/SOS-/SUP-)へ再採番、UNIQUE付与、遺物シーケンス削除、generate_display_id関数をmigrationsへ正本化(migrations/normalize_display_id_format.sql)。旧IDは本番の display_id_backup_20260816 に保存(落ち着いたらDROP可)
 
 ## 試して失敗したこと ★最重要
 - (既存の教訓は git log の過去HANDOFF参照。今回セッション分↓)
