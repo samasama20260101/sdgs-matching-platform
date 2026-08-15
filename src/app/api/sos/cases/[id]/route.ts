@@ -156,5 +156,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
+  // マッチ済み案件の取消は担当サポーターに知らせる(OPENは読み手がいないため不要)
+  if (body.status === 'CANCELLED' && caseData.status === 'MATCHED') {
+    const { error: messageError } = await supabaseAdmin.from('messages').insert({
+      case_id: id,
+      sender_user_id: auth.appUser.id,
+      sender_display_name_snapshot: 'システム',
+      sender_role_snapshot: 'SYSTEM',
+      message_type: 'SYSTEM',
+      content: '__SYSTEM__相談者がこの相談を取り消しました。この案件のチャットは終了となります。これまでのご対応ありがとうございました。',
+    })
+    if (messageError) {
+      console.error('[sos/cases] cancellation system message insert error:', messageError)
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }

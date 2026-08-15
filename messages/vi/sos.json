@@ -124,6 +124,7 @@
     "emptyPast": "Không có tư vấn trước đây",
     "cancelModalTitle": "Hủy tư vấn này?",
     "cancelModalBody": "Nếu hủy 「{title}」, người hỗ trợ sẽ không còn nhìn thấy tư vấn này nữa.",
+    "cancelModalBodyMatched": "Nếu hủy 「{title}」, việc hỗ trợ sẽ kết thúc và người hỗ trợ phụ trách sẽ được thông báo về việc hủy. Bạn cũng sẽ không thể trò chuyện nữa.",
     "cancelModalNote": "※ Sau khi hủy, bạn có thể đăng ký tư vấn mới",
     "cancelConfirm": "Hủy tư vấn",
     "toastCancelFailed": "Hủy thất bại",
