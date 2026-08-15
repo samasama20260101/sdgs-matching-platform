@@ -127,7 +127,7 @@ export async function POST(request: Request) {
 
     // この案件に関与しているか確認（SOS所有者またはACCEPTEDサポーター）
     const { data: caseData } = await supabaseAdmin
-        .from('cases').select('id, owner_user_id').eq('id', case_id).single()
+        .from('cases').select('id, owner_user_id, status').eq('id', case_id).single()
     if (!caseData) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
 
     let canAccess = caseData.owner_user_id === userData.id
@@ -144,6 +144,14 @@ export async function POST(request: Request) {
     }
 
     if (!canAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    // 終了済み案件はUI上読み取り専用。API直叩きでも送信させない
+    if (['RESOLVED', 'CLOSED', 'CANCELLED'].includes(caseData.status)) {
+        return NextResponse.json(
+            { error: 'CASE_CLOSED', message: 'この案件は終了しているため、メッセージを送信できません' },
+            { status: 409 }
+        )
+    }
 
     const { data, error } = await supabaseAdmin
         .from('messages')

@@ -124,6 +124,7 @@
     "emptyPast": "No past consultations",
     "cancelModalTitle": "Cancel this consultation?",
     "cancelModalBody": "If you cancel \"{title}\", supporters will no longer be able to see it.",
+    "cancelModalBodyMatched": "If you cancel \"{title}\", the support will end and the supporter in charge will be notified of the cancellation. Chat will no longer be available.",
     "cancelModalNote": "* After cancelling, you will be able to register a new consultation",
     "cancelConfirm": "Cancel it",
     "toastCancelFailed": "Failed to cancel",

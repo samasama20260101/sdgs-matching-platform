@@ -196,8 +196,10 @@ OPEN → MATCHED → RESOLVED（カウント対象）
 
 ```typescript
 // src/lib/constants/sdgs.ts
-export const MAX_SUPPORTERS_PER_CASE = 2
+export const MAX_SUPPORTERS_PER_CASE = 1
 ```
+
+2026年8月に2→1へ変更（通常・災害とも1案件1団体制）。2団体目以降は将来「マッチ済みサポーターによる招待」方式を検討中のため、並列マッチングは再開しない方針。
 
 ---
 

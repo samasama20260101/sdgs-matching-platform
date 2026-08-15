@@ -20,7 +20,7 @@ const ORGANIZATION_PROFILE_FIELDS = new Set([
     'organization_name', 'organization_phone', 'supporter_type', 'bio', 'social_links',
     'postal_code', 'prefecture', 'city', 'address_structured',
 ])
-const SUPPORTER_TYPES = new Set(['NPO', 'CORPORATE', 'GOVERNMENT'])
+const SUPPORTER_TYPES = new Set(['NPO', 'CORPORATE', 'GOVERNMENT', 'OTHER'])
 const SOCIAL_LINK_KEYS = new Set(['website', 'twitter', 'instagram', 'facebook', 'line'])
 const COUNTRIES = new Set(['JP', 'ID'])
 

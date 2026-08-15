@@ -1,5 +1,5 @@
 // サポータータイプのラベル・絵文字・色を一元管理
-export type SupporterType = 'NPO' | 'CORPORATE' | 'GOVERNMENT'
+export type SupporterType = 'NPO' | 'CORPORATE' | 'GOVERNMENT' | 'OTHER'
 
 export const SUPPORTER_TYPE_CONFIG: Record<SupporterType, {
   emoji: string
@@ -24,6 +24,12 @@ export const SUPPORTER_TYPE_CONFIG: Record<SupporterType, {
     label: '行政・公共機関',
     badgeClass: 'bg-purple-100 text-purple-700',
     textClass: 'text-purple-600',
+  },
+  OTHER: {
+    emoji: '🤝',
+    label: 'その他',
+    badgeClass: 'bg-gray-100 text-gray-700',
+    textClass: 'text-gray-600',
   },
 }
 

@@ -155,6 +155,7 @@ export default function SupportersPage() {
             { key: 'NPO', label: `🌿 ${tSupporterType('NPO')}` },
             { key: 'CORPORATE', label: `🏢 ${tSupporterType('CORPORATE')}` },
             { key: 'GOVERNMENT', label: `🏛️ ${tSupporterType('GOVERNMENT')}` },
+            { key: 'OTHER', label: `🤝 ${tSupporterType('OTHER')}` },
           ].map(({ key, label }) => (
             <button key={String(key)} onClick={() => handleTypeFilter(key)}
               className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key

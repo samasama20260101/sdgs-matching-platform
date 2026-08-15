@@ -124,6 +124,7 @@
     "emptyPast": "Tidak ada konsultasi sebelumnya",
     "cancelModalTitle": "Batalkan konsultasi ini?",
     "cancelModalBody": "Jika membatalkan 「{title}」, pendukung tidak akan bisa melihatnya lagi.",
+    "cancelModalBodyMatched": "Jika membatalkan 「{title}」, dukungan akan berakhir dan pendukung yang bertanggung jawab akan diberi tahu tentang pembatalan. Chat juga tidak dapat digunakan lagi.",
     "cancelModalNote": "※ Setelah dibatalkan, Anda dapat mendaftarkan konsultasi baru",
     "cancelConfirm": "Batalkan",
     "toastCancelFailed": "Gagal membatalkan",

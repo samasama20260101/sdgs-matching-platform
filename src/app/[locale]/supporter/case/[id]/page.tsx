@@ -511,7 +511,8 @@ export default function SupporterCaseDetailPage() {
                         {o.profile?.supporter_type && (
                           <p className="text-xs text-gray-400 mt-0.5">{
                             o.profile.supporter_type === 'NPO' ? 'NPO' :
-                            o.profile.supporter_type === 'CORPORATE' ? '企業' : '行政・公共機関'
+                            o.profile.supporter_type === 'CORPORATE' ? '企業' :
+                            o.profile.supporter_type === 'GOVERNMENT' ? '行政・公共機関' : 'その他'
                           }</p>
                         )}
                       </div>
@@ -626,10 +627,8 @@ export default function SupporterCaseDetailPage() {
           </div>
         )}
 
-        {/* 災害案件(1案件1団体制)では他団体との共有メモタブのみ隠す。自団体メモは利用可 */}
         {isAccepted && accessToken && (
-          <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken}
-            hideSharedTab={Boolean(caseData?.intake_qna?.disaster)} />
+          <InternalNotesPanel caseId={caseData!.id} accessToken={accessToken} />
         )}
       </main>
 
