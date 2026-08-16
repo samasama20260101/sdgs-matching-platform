@@ -27,6 +27,7 @@
 2. 既存サポーターの種別変更 `UPDATE organizations SET supporter_type = 'OTHER' WHERE name = '対象団体名';` を本番SQL Editorで(ユーザー自身が実行)
 3. 拡散タスク(未着手): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
 4. 技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み
+5. 技術負債: admin/stats API がレガシー列 users.supporter_type を読んでいる → organizations 参照に変更(種別変更のたびに2テーブル更新が必要になっている原因。ケアラーズカフェ モンステラのOTHER化では両方手動更新で対応済み 2026-08-16)
 
 ## 地雷・注意
 - **本番Supabaseへの変更操作はユーザー明示許可なしに絶対に実行しない**(こちらはread-only接続のみ)
