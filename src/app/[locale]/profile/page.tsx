@@ -580,6 +580,19 @@ export default function ProfilePage() {
                             {tActions('cancel')}
                         </Button>
                     </div>
+
+                    {/* 保存フォームの外に置く（遷移で編集中の入力が消えるため） */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">{t('securityTitle')}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="text-sm text-gray-600">{t('passwordNote')}</p>
+                            <Button variant="outline" onClick={() => router.push('/change-password')}>
+                                {t('passwordChange')}
+                            </Button>
+                        </CardContent>
+                    </Card>
                 </div>
             </main>
         </div>
