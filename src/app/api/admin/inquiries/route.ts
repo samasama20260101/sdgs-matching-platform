@@ -1,5 +1,6 @@
 // src/app/api/admin/inquiries/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getOrganizationsByUserIds } from '@/lib/organizations'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
 
@@ -35,11 +36,29 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: error.message, detail: error }, { status: 500 })
     }
 
+    // 団体名の正本は organizations（users.organization_name は移行前の遺物で更新されない）。
+    // 未ログイン問い合わせ（user_id なし）と SOS ユーザーは所属団体を持たないため対象外。
+    type InquiryRow = {
+        user_id: string | null
+        users: { display_name: string | null; organization_name: string | null } | null
+        [key: string]: unknown
+    }
+    const inquiries = (data ?? []) as InquiryRow[]
+    const organizationByUserId = await getOrganizationsByUserIds(
+        inquiries.map((i) => i.user_id).filter((id): id is string => Boolean(id)),
+    )
+    const inquiriesWithOrganization = inquiries.map((i) => {
+        const organization = i.user_id ? organizationByUserId[i.user_id] : undefined
+        return i.users
+            ? { ...i, users: { ...i.users, organization_name: organization?.name ?? i.users.organization_name } }
+            : i
+    })
+
     // 未対応件数
     const { count: openCount } = await supabaseAdmin
         .from('inquiries').select('*', { count: 'exact', head: true }).eq('status', 'OPEN')
 
-    return NextResponse.json({ inquiries: data, open_count: openCount ?? 0 })
+    return NextResponse.json({ inquiries: inquiriesWithOrganization, open_count: openCount ?? 0 })
 }
 
 // PATCH: ステータス・メモ更新
