@@ -431,7 +431,7 @@ export default function ProfilePage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="email">メールアドレス</Label>
                                     <Input id="email" type="email" value={userData.email} disabled className="bg-gray-100" />
-                                    <p className="text-xs text-gray-500">※メールアドレスは変更できません</p>
+                                    <p className="text-xs text-gray-500">※変更はページ下部の「ログイン情報」から行えます</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">担当者個人の電話番号 <span className="text-xs font-normal text-gray-400">（任意）</span></Label>
@@ -586,11 +586,20 @@ export default function ProfilePage() {
                         <CardHeader>
                             <CardTitle className="text-base">{t('securityTitle')}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            <p className="text-sm text-gray-600">{t('passwordNote')}</p>
-                            <Button variant="outline" onClick={() => router.push('/change-password')}>
-                                {t('passwordChange')}
-                            </Button>
+                        <CardContent className="space-y-5">
+                            <div className="space-y-3">
+                                <p className="text-sm text-gray-600">{t('passwordNote')}</p>
+                                <Button variant="outline" onClick={() => router.push('/change-password')}>
+                                    {t('passwordChange')}
+                                </Button>
+                            </div>
+                            <div className="space-y-3 border-t border-gray-100 pt-5">
+                                <p className="text-sm text-gray-600">{t('emailNoteChange')}</p>
+                                <p className="text-sm text-gray-500 break-all">{userData.email}</p>
+                                <Button variant="outline" onClick={() => router.push('/change-email')}>
+                                    {t('emailChange')}
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

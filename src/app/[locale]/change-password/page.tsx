@@ -18,6 +18,7 @@ export default function ChangePasswordPage() {
     const tForm = useTranslations('common.form')
     const locale = useLocale()
     const [mode, setMode] = useState<Mode | null>(null)
+    const [currentPassword, setCurrentPassword] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [agreed, setAgreed] = useState(false)
@@ -40,6 +41,16 @@ export default function ChangePasswordPage() {
         resolveMode()
     }, [locale])
 
+    const errorMessage = (code: unknown) => {
+        switch (code) {
+            case 'CURRENT_PASSWORD_REQUIRED': return t('errorCurrentRequired')
+            case 'CURRENT_PASSWORD_MISMATCH': return t('errorCurrentMismatch')
+            case 'SAME_AS_CURRENT': return t('errorSameAsCurrent')
+            case 'INVALID_NEW_PASSWORD': return t('errorTooShort')
+            default: return typeof code === 'string' && code ? code : t('errorGeneric')
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
@@ -60,29 +71,40 @@ export default function ChangePasswordPage() {
 
         setLoading(true)
         try {
-            // 1. パスワードを更新
-            const { error: updateError } = await supabase.auth.updateUser({ password })
-            if (updateError) throw updateError
-
             const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                window.location.href = withLocalePath(locale, '/login')
+                return
+            }
 
-            // 2. 自発的な変更ならプロフィールへ戻すだけ
+            // 検証と更新はサーバー側でまとめて行う。クライアントで updateUser を呼ぶ形だと
+            // 現在パスワードの確認をコンソールから素通りできてしまうため。
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    current_password: mode === 'voluntary' ? currentPassword : undefined,
+                    new_password: password,
+                }),
+            })
+            const result = await res.json()
+            if (!res.ok) {
+                setError(errorMessage(result.error))
+                return
+            }
+
+            // 自発的な変更ならプロフィールへ戻すだけ
             if (mode === 'voluntary') {
                 window.location.href = withLocalePath(locale, '/profile')
                 return
             }
 
-            // 3. must_change_password フラグを解除
-            if (session) {
-                await fetch('/api/auth/clear-must-change-password', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${session.access_token}` },
-                })
-            }
-
-            // 4. ロールに応じてリダイレクト
+            // 初回はロールに応じたダッシュボードへ
             const roleRes = await fetch('/api/auth/get-role', {
-                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                headers: { 'Authorization': `Bearer ${session.access_token}` },
             })
             const roleData = await roleRes.json()
 
@@ -127,6 +149,24 @@ export default function ChangePasswordPage() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* 現在のパスワード確認は自発的な変更のときだけ。
+                            初回は直前にその初期パスワードでログインしたばかりなので求めない */}
+                        {mode === 'voluntary' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                    {t('currentLabel')}
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    maxLength={64}
+                                    autoComplete="current-password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        )}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 {t('newLabel')}
@@ -136,6 +176,7 @@ export default function ChangePasswordPage() {
                                 required
                                 minLength={8}
                                 maxLength={64}
+                                autoComplete="new-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -149,6 +190,7 @@ export default function ChangePasswordPage() {
                                 type="password"
                                 required
                                 maxLength={64}
+                                autoComplete="new-password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

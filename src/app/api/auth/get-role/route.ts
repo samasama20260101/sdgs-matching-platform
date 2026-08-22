@@ -40,6 +40,22 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
     }
 
+    // メールアドレス変更の反映。正本は auth.users 側で、users.email はアプリ用のコピー。
+    // 確認メールのリンクを踏んだ瞬間に切り替わるのは auth 側だけなので、次にこのAPIを
+    // 通ったときに追いつかせる（このAPIはほぼ全ページで呼ばれるため実質すぐ揃う）。
+    if (userData && user.email && userData.email !== user.email) {
+        const { error: emailSyncError } = await supabaseAdmin
+            .from('users')
+            .update({ email: user.email, updated_at: new Date().toISOString() })
+            .eq('id', userData.id)
+        if (emailSyncError) {
+            // 同期に失敗しても認証情報の取得自体は続行する（表示が古いままになるだけ）
+            console.error('[get-role] email sync error:', emailSyncError)
+        } else {
+            userData.email = user.email
+        }
+    }
+
     // サポーターの活動地域を取得
     let serviceAreas: ServiceArea[] = []
     let serviceAreaNationwide = false
