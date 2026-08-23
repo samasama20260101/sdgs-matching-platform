@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AddressForm, { AddressFormData } from '@/components/form/AddressForm';
 import ServiceAreaSelector, { ServiceArea } from '@/components/form/ServiceAreaSelector';
-import { isAppLocale, localeLabels, locales, type AppLocale } from '@/i18n/routing';
+import { LANGUAGE_SWITCHER_ENABLED, isAppLocale, localeLabels, locales, type AppLocale } from '@/i18n/routing';
 
 type UserData = {
     id: string;
@@ -244,9 +244,13 @@ export default function ProfilePage() {
             const updateData: ProfileUpdateData = {
                 real_name: realName.trim(), display_name: displayName.trim(),
                 phone: phone.trim() || null,
-                locale,
                 updated_at: new Date().toISOString(),
             };
+            // 選択UIを出していない間は locale を送らない。非公開ロケール(ko/vi/id)を
+            // 保存済みのユーザーが保存操作をすると、表示中のjaで上書きしてしまうため。
+            if (LANGUAGE_SWITCHER_ENABLED) {
+                updateData.locale = locale;
+            }
 
             if (userData.role === 'SOS') {
                 updateData.sos_region_code = sosRegionCode || null;
@@ -344,25 +348,28 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">{t('languageTitle')}</CardTitle>
-                            <p className="text-xs text-gray-500 mt-1">{t('languageNote')}</p>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <Label htmlFor="locale">{t('languageLabel')}</Label>
-                            <select
-                                id="locale"
-                                value={locale}
-                                onChange={(e) => setLocale(e.target.value as AppLocale)}
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                {locales.map((option) => (
-                                    <option key={option} value={option}>{localeLabels[option]}</option>
-                                ))}
-                            </select>
-                        </CardContent>
-                    </Card>
+                    {/* 多言語の一般公開までは表示言語の選択を出さない（フラグは routing.ts） */}
+                    {LANGUAGE_SWITCHER_ENABLED && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">{t('languageTitle')}</CardTitle>
+                                <p className="text-xs text-gray-500 mt-1">{t('languageNote')}</p>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <Label htmlFor="locale">{t('languageLabel')}</Label>
+                                <select
+                                    id="locale"
+                                    value={locale}
+                                    onChange={(e) => setLocale(e.target.value as AppLocale)}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                    {locales.map((option) => (
+                                        <option key={option} value={option}>{localeLabels[option]}</option>
+                                    ))}
+                                </select>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {userData.role === 'SOS' ? (
                         <>
