@@ -29,6 +29,13 @@
     "areasSuffix": "",
     "areasSuffixSm": ""
   },
+  "supporterRecruit": {
+    "badge": "Đang tuyển người hỗ trợ",
+    "text": "Dành cho NPO, tổ chức hỗ trợ, doanh nghiệp và cơ quan nhà nước",
+    "action": "Xem trang tuyển",
+    "title": "Tham gia với vai trò người hỗ trợ",
+    "description": "Chúng tôi chào đón NPO, tổ chức hỗ trợ, doanh nghiệp và cơ quan nhà nước. Sau khi tìm hiểu về hoạt động của bạn, ban điều hành sẽ cấp tài khoản."
+  },
   "concept": {
     "kicker": "HOW IT WORKS",
     "title": "Cơ chế kết nối tiếng kêu cứu với sự hỗ trợ",
@@ -94,6 +101,7 @@
   "footer": {
     "story": "Tấm lòng của chúng tôi",
     "supporters": "Danh sách người hỗ trợ",
+    "supporterRecruit": "Tuyển người hỗ trợ",
     "contact": "Liên hệ",
     "terms": "Điều khoản sử dụng",
     "privacy": "Chính sách bảo mật",

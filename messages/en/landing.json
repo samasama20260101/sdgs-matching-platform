@@ -29,6 +29,13 @@
     "areasSuffix": "",
     "areasSuffixSm": ""
   },
+  "supporterRecruit": {
+    "badge": "Now recruiting supporters",
+    "text": "For NPOs, support groups, companies and public bodies",
+    "action": "See the details",
+    "title": "Join us as a supporter",
+    "description": "We welcome NPOs, support groups, companies and public bodies. We will ask about your work, then issue your account."
+  },
   "concept": {
     "kicker": "HOW IT WORKS",
     "title": "Turning calls for help into real support",
@@ -94,6 +101,7 @@
   "footer": {
     "story": "Our story",
     "supporters": "Supporters",
+    "supporterRecruit": "Become a supporter",
     "contact": "Contact",
     "terms": "Terms of Service",
     "privacy": "Privacy",

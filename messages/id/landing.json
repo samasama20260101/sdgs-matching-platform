@@ -29,6 +29,13 @@
     "areasSuffix": "",
     "areasSuffixSm": ""
   },
+  "supporterRecruit": {
+    "badge": "Sedang mencari pendukung",
+    "text": "Untuk NPO, lembaga pendukung, perusahaan, dan instansi pemerintah",
+    "action": "Lihat halaman rekrutmen",
+    "title": "Bergabunglah sebagai pendukung",
+    "description": "Kami menyambut NPO, lembaga pendukung, perusahaan, dan instansi pemerintah. Setelah menanyakan kegiatan Anda, pengelola akan menerbitkan akun Anda."
+  },
   "concept": {
     "kicker": "HOW IT WORKS",
     "title": "Mekanisme yang menghubungkan suara minta tolong dengan dukungan",
@@ -94,6 +101,7 @@
   "footer": {
     "story": "Kisah kami",
     "supporters": "Daftar pendukung",
+    "supporterRecruit": "Jadi pendukung",
     "contact": "Kontak",
     "terms": "Syarat Layanan",
     "privacy": "Kebijakan Privasi",

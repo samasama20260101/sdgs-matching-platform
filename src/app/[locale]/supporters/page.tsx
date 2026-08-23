@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { SUPPORTER_RECRUIT_URL } from '@/lib/constants/links';
 import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/icons/Logo';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
@@ -38,6 +39,7 @@ export default function SupportersPage() {
   const tSection = useTranslations('landing.supportersSection');
   const tSupporterType = useTranslations('common.supporterType');
   const tForm = useTranslations('common.form');
+  const tRecruit = useTranslations('landing.supporterRecruit');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [displayCount, setDisplayCount] = useState(20); // 最初は20件表示
   const [isLoading, setIsLoading] = useState(true);
@@ -249,6 +251,24 @@ export default function SupportersPage() {
           )}
           </>
         )}
+
+        {/* 参加を検討している団体向けの導線。一覧を見ている人は関心が最も高いのでここに置く。
+            申し込みは公式サイト側（別ホスト）で完結する */}
+        <div className="mt-12 rounded-2xl border border-teal-100 bg-teal-50/60 px-6 py-7 text-center">
+          <p className="text-sm font-bold text-gray-900 sm:text-base">{tRecruit('title')}</p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm">
+            {tRecruit('description')}
+          </p>
+          <a
+            href={SUPPORTER_RECRUIT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-teal-700"
+          >
+            {tRecruit('action')}
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
       </main>
     </div>
   );

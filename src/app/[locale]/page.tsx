@@ -12,6 +12,7 @@ import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { ACTIVE_DISASTER_EVENT } from '@/lib/constants/disaster';
 import { Logo } from '@/components/icons/Logo';
 import { ShareButtons } from '@/components/marketing/ShareButtons';
+import { SUPPORTER_RECRUIT_URL } from '@/lib/constants/links';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/seeyou.samasama/';
 
@@ -235,6 +236,26 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ── サポーター募集の帯 ──
+          相談者向けの主張を邪魔しないよう控えめに。申し込みは公式サイト側（別ホスト）で完結する */}
+      <a
+        href={SUPPORTER_RECRUIT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group block border-b border-gray-100 bg-gray-50 transition-colors hover:bg-teal-50"
+      >
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-x-3 gap-y-1.5 px-6 py-3.5 text-center">
+          <span className="rounded-full bg-teal-100 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-teal-700">
+            {t('supporterRecruit.badge')}
+          </span>
+          <span className="text-xs text-gray-500 sm:text-sm">{t('supporterRecruit.text')}</span>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-600 sm:text-sm">
+            {t('supporterRecruit.action')}
+            <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        </div>
+      </a>
 
       {/* ── サービス概念図モック ── */}
       <section className="bg-white px-4 py-14 sm:px-6 sm:py-18">
@@ -471,6 +492,8 @@ export default function HomePage() {
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 text-gray-500">
           <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.story')}</Link>
           <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.supporters')}</Link>
+          <a href={SUPPORTER_RECRUIT_URL} target="_blank" rel="noopener noreferrer"
+            className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.supporterRecruit')}</a>
           <Link href="/contact" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.contact')}</Link>
           <Link href="/terms" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.terms')}</Link>
           <Link href="/privacy" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.privacy')}</Link>

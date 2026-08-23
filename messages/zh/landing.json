@@ -29,6 +29,13 @@
     "areasSuffix": "个",
     "areasSuffixSm": "个"
   },
+  "supporterRecruit": {
+    "badge": "正在招募支援方",
+    "text": "致NPO・支援团体・企业・行政机构",
+    "action": "查看招募页面",
+    "title": "以支援方的身份加入我们",
+    "description": "我们欢迎NPO・支援团体・企业・行政机构的加入。在了解您的活动内容后，由运营团队为您开通账号。"
+  },
   "concept": {
     "kicker": "HOW IT WORKS",
     "title": "把求助的声音，连接到支援的机制",
@@ -94,6 +101,7 @@
   "footer": {
     "story": "我们的心声",
     "supporters": "支援者一览",
+    "supporterRecruit": "招募支援方",
     "contact": "联系我们",
     "terms": "服务条款",
     "privacy": "隐私政策",
