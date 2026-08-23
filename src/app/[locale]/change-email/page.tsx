@@ -81,7 +81,20 @@ export default function ChangeEmailPage() {
                 email: checkResult.new_email,
             })
             if (updateError) {
-                setError(updateError.message)
+                // GoTrue のメッセージは英語で、しかも email_address_invalid のときは
+                // 変更先ではなく「現在のアドレス」を引用してくるため、そのまま出さない。
+                // このコードは送信側（SMTP未設定・宛先拒否）の失敗でも返る。
+                console.error('[change-email] updateUser error:', updateError.code, updateError.message)
+                switch (updateError.code) {
+                    case 'email_exists':
+                        setError(t('errorAlreadyUsed')); break
+                    case 'email_address_invalid':
+                        setError(t('errorSendFailed')); break
+                    case 'over_email_send_rate_limit':
+                        setError(t('errorRateLimited')); break
+                    default:
+                        setError(t('errorGeneric'))
+                }
                 return
             }
 
