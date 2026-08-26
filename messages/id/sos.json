@@ -64,6 +64,8 @@
     "title": "Formulir konsultasi",
     "subtitle": "Ceritakan situasi Anda. AI akan menghubungkan Anda dengan dukungan yang paling sesuai.",
     "freeSectionTitle": "Ceritakan sedikit lebih detail",
+    "noPersonalInfoTitle": "Mohon jangan tulis hal yang dapat mengidentifikasi Anda",
+    "noPersonalInfoBody": "Apa yang Anda tulis di sini juga terlihat oleh pendukung sebelum Anda menyetujui mereka. Jangan tulis nama, alamat, nomor telepon, sekolah, atau tempat kerja — cukup ceritakan situasinya. Kontak Anda hanya dibagikan setelah Anda menyetujui, dan hanya seperlunya.",
     "whatLabel": "Apa yang sedang terjadi sekarang?",
     "whatHint": "Semakin detail Anda menulis, semakin mudah menemukan pendukung untuk Anda",
     "whatPlaceholder": "Contoh: Orang tua saya penganut agama baru dan melarang saya berobat ke rumah sakit. Sudah seminggu demam tinggi tetapi tidak bisa mendapat perawatan medis.",
@@ -233,6 +235,8 @@
     },
     "form": {
       "heading": "SOS Bencana {event}",
+      "noPersonalInfoTitle": "Mohon jangan tulis hal yang dapat mengidentifikasi Anda",
+      "noPersonalInfoBody": "Apa yang Anda tulis di sini juga terlihat oleh pendukung sebelum Anda menyetujui mereka. Jangan tulis nama, alamat lengkap, atau nomor telepon — cukup ceritakan situasinya. Untuk lokasi, hanya wilayah yang Anda pilih di atas yang dibagikan.",
       "lead": "Tidak perlu berpikir rumit — isi saja bagian yang Anda bisa. Apa yang Anda tulis akan langsung sampai ke organisasi pendukung.",
       "q1": "Apa yang sedang terjadi sekarang?",
       "q1Placeholder": "Contoh: Rumah saya rusak dan saya tinggal di pengungsian",

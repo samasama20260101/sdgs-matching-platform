@@ -64,6 +64,8 @@
     "title": "Consultation form",
     "subtitle": "Tell us about your situation. AI will connect you with the right support.",
     "freeSectionTitle": "Tell us a little more",
+    "noPersonalInfoTitle": "Please leave out anything that identifies you",
+    "noPersonalInfoBody": "What you write here is visible to supporters before you approve them. Leave out your name, address, phone number, school or workplace, and tell us only about the situation. Your contact details are shared only after you approve a supporter, and only as far as needed.",
     "whatLabel": "What is happening right now?",
     "whatHint": "The more detail you give, the easier it is to find a supporter for you",
     "whatPlaceholder": "e.g. My parents belong to a religious group and refuse to let me see a doctor. I have had a high fever for a week but cannot get medical care.",
@@ -233,6 +235,8 @@
     },
     "form": {
       "heading": "{event} Disaster SOS",
+      "noPersonalInfoTitle": "Please leave out anything that identifies you",
+      "noPersonalInfoBody": "What you write here is visible to supporters before you approve them. Leave out your name, full street address and phone number, and tell us only about the situation. Only the area you picked above is shared as your location.",
       "lead": "Don't worry about writing it perfectly — fill in only what you can. What you write goes directly to supporters.",
       "q1": "What is happening right now?",
       "q1Placeholder": "e.g. My home was damaged and I am staying at a shelter",

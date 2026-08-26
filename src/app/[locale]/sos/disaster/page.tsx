@@ -284,6 +284,13 @@ export default function DisasterSosPage() {
                   </Card>
                 )}
 
+                {/* 個人情報を書かせないための注意喚起。場所は専用の選択欄で取るため
+                    自由記述に住所を書く必要がないことも伝える。送信はブロックしない */}
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-sm font-bold text-amber-900">{t('noPersonalInfoTitle')}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('noPersonalInfoBody')}</p>
+                </div>
+
                 {FIELDS.map((field, index) => (
                   <Card key={field.key} className="border-l-4 border-l-rose-400">
                     <CardHeader>

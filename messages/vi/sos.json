@@ -64,6 +64,8 @@
     "title": "Mẫu tư vấn",
     "subtitle": "Hãy cho chúng tôi biết tình trạng của bạn. AI sẽ kết nối bạn với sự hỗ trợ phù hợp nhất.",
     "freeSectionTitle": "Hãy cho chúng tôi biết thêm một chút",
+    "noPersonalInfoTitle": "Xin đừng viết những gì có thể nhận ra bạn là ai",
+    "noPersonalInfoBody": "Nội dung bạn viết ở đây cũng hiển thị với người hỗ trợ trước khi bạn chấp thuận họ. Xin đừng viết họ tên, địa chỉ, số điện thoại, trường học hay nơi làm việc — chỉ cần cho chúng tôi biết tình huống của bạn. Thông tin liên lạc chỉ được chia sẻ sau khi bạn chấp thuận, và chỉ trong phạm vi cần thiết.",
     "whatLabel": "Hiện giờ đang xảy ra chuyện gì?",
     "whatHint": "Viết càng chi tiết thì càng dễ tìm được người hỗ trợ cho bạn",
     "whatPlaceholder": "VD: Bố mẹ tôi theo một tôn giáo mới và không cho tôi đi khám bệnh. Tôi sốt cao suốt một tuần nay nhưng không được chữa trị.",
@@ -233,6 +235,8 @@
     },
     "form": {
       "heading": "SOS thảm họa {event}",
+      "noPersonalInfoTitle": "Xin đừng viết những gì có thể nhận ra bạn là ai",
+      "noPersonalInfoBody": "Nội dung bạn viết ở đây cũng hiển thị với người hỗ trợ trước khi bạn chấp thuận họ. Xin đừng viết họ tên, địa chỉ chi tiết hay số điện thoại — chỉ cần cho chúng tôi biết tình huống. Về vị trí, chỉ khu vực bạn đã chọn ở trên được chia sẻ.",
       "lead": "Đừng lo lắng về cách viết — chỉ cần điền những gì bạn có thể. Nội dung bạn viết sẽ được gửi trực tiếp đến các tổ chức hỗ trợ.",
       "q1": "Hiện tại điều gì đang xảy ra?",
       "q1Placeholder": "VD: Nhà tôi bị hư hại và tôi đang ở nơi lánh nạn",

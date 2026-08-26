@@ -376,6 +376,13 @@ export default function SOSHearingPage() {
               <CardTitle className="text-base font-medium">{t('freeSectionTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* 個人情報を書かせないための注意喚起。あとからのマスキングに頼らず入力段階で防ぐ
+                  （設計書 §5.2 と同じ思想）。送信はブロックしない */}
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-sm font-bold text-amber-900">{t('noPersonalInfoTitle')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('noPersonalInfoBody')}</p>
+              </div>
+
               <div className="space-y-1">
                 <Label htmlFor="what">
                   {t('whatLabel')} <span className="text-red-500">*</span>
