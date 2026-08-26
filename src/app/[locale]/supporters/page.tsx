@@ -192,6 +192,7 @@ export default function SupportersPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {filtered.slice(0, displayCount).map(s => {
               const matched = !!(userRegionCode && isRegionMatch(s));
+              const name = s.organization_name || s.display_name;
               return (
                 <Link key={s.id} href={`/supporters/${s.id}`}
                   className={`bg-white rounded-2xl p-5 shadow-sm border transition-all block hover:shadow-md ${
@@ -202,12 +203,16 @@ export default function SupportersPage() {
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
-                          {s.organization_name || s.display_name}
+                      <div className="flex items-center gap-2 mb-1">
+                        {/* 長い団体名はカードを伸ばさず2行で打ち切る。全文は詳細ページとtitle属性で見られる。
+                            flex項目は既定の min-width:auto で内容幅より縮まないため min-w-0 が要る。
+                            wrap-anywhere は必要なときだけ折り、かつ min-content 幅にも効く */}
+                        <h3 title={name}
+                          className="min-w-0 flex-1 line-clamp-2 wrap-anywhere font-bold text-gray-800 text-sm leading-tight">
+                          {name}
                         </h3>
                         {matched && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium whitespace-nowrap">
+                          <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium whitespace-nowrap">
                             {t('regionBadge')}
                           </span>
                         )}
