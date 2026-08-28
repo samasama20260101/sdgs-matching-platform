@@ -29,6 +29,13 @@
     "areasSuffix": "都道府県",
     "areasSuffixSm": "県"
   },
+  "supporterRecruit": {
+    "badge": "サポーター募集中",
+    "text": "NPO・支援団体・企業・行政のみなさまへ",
+    "action": "募集ページを見る",
+    "title": "支援する側として参加しませんか",
+    "description": "NPO・支援団体・企業・行政の方の参加を受け付けています。活動内容をうかがったうえで、運営がアカウントを発行します。"
+  },
   "concept": {
     "kicker": "HOW IT WORKS",
     "title": "助けてほしい声を、支援につなげる仕組み",
@@ -94,6 +101,7 @@
   "footer": {
     "story": "私たちの思い",
     "supporters": "サポーター一覧",
+    "supporterRecruit": "サポーター募集",
     "contact": "お問い合わせ",
     "terms": "利用規約",
     "privacy": "プライバシー",

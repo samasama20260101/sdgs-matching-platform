@@ -1,8 +1,6 @@
 {
   "questions": {
     "intro": "※ Jika lebih dari satu yang sesuai, silakan centang semuanya",
-    "otherLabel": "Lainnya",
-    "otherPrefix": "Lainnya: ",
     "q1": {
       "question": "Apakah Anda mengalami kesulitan terkait kebutuhan hidup sehari-hari?",
       "options": {
@@ -11,8 +9,7 @@
         "q1_3": "Tidak bisa menggunakan listrik",
         "q1_4": "Tidak bisa menggunakan internet",
         "q1_5": "Tidak ada yang sesuai"
-      },
-      "otherPlaceholder": "Contoh: Tidak bisa mendapatkan air minum bersih, tidak ada pemanas di musim dingin"
+      }
     },
     "q2": {
       "question": "Apakah Anda mengalami kesulitan terkait kehidupan yang aman dan tenteram?",
@@ -22,8 +19,7 @@
         "q2_3": "Mengalami kekerasan atau pelecehan fisik・mental・seksual",
         "q2_4": "Bekerja dengan upah di bawah upah minimum, atau lembur tanpa dibayar",
         "q2_5": "Tidak ada yang sesuai"
-      },
-      "otherPlaceholder": "Contoh: Kebebasan dirampas karena alasan agama, mengalami diskriminasi sebagai pengungsi"
+      }
     },
     "q3": {
       "question": "Apakah Anda mengalami kesulitan terkait pekerjaan, uang, atau pendidikan?",
@@ -33,8 +29,7 @@
         "q3_3": "Tidak bisa bersekolah",
         "q3_4": "Berusia di bawah 15 tahun tetapi bekerja",
         "q3_5": "Tidak ada yang sesuai"
-      },
-      "otherPlaceholder": "Contoh: Memiliki disabilitas sehingga tidak bisa mencari kerja, terus bekerja untuk membayar utang"
+      }
     },
     "q4": {
       "question": "Apakah saat ini Anda mengalami kesulitan terkait kesehatan fisik atau mental?",
@@ -44,8 +39,7 @@
         "q4_3": "Menderita karena asap rokok orang lain",
         "q4_4": "Bekerja di lingkungan berbahaya yang rawan cedera dan merasa cemas",
         "q4_5": "Tidak ada yang sesuai"
-      },
-      "otherPlaceholder": "Contoh: Butuh perawatan mental tetapi tidak tahu harus konsultasi ke mana, tidak bisa mendapatkan obat"
+      }
     },
     "q5": {
       "question": "Dukungan seperti apa yang Anda harapkan?",
@@ -56,14 +50,15 @@
         "q5_4": "Ingin berkonsultasi dengan ahli seperti pengacara atau dokter",
         "q5_5": "Bersedia membayar untuk mendapatkan dukungan",
         "q5_6": "Tidak ada yang sesuai"
-      },
-      "otherPlaceholder": "Contoh: Anak saya perlu perlindungan, sedang mencari tempat berlindung"
+      }
     }
   },
   "hearing": {
     "title": "Formulir konsultasi",
     "subtitle": "Ceritakan situasi Anda. AI akan menghubungkan Anda dengan dukungan yang paling sesuai.",
     "freeSectionTitle": "Ceritakan sedikit lebih detail",
+    "noPersonalInfoTitle": "Mohon jangan tulis hal yang dapat mengidentifikasi Anda",
+    "noPersonalInfoBody": "Apa yang Anda tulis di sini juga terlihat oleh pendukung sebelum Anda menyetujui mereka. Jangan tulis nama, alamat, nomor telepon, sekolah, atau tempat kerja — cukup ceritakan situasinya. Kontak Anda hanya dibagikan setelah Anda menyetujui, dan hanya seperlunya.",
     "whatLabel": "Apa yang sedang terjadi sekarang?",
     "whatHint": "Semakin detail Anda menulis, semakin mudah menemukan pendukung untuk Anda",
     "whatPlaceholder": "Contoh: Orang tua saya penganut agama baru dan melarang saya berobat ke rumah sakit. Sudah seminggu demam tinggi tetapi tidak bisa mendapat perawatan medis.",
@@ -84,8 +79,6 @@
     "aiStep4": "Menyiapkan pencocokan...",
     "aiWait": "Mohon tunggu sebentar...",
     "errorAnswerRequired": "Silakan jawab minimal satu pilihan di Q{id}",
-    "errorOtherRequired": "Silakan isi kolom 「Lainnya」 di Q{id}",
-    "errorOtherTooLong": "Kolom 「Lainnya」 Q{id} maksimal {max} karakter",
     "errorWhatRequired": "Silakan isi 「Apa yang sedang terjadi sekarang?」",
     "errorWhatTooLong": "「Apa yang sedang terjadi sekarang?」 maksimal {max} karakter",
     "errorTimeout": "Proses memakan waktu terlalu lama. Silakan coba lagi nanti.",
@@ -233,6 +226,8 @@
     },
     "form": {
       "heading": "SOS Bencana {event}",
+      "noPersonalInfoTitle": "Mohon jangan tulis hal yang dapat mengidentifikasi Anda",
+      "noPersonalInfoBody": "Apa yang Anda tulis di sini juga terlihat oleh pendukung sebelum Anda menyetujui mereka. Jangan tulis nama, alamat lengkap, atau nomor telepon — cukup ceritakan situasinya. Untuk lokasi, hanya wilayah yang Anda pilih di atas yang dibagikan.",
       "lead": "Tidak perlu berpikir rumit — isi saja bagian yang Anda bisa. Apa yang Anda tulis akan langsung sampai ke organisasi pendukung.",
       "q1": "Apa yang sedang terjadi sekarang?",
       "q1Placeholder": "Contoh: Rumah saya rusak dan saya tinggal di pengungsian",

@@ -18,7 +18,6 @@ import { Modal } from '@/components/ui/modal';
 
 // 入力上限
 const CHAR_LIMITS = {
-  otherText: 200,
   what: 1000,
   when: 200,
   want: 200,
@@ -79,10 +78,6 @@ export default function SOSHearingPage() {
   // 選択された回答（複数選択可）
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<number, Set<string>>>({});
 
-  // Q1〜Q5の「その他」チェック状態 & テキスト
-  const [otherChecked, setOtherChecked] = useState<Record<number, boolean>>({});
-  const [otherTexts, setOtherTexts] = useState<Record<number, string>>({});
-
   // 自由記述
   const [freeText, setFreeText] = useState({ what: '', when: '', want: '' });
 
@@ -115,14 +110,12 @@ export default function SOSHearingPage() {
       const current = new Set(prev[questionId] || []);
       const exclusiveOptionId = question.options.find(item => item.exclusive)?.id;
       if (option.exclusive) {
-        // 「該当なし」を選んだら他をすべて外し、その他もリセット
+        // 「該当なし」を選んだら他をすべて外す
         if (current.has(option.id)) {
           current.delete(option.id);
         } else {
           current.clear();
           current.add(option.id);
-          setOtherChecked(p => ({ ...p, [questionId]: false }));
-          setOtherTexts(p => ({ ...p, [questionId]: '' }));
         }
       } else {
         // 他の選択肢を選んだら「該当なし」を外す
@@ -134,25 +127,6 @@ export default function SOSHearingPage() {
     });
   };
 
-  // 「その他」チェック切り替え
-  const handleToggleOther = (questionId: number) => {
-    setOtherChecked(prev => {
-      const next = { ...prev, [questionId]: !prev[questionId] };
-      if (!next[questionId]) {
-        setOtherTexts(p => ({ ...p, [questionId]: '' }));
-      } else {
-        // その他を選んだら「該当なし」を外す
-        setSelectedOptionIds(p => {
-          const current = new Set(p[questionId] || []);
-          const question = QA_QUESTIONS.find(item => item.id === questionId);
-          const exclusiveOptionId = question?.options.find(item => item.exclusive)?.id;
-          if (exclusiveOptionId) current.delete(exclusiveOptionId);
-          return { ...p, [questionId]: current };
-        });
-      }
-      return next;
-    });
-  };
 
   // 自由記述専用の緊急語彙。機械翻訳だけで確定せず、ネイティブ/専門家確認が必要な暫定リスト。
   const detectUrgency = (text: string): boolean => {
@@ -177,17 +151,8 @@ export default function SOSHearingPage() {
     // バリデーション
     for (const q of QA_QUESTIONS) {
       const selected = selectedOptionIds[q.id]?.size || 0;
-      const hasOther = otherChecked[q.id] && otherTexts[q.id]?.trim();
-      if (selected === 0 && !hasOther) {
+      if (selected === 0) {
         setError(t('errorAnswerRequired', { id: q.id }));
-        return;
-      }
-      if (otherChecked[q.id] && !otherTexts[q.id]?.trim()) {
-        setError(t('errorOtherRequired', { id: q.id }));
-        return;
-      }
-      if ((otherTexts[q.id]?.length || 0) > CHAR_LIMITS.otherText) {
-        setError(t('errorOtherTooLong', { id: q.id, max: CHAR_LIMITS.otherText }));
         return;
       }
     }
@@ -224,20 +189,15 @@ export default function SOSHearingPage() {
       const qaIds: Record<number, string[]> = {};
       for (const q of QA_QUESTIONS) {
         const selectedIds = [...(selectedOptionIds[q.id] || [])];
-        const items = selectedIds.map(id => optionText(q.id, id));
-        if (otherChecked[q.id] && otherTexts[q.id]?.trim()) {
-          items.push(`${tQ('otherPrefix')}${otherTexts[q.id].trim()}`);
-          selectedIds.push(`q${q.id}_other`);
-        }
-        qaData[q.id] = items;
+        qaData[q.id] = selectedIds.map(id => optionText(q.id, id));
         qaIds[q.id] = selectedIds;
       }
 
-      // 緊急度判定: 選択肢はurgentフラグ、自由記述と「その他」は語彙リストで判定する。
+      // 緊急度判定: 選択肢はurgentフラグ、自由記述は語彙リストで判定する。
       const hasUrgentChoice = QA_QUESTIONS.some(q =>
         [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
       );
-      const freeTextForUrgency = Object.values(freeText).join(' ') + ' ' + Object.values(otherTexts).join(' ');
+      const freeTextForUrgency = Object.values(freeText).join(' ');
       const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -335,36 +295,6 @@ export default function SOSHearingPage() {
                       </label>
                     );
                   })}
-
-                  {/* その他 */}
-                  <div>
-                    <label
-                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${otherChecked[question.id] ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
-                        }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={otherChecked[question.id] || false}
-                        onChange={() => handleToggleOther(question.id)}
-                        className="mt-0.5 text-blue-600 rounded"
-                      />
-                      <span className="text-sm">{tQ('otherLabel')}</span>
-                    </label>
-
-                    {otherChecked[question.id] && (
-                      <div className="mt-2 ml-8">
-                        <textarea
-                          rows={2}
-                          maxLength={CHAR_LIMITS.otherText}
-                          className="w-full p-3 border border-blue-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
-                          placeholder={tQ(`q${question.id}.otherPlaceholder`)}
-                          value={otherTexts[question.id] || ''}
-                          onChange={(e) => setOtherTexts(prev => ({ ...prev, [question.id]: e.target.value }))}
-                        />
-                        <CharCounter current={otherTexts[question.id]?.length || 0} max={CHAR_LIMITS.otherText} />
-                      </div>
-                    )}
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -376,6 +306,13 @@ export default function SOSHearingPage() {
               <CardTitle className="text-base font-medium">{t('freeSectionTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* 個人情報を書かせないための注意喚起。あとからのマスキングに頼らず入力段階で防ぐ
+                  （設計書 §5.2 と同じ思想）。送信はブロックしない */}
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-sm font-bold text-amber-900">{t('noPersonalInfoTitle')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('noPersonalInfoBody')}</p>
+              </div>
+
               <div className="space-y-1">
                 <Label htmlFor="what">
                   {t('whatLabel')} <span className="text-red-500">*</span>

@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { SUPPORTER_RECRUIT_URL } from '@/lib/constants/links';
 import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/icons/Logo';
 import { getSupporterTypeConfig } from '@/lib/supporterType';
@@ -38,6 +39,7 @@ export default function SupportersPage() {
   const tSection = useTranslations('landing.supportersSection');
   const tSupporterType = useTranslations('common.supporterType');
   const tForm = useTranslations('common.form');
+  const tRecruit = useTranslations('landing.supporterRecruit');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [displayCount, setDisplayCount] = useState(20); // 最初は20件表示
   const [isLoading, setIsLoading] = useState(true);
@@ -190,6 +192,7 @@ export default function SupportersPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {filtered.slice(0, displayCount).map(s => {
               const matched = !!(userRegionCode && isRegionMatch(s));
+              const name = s.organization_name || s.display_name;
               return (
                 <Link key={s.id} href={`/supporters/${s.id}`}
                   className={`bg-white rounded-2xl p-5 shadow-sm border transition-all block hover:shadow-md ${
@@ -200,12 +203,16 @@ export default function SupportersPage() {
                       {getSupporterTypeConfig(s.supporter_type).emoji}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="font-bold text-gray-800 text-sm leading-tight break-words">
-                          {s.organization_name || s.display_name}
+                      <div className="flex items-center gap-2 mb-1">
+                        {/* 長い団体名はカードを伸ばさず2行で打ち切る。全文は詳細ページとtitle属性で見られる。
+                            flex項目は既定の min-width:auto で内容幅より縮まないため min-w-0 が要る。
+                            wrap-anywhere は必要なときだけ折り、かつ min-content 幅にも効く */}
+                        <h3 title={name}
+                          className="min-w-0 flex-1 line-clamp-2 wrap-anywhere font-bold text-gray-800 text-sm leading-tight">
+                          {name}
                         </h3>
                         {matched && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium whitespace-nowrap">
+                          <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium whitespace-nowrap">
                             {t('regionBadge')}
                           </span>
                         )}
@@ -249,6 +256,24 @@ export default function SupportersPage() {
           )}
           </>
         )}
+
+        {/* 参加を検討している団体向けの導線。一覧を見ている人は関心が最も高いのでここに置く。
+            申し込みは公式サイト側（別ホスト）で完結する */}
+        <div className="mt-12 rounded-2xl border border-teal-100 bg-teal-50/60 px-6 py-7 text-center">
+          <p className="text-sm font-bold text-gray-900 sm:text-base">{tRecruit('title')}</p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm">
+            {tRecruit('description')}
+          </p>
+          <a
+            href={SUPPORTER_RECRUIT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-teal-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-teal-700"
+          >
+            {tRecruit('action')}
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
       </main>
     </div>
   );

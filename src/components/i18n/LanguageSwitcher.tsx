@@ -3,12 +3,8 @@
 import { Languages } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
+import { LANGUAGE_SWITCHER_ENABLED, localeLabels, locales, type AppLocale } from '@/i18n/routing';
 import { supabase } from '@/lib/supabase/client';
-
-// 多言語はまだ一般公開しない(後日大々的に公開予定)。公開時に true へ戻す。
-// あわせて src/i18n/routing.ts の localeDetection も戻すこと。
-const LANGUAGE_SWITCHER_ENABLED = false;
 
 export function LanguageSwitcher() {
   const locale = useLocale() as AppLocale;

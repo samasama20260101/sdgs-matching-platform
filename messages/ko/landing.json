@@ -29,6 +29,13 @@
     "areasSuffix": "곳",
     "areasSuffixSm": "곳"
   },
+  "supporterRecruit": {
+    "badge": "서포터 모집 중",
+    "text": "NPO・지원단체・기업・행정기관 여러분께",
+    "action": "모집 페이지 보기",
+    "title": "지원하는 쪽으로 참여해 보시겠어요",
+    "description": "NPO・지원단체・기업・행정기관의 참여를 받고 있습니다. 활동 내용을 확인한 뒤 운영팀이 계정을 발급합니다."
+  },
   "concept": {
     "kicker": "HOW IT WORKS",
     "title": "도움을 청하는 목소리를 지원으로 잇는 구조",
@@ -94,6 +101,7 @@
   "footer": {
     "story": "우리의 마음",
     "supporters": "서포터 목록",
+    "supporterRecruit": "서포터 모집",
     "contact": "문의",
     "terms": "이용약관",
     "privacy": "개인정보 처리방침",

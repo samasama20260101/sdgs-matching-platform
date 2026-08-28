@@ -1,5 +1,6 @@
 // src/app/api/admin/stats/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getOrganizationsByUserIds } from '@/lib/organizations'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -26,11 +27,29 @@ export async function GET(request: Request) {
     }
 
     // サポーター一覧
+    // 注意：users.organization_name / users.supporter_type は organizations 移行前の遺物で
+    //       プロフィール更新では書き換わらない。正本は organizations 側なので下で上書きする。
     const { data: supporters } = await supabaseAdmin
         .from('users')
         .select('id, real_name, display_name, email, organization_name, supporter_type, phone, created_at, is_suspended')
         .eq('role', 'SUPPORTER')
         .order('created_at', { ascending: false })
+
+    const organizationBySupporterId = await getOrganizationsByUserIds(
+        (supporters ?? []).map((s: { id: string }) => s.id),
+    )
+
+    // 団体未所属（移行漏れ）の場合のみ users 側の値にフォールバック
+    const supportersWithOrganization = (supporters ?? []).map(
+        (s: { id: string; organization_name: string | null; supporter_type: string | null; [key: string]: unknown }) => {
+            const organization = organizationBySupporterId[s.id]
+            return {
+                ...s,
+                organization_name: organization?.name ?? s.organization_name,
+                supporter_type: organization?.supporter_type ?? s.supporter_type,
+            }
+        },
+    )
 
     // SOSユーザー一覧
     const { data: sosUsers } = await supabaseAdmin
@@ -99,7 +118,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-        supporters: supporters ?? [],
+        supporters: supportersWithOrganization,
         sosUsers: sosUsersWithRegion,
         sosCount: sosUsersWithRegion.length,
         cases: casesWithOwner,

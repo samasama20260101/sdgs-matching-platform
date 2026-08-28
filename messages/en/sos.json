@@ -1,8 +1,6 @@
 {
   "questions": {
     "intro": "* If more than one applies to you, please check all that apply",
-    "otherLabel": "Other",
-    "otherPrefix": "Other: ",
     "q1": {
       "question": "Are you having trouble with daily necessities?",
       "options": {
@@ -11,8 +9,7 @@
         "q1_3": "I have no electricity",
         "q1_4": "I have no internet access",
         "q1_5": "None of these"
-      },
-      "otherPlaceholder": "e.g. I can't get clean drinking water, I have no heating in winter"
+      }
     },
     "q2": {
       "question": "Are you having trouble with safety or security in your life?",
@@ -22,8 +19,7 @@
         "q2_3": "I am experiencing physical, mental, or sexual violence or harassment",
         "q2_4": "I work for less than minimum wage, or do unpaid overtime",
         "q2_5": "None of these"
-      },
-      "otherPlaceholder": "e.g. My freedom is restricted for religious reasons, I face discrimination as a refugee"
+      }
     },
     "q3": {
       "question": "Are you having trouble with work, money, or education?",
@@ -33,8 +29,7 @@
         "q3_3": "I cannot attend school",
         "q3_4": "I am under 15 and working",
         "q3_5": "None of these"
-      },
-      "otherPlaceholder": "e.g. I have a disability and cannot look for work, I keep working to repay debts"
+      }
     },
     "q4": {
       "question": "Are you currently having trouble with your health or mental well-being?",
@@ -44,8 +39,7 @@
         "q4_3": "Secondhand smoke is causing me distress",
         "q4_4": "I work in a dangerous environment and worry about getting injured",
         "q4_5": "None of these"
-      },
-      "otherPlaceholder": "e.g. I need mental health care but don't know where to turn, I can't get my medication"
+      }
     },
     "q5": {
       "question": "What kind of support would you like?",
@@ -56,14 +50,15 @@
         "q5_4": "I want to consult a professional such as a lawyer or doctor",
         "q5_5": "I am willing to pay for support",
         "q5_6": "None of these"
-      },
-      "otherPlaceholder": "e.g. My child needs protection, I am looking for a place to shelter"
+      }
     }
   },
   "hearing": {
     "title": "Consultation form",
     "subtitle": "Tell us about your situation. AI will connect you with the right support.",
     "freeSectionTitle": "Tell us a little more",
+    "noPersonalInfoTitle": "Please leave out anything that identifies you",
+    "noPersonalInfoBody": "What you write here is visible to supporters before you approve them. Leave out your name, address, phone number, school or workplace, and tell us only about the situation. Your contact details are shared only after you approve a supporter, and only as far as needed.",
     "whatLabel": "What is happening right now?",
     "whatHint": "The more detail you give, the easier it is to find a supporter for you",
     "whatPlaceholder": "e.g. My parents belong to a religious group and refuse to let me see a doctor. I have had a high fever for a week but cannot get medical care.",
@@ -84,8 +79,6 @@
     "aiStep4": "Preparing the matching...",
     "aiWait": "Please wait a moment...",
     "errorAnswerRequired": "Please answer at least one item in Q{id}",
-    "errorOtherRequired": "Please fill in the \"Other\" field for Q{id}",
-    "errorOtherTooLong": "The \"Other\" field for Q{id} must be {max} characters or less",
     "errorWhatRequired": "Please fill in \"What is happening right now?\"",
     "errorWhatTooLong": "\"What is happening right now?\" must be {max} characters or less",
     "errorTimeout": "This is taking too long. Please try again in a little while.",
@@ -233,6 +226,8 @@
     },
     "form": {
       "heading": "{event} Disaster SOS",
+      "noPersonalInfoTitle": "Please leave out anything that identifies you",
+      "noPersonalInfoBody": "What you write here is visible to supporters before you approve them. Leave out your name, full street address and phone number, and tell us only about the situation. Only the area you picked above is shared as your location.",
       "lead": "Don't worry about writing it perfectly — fill in only what you can. What you write goes directly to supporters.",
       "q1": "What is happening right now?",
       "q1Placeholder": "e.g. My home was damaged and I am staying at a shelter",

@@ -13,6 +13,11 @@ export type AppLocale = (typeof locales)[number];
 
 export const defaultLocale: AppLocale = 'ja';
 
+// 多言語はまだ一般公開しない（後日大々的に公開予定）。公開時に true へ戻す。
+// 言語選択UIはヘッダーの LanguageSwitcher とプロフィールの表示言語欄の2箇所にあり、
+// どちらもこの1つのフラグで出し分ける（片方だけ戻す事故を防ぐため）。
+export const LANGUAGE_SWITCHER_ENABLED = false;
+
 export const localeLabels: Record<SupportedLocale, string> = {
   ja: '日本語',
   en: 'English',
@@ -27,7 +32,7 @@ export const routing = defineRouting({
   defaultLocale,
   localePrefix: 'as-needed',
   // 多言語の大々的公開までブラウザ言語による自動リダイレクトを止める(ja固定)。
-  // 公開時はこの行を削除し、LanguageSwitcher の LANGUAGE_SWITCHER_ENABLED も true へ。
+  // 公開時はこの行を削除し、上の LANGUAGE_SWITCHER_ENABLED も true へ。
   localeDetection: false,
 });
 
