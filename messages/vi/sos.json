@@ -1,8 +1,6 @@
 {
   "questions": {
     "intro": "※ Nếu có nhiều mục phù hợp, hãy đánh dấu tất cả",
-    "otherLabel": "Khác",
-    "otherPrefix": "Khác: ",
     "q1": {
       "question": "Bạn có gặp khó khăn về những thứ cần thiết cho cuộc sống không?",
       "options": {
@@ -11,8 +9,7 @@
         "q1_3": "Không có điện để dùng",
         "q1_4": "Không có internet để dùng",
         "q1_5": "Không có mục nào phù hợp"
-      },
-      "otherPlaceholder": "VD: Không có nước sạch để uống, mùa đông không có sưởi"
+      }
     },
     "q2": {
       "question": "Bạn có gặp khó khăn về cuộc sống an toàn, yên tâm không?",
@@ -22,8 +19,7 @@
         "q2_3": "Đang chịu bạo lực hoặc quấy rối về thể chất・tinh thần・tình dục",
         "q2_4": "Làm việc với lương thấp hơn lương tối thiểu, hoặc phải làm thêm giờ không lương",
         "q2_5": "Không có mục nào phù hợp"
-      },
-      "otherPlaceholder": "VD: Bị tước đoạt tự do vì lý do tôn giáo, bị phân biệt đối xử vì là người tị nạn"
+      }
     },
     "q3": {
       "question": "Bạn có gặp khó khăn về công việc, tiền bạc hay học tập không?",
@@ -33,8 +29,7 @@
         "q3_3": "Không thể đến trường",
         "q3_4": "Dưới 15 tuổi nhưng đang phải làm việc",
         "q3_5": "Không có mục nào phù hợp"
-      },
-      "otherPlaceholder": "VD: Có khuyết tật nên không thể xin việc, phải làm việc liên tục để trả nợ"
+      }
     },
     "q4": {
       "question": "Hiện tại bạn có gặp khó khăn về sức khỏe thể chất hay tinh thần không?",
@@ -44,8 +39,7 @@
         "q4_3": "Khổ sở vì hít phải khói thuốc lá (hút thuốc thụ động)",
         "q4_4": "Làm việc trong môi trường nguy hiểm dễ bị thương và cảm thấy bất an",
         "q4_5": "Không có mục nào phù hợp"
-      },
-      "otherPlaceholder": "VD: Cần chăm sóc tinh thần nhưng không biết hỏi ai, không mua được thuốc"
+      }
     },
     "q5": {
       "question": "Bạn mong muốn được hỗ trợ như thế nào?",
@@ -56,8 +50,7 @@
         "q5_4": "Muốn tư vấn với chuyên gia như luật sư, bác sĩ",
         "q5_5": "Muốn nhận hỗ trợ dù phải trả phí",
         "q5_6": "Không có mục nào phù hợp"
-      },
-      "otherPlaceholder": "VD: Con tôi cần được bảo vệ, đang tìm nơi lánh nạn"
+      }
     }
   },
   "hearing": {
@@ -86,8 +79,6 @@
     "aiStep4": "Đang chuẩn bị ghép nối...",
     "aiWait": "Vui lòng chờ trong giây lát...",
     "errorAnswerRequired": "Vui lòng trả lời ít nhất một mục ở Q{id}",
-    "errorOtherRequired": "Vui lòng nhập nội dung mục 「Khác」 của Q{id}",
-    "errorOtherTooLong": "Mục 「Khác」 của Q{id} tối đa {max} ký tự",
     "errorWhatRequired": "Vui lòng nhập 「Hiện giờ đang xảy ra chuyện gì?」",
     "errorWhatTooLong": "「Hiện giờ đang xảy ra chuyện gì?」 tối đa {max} ký tự",
     "errorTimeout": "Xử lý mất quá nhiều thời gian. Vui lòng thử lại sau ít phút.",
