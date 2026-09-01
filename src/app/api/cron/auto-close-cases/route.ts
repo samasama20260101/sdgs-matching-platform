@@ -1,7 +1,7 @@
 // src/app/api/cron/auto-close-cases/route.ts
 // Vercel Cron: 以下の2条件で自動処理（毎日午前2時）
 // 1. サポーター解決報告から14日後に自動RESOLVED
-// 2. MATCHEDのまま最終メッセージから14日間無活動 → 自動CLOSED
+// 2. MATCHEDのまま最終メッセージから30日間無活動 → 自動CLOSED
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
 import { NextResponse } from 'next/server'
@@ -14,7 +14,8 @@ export async function GET(request: Request) {
     }
 
     const now = new Date()
-    const deadline = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) // 14日前
+    const deadline = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) // 14日前（解決報告の自動RESOLVED用）
+    const inactivityDeadline = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // 30日前（MATCHED無活動の自動CLOSED用）
 
     // ─────────────────────────────────────────────────────
     // 処理1: supporter_resolved_at から14日経過 → RESOLVED
@@ -61,9 +62,9 @@ export async function GET(request: Request) {
     }
 
     // ─────────────────────────────────────────────────────
-    // 処理2: MATCHEDのまま最終メッセージから14日無活動 → CLOSED
-    // 判定：最後のメッセージ送信日が14日以上前、またはメッセージが0件で
-    //       案件のupdated_atが14日以上前
+    // 処理2: MATCHEDのまま最終メッセージから30日無活動 → CLOSED
+    // 判定：最後のメッセージ送信日が30日以上前、またはメッセージが0件で
+    //       案件のupdated_atが30日以上前
     // ─────────────────────────────────────────────────────
     const { data: matchedCases, error: matchedError } = await supabaseAdmin
         .from('cases')
@@ -102,10 +103,10 @@ export async function GET(request: Request) {
                 }
             })
 
-            // 無活動判定：最終メッセージ or updated_at が14日以上前
+            // 無活動判定：最終メッセージ or updated_at が30日以上前
             const inactiveCases = targetCases.filter((c: { id: string; updated_at: string }) => {
                 const lastActivity = lastMessageMap[c.id] ?? c.updated_at
-                return new Date(lastActivity) < deadline
+                return new Date(lastActivity) < inactivityDeadline
             })
 
             if (inactiveCases.length > 0) {
@@ -125,7 +126,7 @@ export async function GET(request: Request) {
                         sender_display_name_snapshot: 'システム',
                         sender_role_snapshot: 'SYSTEM',
                         message_type: 'SYSTEM',
-                        content: '__SYSTEM__最後のメッセージから14日間活動がなかったため、この案件は自動的に終了しました。',
+                        content: '__SYSTEM__最後のメッセージから30日間活動がなかったため、この案件は自動的に終了しました。',
                     }))
                     await supabaseAdmin.from('messages').insert(closeMessages)
                     closedCount = inactiveIds.length
