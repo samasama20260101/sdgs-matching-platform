@@ -8,7 +8,8 @@
 //
 // 安全設計:
 // - 入力文はこの画面の外に出ない(送信ゼロ・保存ゼロ。すべてブラウザ内で処理)
-// - 通信は kuromoji.js の辞書を初回に CDN(jsDelivr)から取得する一回だけ。入力文は含まれない
+// - kuromoji.js本体と辞書は public/kuromoji/ に自前ホスト(外部CDNへの通信なし)。
+//   CDN直読みは kuromoji内部の path.join が https:// を潰す既知の脆さがあるため相対パスにする
 // - 実験材料には合成サンプル(実在しない人名・住所)を用意。本物の相談文を貼らないこと
 // ============================================================
 
@@ -118,14 +119,16 @@ type KuromojiGlobal = {
     }
 }
 
-const KUROMOJI_CDN = 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2'
+// 自前ホスト(public/kuromoji/)。相対パスなら kuromoji 内部の path.join でも壊れない
+const KUROMOJI_BASE = '/kuromoji'
+const DICT_TIMEOUT_MS = 120_000
 
 function loadKuromojiScript(): Promise<KuromojiGlobal> {
     return new Promise((resolve, reject) => {
         const w = window as unknown as { kuromoji?: KuromojiGlobal }
         if (w.kuromoji) { resolve(w.kuromoji); return }
         const s = document.createElement('script')
-        s.src = KUROMOJI_CDN + '/build/kuromoji.js'
+        s.src = KUROMOJI_BASE + '/kuromoji.js'
         s.onload = () => {
             if (w.kuromoji) resolve(w.kuromoji)
             else reject(new Error('kuromoji global not found'))
@@ -135,12 +138,24 @@ function loadKuromojiScript(): Promise<KuromojiGlobal> {
     })
 }
 
+// kuromojiのローダーは辞書取得に失敗すると例外を握りつぶして永遠に黙ることがある。
+// タイムアウトと window error の捕捉で、沈黙ではなくエラーとして表面化させる。
 function buildTokenizer(k: KuromojiGlobal): Promise<KuromojiTokenizer> {
     return new Promise((resolve, reject) => {
-        k.builder({ dicPath: KUROMOJI_CDN + '/dict/' }).build((err, tokenizer) => {
-            if (err) reject(err)
-            else resolve(tokenizer)
-        })
+        let settled = false
+        const settle = (fn: () => void) => { if (!settled) { settled = true; cleanup(); fn() } }
+        const timer = setTimeout(() => settle(() => reject(new Error('辞書の読み込みが' + DICT_TIMEOUT_MS / 1000 + '秒でタイムアウトしました'))), DICT_TIMEOUT_MS)
+        const onWindowError = (e: ErrorEvent) => settle(() => reject(new Error('辞書の読み込み中にエラー: ' + e.message)))
+        const cleanup = () => { clearTimeout(timer); window.removeEventListener('error', onWindowError) }
+        window.addEventListener('error', onWindowError)
+        try {
+            k.builder({ dicPath: KUROMOJI_BASE + '/dict/' }).build((err, tokenizer) => {
+                if (err) settle(() => reject(err instanceof Error ? err : new Error(String(err))))
+                else settle(() => resolve(tokenizer))
+            })
+        } catch (e) {
+            settle(() => reject(e instanceof Error ? e : new Error(String(e))))
+        }
     })
 }
 
@@ -324,7 +339,7 @@ export default function MaskLabPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">
                 <p>・入力した文章は<strong>この画面の外に出ません</strong>(送信・保存は一切なし。すべてブラウザ内で処理します)。</p>
-                <p>・通信が発生するのは、層2の辞書(約18MB・初回のみ)を CDN から取得するときだけです。入力文は含まれません。</p>
+                <p>・辞書もアプリ内から配信するため、<strong>外部サービスへの通信は一切ありません</strong>(層2の辞書 約17MB を初回に読み込むだけ)。</p>
                 <p>・実験には下の合成サンプルを使ってください。<strong>本物の相談文を貼らないでください。</strong></p>
             </div>
 
@@ -351,7 +366,7 @@ export default function MaskLabPage() {
                     </button>
                     {dictState === 'idle' && (
                         <button onClick={handleLoadDict} className="text-sm text-blue-600 hover:underline">
-                            層2の辞書を読み込む(約18MB・初回のみ)
+                            層2の辞書を読み込む(約17MB・初回のみ)
                         </button>
                     )}
                     {dictState === 'loading' && <span className="text-sm text-gray-500 animate-pulse">辞書を読み込み中…(数十秒かかることがあります)</span>}
@@ -384,7 +399,7 @@ export default function MaskLabPage() {
                             <p className="text-sm text-gray-500">層2(人名・地名・組織名の検出)には辞書の読み込みが必要です</p>
                             {dictState === 'loading'
                                 ? <span className="text-sm text-gray-500 animate-pulse">辞書を読み込み中…</span>
-                                : <button onClick={handleLoadDict} className="text-sm text-blue-600 hover:underline">辞書を読み込む(約18MB・初回のみ)</button>}
+                                : <button onClick={handleLoadDict} className="text-sm text-blue-600 hover:underline">辞書を読み込む(約17MB・初回のみ)</button>}
                         </div>
                     )}
                 </div>
