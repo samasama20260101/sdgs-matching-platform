@@ -45,11 +45,11 @@ type Span = { start: number; end: number; cat: Category; text: string }
 // ─────────────────────────────────────────────
 const REGEX_RULES: { cat: Category; re: () => RegExp }[] = [
     { cat: 'url', re: () => /https?:\/\/[^\s　]+/g },
-    { cat: 'email', re: () => /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
+    { cat: 'email', re: () => /[A-Za-z0-9._%+-]+\s{0,2}@\s{0,2}[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
     // LINE ID: tanaka_123 / @handle 形式
     { cat: 'sns', re: () => /(?:LINE|ライン|Instagram|インスタ(?:グラム)?|Twitter|TikTok|X)\s*(?:の)?\s*(?:ID|ＩＤ|アイディー?)\s*[:：]?\s*[A-Za-z0-9_.-]{3,}|@[A-Za-z0-9_.]{3,}/g },
     { cat: 'postal', re: () => /〒\s*[0-9０-９]{3}[-−ー‐]?[0-9０-９]{4}|(?<![0-9-])[0-9]{3}[-−ー‐][0-9]{4}(?![0-9-])/g },
-    { cat: 'phone', re: () => /(?:\+81[-−ー‐\s]?|0|０)[0-9０-９]{1,4}[-−ー‐()（）\s]?[0-9０-９]{1,4}[-−ー‐()（）\s]?[0-9０-９]{3,4}/g },
+    { cat: 'phone', re: () => /(?:\+81[-−ー‐\s]?|0|０)[0-9０-９]{1,4}[-−ー‐()（）.・\s]?[0-9０-９]{1,4}[-−ー‐()（）.・\s]?[0-9０-９]{3,4}/g },
     // 年つきの日付のみ(「来週の3月2日」のような予定日は拾わない)
     { cat: 'dob', re: () => /(?:19|20|１９|２０)[0-9０-９]{2}\s*年\s*[0-9０-９]{1,2}\s*月\s*[0-9０-９]{1,2}\s*日\s*(?:生まれ|生)?/g },
     // 市区町村+丁目・番地・号の並び(番地なしの「市役所」等は拾わない)
@@ -61,14 +61,27 @@ const REGEX_RULES: { cat: Category; re: () => RegExp }[] = [
     { cat: 'number', re: () => /(?<![0-9])[0-9]{7,}(?![0-9])/g },
 ]
 
-function detectRegex(text: string): Span[] {
+// 検出前の正規化: 全角英数字・記号・全角スペースを半角へ(NFKC)。
+// 文字数が変わらない置換だけ適用するので、検出位置は原文とずれない。
+function normalizeForDetection(original: string): string {
+    let out = ''
+    for (const ch of original) {
+        const n = ch.normalize('NFKC')
+        out += n.length === ch.length ? n : ch
+    }
+    return out
+}
+
+function detectRegex(original: string): Span[] {
+    const text = normalizeForDetection(original)
     const spans: Span[] = []
     for (const rule of REGEX_RULES) {
         const re = rule.re()
         let m: RegExpExecArray | null
         while ((m = re.exec(text)) !== null) {
             if (m[0].length === 0) { re.lastIndex++; continue }
-            spans.push({ start: m.index, end: m.index + m[0].length, cat: rule.cat, text: m[0] })
+            // 内訳には原文の該当箇所を見せる(正規化後ではなく)
+            spans.push({ start: m.index, end: m.index + m[0].length, cat: rule.cat, text: original.slice(m.index, m.index + m[0].length) })
         }
     }
     return spans
@@ -167,7 +180,11 @@ const SAMPLES: { name: string; text: string }[] = [
         text: '近所の田中のおばあちゃん(1948年3月2日生まれ)が心配です。住所は〒862-0950 熊本市中央区水前寺公園3-1です。LINEのID: tanaka_mimamori に連絡がつきません。知らない人から口座1234567890に振り込めと言われたそうです。',
     },
     {
-        name: 'サンプル3: ひっかけ(消しすぎ検証)',
+        name: 'サンプル3: 表記ゆれ',
+        text: '電話は０９０－１２３４－５６７８か 096.384.1234 へ。メールは ＨＡＮＡＫＯ＠ＥＸＡＭＰＬＥ．ＣＯＭ か hanako.yamada @ example.com です。郵便番号は８６２−０９５０。',
+    },
+    {
+        name: 'サンプル4: ひっかけ(消しすぎ検証)',
         text: '水俣病の後遺症の相談です。田中内科クリニックを紹介されましたが遠くて通えません。SDGs目標3の関係で、来週の3月2日に市役所へ行く予定です。请求は1万5000円でした。',
     },
 ]
