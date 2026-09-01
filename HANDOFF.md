@@ -39,6 +39,8 @@ main = `3ab003f`、dev はコード的に本番と同一(差分はHANDOFFのみ)
 3. 技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み。`users.supporter_type` / `users.organization_name` 列のDROP migration(読み取り側が全部organizationsに寄ったことを本番で確認後)
 4. 数週間問題なければ本番の `display_id_backup_20260816` テーブルをDROP(ユーザー実行)
 
+- **`feature/account-email-change` は保留中(2026-09-01 ユーザー判断・まだdevに入れない)**。メール変更(`/change-email`)+現在パスワード確認(メール変更・パスワード変更とも)+管理ユーザー編集拡張が実装済み(+4コミット・origin push済み)。再開時: dev取り込み(衝突は profile/page.tsx のみ見込み)→ SMTP(Resend)設定 → Staging検証 → チェックポイントPR。Stagingがメール送信不可のため確認メールの実機検証はSMTP設定が前提
+
 ## 地雷・注意
 - **本番Supabaseへの変更操作はユーザー明示許可なしに絶対に実行しない**(こちらはread-only接続のみ。auto modeでは本番psqlがブロックされるのでユーザーが `!` で実行)
 - **パスワード変更に現在パスワード確認は未実装**(意図的に後回し)。実装するなら Supabase `updateUser` は現PWを検証しないので、入力された現PWで `signInWithPassword` を叩いて確かめる自前実装が要る
