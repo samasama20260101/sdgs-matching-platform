@@ -1,5 +1,5 @@
 # HANDOFF: 技術負債返済 + アカウント設定の穴埋め(本番反映・検収完了)
-更新: 2026-09-01(未コミット2件を処理)
+更新: 2026-09-01(auto-close 30日化を本番反映)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -9,7 +9,7 @@
 ## 現在地
 **2026-08-29 PR #29 で dev→main マージ・本番デプロイ success。2026-09-01 ユーザーが本番で実操作検収済み(下記)。このフェーズは完了。**
 main = `3ab003f`、dev はコード的に本番と同一(差分はHANDOFFのみ)。DB操作は今回なし。
-未コミット2件は 2026-09-01 に dev へコミット済み(`879372c` auto-close 30日化 / `b29617c` 設計書§5・§10)。**auto-close 30日化はまだStagingのみ**で、次の main マージまで本番cronは14日のまま動く。
+未コミット2件は 2026-09-01 に dev へコミットし、同日 **PR #30 で本番反映済み**(main = `8e19060`・デプロイ success)。MATCHED無活動の自動CLOSEDは本番でも30日で動く(次回cronは毎日2時)。
 
 ## 完了したこと
 - **本番反映(PR #29、13コミット・38ファイル)** — 内容:
@@ -34,11 +34,10 @@ main = `3ab003f`、dev はコード的に本番と同一(差分はHANDOFFのみ)
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
-1. `879372c`(auto-close 30日化)を本番に乗せるタイミングを決める。単独でPRするか、次のリリースに同梱するか(乗るまで本番cronは14日のままMATCHED案件を閉じ続ける点に注意)
-2. `docs/proposals/`(戸山十三ヒアリング資料4本・成長戦略・相談フォーム改善提案、md+pdf)と `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否を決める。相談フォーム改善提案は依頼者の決定待ち(§10)
-3. 拡散タスク(ユーザー作業): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
-4. 技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み。`users.supporter_type` / `users.organization_name` 列のDROP migration(読み取り側が全部organizationsに寄ったことを本番で確認後)
-5. 数週間問題なければ本番の `display_id_backup_20260816` テーブルをDROP(ユーザー実行)
+1. `docs/proposals/`(戸山十三ヒアリング資料4本・成長戦略・相談フォーム改善提案、md+pdf)と `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否を決める。相談フォーム改善提案は依頼者の決定待ち(§10)
+2. 拡散タスク(ユーザー作業): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
+3. 技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み。`users.supporter_type` / `users.organization_name` 列のDROP migration(読み取り側が全部organizationsに寄ったことを本番で確認後)
+4. 数週間問題なければ本番の `display_id_backup_20260816` テーブルをDROP(ユーザー実行)
 
 ## 地雷・注意
 - **本番Supabaseへの変更操作はユーザー明示許可なしに絶対に実行しない**(こちらはread-only接続のみ。auto modeでは本番psqlがブロックされるのでユーザーが `!` で実行)
