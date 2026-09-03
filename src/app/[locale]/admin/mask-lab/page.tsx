@@ -321,6 +321,12 @@ export default function MaskLabPage() {
         }
     }
 
+    // 認可が通ったら辞書をバックグラウンドで自動読み込み(ボタン操作不要)
+    useEffect(() => {
+        if (authChecked && dictState === 'idle') handleLoadDict()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authChecked])
+
     if (!authChecked) {
         return <div className="flex items-center justify-center min-h-screen text-gray-400">確認中…</div>
     }
@@ -339,7 +345,7 @@ export default function MaskLabPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">
                 <p>・入力した文章は<strong>この画面の外に出ません</strong>(送信・保存は一切なし。すべてブラウザ内で処理します)。</p>
-                <p>・辞書もアプリ内から配信するため、<strong>外部サービスへの通信は一切ありません</strong>(層2の辞書 約17MB を初回に読み込むだけ)。</p>
+                <p>・辞書もアプリ内から配信するため、<strong>外部サービスへの通信は一切ありません</strong>(層2の辞書 約17MB をページを開いたときに自動で読み込みます)。</p>
                 <p>・実験には下の合成サンプルを使ってください。<strong>本物の相談文を貼らないでください。</strong></p>
             </div>
 
@@ -364,12 +370,7 @@ export default function MaskLabPage() {
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium rounded-lg px-6 py-2">
                         マスク変換を実行
                     </button>
-                    {dictState === 'idle' && (
-                        <button onClick={handleLoadDict} className="text-sm text-blue-600 hover:underline">
-                            層2の辞書を読み込む(約17MB・初回のみ)
-                        </button>
-                    )}
-                    {dictState === 'loading' && <span className="text-sm text-gray-500 animate-pulse">辞書を読み込み中…(数十秒かかることがあります)</span>}
+                    {(dictState === 'idle' || dictState === 'loading') && <span className="text-sm text-gray-500 animate-pulse">層2の辞書をバックグラウンドで読み込み中…</span>}
                     {dictState === 'ready' && <span className="text-sm text-green-600">層2 準備完了</span>}
                     {dictState === 'error' && (
                         <span className="text-sm text-red-600">
@@ -396,10 +397,9 @@ export default function MaskLabPage() {
                         />
                     ) : (
                         <div className="bg-white rounded-lg border border-dashed border-gray-300 p-4 flex flex-col items-center justify-center text-center gap-2 min-h-40">
-                            <p className="text-sm text-gray-500">層2(人名・地名・組織名の検出)には辞書の読み込みが必要です</p>
-                            {dictState === 'loading'
-                                ? <span className="text-sm text-gray-500 animate-pulse">辞書を読み込み中…</span>
-                                : <button onClick={handleLoadDict} className="text-sm text-blue-600 hover:underline">辞書を読み込む(約17MB・初回のみ)</button>}
+                            {dictState === 'error'
+                                ? <><p className="text-sm text-red-600">辞書の読み込みに失敗しました</p><button onClick={handleLoadDict} className="text-sm text-blue-600 hover:underline">再試行</button></>
+                                : <span className="text-sm text-gray-500 animate-pulse">層2(人名・地名・組織名)の辞書を読み込み中…完了すると自動で表示されます</span>}
                         </div>
                     )}
                 </div>
