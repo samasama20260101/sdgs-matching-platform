@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-09-16(PR #32 を本番反映・疎通確認済み。本番でのブラウザ実操作検証が残り)
+更新: 2026-09-16(PR #32 本番反映+確認メール件名の日本語化。本番でのブラウザ実操作検証が残り)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -11,7 +11,7 @@
 **2026-09-16 PR #32 で本番反映(main = `1d0abf3`、デプロイ success 08:16Z)。内容: メール変更一式(本人/管理者)+現PW確認、熊本地震 災害SOS受付終了、PCロゴ修正、未適用migration削除。本番DB変更なし。**
 本番疎通(curl): `/` `/en` に 🆘 バナーなし・ロゴ id 重複ゼロ、`/supporters` `/login` `/change-email` `/change-password` `/profile` 200、新API 2本は無トークン 401、廃止API 404、get-role 401。
 **未実施(ユーザー作業)**: 本番でのブラウザ実操作 — ①自発パスワード変更(現PW誤り→エラー/正しい→成功) ②初回強制変更で現PW欄が出ない ③管理者のユーザーメール変更 ④本人メール変更(本番の残存テスト用SOSアカウントで。確認メールは Resend 経由で届くはず) ⑤PCでロゴの涙型が見える。Staging でのブラウザ操作テストはユーザー判断で省略して本番へ出した。
-**保留(本番設定・要許可)**: メール変更確認メールの件名が既定英語「Confirm Email Change」のまま → 「【明日もsamasama】メールアドレス変更の確認」へ(Management API で変更可)。
+**本番・Staging の Supabase 設定(2026-09-16 ユーザー許可のうえ実施)**: メール変更確認メールの件名を「Confirm Email Change」→「【明日もsamasama】メールアドレス変更の確認」に変更(Management API PATCH、`mailer_subjects_email_change` のみ。他キーは不変を確認)。本番 SMTP(Resend)・テンプレート・Secure email change は元から設定済み。
 
 前回まで: **2026-09-16 休止前整理を実施: ブランチは `dev` / `main` の2本だけになった**(dev取り込み済み18本+i18n-supporter-ui+variant試作を削除)。多言語 Phase 2 は PR #10 をクローズし、タグ `archive/i18n-phase2-2026-07` に保管してブランチ削除(設計書冒頭に判断メモ)。**ユーザーは 2026年11月以降、開発を一時休止する予定**。休止前の判断基準は「本番の安定を崩さない・DBを増やさない」。
 **Staging の i18n Phase 2 用の列7本+インデックス1本は同日 DROP 済み(Management API 経由・データ0件・messages 100件/cases 92件は無傷)。Staging と本番のスキーマはこの点で一致。`migrations/add_case_chat_translation.sql` は dev から削除。**
@@ -57,7 +57,7 @@
 
 ## 次の一手
 1. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤。NGがあればこちらで修正 → dev → PR
-2. **本番の確認メール件名を日本語化**(ユーザー許可後に Management API で変更)。Staging も同じ件名にしておく
+2. ~~本番の確認メール件名を日本語化~~ → 2026-09-16 本番・Staging とも変更済み
 3. **Staging の SMTP(Resend)設定**は任意。再発行キーがあれば設定し、以後は Staging でメール系を検証できる
 4. **ブランチ整理は完了**(2026-09-16): 残骸18本(account-email-change 含む)を origin・ローカルとも削除、ローカル main を origin/main に追随。`feature/i18n-supporter-ui` はサポーターUI翻訳しない方針のため 9/16 に origin・ローカルとも削除済み(最終コミット 7a689d4、同梱の 6/12 レビューmd 2本も未救出)。`feature/multilingual-development`(多言語 Phase 2)は PR #10 クローズ・タグ `archive/i18n-phase2-2026-07` 保管・削除。再開時はマージせず設計書から再実装(docs/i18n_multilingual_design.md 冒頭)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
 5. (継続)`docs/proposals/` + `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否。相談フォーム改善提案は依頼者の決定待ち(§10)
