@@ -1,7 +1,7 @@
 // src/app/api/sos/cases/route.ts
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { DISASTER_EVENT_IDS, getDisasterEvent } from '@/lib/constants/disaster'
+import { ACTIVE_DISASTER_EVENT, DISASTER_EVENT_IDS, getDisasterEvent } from '@/lib/constants/disaster'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
 import { NextResponse, after } from 'next/server'
 
@@ -33,6 +33,8 @@ function sanitizeDisaster(value: unknown) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null
     const eventId = (value as { event_id?: unknown }).event_id
     if (typeof eventId !== 'string' || !DISASTER_EVENT_IDS.has(eventId)) return null
+    // 新規登録は受付中のイベントに限る(POST 側で先に 400 を返すが、ここでも通さない)
+    if (ACTIVE_DISASTER_EVENT?.id !== eventId) return null
 
     const answersRaw = (value as { answers?: unknown }).answers
     const answers: Record<string, string> = {}
@@ -167,6 +169,16 @@ export async function POST(request: Request) {
         ? body.region_country
         : 'JP'
     const locale = sanitizeLocale(body.locale) || sanitizeLocale(body.intake_qna?.locale) || 'ja'
+
+    // 災害SOS: 受付終了後はフォームが閉じているが、APIも同じ判断にする。
+    // 黙って通常案件に格下げすると AI分析を通らず非公開のまま残るため、明示的に拒否する
+    const requestedDisaster = (body.intake_qna as { disaster?: unknown } | null | undefined)?.disaster
+    if (requestedDisaster !== undefined && requestedDisaster !== null) {
+        const requestedEventId = (requestedDisaster as { event_id?: unknown }).event_id
+        if (typeof requestedEventId !== 'string' || ACTIVE_DISASTER_EVENT?.id !== requestedEventId) {
+            return NextResponse.json({ error: 'この災害SOSの受付は終了しました' }, { status: 400 })
+        }
+    }
 
     const intakeQna = sanitizeIntakeQna(body.intake_qna, locale)
 

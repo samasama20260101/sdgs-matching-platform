@@ -53,8 +53,10 @@ export const DISASTER_EVENTS: DisasterEvent[] = [
   },
 ]
 
-// 現在受付中の災害イベント。null にすると入口バナーとフォームが閉じる。
-export const ACTIVE_DISASTER_EVENT: DisasterEvent | null = DISASTER_EVENTS[0]
+// 現在受付中の災害イベント。null にすると入口バナーとフォームが閉じ、案件登録APIも新規の災害SOSを拒否する。
+// 登録済みの災害案件の表示・地域設定・承認上限は DISASTER_EVENTS を引くので、受付終了後も従来どおり動く。
+// 熊本地震(kumamoto-eq-2026)は 2026-09-16 に受付終了。再開するときは DISASTER_EVENTS[0] を指す。
+export const ACTIVE_DISASTER_EVENT: DisasterEvent | null = null
 
 export const DISASTER_EVENT_IDS = new Set(DISASTER_EVENTS.map((e) => e.id))
 
