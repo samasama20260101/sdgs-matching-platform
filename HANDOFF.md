@@ -82,4 +82,4 @@
 - チャットに貼られたResend APIキーは落ち着いたら再発行→Supabase SMTP再設定
 - `docs/staging_users_20260806.csv` はユーザー一覧のためコミット禁止。docs/配布物(pptx・PDF・インスタ画像)は未追跡のまま
 - 将来の招待方式を作る際、共有メモ(APPROVED_SUPPORTERS)の過去データはDBに残っている(表示のみ廃止)
-- 本番にテスト用SOSアカウント(捨てアドレス)が1つ残存
+- 本番のテスト用SOSアカウント(捨てアドレス2件: SOS-00003 / SOS-00011)は **2026-09-16 に削除済み**(案件4件・写真7件・auth含む。ユーザーが Dashboard の SQL Editor と Storage UI で実施)。手順の要点: ①read-only psql は auth/storage スキーマを読めないので確認も SQL Editor で行う ②storage.objects は保護トリガーで SQL から消せず Storage UI(またはStorage API)で消す ③削除は1トランザクションで cases(NO ACTION) → public.users → auth.users の順、FK を pg_constraint から動的に辿る。SQL は `~/samasama/本番アカウント削除SQL/` に保管
