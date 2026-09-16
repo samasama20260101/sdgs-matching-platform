@@ -1,5 +1,5 @@
-# HANDOFF: 休止前整理(ブランチ dev/main 化・多言語Phase 2アーカイブ)+ メール変更のStaging検証待ち
-更新: 2026-09-16(ブランチ整理・多言語Phase 2アーカイブ・Staging スキーマを本番に揃えた)
+# HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
+更新: 2026-09-16(PR #32 を本番反映・疎通確認済み。本番でのブラウザ実操作検証が残り)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,7 +8,12 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
-**2026-09-16 休止前整理を実施: ブランチは `dev` / `main` の2本だけになった**(dev取り込み済み18本+i18n-supporter-ui+variant試作を削除)。多言語 Phase 2 は PR #10 をクローズし、タグ `archive/i18n-phase2-2026-07` に保管してブランチ削除(設計書冒頭に判断メモ)。**ユーザーは 2026年11月以降、開発を一時休止する予定**。休止前の判断基準は「本番の安定を崩さない・DBを増やさない」。
+**2026-09-16 PR #32 で本番反映(main = `1d0abf3`、デプロイ success 08:16Z)。内容: メール変更一式(本人/管理者)+現PW確認、熊本地震 災害SOS受付終了、PCロゴ修正、未適用migration削除。本番DB変更なし。**
+本番疎通(curl): `/` `/en` に 🆘 バナーなし・ロゴ id 重複ゼロ、`/supporters` `/login` `/change-email` `/change-password` `/profile` 200、新API 2本は無トークン 401、廃止API 404、get-role 401。
+**未実施(ユーザー作業)**: 本番でのブラウザ実操作 — ①自発パスワード変更(現PW誤り→エラー/正しい→成功) ②初回強制変更で現PW欄が出ない ③管理者のユーザーメール変更 ④本人メール変更(本番の残存テスト用SOSアカウントで。確認メールは Resend 経由で届くはず) ⑤PCでロゴの涙型が見える。Staging でのブラウザ操作テストはユーザー判断で省略して本番へ出した。
+**保留(本番設定・要許可)**: メール変更確認メールの件名が既定英語「Confirm Email Change」のまま → 「【明日もsamasama】メールアドレス変更の確認」へ(Management API で変更可)。
+
+前回まで: **2026-09-16 休止前整理を実施: ブランチは `dev` / `main` の2本だけになった**(dev取り込み済み18本+i18n-supporter-ui+variant試作を削除)。多言語 Phase 2 は PR #10 をクローズし、タグ `archive/i18n-phase2-2026-07` に保管してブランチ削除(設計書冒頭に判断メモ)。**ユーザーは 2026年11月以降、開発を一時休止する予定**。休止前の判断基準は「本番の安定を崩さない・DBを増やさない」。
 **Staging の i18n Phase 2 用の列7本+インデックス1本は同日 DROP 済み(Management API 経由・データ0件・messages 100件/cases 92件は無傷)。Staging と本番のスキーマはこの点で一致。`migrations/add_case_chat_translation.sql` は dev から削除。**
 **同日、熊本地震の災害SOS受付を dev で終了**(`ACTIVE_DISASTER_EVENT = null` + 案件登録APIが受付外イベントを400で拒否。本番は受付中のまま → メール変更と同じチェックポイントPRで反映する方針)。
 同日 `feature/account-email-change` を dev にマージ(`1bb26b7`)。衝突なし、ビルド exit 0・静的ページ 122/122(change-email 追加で 115 から増加)、翻訳キー 6言語×700 一致。origin/dev へ push 済み → Staging 自動デプロイ。本番(main = `93099a7`)には未反映。**
@@ -51,9 +56,9 @@
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
-1. **Staging Supabase の設定**(ユーザー作業、またはユーザー許可のうえ): (a) SMTP(Resend)設定 (b) Authentication → Emails → Change Email Address に `docs/email_templates/change_email.html` を貼る(件名「【明日もsamasama】メールアドレス変更の確認」) (c) 「Secure email change」(新旧両方のアドレスで確認)が ON か確認。SMTP がないと確認メールが届かず本人経路のメール変更は検証できない
-2. **Staging 実操作検証**(人手): 自発パスワード変更(現PW誤り→エラー、正しい→成功)、初回強制変更で現PW欄が出ない、メール変更(確認メール→リンク→profile の表示が新アドレス)、管理者のユーザーメール変更(即時切替+新アドレスでログイン可)。curl で通る部分: `email-change-check` の 400(形式)/403(PW不一致)/409(重複)
-3. 検証OKなら **チェックポイントPR(dev→main)**(メール変更+熊本災害SOS終了+ロゴ修正をまとめて本番へ。本番反映後はリーフレット/Instagram の災害SOSリンクがダッシュボード行きになる点に注意)。本番側も同じ Supabase 設定(SMTP・テンプレート・Secure email change)が事前に必要
+1. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤。NGがあればこちらで修正 → dev → PR
+2. **本番の確認メール件名を日本語化**(ユーザー許可後に Management API で変更)。Staging も同じ件名にしておく
+3. **Staging の SMTP(Resend)設定**は任意。再発行キーがあれば設定し、以後は Staging でメール系を検証できる
 4. **ブランチ整理は完了**(2026-09-16): 残骸18本(account-email-change 含む)を origin・ローカルとも削除、ローカル main を origin/main に追随。`feature/i18n-supporter-ui` はサポーターUI翻訳しない方針のため 9/16 に origin・ローカルとも削除済み(最終コミット 7a689d4、同梱の 6/12 レビューmd 2本も未救出)。`feature/multilingual-development`(多言語 Phase 2)は PR #10 クローズ・タグ `archive/i18n-phase2-2026-07` 保管・削除。再開時はマージせず設計書から再実装(docs/i18n_multilingual_design.md 冒頭)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
 5. (継続)`docs/proposals/` + `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否。相談フォーム改善提案は依頼者の決定待ち(§10)
 6. (継続)拡散タスク(ユーザー作業): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
