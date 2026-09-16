@@ -48,13 +48,26 @@ export async function POST(request: Request) {
         }
     }
 
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-        auth.appUser.auth_user_id,
-        { password: body.new_password }
-    )
-    if (updateError) {
-        console.error('[auth/change-password] password update error:', updateError)
-        return NextResponse.json({ error: updateError.message }, { status: 400 })
+    // 更新は本人のトークンで GoTrue の PUT /user を呼ぶ(利用者本人による更新)。
+    // admin.updateUserById だと GoTrue が本人の現在のセッションまで全て失効させ、
+    // 変更直後にログアウトしてしまう(2026-09-16 本番で発生)。本人経路なら現在のセッションは残り、
+    // 他端末のセッションだけ失効する(変更前のクライアント直接呼び出しと同じ挙動)。
+    const updateRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            Authorization: `Bearer ${auth.token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: body.new_password }),
+    })
+    if (!updateRes.ok) {
+        const detail = await updateRes.json().catch(() => null) as { msg?: string; message?: string; error_description?: string } | null
+        console.error('[auth/change-password] password update error:', updateRes.status, detail)
+        return NextResponse.json(
+            { error: detail?.msg || detail?.message || detail?.error_description || 'パスワードの更新に失敗しました' },
+            { status: 400 }
+        )
     }
 
     if (userData.must_change_password) {
