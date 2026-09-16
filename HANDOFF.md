@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理(ブランチ dev/main 化・多言語Phase 2アーカイブ)+ メール変更のStaging検証待ち
-更新: 2026-09-16(ブランチ整理・多言語Phase 2アーカイブ・Staging DROP は確認待ち)
+更新: 2026-09-16(ブランチ整理・多言語Phase 2アーカイブ・Staging スキーマを本番に揃えた)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -9,7 +9,7 @@
 
 ## 現在地
 **2026-09-16 休止前整理を実施: ブランチは `dev` / `main` の2本だけになった**(dev取り込み済み18本+i18n-supporter-ui+variant試作を削除)。多言語 Phase 2 は PR #10 をクローズし、タグ `archive/i18n-phase2-2026-07` に保管してブランチ削除(設計書冒頭に判断メモ)。**ユーザーは 2026年11月以降、開発を一時休止する予定**。休止前の判断基準は「本番の安定を崩さない・DBを増やさない」。
-**残り: Staging の i18n Phase 2 用の列7本+インデックス1本の DROP(SQL は用意済み・ユーザー確認待ち)→ dev の `migrations/add_case_chat_translation.sql` を外す。**
+**Staging の i18n Phase 2 用の列7本+インデックス1本は同日 DROP 済み(Management API 経由・データ0件・messages 100件/cases 92件は無傷)。Staging と本番のスキーマはこの点で一致。`migrations/add_case_chat_translation.sql` は dev から削除。**
 同日 `feature/account-email-change` を dev にマージ(`1bb26b7`)。衝突なし、ビルド exit 0・静的ページ 122/122(change-email 追加で 115 から増加)、翻訳キー 6言語×700 一致。origin/dev へ push 済み → Staging 自動デプロイ。本番(main = `93099a7`)には未反映。**
 前回: 2026-09-03 PR #31 で東京リージョン化+マスク検証ラボを本番反映(hnd1 実測済み)。PR #29(8/29)、PR #30(auto-close 30日化)。DB操作はいずれもなし。
 
@@ -62,7 +62,7 @@
 - **管理者は `/profile` に入れない**(role が `'SOS' | 'SUPPORTER'`)ため、管理者自身のパスワード変更は forgot-password 頼み。管理者自身のメール変更・退会は未整備(他ユーザーのメールは管理画面から変更可になった)
 - `/profile` の「※変更はページ下部の「ログイン情報」から行えます」は日本語ハードコード(旧文言も同様。i18n化は未対応)
 - Stagingテストユーザー: sos01@gmail.com / npo01_1@gmail.com(testpass123)、管理者 x25660@yahoo.co.jp(PW不明)。検収でPWやメールを変えたらここも直す
-- **Staging と本番のスキーマ差分(2026-09-16 確認)**: 本番には `users.locale` / `cases.locale` のみ(`add_i18n_locale_foundation.sql` 適用済み)。`add_case_chat_translation.sql`(dev の migrations/ にあるが本番未適用: `cases.description_free_ja`、`messages.source_locale/translated_content/translation_status/translation_attempts`)と `add_system_message_keys.sql`(feature/multilingual-development にのみ存在: `messages.system_key/system_params`)は **Staging には適用済み・本番には無い**。dev のコードはこれらの列を参照していないので現時点の本番に影響なし。Phase 2 アーカイブに伴い **Staging 側の7列+`idx_messages_translation_pending` を DROP して本番と揃える**(対象列のデータは全て0件を確認済み。SQL はセッションの scratchpad に用意、実行は Management API 経由・ユーザー確認後)。実行後は dev の `migrations/add_case_chat_translation.sql` を削除する(タグと git 履歴に残る)
+- **Staging と本番のスキーマ差分(2026-09-16 確認)**: 本番には `users.locale` / `cases.locale` のみ(`add_i18n_locale_foundation.sql` 適用済み)。`add_case_chat_translation.sql`(dev の migrations/ にあるが本番未適用: `cases.description_free_ja`、`messages.source_locale/translated_content/translation_status/translation_attempts`)と `add_system_message_keys.sql`(feature/multilingual-development にのみ存在: `messages.system_key/system_params`)は **Staging には適用済み・本番には無い**。dev のコードはこれらの列を参照していないので現時点の本番に影響なし。Phase 2 アーカイブに伴い **2026-09-16 に Staging 側の7列+`idx_messages_translation_pending` を DROP 済み**(データ0件・ユーザー確認のうえ Management API で実行)。`migrations/add_case_chat_translation.sql` は dev から削除済み(タグ `archive/i18n-phase2-2026-07` と git 履歴に残る)。現在 Staging と本番で残る i18n 列は `users.locale` / `cases.locale` のみで一致
 - `users.supporter_type` / `users.organization_name` 列は未DROP(`admin/create-supporter` は両方に書く。害はない)
 - 多言語再公開は `src/i18n/routing.ts` の `LANGUAGE_SWITCHER_ENABLED` + `localeDetection` の2点。ko/vi/idは緊急語彙ネイティブ確認が前提
 - 災害データは `cases.intake_qna.disaster` 配下(migration不要方針)。正本は `src/lib/constants/disaster.ts`
