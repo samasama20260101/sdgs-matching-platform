@@ -15,6 +15,7 @@
 前回: 2026-09-03 PR #31 で東京リージョン化+マスク検証ラボを本番反映(hnd1 実測済み)。PR #29(8/29)、PR #30(auto-close 30日化)。DB操作はいずれもなし。
 
 ## 完了したこと
+- **PCでロゴの涙型が消える不具合の修正(dev 2026-09-16、`2b86e8e`)**: ヘッダーはスマホ用/PC用で同じロゴを2つ置きCSSで片方を隠すが、SVGのグラデーション・フィルタ id が「サイズ+色」から作られて重複していた。ブラウザは最初の要素(スマホ用=PCでは display:none)に解決するため PC だけ涙型が描かれず濃紺の四角に見えていた(本番も同じ・今日の変更とは無関係)。`src/components/icons/Logo.tsx` の3部品で `useId` から固有 id を生成。Staging の `/` `/supporters` `/login` `/en` で id 重複ゼロ・未解決参照ゼロを機械確認済み。**PC ブラウザでの目視確認はユーザー待ち**
 - **熊本地震 災害SOSの受付終了(dev 2026-09-16、DB変更なし)**: `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` を null に。トップ/SOSダッシュボードのバナー非表示、`/sos/disaster` はダッシュボードへリダイレクト、`POST /api/sos/cases` は受付外イベントの災害payloadを 400「この災害SOSの受付は終了しました」で拒否(黙って通常案件に格下げするとAI分析を通らず非公開のまま残るため)。登録済み案件の表示・地域設定・承認上限1は `DISASTER_EVENTS` 参照のまま維持。ビルド 122/122、編集ファイルの eslint クリーン(リポジトリ全体の lint は既存の 6 errors / 88 warnings で今回と無関係)
 - **メール変更・現PW確認(dev マージ 2026-09-16、DB変更なし)**:
   - 本人によるメール変更 `/change-email`: 事前確認API `POST /api/auth/email-change-check`(現PW確認+`users.email` 重複チェック)→ クライアントの `supabase.auth.updateUser({ email })` が確認メールを送る。確認リンクで auth.users が切り替わり、`get-role` が次回呼び出し時に `users.email` を自己修復同期
@@ -39,6 +40,7 @@
 - **auto mode の分類器は「一括削除っぽい」コマンドをブロックする**(xargs で18ブランチ push --delete、for ループで branch -d)。ブランチ名を明示列挙した単一コマンドなら通る。本番 psql も同様にブロックされるのでユーザーが `!` で実行
 - **この gh CLI の `pr close` に `--comment` は無い** → `gh pr comment N --body` してから `gh pr close N`
 - **Staging の DDL/SQL は Management API**(`POST https://api.supabase.com/v1/projects/<ref>/database/query`、トークンは `~/.supabase/access-token`)で流せる。jq は未インストールなので python3 で整形
+- **SVG の url(#id) 参照は id 重複に弱い**: 同じ部品を表示/非表示ペアで2つ置くと、最初の要素が display:none のとき Chrome で描画されない。SVG内で defs を持つ部品は `useId` で固有 id にする(Logo.tsx で対応済み)
 - **feature ブランチの未取り込み判定は `git cherry -v dev <branch>`**(`-` は dev に同内容のパッチあり、`+` が本当に未取り込み)。`--no-merged` だけだと cherry-pick 済みの分まで「未マージ」に見える
 - **衝突候補は merge-base からの変更ファイルの重なり**(`git diff --name-only <mb> <branch>` と `<mb> dev` を `comm -12`)で事前に出せる。今回 profile/page.tsx が重なっていたが自動マージで解決した。`--no-commit` で止めて中身を見てからコミットするのが安全
 - **`git merge-tree --write-tree` は git 2.34 では未対応**で usage を出して非0終了 → 「CONFLICT」と誤判定しかけた
@@ -51,7 +53,7 @@
 ## 次の一手
 1. **Staging Supabase の設定**(ユーザー作業、またはユーザー許可のうえ): (a) SMTP(Resend)設定 (b) Authentication → Emails → Change Email Address に `docs/email_templates/change_email.html` を貼る(件名「【明日もsamasama】メールアドレス変更の確認」) (c) 「Secure email change」(新旧両方のアドレスで確認)が ON か確認。SMTP がないと確認メールが届かず本人経路のメール変更は検証できない
 2. **Staging 実操作検証**(人手): 自発パスワード変更(現PW誤り→エラー、正しい→成功)、初回強制変更で現PW欄が出ない、メール変更(確認メール→リンク→profile の表示が新アドレス)、管理者のユーザーメール変更(即時切替+新アドレスでログイン可)。curl で通る部分: `email-change-check` の 400(形式)/403(PW不一致)/409(重複)
-3. 検証OKなら **チェックポイントPR(dev→main)**(メール変更+熊本災害SOS終了をまとめて本番へ。本番反映後はリーフレット/Instagram の災害SOSリンクがダッシュボード行きになる点に注意)。本番側も同じ Supabase 設定(SMTP・テンプレート・Secure email change)が事前に必要
+3. 検証OKなら **チェックポイントPR(dev→main)**(メール変更+熊本災害SOS終了+ロゴ修正をまとめて本番へ。本番反映後はリーフレット/Instagram の災害SOSリンクがダッシュボード行きになる点に注意)。本番側も同じ Supabase 設定(SMTP・テンプレート・Secure email change)が事前に必要
 4. **ブランチ整理は完了**(2026-09-16): 残骸18本(account-email-change 含む)を origin・ローカルとも削除、ローカル main を origin/main に追随。`feature/i18n-supporter-ui` はサポーターUI翻訳しない方針のため 9/16 に origin・ローカルとも削除済み(最終コミット 7a689d4、同梱の 6/12 レビューmd 2本も未救出)。`feature/multilingual-development`(多言語 Phase 2)は PR #10 クローズ・タグ `archive/i18n-phase2-2026-07` 保管・削除。再開時はマージせず設計書から再実装(docs/i18n_multilingual_design.md 冒頭)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
 5. (継続)`docs/proposals/` + `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否。相談フォーム改善提案は依頼者の決定待ち(§10)
 6. (継続)拡散タスク(ユーザー作業): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
