@@ -3,8 +3,15 @@
 作成日: 2026-07-05
 更新: 2026-07-05 — §5.8 追加（相談文・チャットの送信時翻訳を採用・論点3解決）
 更新: 2026-07-05 — §5.8 に CHECK制約（既存慣行準拠）と再試行cron方式（閲覧時トリガー不採用）を確定
-ステータス: ドラフト（実装前・migration未作成）
-ブランチ: feature/multilingual-development
+更新: 2026-09-16 — Phase 2 をアーカイブ（下記の判断メモ）
+ステータス: Phase 0〜1 は本番反映済み（言語切替は非表示）。Phase 2（§5.5 / §5.7 / §5.8）は実装済みだが未マージのまま **2026-09-16 にアーカイブ**
+ブランチ: ~~feature/multilingual-development~~ → 削除済み。実装はタグ `archive/i18n-phase2-2026-07`（PR #10 クローズ）
+
+> **2026-09-16 アーカイブ判断（依頼者・ユーザー決定）**
+> 多言語を当面有効化しない方針のため、Phase 2 の実装（システムメッセージID化・送信時翻訳・AI二言語出力・APIエラーコード第1〜2波、約730行）は dev に取り込まず、タグ `archive/i18n-phase2-2026-07` に保管した。
+> 理由: dev との乖離が2か月分あり core 経路（メッセージ送信・案件作成・Gemini分類）で手作業の衝突解消が要ること、本番に休眠コードとして置いても翻訳経路は一度も実行されず検証されないまま腐ること、本番 migration 2本と空振り cron が要ること。
+> **再開時はこの設計書を正本に、タグを参考資料として再実装する（マージではなく）。** 手順: ① `src/i18n/routing.ts` の `LANGUAGE_SWITCHER_ENABLED` と `localeDetection` を戻して静的 i18n を再公開 → ② 緊急語彙のネイティブ確認 → ③ Phase 2 を再実装（§5.8 の migration は再作成）。
+> Staging に先行適用していた Phase 2 用の列（`cases.description_free_ja`、`messages.source_locale / translated_content / translation_status / translation_attempts / system_key / system_params`）は本番に無く、2026-09-16 に Staging 側を DROP して本番と揃えた（データは0件だった）。`migrations/add_case_chat_translation.sql` も dev から外した（タグと git 履歴に残る）。
 
 日本語UIのみの現行サービスを、**日本語・英語・中国語（簡体字）・韓国語・ベトナム語**
 （将来: インドネシア語）で切り替えられるようにするための設計書。

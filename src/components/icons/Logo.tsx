@@ -1,6 +1,16 @@
 // src/components/icons/Logo.tsx
 // 明日もsamasama — 涙型ロゴ 統一コンポーネント
 
+import { useId } from 'react'
+
+// SVG 内のグラデーション・フィルタは id で参照する。同じ設定のロゴを1ページに2つ置くと
+// (例: ヘッダーのスマホ用と PC 用)id が重複し、ブラウザは最初の要素に解決するため、
+// 最初の要素が display:none だと涙型が描かれない(PC だけロゴが真っ黒に見える)。
+// 描画ごとに固有の id を振って回避する。useId の記号は url(#…) で安全な英数字に落とす。
+function useSvgId(prefix: string) {
+  return `${prefix}-${useId().replace(/[^A-Za-z0-9]/g, '')}`
+}
+
 interface LogoProps {
   variant?: 'default' | 'white'
   size?: 'sm' | 'md' | 'lg'
@@ -16,7 +26,7 @@ const cfg = {
 
 // アイコン（ダーク背景 + 涙型）単体
 export function LogoIcon({ size = 36 }: { size?: number }) {
-  const id = `li${size}`
+  const id = useSvgId('li')
   const r = Math.round(size * 0.23)
   return (
     <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
@@ -36,7 +46,7 @@ export function LogoIcon({ size = 36 }: { size?: number }) {
 
 // シンボルのみ（背景なし）
 export function LogoMark({ size = 36, white = false }: { size?: number; white?: boolean }) {
-  const id = `lm${size}${white ? 'w' : 'd'}`
+  const id = useSvgId('lm')
   return (
     <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
       <defs>
@@ -60,7 +70,7 @@ export function Logo({ variant = 'default', size = 'md', showText = true, classN
   const teal        = isWhite ? '#5EEAD4' : '#0BC5A4'
   const blue        = isWhite ? '#7DD3FC' : '#0A8FD4'
   const subColor    = '#94A3B8'
-  const id = `logo${size}${variant}`
+  const id = useSvgId('logo')
   const w = showText ? c.totalW : c.icon
   const h = c.icon
   const tx = c.icon + c.gap

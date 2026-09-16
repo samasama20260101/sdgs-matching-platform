@@ -59,6 +59,13 @@ export default function AdminDashboardPage() {
         userId: string; userName: string
     }>({ isOpen: false, type: null, userId: '', userName: '' })
     const [actionLoading, setActionLoading] = useState(false)
+    // メールアドレス変更は入力欄が要るため confirmModal とは別に持つ
+    const [emailModal, setEmailModal] = useState<{
+        isOpen: boolean; userId: string; userName: string; currentEmail: string
+    }>({ isOpen: false, userId: '', userName: '', currentEmail: '' })
+    const [newEmail, setNewEmail] = useState('')
+    const [emailError, setEmailError] = useState<string | null>(null)
+    const [emailSaving, setEmailSaving] = useState(false)
     const [supporters, setSupporters] = useState<Supporter[]>([])
     const [sosUsers, setSosUsers] = useState<SosUser[]>([])
     const [allCases, setAllCases] = useState<Case[]>([])
@@ -173,6 +180,37 @@ export default function AdminDashboardPage() {
             alert('操作に失敗しました')
         } finally {
             setActionLoading(false)
+        }
+    }
+
+    const openEmailModal = (userId: string, userName: string, currentEmail: string) => {
+        setEmailModal({ isOpen: true, userId, userName, currentEmail })
+        setNewEmail('')
+        setEmailError(null)
+    }
+
+    const handleEmailChange = async () => {
+        if (emailSaving) return
+        setEmailSaving(true)
+        setEmailError(null)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            const res = await fetch(`/api/admin/users/${emailModal.userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+                body: JSON.stringify({ action: 'change_email', new_email: newEmail }),
+            })
+            const result = await res.json()
+            if (!res.ok) {
+                setEmailError(result.error || '変更に失敗しました')
+                return
+            }
+            setEmailModal({ isOpen: false, userId: '', userName: '', currentEmail: '' })
+            loadData()
+        } catch {
+            setEmailError('変更に失敗しました')
+        } finally {
+            setEmailSaving(false)
         }
     }
 
@@ -394,6 +432,8 @@ export default function AdminDashboardPage() {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center justify-center gap-1">
+                                                                <button onClick={() => openEmailModal(s.id, s.organization_name || s.real_name, s.email)}
+                                                                    className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 whitespace-nowrap">メール変更</button>
                                                                 {s.is_suspended ? (
                                                                     <button onClick={() => setConfirmModal({ isOpen: true, type: 'unsuspend', userId: s.id, userName: s.organization_name || s.real_name })}
                                                                         className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 whitespace-nowrap">停止解除</button>
@@ -471,6 +511,8 @@ export default function AdminDashboardPage() {
                                                     <td className="px-6 py-4 text-gray-400">{new Date(u.created_at).toLocaleDateString('ja-JP')}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center justify-center gap-1">
+                                                            <button onClick={() => openEmailModal(u.id, u.display_name || u.real_name, u.email)}
+                                                                className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 whitespace-nowrap">メール変更</button>
                                                             {u.is_suspended ? (
                                                                 <button onClick={() => setConfirmModal({ isOpen: true, type: 'unsuspend', userId: u.id, userName: u.display_name || u.real_name })}
                                                                     className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 whitespace-nowrap">停止解除</button>
@@ -903,6 +945,54 @@ export default function AdminDashboardPage() {
             )}
 
             {/* ── ユーザー操作確認モーダル ── */}
+            {emailModal.isOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                        <div className="text-center mb-4">
+                            <div className="text-3xl mb-2">✉️</div>
+                            <h3 className="text-lg font-bold text-gray-800">メールアドレスを変更しますか？</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                <span className="font-medium">{emailModal.userName}</span> のログイン用アドレスを変更します
+                            </p>
+                        </div>
+
+                        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 leading-5">
+                            この操作は新しいアドレスの所有確認を行いません。本人であること・そのアドレスが本人のものであることを確認したうえで実行してください。変更後、本人は新しいアドレスでログインします（パスワードは変わりません）。
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500">現在のアドレス</label>
+                                <p className="text-sm text-gray-700 break-all mt-0.5">{emailModal.currentEmail}</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">新しいアドレス</label>
+                                <input type="email" value={newEmail} maxLength={254}
+                                    onChange={e => setNewEmail(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                            {emailError && (
+                                <p className="text-sm text-red-600">{emailError}</p>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setEmailModal({ isOpen: false, userId: '', userName: '', currentEmail: '' })}
+                                className="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50">
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={handleEmailChange}
+                                disabled={emailSaving || !newEmail.trim()}
+                                className="flex-1 px-4 py-2 rounded-lg text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                                {emailSaving ? '変更中...' : '変更する'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {confirmModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white rounded-xl shadow-2xl p-6 mx-4 max-w-sm w-full">
