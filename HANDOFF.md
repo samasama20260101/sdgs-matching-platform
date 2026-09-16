@@ -45,7 +45,7 @@
 1. **Staging Supabase の設定**(ユーザー作業、またはユーザー許可のうえ): (a) SMTP(Resend)設定 (b) Authentication → Emails → Change Email Address に `docs/email_templates/change_email.html` を貼る(件名「【明日もsamasama】メールアドレス変更の確認」) (c) 「Secure email change」(新旧両方のアドレスで確認)が ON か確認。SMTP がないと確認メールが届かず本人経路のメール変更は検証できない
 2. **Staging 実操作検証**(人手): 自発パスワード変更(現PW誤り→エラー、正しい→成功)、初回強制変更で現PW欄が出ない、メール変更(確認メール→リンク→profile の表示が新アドレス)、管理者のユーザーメール変更(即時切替+新アドレスでログイン可)。curl で通る部分: `email-change-check` の 400(形式)/403(PW不一致)/409(重複)
 3. 検証OKなら **チェックポイントPR(dev→main)**。本番側も同じ Supabase 設定(SMTP・テンプレート・Secure email change)が事前に必要
-4. **ブランチ整理**(ユーザー判断待ち): dev取り込み済みの残骸16本の削除可否/`feature/i18n-supporter-ui`(サポーターUI翻訳しない方針でお蔵入り候補)/`feature/multilingual-development`(動的翻訳・待機中)/ローカルのみの `feature/variant-family-access-foundation`(origin 未push)
+4. **ブランチ整理**(ユーザー判断待ち): dev取り込み済みの残骸16本の削除可否/`feature/i18n-supporter-ui`(サポーターUI翻訳しない方針でお蔵入り候補)/`feature/multilingual-development`(動的翻訳・待機中)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
 5. (継続)`docs/proposals/` + `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否。相談フォーム改善提案は依頼者の決定待ち(§10)
 6. (継続)拡散タスク(ユーザー作業): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
 7. (継続)技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み。`users.supporter_type` / `users.organization_name` 列のDROP migration。本番の `display_id_backup_20260816` テーブルDROP(ユーザー実行、8/16 から1か月経過)
