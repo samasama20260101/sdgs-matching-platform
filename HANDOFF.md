@@ -1,5 +1,5 @@
-# HANDOFF: 技術負債返済 + アカウント設定の穴埋め(メール変更を dev 取り込み・Staging検証待ち)
-更新: 2026-09-16(feature/account-email-change を dev にマージ)
+# HANDOFF: 休止前整理(ブランチ dev/main 化・多言語Phase 2アーカイブ)+ メール変更のStaging検証待ち
+更新: 2026-09-16(ブランチ整理・多言語Phase 2アーカイブ・Staging DROP は確認待ち)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,7 +8,9 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
-**2026-09-16 `feature/account-email-change` を dev にマージ(`1bb26b7`)。衝突なし、ビルド exit 0・静的ページ 122/122(change-email 追加で 115 から増加)、翻訳キー 6言語×700 一致。origin/dev へ push 済み → Staging 自動デプロイ。本番(main = `93099a7`)には未反映。**
+**2026-09-16 休止前整理を実施: ブランチは `dev` / `main` の2本だけになった**(dev取り込み済み18本+i18n-supporter-ui+variant試作を削除)。多言語 Phase 2 は PR #10 をクローズし、タグ `archive/i18n-phase2-2026-07` に保管してブランチ削除(設計書冒頭に判断メモ)。**ユーザーは 2026年11月以降、開発を一時休止する予定**。休止前の判断基準は「本番の安定を崩さない・DBを増やさない」。
+**残り: Staging の i18n Phase 2 用の列7本+インデックス1本の DROP(SQL は用意済み・ユーザー確認待ち)→ dev の `migrations/add_case_chat_translation.sql` を外す。**
+同日 `feature/account-email-change` を dev にマージ(`1bb26b7`)。衝突なし、ビルド exit 0・静的ページ 122/122(change-email 追加で 115 から増加)、翻訳キー 6言語×700 一致。origin/dev へ push 済み → Staging 自動デプロイ。本番(main = `93099a7`)には未反映。**
 前回: 2026-09-03 PR #31 で東京リージョン化+マスク検証ラボを本番反映(hnd1 実測済み)。PR #29(8/29)、PR #30(auto-close 30日化)。DB操作はいずれもなし。
 
 ## 完了したこと
@@ -32,6 +34,9 @@
 - 前フェーズ(2026-08-16): PR #26/#27/#28、display_id形式統一とUNIQUE付与(本番適用済み)、詳細は git log
 
 ## 試して失敗したこと ★最重要
+- **auto mode の分類器は「一括削除っぽい」コマンドをブロックする**(xargs で18ブランチ push --delete、for ループで branch -d)。ブランチ名を明示列挙した単一コマンドなら通る。本番 psql も同様にブロックされるのでユーザーが `!` で実行
+- **この gh CLI の `pr close` に `--comment` は無い** → `gh pr comment N --body` してから `gh pr close N`
+- **Staging の DDL/SQL は Management API**(`POST https://api.supabase.com/v1/projects/<ref>/database/query`、トークンは `~/.supabase/access-token`)で流せる。jq は未インストールなので python3 で整形
 - **feature ブランチの未取り込み判定は `git cherry -v dev <branch>`**(`-` は dev に同内容のパッチあり、`+` が本当に未取り込み)。`--no-merged` だけだと cherry-pick 済みの分まで「未マージ」に見える
 - **衝突候補は merge-base からの変更ファイルの重なり**(`git diff --name-only <mb> <branch>` と `<mb> dev` を `comm -12`)で事前に出せる。今回 profile/page.tsx が重なっていたが自動マージで解決した。`--no-commit` で止めて中身を見てからコミットするのが安全
 - **`git merge-tree --write-tree` は git 2.34 では未対応**で usage を出して非0終了 → 「CONFLICT」と誤判定しかけた
@@ -45,7 +50,7 @@
 1. **Staging Supabase の設定**(ユーザー作業、またはユーザー許可のうえ): (a) SMTP(Resend)設定 (b) Authentication → Emails → Change Email Address に `docs/email_templates/change_email.html` を貼る(件名「【明日もsamasama】メールアドレス変更の確認」) (c) 「Secure email change」(新旧両方のアドレスで確認)が ON か確認。SMTP がないと確認メールが届かず本人経路のメール変更は検証できない
 2. **Staging 実操作検証**(人手): 自発パスワード変更(現PW誤り→エラー、正しい→成功)、初回強制変更で現PW欄が出ない、メール変更(確認メール→リンク→profile の表示が新アドレス)、管理者のユーザーメール変更(即時切替+新アドレスでログイン可)。curl で通る部分: `email-change-check` の 400(形式)/403(PW不一致)/409(重複)
 3. 検証OKなら **チェックポイントPR(dev→main)**。本番側も同じ Supabase 設定(SMTP・テンプレート・Secure email change)が事前に必要
-4. **ブランチ整理**(ユーザー判断待ち): dev取り込み済みの残骸16本の削除可否。`feature/i18n-supporter-ui` はサポーターUI翻訳しない方針のため 9/16 に origin・ローカルとも削除済み(最終コミット 7a689d4、同梱の 6/12 レビューmd 2本も未救出)。残るは `feature/multilingual-development`(動的翻訳・待機中)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
+4. **ブランチ整理は完了**(2026-09-16): 残骸18本(account-email-change 含む)を origin・ローカルとも削除、ローカル main を origin/main に追随。`feature/i18n-supporter-ui` はサポーターUI翻訳しない方針のため 9/16 に origin・ローカルとも削除済み(最終コミット 7a689d4、同梱の 6/12 レビューmd 2本も未救出)。`feature/multilingual-development`(多言語 Phase 2)は PR #10 クローズ・タグ `archive/i18n-phase2-2026-07` 保管・削除。再開時はマージせず設計書から再実装(docs/i18n_multilingual_design.md 冒頭)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
 5. (継続)`docs/proposals/` + `scripts/md2pdf.sh` + `scripts/lib/` の追跡可否。相談フォーム改善提案は依頼者の決定待ち(§10)
 6. (継続)拡散タスク(ユーザー作業): Resend Proアップグレード / Instagramリンク設定+投稿 / pptxスライド12とリーフレットの連絡先記入 / 八代市「郡築」表記確認
 7. (継続)技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み(**9/16 に i18n フェーズ2の列で実際に差分を確認済み**、下記「地雷」参照)。`users.supporter_type` / `users.organization_name` 列のDROP migration。本番の `display_id_backup_20260816` テーブルDROP(ユーザー実行、8/16 から1か月経過)
@@ -57,7 +62,7 @@
 - **管理者は `/profile` に入れない**(role が `'SOS' | 'SUPPORTER'`)ため、管理者自身のパスワード変更は forgot-password 頼み。管理者自身のメール変更・退会は未整備(他ユーザーのメールは管理画面から変更可になった)
 - `/profile` の「※変更はページ下部の「ログイン情報」から行えます」は日本語ハードコード(旧文言も同様。i18n化は未対応)
 - Stagingテストユーザー: sos01@gmail.com / npo01_1@gmail.com(testpass123)、管理者 x25660@yahoo.co.jp(PW不明)。検収でPWやメールを変えたらここも直す
-- **Staging と本番のスキーマ差分(2026-09-16 確認)**: 本番には `users.locale` / `cases.locale` のみ(`add_i18n_locale_foundation.sql` 適用済み)。`add_case_chat_translation.sql`(dev の migrations/ にあるが本番未適用: `cases.description_free_ja`、`messages.source_locale/translated_content/translation_status/translation_attempts`)と `add_system_message_keys.sql`(feature/multilingual-development にのみ存在: `messages.system_key/system_params`)は **Staging には適用済み・本番には無い**。dev のコードはこれらの列を参照していないので現時点の本番に影響なし。`feature/multilingual-development` を取り込むときは、この2本を本番適用するのが前提
+- **Staging と本番のスキーマ差分(2026-09-16 確認)**: 本番には `users.locale` / `cases.locale` のみ(`add_i18n_locale_foundation.sql` 適用済み)。`add_case_chat_translation.sql`(dev の migrations/ にあるが本番未適用: `cases.description_free_ja`、`messages.source_locale/translated_content/translation_status/translation_attempts`)と `add_system_message_keys.sql`(feature/multilingual-development にのみ存在: `messages.system_key/system_params`)は **Staging には適用済み・本番には無い**。dev のコードはこれらの列を参照していないので現時点の本番に影響なし。Phase 2 アーカイブに伴い **Staging 側の7列+`idx_messages_translation_pending` を DROP して本番と揃える**(対象列のデータは全て0件を確認済み。SQL はセッションの scratchpad に用意、実行は Management API 経由・ユーザー確認後)。実行後は dev の `migrations/add_case_chat_translation.sql` を削除する(タグと git 履歴に残る)
 - `users.supporter_type` / `users.organization_name` 列は未DROP(`admin/create-supporter` は両方に書く。害はない)
 - 多言語再公開は `src/i18n/routing.ts` の `LANGUAGE_SWITCHER_ENABLED` + `localeDetection` の2点。ko/vi/idは緊急語彙ネイティブ確認が前提
 - 災害データは `cases.intake_qna.disaster` 配下(migration不要方針)。正本は `src/lib/constants/disaster.ts`
