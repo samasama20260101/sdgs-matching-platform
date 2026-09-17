@@ -6,6 +6,7 @@
   "nav": {
     "supporters": "Daftar pendukung",
     "story": "Kisah kami",
+    "news": "Berita",
     "login": "Masuk",
     "consult": "Konsultasi"
   },
@@ -100,6 +101,7 @@
   },
   "footer": {
     "story": "Kisah kami",
+    "news": "Berita",
     "supporters": "Daftar pendukung",
     "supporterRecruit": "Jadi pendukung",
     "contact": "Kontak",
@@ -159,5 +161,23 @@
     "shareOn": "Bagikan ke {network}",
     "copy": "Salin tautan",
     "copied": "Tautan disalin"
+  },
+  "news": {
+    "sectionTitle": "Berita",
+    "viewAll": "Lihat semua",
+    "listKicker": "News",
+    "listTitle": "Berita",
+    "listLead": "Pengumuman dari tim, perkenalan organisasi peserta, dan wawancara.",
+    "empty": "Belum ada berita saat ini.",
+    "backToTop": "← Beranda",
+    "backToList": "← Kembali ke daftar berita",
+    "external": "Baca selengkapnya (situs luar)",
+    "metaTitle": "Berita | 明日もsamasama",
+    "category": {
+      "NOTICE": "Pengumuman",
+      "MAINTENANCE": "Pemeliharaan",
+      "SUPPORTER_JOINED": "Organisasi baru",
+      "INTERVIEW": "Wawancara"
+    }
   }
 }

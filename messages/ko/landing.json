@@ -6,6 +6,7 @@
   "nav": {
     "supporters": "서포터 목록",
     "story": "우리의 마음",
+    "news": "소식",
     "login": "로그인",
     "consult": "상담하기"
   },
@@ -100,6 +101,7 @@
   },
   "footer": {
     "story": "우리의 마음",
+    "news": "소식",
     "supporters": "서포터 목록",
     "supporterRecruit": "서포터 모집",
     "contact": "문의",
@@ -159,5 +161,23 @@
     "shareOn": "{network}에 공유",
     "copy": "링크 복사",
     "copied": "링크를 복사했습니다"
+  },
+  "news": {
+    "sectionTitle": "소식",
+    "viewAll": "전체 보기",
+    "listKicker": "News",
+    "listTitle": "소식",
+    "listLead": "운영진의 안내, 참여 단체 소개, 인터뷰를 게재합니다.",
+    "empty": "현재 소식이 없습니다.",
+    "backToTop": "← 홈으로",
+    "backToList": "← 소식 목록으로",
+    "external": "더 읽기(외부 사이트)",
+    "metaTitle": "소식 | 明日もsamasama",
+    "category": {
+      "NOTICE": "안내",
+      "MAINTENANCE": "점검",
+      "SUPPORTER_JOINED": "참여 단체",
+      "INTERVIEW": "인터뷰"
+    }
   }
 }

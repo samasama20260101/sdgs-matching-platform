@@ -6,6 +6,7 @@
   "nav": {
     "supporters": "サポーター一覧",
     "story": "私たちの思い",
+    "news": "お知らせ",
     "login": "ログイン",
     "consult": "相談する"
   },
@@ -100,6 +101,7 @@
   },
   "footer": {
     "story": "私たちの思い",
+    "news": "お知らせ",
     "supporters": "サポーター一覧",
     "supporterRecruit": "サポーター募集",
     "contact": "お問い合わせ",
@@ -159,5 +161,23 @@
     "shareOn": "{network}でシェア",
     "copy": "リンクをコピー",
     "copied": "リンクをコピーしました"
+  },
+  "news": {
+    "sectionTitle": "お知らせ",
+    "viewAll": "すべて見る",
+    "listKicker": "News",
+    "listTitle": "お知らせ",
+    "listLead": "運営からのお知らせ、参加団体の紹介、インタビューなどを掲載しています。",
+    "empty": "現在、お知らせはありません。",
+    "backToTop": "← トップへ",
+    "backToList": "← お知らせ一覧へ",
+    "external": "続きを読む(外部サイト)",
+    "metaTitle": "お知らせ | 明日もsamasama",
+    "category": {
+      "NOTICE": "お知らせ",
+      "MAINTENANCE": "メンテナンス",
+      "SUPPORTER_JOINED": "参加団体",
+      "INTERVIEW": "インタビュー"
+    }
   }
 }
