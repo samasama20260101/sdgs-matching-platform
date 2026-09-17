@@ -258,7 +258,7 @@ export default function AdminNewsPage() {
                     <section className="rounded-xl bg-white border border-gray-100">
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                             <h2 className="font-semibold text-gray-900">{selectedId ? '編集' : '新規作成'}</h2>
-                            {selected?.status === 'PUBLISHED' && !selected.external_url && (
+                            {selected?.status === 'PUBLISHED' && (
                                 <a href={`/news/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-700 hover:underline">
                                     公開ページを開く ↗
                                 </a>
@@ -379,7 +379,7 @@ export default function AdminNewsPage() {
                                     placeholder="https://note.com/..."
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                                 />
-                                <p className="mt-1 text-xs text-gray-400">入れると、トップと一覧からはこのURLへ直接飛びます(本文は記事ページを開いた人だけが読む)</p>
+                                <p className="mt-1 text-xs text-gray-400">入れると、記事ページの本文の下に「続きを読む(外部サイトが開きます)」ボタンが出ます。トップと一覧からは必ずサイト内の記事ページに入るので、本文に2〜3行の導入文を書いてください</p>
                             </div>
 
                             {/* 公開日・状態 */}

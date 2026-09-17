@@ -19,6 +19,14 @@ type PageProps = { params: Promise<{ locale: string; id: string }> }
 // generateMetadata と本体で同じ id を二度読まないようにリクエスト内でキャッシュする
 const loadPost = cache(async (id: string) => (isUuid(id) ? getPublishedNewsById(id) : null))
 
+function hostnameOf(url: string) {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return url
+  }
+}
+
 function summarize(body: string) {
   return body.replace(/^## .*$/gm, '').replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 120)
 }
@@ -82,6 +90,8 @@ export default async function NewsArticlePage({ params }: PageProps) {
               >
                 {t('external')} <span aria-hidden="true">↗</span>
               </a>
+              {/* 飛び先のドメインを添えて、どこへ行くのか分かるようにする(見知らぬサイトへ突然飛ばさない) */}
+              <p className="mt-2 text-xs text-gray-400">{t('externalHost', { host: hostnameOf(post.external_url) })}</p>
             </div>
           )}
         </article>

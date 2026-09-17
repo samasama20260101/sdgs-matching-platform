@@ -171,7 +171,8 @@
     "empty": "현재 소식이 없습니다.",
     "backToTop": "← 홈으로",
     "backToList": "← 소식 목록으로",
-    "external": "더 읽기(외부 사이트)",
+    "external": "더 읽기(외부 사이트가 열립니다)",
+    "externalHost": "이동 대상: {host}",
     "metaTitle": "소식 | 明日もsamasama",
     "category": {
       "NOTICE": "안내",

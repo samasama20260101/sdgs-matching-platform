@@ -1,6 +1,7 @@
 'use client';
 
 // トップページの「お知らせ」ブロック。公開中の新しい数件を1行ずつ並べる。
+// リンク先は常にサイト内の記事ページ(外部リンクがある投稿も、記事ページで導入文を読んでから外へ出る)。
 // 公開中が0件・取得失敗のときはブロックごと出さない(空の欄を見せない)。
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -42,20 +43,13 @@ export function NewsSection() {
                   <time dateTime={post.published_at} className="tabular-nums">{formatNewsDate(post.published_at, locale)}</time>
                   <NewsCategoryChip category={post.category} label={t(`category.${post.category}`)} />
                 </div>
-                <p className="min-w-0 flex-1 text-sm text-gray-800 group-hover:text-teal-700 transition-colors">
-                  {post.title}
-                  {post.external_url && <span className="ml-1 text-xs text-gray-400">↗</span>}
-                </p>
+                <p className="min-w-0 flex-1 text-sm text-gray-800 group-hover:text-teal-700 transition-colors">{post.title}</p>
               </>
             );
             const className = 'group flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4';
             return (
               <li key={post.id}>
-                {post.external_url ? (
-                  <a href={post.external_url} target="_blank" rel="noopener noreferrer" className={className}>{inner}</a>
-                ) : (
-                  <Link href={`/news/${post.id}`} className={className}>{inner}</Link>
-                )}
+                <Link href={`/news/${post.id}`} className={className}>{inner}</Link>
               </li>
             );
           })}

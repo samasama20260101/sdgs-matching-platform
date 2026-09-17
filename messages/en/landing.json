@@ -171,7 +171,8 @@
     "empty": "There are no news posts at the moment.",
     "backToTop": "← Home",
     "backToList": "← Back to news",
-    "external": "Read more (external site)",
+    "external": "Read more (opens an external site)",
+    "externalHost": "Destination: {host}",
     "metaTitle": "News | 明日もsamasama",
     "category": {
       "NOTICE": "Notice",

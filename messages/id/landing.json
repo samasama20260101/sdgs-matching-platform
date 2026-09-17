@@ -171,7 +171,8 @@
     "empty": "Belum ada berita saat ini.",
     "backToTop": "← Beranda",
     "backToList": "← Kembali ke daftar berita",
-    "external": "Baca selengkapnya (situs luar)",
+    "external": "Baca selengkapnya (membuka situs luar)",
+    "externalHost": "Tujuan tautan: {host}",
     "metaTitle": "Berita | 明日もsamasama",
     "category": {
       "NOTICE": "Pengumuman",

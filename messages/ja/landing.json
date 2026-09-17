@@ -171,7 +171,8 @@
     "empty": "現在、お知らせはありません。",
     "backToTop": "← トップへ",
     "backToList": "← お知らせ一覧へ",
-    "external": "続きを読む(外部サイト)",
+    "external": "続きを読む(外部サイトが開きます)",
+    "externalHost": "リンク先: {host}",
     "metaTitle": "お知らせ | 明日もsamasama",
     "category": {
       "NOTICE": "お知らせ",

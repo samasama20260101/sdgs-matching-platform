@@ -171,7 +171,8 @@
     "empty": "目前没有通知。",
     "backToTop": "← 首页",
     "backToList": "← 返回通知列表",
-    "external": "阅读全文(外部网站)",
+    "external": "阅读全文(将打开外部网站)",
+    "externalHost": "链接目标: {host}",
     "metaTitle": "通知 | 明日もsamasama",
     "category": {
       "NOTICE": "通知",

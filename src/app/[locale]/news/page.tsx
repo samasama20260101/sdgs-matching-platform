@@ -69,23 +69,14 @@ export default async function NewsListPage({ params }: PageProps) {
                           <time dateTime={post.published_at}>{formatNewsDate(post.published_at, locale)}</time>
                           <NewsCategoryChip category={post.category} label={t(`category.${post.category}`)} />
                         </div>
-                        <p className="mt-1.5 text-base font-bold text-gray-900 group-hover:text-teal-700 transition-colors">
-                          {post.title}
-                          {post.external_url && <span className="ml-1.5 text-xs font-normal text-gray-400">↗</span>}
-                        </p>
+                        <p className="mt-1.5 text-base font-bold text-gray-900 group-hover:text-teal-700 transition-colors">{post.title}</p>
                       </>
                     )
                     return (
                       <li key={post.id}>
-                        {post.external_url ? (
-                          <a href={post.external_url} target="_blank" rel="noopener noreferrer" className="group block py-5">
-                            {inner}
-                          </a>
-                        ) : (
-                          <Link href={`/news/${post.id}`} className="group block py-5">
-                            {inner}
-                          </Link>
-                        )}
+                        <Link href={`/news/${post.id}`} className="group block py-5">
+                          {inner}
+                        </Link>
                       </li>
                     )
                   })}

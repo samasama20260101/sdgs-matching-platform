@@ -171,7 +171,8 @@
     "empty": "Hiện chưa có tin tức.",
     "backToTop": "← Trang chủ",
     "backToList": "← Về danh sách tin tức",
-    "external": "Đọc tiếp (trang ngoài)",
+    "external": "Đọc tiếp (mở trang web bên ngoài)",
+    "externalHost": "Trang đích: {host}",
     "metaTitle": "Tin tức | 明日もsamasama",
     "category": {
       "NOTICE": "Thông báo",
