@@ -94,7 +94,7 @@ rollback: `DROP TABLE news_posts;`(他テーブルから参照されない)。
 - 認可は `requireActiveAppUser(request, { roles: ['ADMIN'] })` を使う(`src/lib/api/auth.ts`)。
 - 入力検証: `title` ≤ 120 文字、`body` ≤ 20,000 文字、`external_url` は `http(s)://` のみ(`validation.ts` に `isHttpUrl` を追加)、`id` は `isUuid`。
 - 公開・下書き戻し・削除は `audit_logs` に記録(`news_post_published` / `news_post_unpublished` / `news_post_deleted`)。既存テーブルで追加なし。
-- 公開 API は `Cache-Control: public, s-maxage=60, stale-while-revalidate=600`。お知らせは更新頻度が低く、60 秒の遅れは問題にならない。
+- 公開 API は `Cache-Control: no-store`(featured-supporters と同じ)。当初 `s-maxage=60, stale-while-revalidate=600` にしたが、公開直後にトップを確認すると CDN が公開前の空応答を最大 10 分返し続けた(2026-09-17 プレビューで実測)ため撤回。
 
 ### 3.4 公開側
 
