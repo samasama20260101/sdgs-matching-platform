@@ -1,5 +1,5 @@
 # HANDOFF: トップページお知らせ欄の実装(feature/news-section)+ 休止前整理
-更新: 2026-09-17(お知らせ欄を feature/news-section で実装。ローカル+Staging DB で通し検証済み。PR feature→dev 待ち)
+更新: 2026-09-17(お知らせ欄を feature/news-section で実装。ローカル+Staging DB で通し検証済み。PR #34 feature→dev のマージ承認待ち)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -9,7 +9,7 @@
 **新規(2026-09-17)**: トップページ「お知らせ」欄。運営が管理画面 `/admin/news` から投稿し、公開中の新しい3件がトップに、全件が `/news` に並ぶ。AI(Gemini)が材料から下書きを作る。写真なし・文章のみで小さく。正本は `docs/news_section_design.md`。**11月からの「少人数運営」宣言が最初の投稿**になる予定(たたき台は設計書 §6.2)。
 
 ## 現在地
-**2026-09-17 お知らせ欄を `feature/news-section`(dev から分岐)で実装完了。** 内容: migration `migrations/add_news_posts.sql`(**Staging には Management API で適用済み・本番未適用**)、公開API `GET /api/public/news`、トップの `NewsSection`(ヒーロー直下・0件なら非表示)、`/news` `/news/[id]`(サーバー描画・generateMetadata で記事名を title/OGP に)、管理API `/api/admin/news`(GET/POST)・`[id]`(PATCH/DELETE)・`draft`(AI下書き)、管理画面 `/admin/news`(ダッシュボードのヘッダーからリンク)、i18n `landing.news.*` 6言語×18キー(781 で一致)。ビルド exit 0・静的ページ 131/131。ローカル dev(Staging DB 接続)で API/ページの通し検証 44 項目通過(認可 401/403・入力検証 400・下書き非表示・公開→表示→非公開→404・外部リンク・AI下書き・削除・監査ログ)。**ブラウザでの見た目・管理画面の操作は未検証(Playwright なし)** → dev マージ後に Staging でユーザーが確認する。**未 push・PR 未作成**(この HANDOFF 更新のコミット後に push → PR feature→dev を作る。マージはユーザー承認後)。
+**2026-09-17 お知らせ欄を `feature/news-section`(dev から分岐)で実装完了。** 内容: migration `migrations/add_news_posts.sql`(**Staging には Management API で適用済み・本番未適用**)、公開API `GET /api/public/news`、トップの `NewsSection`(ヒーロー直下・0件なら非表示)、`/news` `/news/[id]`(サーバー描画・generateMetadata で記事名を title/OGP に)、管理API `/api/admin/news`(GET/POST)・`[id]`(PATCH/DELETE)・`draft`(AI下書き)、管理画面 `/admin/news`(ダッシュボードのヘッダーからリンク)、i18n `landing.news.*` 6言語×18キー(781 で一致)。ビルド exit 0・静的ページ 131/131。ローカル dev(Staging DB 接続)で API/ページの通し検証 44 項目通過(認可 401/403・入力検証 400・下書き非表示・公開→表示→非公開→404・外部リンク・AI下書き・削除・監査ログ)。**ブラウザでの見た目・管理画面の操作は未検証(Playwright なし)** → dev マージ後に Staging でユーザーが確認する。**origin に push 済み・PR #34(feature/news-section → dev)作成済み**。マージはユーザー承認後(承認発言のあとなら `gh pr merge 34` 可)。
 
 **2026-09-17 本番でパスワード変更直後にログアウトする回帰を確認 → dev で修正(`1f652cc`)→ Staging 実測OK → PR #33 で本番反映(main = `f424824`、デプロイ success)。本番で「パスワード変更後もログアウトしない」のブラウザ確認はユーザー待ち。** 原因: PR #32 でパスワード更新を `admin.updateUserById` に切り替えたため、GoTrue が本人の現在のセッションも含めて全失効させていた(旧実装のクライアント `updateUser` は本人セッションを残す)。修正: 現PW検証は従来どおりサーバーで行い、更新は本人のトークンで GoTrue `PUT /auth/v1/user` を呼ぶ。Staging 実測: 変更した本人のトークンは get-role 200 のまま、別セッションは 401(他端末は失効)、403/400 のエラー経路も維持。
 
@@ -68,7 +68,7 @@
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
-0. **お知らせ欄**: ①`feature/news-section` を push → PR feature→dev(ユーザー承認後マージ)→ Staging(dev 自動デプロイ)でブラウザ検証: `/admin/login` に検証用管理者でログイン → `/admin/news` で投稿(AI下書き含む)→ トップに出る → `/news/[id]` → 下書きに戻すと消える。見た目の調整はここで拾う ②OK なら PR dev→main。**本番 migration(`migrations/add_news_posts.sql`)はユーザーが SQL Editor で実行**(PR マージ前に適用しても害はない: コードが無ければ誰も触らない) ③本番反映後、最初の投稿(11月の少人数運営宣言、設計書 §6.2 のたたき台をオーナーが書き直す)を `/admin/news` から入れる ④伊藤さんの note 記事が公開されたら INTERVIEW として外部リンク投稿
+0. **お知らせ欄**: ①PR #34(feature→dev)をユーザー承認後にマージ → Staging(dev 自動デプロイ)でブラウザ検証: `/admin/login` に検証用管理者でログイン → `/admin/news` で投稿(AI下書き含む)→ トップに出る → `/news/[id]` → 下書きに戻すと消える。見た目の調整はここで拾う ②OK なら PR dev→main。**本番 migration(`migrations/add_news_posts.sql`)はユーザーが SQL Editor で実行**(PR マージ前に適用しても害はない: コードが無ければ誰も触らない) ③本番反映後、最初の投稿(11月の少人数運営宣言、設計書 §6.2 のたたき台をオーナーが書き直す)を `/admin/news` から入れる ④伊藤さんの note 記事が公開されたら INTERVIEW として外部リンク投稿
 1. ~~パスワード変更の回帰修正を本番へ~~ → PR #33 で反映済み。本番で①自発パスワード変更後にログアウトしないこと をユーザーが再確認
 1b. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤(①は 9/17 に実施→ログアウト回帰を発見。変更後PWでの再ログインは可)。NGがあればこちらで修正 → dev → PR
 2. ~~本番の確認メール件名を日本語化~~ → 2026-09-16 本番・Staging とも変更済み
