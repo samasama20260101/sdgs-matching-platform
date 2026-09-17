@@ -1,8 +1,13 @@
-// お知らせ本文の描画。書式は3規則だけ(空行=段落 / 行頭「## 」=小見出し / http(s) URL は自動リンク)。
-// React 要素で組み立てるので dangerouslySetInnerHTML は使わない。サーバー・クライアント両方で使える。
+// お知らせ本文の描画(サーバーコンポーネント)。書式は4規則だけ:
+//   空行=段落 / 行頭「## 」=小見出し / 文中の http(s) URL は自動リンク / URL を1行だけで置くと OGP カード
+// React 要素で組み立てるので dangerouslySetInnerHTML は使わない。
 import React from 'react'
+import { LinkPreviewCard } from '@/components/news/LinkPreviewCard'
 
-const URL_SOURCE = 'https?:\\/\\/[^\\s<>"\'）)。、」]+'
+// URL は ASCII だけ(日本語の文が URL の直後に続いても巻き込まない)。末尾の句読点・閉じ括弧は URL に含めない
+const URL_SOURCE = "https?:\\/\\/[A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
+const TRAILING_PUNCTUATION = /[.,;:!?)\]'"]+$/
+const URL_ONLY_LINE = new RegExp(`^${URL_SOURCE}$`)
 
 function linkify(text: string, keyPrefix: string): React.ReactNode[] {
   const pattern = new RegExp(URL_SOURCE, 'g')
@@ -11,19 +16,20 @@ function linkify(text: string, keyPrefix: string): React.ReactNode[] {
   let index = 0
   let match: RegExpExecArray | null
   while ((match = pattern.exec(text)) !== null) {
+    const url = match[0].replace(TRAILING_PUNCTUATION, '')
     if (match.index > last) nodes.push(text.slice(last, match.index))
     nodes.push(
       <a
         key={`${keyPrefix}-${index++}`}
-        href={match[0]}
+        href={url}
         target="_blank"
         rel="noopener noreferrer"
         className="text-teal-600 underline decoration-teal-300 underline-offset-2 break-all hover:text-teal-700"
       >
-        {match[0]}
+        {url}
       </a>
     )
-    last = match.index + match[0].length
+    last = match.index + url.length
   }
   if (last < text.length) nodes.push(text.slice(last))
   return nodes
@@ -48,6 +54,9 @@ export function NewsBody({ body }: { body: string }) {
               {block.slice(3).trim()}
             </h2>
           )
+        }
+        if (URL_ONLY_LINE.test(block)) {
+          return <LinkPreviewCard key={blockIndex} url={block.replace(TRAILING_PUNCTUATION, '')} />
         }
         const lines = block.split('\n')
         return (

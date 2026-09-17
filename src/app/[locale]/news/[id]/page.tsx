@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation'
 import { Logo } from '@/components/icons/Logo'
 import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice'
 import { NewsBody } from '@/components/news/NewsBody'
+import { LinkPreviewCard } from '@/components/news/LinkPreviewCard'
 import { NewsCategoryChip } from '@/components/news/NewsCategoryChip'
 import { isUuid } from '@/lib/api/validation'
 import { formatNewsDate } from '@/lib/news/format'
@@ -81,7 +82,9 @@ export default async function NewsArticlePage({ params }: PageProps) {
           {post.body && <NewsBody body={post.body} />}
 
           {post.external_url && (
-            <div className="mt-10">
+            <div className="mt-10 space-y-4">
+              {/* 飛び先の OGP カード(画像・タイトル)を先に見せて、ボタンで外へ出る */}
+              <LinkPreviewCard url={post.external_url} />
               <a
                 href={post.external_url}
                 target="_blank"
