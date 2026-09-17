@@ -385,7 +385,7 @@ export default function AdminNewsPage() {
                             {/* 公開日・状態 */}
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">公開日 <span className="text-xs font-normal text-gray-400">(表示日・並び順)</span></label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">公開日 <span className="text-xs font-normal text-gray-400">(表示日・並び順。同じ日は登録が新しい順)</span></label>
                                     <input
                                         type="date"
                                         value={form.published_at}

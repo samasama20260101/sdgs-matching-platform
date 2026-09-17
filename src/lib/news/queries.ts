@@ -21,6 +21,8 @@ export async function getPublishedNews(limit: number): Promise<NewsPostPublic[]>
     .eq('status', 'PUBLISHED')
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
+    // 公開日は日単位(フォームの date 入力)なので同日は同点になる。登録が新しい順で並べる
+    .order('created_at', { ascending: false })
     .limit(clampNewsLimit(limit, NEWS_LIST_MAX))
   if (error) {
     console.error('[news] list error:', error)

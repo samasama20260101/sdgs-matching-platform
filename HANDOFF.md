@@ -48,6 +48,7 @@
 - 前フェーズ(2026-08-16): PR #26/#27/#28、display_id形式統一とUNIQUE付与(本番適用済み)、詳細は git log
 
 ## 試して失敗したこと ★最重要
+- **公開日だけで並べると同日の2件が同点になり、新しい方が上に来なかった**(公開日は date 入力で 0:00 JST 固定)。`created_at desc` を第2キーに追加(2026-09-17)
 - **公開 API に `s-maxage=60, stale-while-revalidate=600` を付けたら、公開直後のトップに出なかった**(Vercel CDN が公開前の空応答を STALE で最大10分返す。x-vercel-cache: STALE、age 353 で実測)。管理者が「公開→トップで確認」する流れと相性が悪い → `no-store` に変更(2026-09-17)
 - **feature ブランチにも Vercel プレビューが出る**: `https://sdgs-matching-platform-git-<branch名>-samasama.vercel.app`(env は Preview = Staging Supabase、dev-login ゲートあり)。dev マージ前のブラウザ検証はここでできる。dev の Staging URL は PR マージまで新ルートが 404
 - **`pkill -f "next dev"` は自分のシェルも殺す**(コマンド文字列にマッチ)。`pkill -f "[n]ext dev"` にする
