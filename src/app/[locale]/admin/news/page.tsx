@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import {
-    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX,
+    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NOTE_ARTICLE_WORKFLOW_ENABLED,
     type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsStatus,
 } from '@/lib/constants/news'
 import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
@@ -178,10 +178,12 @@ export default function AdminNewsPage() {
                     external_url: form.external_url.trim() || null,
                     published_at: form.published_at || null,
                     status: form.status,
-                    interview_source: form.interview_source,
-                    note_angle: form.note_angle,
-                    note_article: form.note_article,
-                    note_checklist: form.note_checklist,
+                    ...(NOTE_ARTICLE_WORKFLOW_ENABLED ? {
+                        interview_source: form.interview_source,
+                        note_angle: form.note_angle,
+                        note_article: form.note_article,
+                        note_checklist: form.note_checklist,
+                    } : {}),
                 }),
             })
             const result = await res.json()
@@ -370,7 +372,7 @@ export default function AdminNewsPage() {
                             </div>
 
                             {/* note 記事ワークフロー(インタビューのみ) */}
-                            {form.category === 'INTERVIEW' && (
+                            {NOTE_ARTICLE_WORKFLOW_ENABLED && form.category === 'INTERVIEW' && (
                                 <NoteArticlePanel
                                     title={form.title}
                                     fields={{

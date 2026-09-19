@@ -27,6 +27,11 @@ export function isNewsStatus(value: unknown): value is NewsStatus {
   return typeof value === 'string' && (NEWS_STATUSES as readonly string[]).includes(value)
 }
 
+// note 記事ワークフロー(設計 §4.5)の有効化フラグ。
+// 2026-09-19 に実装したが、gemini-2.5-pro がこの API キーで使えないため当面 false(ユーザー判断)。
+// true にするときは migrations/add_news_note_article_columns.sql を先に適用する(4列が要る)。
+export const NOTE_ARTICLE_WORKFLOW_ENABLED = false
+
 // 入力上限(設計 §3.3 / §4.4 / §4.5)
 export const NEWS_TITLE_MAX = 120
 export const NEWS_BODY_MAX = 20000
@@ -65,11 +70,12 @@ export type NewsAngle = {
 }
 
 // 管理画面が扱う形(note 記事ワークフローの列を含む)
+// 4列は NOTE_ARTICLE_WORKFLOW_ENABLED が true のときだけ API が返す
 export type NewsPostAdmin = NewsPost & {
-  interview_source: string
-  note_angle: NewsAngle | null
-  note_article: string
-  note_checklist: string
+  interview_source?: string
+  note_angle?: NewsAngle | null
+  note_article?: string
+  note_checklist?: string
 }
 
 export function isNewsAngle(value: unknown): value is NewsAngle {

@@ -2,7 +2,7 @@
 // 管理者: note 記事ワークフロー(切り口3案 / 本文 / 見直し)。DB には書かない(保存は PATCH /api/admin/news/[id])。
 import { NextResponse } from 'next/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
-import { isNewsAngle, NEWS_ARTICLE_MAX, NEWS_INTERVIEW_SOURCE_MAX } from '@/lib/constants/news'
+import { isNewsAngle, NEWS_ARTICLE_MAX, NEWS_INTERVIEW_SOURCE_MAX, NOTE_ARTICLE_WORKFLOW_ENABLED } from '@/lib/constants/news'
 import { proposeArticleAngles, reviewNoteArticle, writeNoteArticle, type ArticleFailure } from '@/lib/newsArticle'
 
 function pickText(value: unknown, max: number) {
@@ -16,6 +16,7 @@ function failure(result: ArticleFailure) {
 }
 
 export async function POST(request: Request) {
+  if (!NOTE_ARTICLE_WORKFLOW_ENABLED) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
   if ('response' in auth) return auth.response
 

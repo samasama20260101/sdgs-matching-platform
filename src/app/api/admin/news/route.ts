@@ -3,9 +3,13 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
+import { NOTE_ARTICLE_WORKFLOW_ENABLED, type NewsPostAdmin } from '@/lib/constants/news'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
-const ADMIN_NEWS_COLUMNS = 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
+// 列名を string にすると supabase-js の select 型推論(文字列パーサ)を通らないので、返り型は returns<>() で明示する
+const ADMIN_NEWS_COLUMNS: string = NOTE_ARTICLE_WORKFLOW_ENABLED
+    ? 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
+    : 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
 
 export async function GET(request: Request) {
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
@@ -16,6 +20,7 @@ export async function GET(request: Request) {
     .select(ADMIN_NEWS_COLUMNS)
     .order('published_at', { ascending: false, nullsFirst: true })
     .order('created_at', { ascending: false })
+    .returns<NewsPostAdmin[]>()
   if (error) {
     console.error('[admin/news] list error:', error)
     return NextResponse.json({ error: 'お知らせの取得に失敗しました' }, { status: 500 })
@@ -40,6 +45,7 @@ export async function POST(request: Request) {
     .from('news_posts')
     .insert({ ...parsed.data, created_by: auth.appUser.id })
     .select(ADMIN_NEWS_COLUMNS)
+    .returns<NewsPostAdmin[]>()
     .single()
   if (error || !data) {
     console.error('[admin/news] insert error:', error)

@@ -15,15 +15,9 @@ CREATE TABLE IF NOT EXISTS news_posts (
     status        text NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PUBLISHED')),
     published_at  timestamptz,                -- 表示日・並び順。公開時に未設定なら API が now() を入れる
     created_by    uuid REFERENCES users(id) ON DELETE SET NULL,
-    -- INTERVIEW 用: note 記事ワークフロー(設計 §4.5)。取材メモ → 切り口 → 記事本文 → 確認リスト
-    interview_source text NOT NULL DEFAULT '',  -- 取材メモ・書き起こし(AI の材料。オフレコは「非公開」と付ければ AI が無視する)
-    note_angle       jsonb,                      -- 選んだ切り口 {title, audience, hook, why}
-    note_article     text NOT NULL DEFAULT '',   -- note に貼る記事本文(## 見出し / > 引用 / 空行=段落)
-    note_checklist   text NOT NULL DEFAULT '',   -- 取材相手に確認する項目(見直し AI の出力を人が直したもの)
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz NOT NULL DEFAULT now()
 );
--- Staging には 2026-09-17 に上の4列なしで作成し、2026-09-19 に ALTER TABLE ... ADD COLUMN で追加済み。本番はこのファイルを一度流せばよい
 
 -- RLS 有効・ポリシーなし = anon / authenticated は読めない。service_role(API)だけが触る
 ALTER TABLE news_posts ENABLE ROW LEVEL SECURITY;

@@ -3,7 +3,7 @@ import 'server-only'
 
 import { normalizeHttpUrl } from '@/lib/api/validation'
 import {
-  isNewsAngle, isNewsCategory, isNewsStatus,
+  isNewsAngle, isNewsCategory, isNewsStatus, NOTE_ARTICLE_WORKFLOW_ENABLED,
   NEWS_ARTICLE_MAX, NEWS_BODY_MAX, NEWS_CHECKLIST_MAX, NEWS_INTERVIEW_SOURCE_MAX, NEWS_TITLE_MAX,
   type NewsAngle, type NewsCategory, type NewsStatus,
 } from '@/lib/constants/news'
@@ -73,7 +73,8 @@ export function parseNewsInput(raw: unknown): ParseResult {
     published_at: publishedAt.value ?? (status === 'PUBLISHED' ? new Date().toISOString() : null),
   }
 
-  // note 記事ワークフローの列は、リクエストに含まれるときだけ検証して更新する
+  // note 記事ワークフローの列は、機能が有効で、かつリクエストに含まれるときだけ検証して更新する(無効時は列が無い)
+  if (!NOTE_ARTICLE_WORKFLOW_ENABLED) return { ok: true, data }
   const longText = (key: 'interview_source' | 'note_article' | 'note_checklist', max: number, label: string) => {
     if (!(key in input)) return null
     const value = typeof input[key] === 'string' ? (input[key] as string).replace(/\r\n?/g, '\n') : ''

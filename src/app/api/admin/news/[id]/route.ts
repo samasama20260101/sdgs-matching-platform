@@ -3,10 +3,14 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
+import { NOTE_ARTICLE_WORKFLOW_ENABLED, type NewsPostAdmin } from '@/lib/constants/news'
 import { isUuid } from '@/lib/api/validation'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
-const COLUMNS = 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
+// 列名を string にすると supabase-js の select 型推論(文字列パーサ)を通らないので、返り型は returns<>() で明示する
+const COLUMNS: string = NOTE_ARTICLE_WORKFLOW_ENABLED
+    ? 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
+    : 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -52,6 +56,7 @@ export async function PATCH(request: Request, { params }: Params) {
     .update(parsed.data)
     .eq('id', id)
     .select(COLUMNS)
+    .returns<NewsPostAdmin[]>()
     .single()
   if (error || !data) {
     console.error('[admin/news] update error:', error)
