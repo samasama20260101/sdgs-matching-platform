@@ -27,10 +27,13 @@ export function isNewsStatus(value: unknown): value is NewsStatus {
   return typeof value === 'string' && (NEWS_STATUSES as readonly string[]).includes(value)
 }
 
-// 入力上限(設計 §3.3 / §4.4)
+// 入力上限(設計 §3.3 / §4.4 / §4.5)
 export const NEWS_TITLE_MAX = 120
 export const NEWS_BODY_MAX = 20000
 export const NEWS_MATERIAL_MAX = 8000
+export const NEWS_INTERVIEW_SOURCE_MAX = 40000  // 取材メモ・書き起こし(1時間の逐語で 2 万字前後)
+export const NEWS_ARTICLE_MAX = 30000           // note 記事本文
+export const NEWS_CHECKLIST_MAX = 10000         // 確認リスト
 
 // トップページに並べる件数と一覧の上限
 export const NEWS_TOP_LIMIT = 3
@@ -45,10 +48,32 @@ export type NewsPostPublic = {
   published_at: string
 }
 
-// 記事ページ・管理画面が扱う形
+// 記事ページが扱う形
 export type NewsPost = NewsPostPublic & {
   body: string
   status: NewsStatus
   created_at: string
   updated_at: string
+}
+
+// note 記事の切り口(INTERVIEW 用。AI が3案出し、書き手が1つ選ぶ)
+export type NewsAngle = {
+  title: string    // タイトル案
+  audience: string // 誰に何を伝える記事か
+  hook: string     // 冒頭の一文
+  why: string      // なぜこの切り口が材料に合うか
+}
+
+// 管理画面が扱う形(note 記事ワークフローの列を含む)
+export type NewsPostAdmin = NewsPost & {
+  interview_source: string
+  note_angle: NewsAngle | null
+  note_article: string
+  note_checklist: string
+}
+
+export function isNewsAngle(value: unknown): value is NewsAngle {
+  if (!value || typeof value !== 'object') return false
+  const v = value as Record<string, unknown>
+  return ['title', 'audience', 'hook', 'why'].every((k) => typeof v[k] === 'string' && (v[k] as string).length <= 1000)
 }

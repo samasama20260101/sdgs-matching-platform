@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
-const ADMIN_NEWS_COLUMNS = 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
+const ADMIN_NEWS_COLUMNS = 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
 
 export async function GET(request: Request) {
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })

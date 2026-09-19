@@ -8,8 +8,9 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import {
     NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX,
-    type NewsCategory, type NewsPost, type NewsStatus,
+    type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsStatus,
 } from '@/lib/constants/news'
+import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
 
 type FormState = {
     category: NewsCategory
@@ -18,20 +19,28 @@ type FormState = {
     external_url: string
     published_at: string   // "YYYY-MM-DD" または空
     status: NewsStatus
+    // note 記事ワークフロー(INTERVIEW 用)
+    interview_source: string
+    note_angle: NewsAngle | null
+    note_article: string
+    note_checklist: string
 }
 type Materials = { site: string; memo: string; notes: string }
 
 // 日本時間の YYYY-MM-DD(sv-SE ロケールは ISO 形式で日付を出す)
 const JST_DATE = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' })
 const toDateInput = (iso: string | null) => (iso ? JST_DATE.format(new Date(iso)) : '')
-const emptyForm = (): FormState => ({ category: 'NOTICE', title: '', body: '', external_url: '', published_at: JST_DATE.format(new Date()), status: 'DRAFT' })
+const emptyForm = (): FormState => ({
+    category: 'NOTICE', title: '', body: '', external_url: '', published_at: JST_DATE.format(new Date()), status: 'DRAFT',
+    interview_source: '', note_angle: null, note_article: '', note_checklist: '',
+})
 const emptyMaterials = (): Materials => ({ site: '', memo: '', notes: '' })
 
 const STATUS_LABEL: Record<NewsStatus, string> = { DRAFT: '下書き', PUBLISHED: '公開中' }
 
 export default function AdminNewsPage() {
     const router = useRouter()
-    const [posts, setPosts] = useState<NewsPost[]>([])
+    const [posts, setPosts] = useState<NewsPostAdmin[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [notice, setNotice] = useState<string | null>(null)
@@ -85,7 +94,7 @@ export default function AdminNewsPage() {
         setNotice(null)
     }
 
-    const selectPost = (post: NewsPost) => {
+    const selectPost = (post: NewsPostAdmin) => {
         setSelectedId(post.id)
         setForm({
             category: post.category,
@@ -94,6 +103,10 @@ export default function AdminNewsPage() {
             external_url: post.external_url ?? '',
             published_at: toDateInput(post.published_at),
             status: post.status,
+            interview_source: post.interview_source ?? '',
+            note_angle: post.note_angle ?? null,
+            note_article: post.note_article ?? '',
+            note_checklist: post.note_checklist ?? '',
         })
         setMaterials(emptyMaterials())
         setFormError(null)
@@ -133,6 +146,18 @@ export default function AdminNewsPage() {
         }
     }
 
+    const handleNoteFields = (patch: Partial<NoteArticleFields>) => setForm((prev) => ({ ...prev, ...patch }))
+
+    // note 記事の本文ができたら、投稿のタイトルと導入文が空のときだけ埋める(入力済みなら触らない)
+    const handleDraftWritten = ({ title, lead }: { title: string; lead: string }) => {
+        setForm((prev) => ({
+            ...prev,
+            title: prev.title.trim() ? prev.title : title.slice(0, NEWS_TITLE_MAX),
+            body: prev.body.trim() ? prev.body : lead,
+        }))
+        setNotice('note 記事の本文を入れました。投稿のタイトルと導入文が空だった場合はあわせて入れています。最後に「保存」を押してください')
+    }
+
     const handleSave = async () => {
         setFormError(null)
         setNotice(null)
@@ -153,11 +178,15 @@ export default function AdminNewsPage() {
                     external_url: form.external_url.trim() || null,
                     published_at: form.published_at || null,
                     status: form.status,
+                    interview_source: form.interview_source,
+                    note_angle: form.note_angle,
+                    note_article: form.note_article,
+                    note_checklist: form.note_checklist,
                 }),
             })
             const result = await res.json()
             if (!res.ok) throw new Error(result.error || '保存に失敗しました')
-            const saved = result.post as NewsPost
+            const saved = result.post as NewsPostAdmin
             setSelectedId(saved.id)
             setForm((prev) => ({ ...prev, published_at: toDateInput(saved.published_at) }))
             setNotice(saved.status === 'PUBLISHED' ? '保存しました(公開中)' : '保存しました(下書き)')
@@ -339,6 +368,22 @@ export default function AdminNewsPage() {
                                     {generating ? '下書きを作成中…(20秒ほどかかります)' : '下書きを作る'}
                                 </button>
                             </div>
+
+                            {/* note 記事ワークフロー(インタビューのみ) */}
+                            {form.category === 'INTERVIEW' && (
+                                <NoteArticlePanel
+                                    title={form.title}
+                                    fields={{
+                                        interview_source: form.interview_source,
+                                        note_angle: form.note_angle,
+                                        note_article: form.note_article,
+                                        note_checklist: form.note_checklist,
+                                    }}
+                                    onChange={handleNoteFields}
+                                    onDraftWritten={handleDraftWritten}
+                                    authHeader={authHeader}
+                                />
+                            )}
 
                             {/* タイトル */}
                             <div>

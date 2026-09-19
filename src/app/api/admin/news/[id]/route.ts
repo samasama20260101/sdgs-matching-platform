@@ -6,7 +6,7 @@ import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
-const COLUMNS = 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
+const COLUMNS = 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
 
 type Params = { params: Promise<{ id: string }> }
 

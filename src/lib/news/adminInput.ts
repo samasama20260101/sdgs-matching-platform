@@ -3,8 +3,9 @@ import 'server-only'
 
 import { normalizeHttpUrl } from '@/lib/api/validation'
 import {
-  isNewsCategory, isNewsStatus, NEWS_BODY_MAX, NEWS_TITLE_MAX,
-  type NewsCategory, type NewsStatus,
+  isNewsAngle, isNewsCategory, isNewsStatus,
+  NEWS_ARTICLE_MAX, NEWS_BODY_MAX, NEWS_CHECKLIST_MAX, NEWS_INTERVIEW_SOURCE_MAX, NEWS_TITLE_MAX,
+  type NewsAngle, type NewsCategory, type NewsStatus,
 } from '@/lib/constants/news'
 
 export type NewsInput = {
@@ -14,6 +15,11 @@ export type NewsInput = {
   external_url: string | null
   status: NewsStatus
   published_at: string | null
+  // note 記事ワークフロー(INTERVIEW 用)。送られてきたときだけ更新する
+  interview_source?: string
+  note_angle?: NewsAngle | null
+  note_article?: string
+  note_checklist?: string
 }
 
 type ParseResult = { ok: true; data: NewsInput } | { ok: false; error: string }
@@ -57,16 +63,33 @@ export function parseNewsInput(raw: unknown): ParseResult {
   const publishedAt = parsePublishedAt(input.published_at)
   if (!publishedAt.ok) return { ok: false, error: '公開日の形式が不正です' }
 
-  return {
-    ok: true,
-    data: {
-      category: input.category,
-      title,
-      body,
-      external_url: externalUrl,
-      status,
-      // 公開時に日付が無ければ今にする(並び順と表示日に使うため必須)
-      published_at: publishedAt.value ?? (status === 'PUBLISHED' ? new Date().toISOString() : null),
-    },
+  const data: NewsInput = {
+    category: input.category,
+    title,
+    body,
+    external_url: externalUrl,
+    status,
+    // 公開時に日付が無ければ今にする(並び順と表示日に使うため必須)
+    published_at: publishedAt.value ?? (status === 'PUBLISHED' ? new Date().toISOString() : null),
   }
+
+  // note 記事ワークフローの列は、リクエストに含まれるときだけ検証して更新する
+  const longText = (key: 'interview_source' | 'note_article' | 'note_checklist', max: number, label: string) => {
+    if (!(key in input)) return null
+    const value = typeof input[key] === 'string' ? (input[key] as string).replace(/\r\n?/g, '\n') : ''
+    if (value.length > max) return `${label}は${max}文字以内にしてください`
+    data[key] = value
+    return null
+  }
+  const longTextError = longText('interview_source', NEWS_INTERVIEW_SOURCE_MAX, '取材メモ')
+    ?? longText('note_article', NEWS_ARTICLE_MAX, '記事本文')
+    ?? longText('note_checklist', NEWS_CHECKLIST_MAX, '確認リスト')
+  if (longTextError) return { ok: false, error: longTextError }
+  if ('note_angle' in input) {
+    if (input.note_angle === null || input.note_angle === undefined) data.note_angle = null
+    else if (isNewsAngle(input.note_angle)) data.note_angle = input.note_angle
+    else return { ok: false, error: '切り口の形式が不正です' }
+  }
+
+  return { ok: true, data }
 }
