@@ -6,6 +6,7 @@
   "nav": {
     "supporters": "支援者一览",
     "story": "我们的心声",
+    "news": "通知",
     "login": "登录",
     "consult": "咨询"
   },
@@ -100,6 +101,7 @@
   },
   "footer": {
     "story": "我们的心声",
+    "news": "通知",
     "supporters": "支援者一览",
     "supporterRecruit": "招募支援方",
     "contact": "联系我们",
@@ -159,5 +161,24 @@
     "shareOn": "分享到{network}",
     "copy": "复制链接",
     "copied": "已复制链接"
+  },
+  "news": {
+    "sectionTitle": "通知",
+    "viewAll": "查看全部",
+    "listKicker": "News",
+    "listTitle": "通知",
+    "listLead": "运营团队的通知、参与团体的介绍和访谈。",
+    "empty": "目前没有通知。",
+    "backToTop": "← 首页",
+    "backToList": "← 返回通知列表",
+    "external": "阅读全文(将打开外部网站)",
+    "externalHost": "链接目标: {host}",
+    "metaTitle": "通知 | 明日もsamasama",
+    "category": {
+      "NOTICE": "通知",
+      "MAINTENANCE": "维护",
+      "SUPPORTER_JOINED": "新加入团体",
+      "INTERVIEW": "访谈"
+    }
   }
 }

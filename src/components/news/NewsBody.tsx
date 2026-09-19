@@ -1,0 +1,75 @@
+// お知らせ本文の描画(サーバーコンポーネント)。書式は4規則だけ:
+//   空行=段落 / 行頭「## 」=小見出し / 文中の http(s) URL は自動リンク / URL を1行だけで置くと OGP カード
+// React 要素で組み立てるので dangerouslySetInnerHTML は使わない。
+import React from 'react'
+import { LinkPreviewCard } from '@/components/news/LinkPreviewCard'
+
+// URL は ASCII だけ(日本語の文が URL の直後に続いても巻き込まない)。末尾の句読点・閉じ括弧は URL に含めない
+const URL_SOURCE = "https?:\\/\\/[A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
+const TRAILING_PUNCTUATION = /[.,;:!?)\]'"]+$/
+const URL_ONLY_LINE = new RegExp(`^${URL_SOURCE}$`)
+
+function linkify(text: string, keyPrefix: string): React.ReactNode[] {
+  const pattern = new RegExp(URL_SOURCE, 'g')
+  const nodes: React.ReactNode[] = []
+  let last = 0
+  let index = 0
+  let match: RegExpExecArray | null
+  while ((match = pattern.exec(text)) !== null) {
+    const url = match[0].replace(TRAILING_PUNCTUATION, '')
+    if (match.index > last) nodes.push(text.slice(last, match.index))
+    nodes.push(
+      <a
+        key={`${keyPrefix}-${index++}`}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-teal-600 underline decoration-teal-300 underline-offset-2 break-all hover:text-teal-700"
+      >
+        {url}
+      </a>
+    )
+    last = match.index + url.length
+  }
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
+export function splitNewsBlocks(body: string) {
+  return body
+    .replace(/\r\n?/g, '\n')
+    .split(/\n[ \t]*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+}
+
+export function NewsBody({ body }: { body: string }) {
+  const blocks = splitNewsBlocks(body)
+  return (
+    <div className="space-y-5 text-[15px] leading-8 text-gray-700 sm:text-base">
+      {blocks.map((block, blockIndex) => {
+        if (block.startsWith('## ')) {
+          return (
+            <h2 key={blockIndex} className="pt-4 text-lg font-bold text-gray-900">
+              {block.slice(3).trim()}
+            </h2>
+          )
+        }
+        if (URL_ONLY_LINE.test(block)) {
+          return <LinkPreviewCard key={blockIndex} url={block.replace(TRAILING_PUNCTUATION, '')} />
+        }
+        const lines = block.split('\n')
+        return (
+          <p key={blockIndex}>
+            {lines.map((line, lineIndex) => (
+              <React.Fragment key={lineIndex}>
+                {lineIndex > 0 && <br />}
+                {linkify(line, `${blockIndex}-${lineIndex}`)}
+              </React.Fragment>
+            ))}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
