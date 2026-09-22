@@ -1,5 +1,5 @@
 # HANDOFF: トップページお知らせ欄の実装(feature/news-section)+ 休止前整理
-更新: 2026-09-17(お知らせ欄を feature/news-section で実装。ローカル+Staging DB で通し検証済み。PR #34 feature→dev のマージ承認待ち)
+更新: 2026-09-22(本番のブラウザ実操作検証がすべて完了。残りは PR #34 feature→dev のマージ承認待ち)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -13,11 +13,11 @@
 
 **2026-09-17 お知らせ欄を `feature/news-section`(dev から分岐)で実装完了。** 内容: migration `migrations/add_news_posts.sql`(**Staging には Management API で適用済み・本番未適用**)、公開API `GET /api/public/news`、トップの `NewsSection`(ヒーロー直下・0件なら非表示)、`/news` `/news/[id]`(サーバー描画・generateMetadata で記事名を title/OGP に)、管理API `/api/admin/news`(GET/POST)・`[id]`(PATCH/DELETE)・`draft`(AI下書き)、管理画面 `/admin/news`(ダッシュボードのヘッダーからリンク)、i18n `landing.news.*` 6言語×18キー(781 で一致)。ビルド exit 0・静的ページ 131/131。ローカル dev(Staging DB 接続)で API/ページの通し検証 44 項目通過(認可 401/403・入力検証 400・下書き非表示・公開→表示→非公開→404・外部リンク・AI下書き・削除・監査ログ)。**ブラウザでの見た目・管理画面の操作は未検証(Playwright なし)** → dev マージ後に Staging でユーザーが確認する。**origin に push 済み・PR #34(feature/news-section → dev)作成済み**。ユーザーが feature プレビュー(`…-git-feature-news-section-samasama.vercel.app`)で 2 件投稿して確認中。指摘を受けて同日に追加した修正 3 件(いずれもプレビューで反映確認済み): ①公開 API を `no-store` に(CDN の古い応答でトップに出なかった)②同日投稿は登録が新しい順(`created_at` 第2キー)③`/news` を年ごとの見出し「2026年」でグループ化 ④トップ・一覧からは必ず記事ページへ入り、外部リンクは記事ページのボタン+リンク先ドメイン表示に(直接外部へ飛ぶのは怖い、というユーザー判断)⑤本文で URL を1行だけ置くと OGP カード ⑥(9/19)note 記事ワークフロー(`src/lib/news/linkPreview.ts`、サーバー取得・24h キャッシュ・4 秒タイムアウト・内部アドレス拒否)。外部リンクボタンの上にも同じカード。URL 正規表現を ASCII 限定にし、直後の日本語を巻き込むバグも修正。マージはユーザー承認後(承認発言のあとなら `gh pr merge 34` 可)。
 
-**2026-09-17 本番でパスワード変更直後にログアウトする回帰を確認 → dev で修正(`1f652cc`)→ Staging 実測OK → PR #33 で本番反映(main = `f424824`、デプロイ success)。本番で「パスワード変更後もログアウトしない」のブラウザ確認はユーザー待ち。** 原因: PR #32 でパスワード更新を `admin.updateUserById` に切り替えたため、GoTrue が本人の現在のセッションも含めて全失効させていた(旧実装のクライアント `updateUser` は本人セッションを残す)。修正: 現PW検証は従来どおりサーバーで行い、更新は本人のトークンで GoTrue `PUT /auth/v1/user` を呼ぶ。Staging 実測: 変更した本人のトークンは get-role 200 のまま、別セッションは 401(他端末は失効)、403/400 のエラー経路も維持。
+**2026-09-17 本番でパスワード変更直後にログアウトする回帰を確認 → dev で修正(`1f652cc`)→ Staging 実測OK → PR #33 で本番反映(main = `f424824`、デプロイ success)。本番で「パスワード変更後もログアウトしない」ことをユーザーがブラウザで確認済み(2026-09-22)。** 原因: PR #32 でパスワード更新を `admin.updateUserById` に切り替えたため、GoTrue が本人の現在のセッションも含めて全失効させていた(旧実装のクライアント `updateUser` は本人セッションを残す)。修正: 現PW検証は従来どおりサーバーで行い、更新は本人のトークンで GoTrue `PUT /auth/v1/user` を呼ぶ。Staging 実測: 変更した本人のトークンは get-role 200 のまま、別セッションは 401(他端末は失効)、403/400 のエラー経路も維持。
 
 **2026-09-16 PR #32 で本番反映(main = `1d0abf3`、デプロイ success 08:16Z)。内容: メール変更一式(本人/管理者)+現PW確認、熊本地震 災害SOS受付終了、PCロゴ修正、未適用migration削除。本番DB変更なし。**
 本番疎通(curl): `/` `/en` に 🆘 バナーなし・ロゴ id 重複ゼロ、`/supporters` `/login` `/change-email` `/change-password` `/profile` 200、新API 2本は無トークン 401、廃止API 404、get-role 401。
-**未実施(ユーザー作業)**: 本番でのブラウザ実操作 — ①自発パスワード変更(現PW誤り→エラー/正しい→成功) ②初回強制変更で現PW欄が出ない ③管理者のユーザーメール変更 ④本人メール変更(本番の残存テスト用SOSアカウントで。確認メールは Resend 経由で届くはず) ⑤PCでロゴの涙型が見える。Staging でのブラウザ操作テストはユーザー判断で省略して本番へ出した。
+**本番でのブラウザ実操作はユーザーが完了(2026-09-22、問題なし)**: ①自発パスワード変更(変更後もログアウトしない) ③管理者のユーザーメール変更 ④本人メール変更 ⑤PCでロゴの涙型が見える。Staging でのブラウザ操作テストはユーザー判断で省略して本番へ出した。
 **本番・Staging の Supabase 設定(2026-09-16 ユーザー許可のうえ実施)**: メール変更確認メールの件名を「Confirm Email Change」→「【明日もsamasama】メールアドレス変更の確認」に変更(Management API PATCH、`mailer_subjects_email_change` のみ。他キーは不変を確認)。本番 SMTP(Resend)・テンプレート・Secure email change は元から設定済み。
 
 前回まで: **2026-09-16 休止前整理を実施: ブランチは `dev` / `main` の2本だけになった**(dev取り込み済み18本+i18n-supporter-ui+variant試作を削除)。多言語 Phase 2 は PR #10 をクローズし、タグ `archive/i18n-phase2-2026-07` に保管してブランチ削除(設計書冒頭に判断メモ)。**ユーザーは 2026年11月以降、開発を一時休止する予定**。休止前の判断基準は「本番の安定を崩さない・DBを増やさない」。
@@ -29,7 +29,7 @@
 ## 完了したこと
 - **note 記事ワークフロー(2026-09-19)**: `src/lib/news/articlePrompt.ts`(ライター人格=伊藤さん記事の作り方・鉄則・3工程のプロンプト・確認リスト整形)、`src/lib/news/articleFormat.ts`(## / ### / > / 段落 → HTML・文章)、`src/lib/newsArticle.ts`(server-only、flash)、`src/app/api/admin/news/article/route.ts`、`src/components/admin/NoteArticlePanel.tsx`(切り口カード・本文 textarea/プレビュー・コピー3種・確認リスト)、`adminInput.ts` は新列を「送られてきたときだけ更新」
 - **お知らせ欄(feature/news-section、2026-09-17)**: 設計 `docs/news_section_design.md`(壁打ちで決定: 掲示板が主目的・管理画面から投稿・DB1テーブルは休止前基準の例外として許容・文章のみ・AI下書きは声+構造の2層プロンプトと鉄則)。実装ファイル: `src/lib/constants/news.ts`(種別4つ固定・上限値)、`src/lib/news/{queries,adminInput,draftPrompt,format}.ts`、`src/lib/newsDraft.ts`(gemini-2.5-flash、maxOutputTokens 8192)、`src/components/news/{NewsSection,NewsBody,NewsCategoryChip}.tsx`(本文は React 要素で組む: 空行=段落 / `## `=小見出し / URL自動リンク。dangerouslySetInnerHTML 不使用)、`src/app/[locale]/news/**`、`src/app/[locale]/admin/news/page.tsx`、`src/app/api/{public,admin}/news/**`、`validation.ts` に `normalizeHttpUrl`。監査ログは `news_post_published / unpublished / deleted`(既存 audit_logs)。Gemini 品質は伊藤さんの取材材料で事前確認(電話番号・オフレコ・相談者事例が除外され、構造どおり 440 字)
-- **PCでロゴの涙型が消える不具合の修正(dev 2026-09-16、`2b86e8e`)**: ヘッダーはスマホ用/PC用で同じロゴを2つ置きCSSで片方を隠すが、SVGのグラデーション・フィルタ id が「サイズ+色」から作られて重複していた。ブラウザは最初の要素(スマホ用=PCでは display:none)に解決するため PC だけ涙型が描かれず濃紺の四角に見えていた(本番も同じ・今日の変更とは無関係)。`src/components/icons/Logo.tsx` の3部品で `useId` から固有 id を生成。Staging の `/` `/supporters` `/login` `/en` で id 重複ゼロ・未解決参照ゼロを機械確認済み。**PC ブラウザでの目視確認はユーザー待ち**
+- **PCでロゴの涙型が消える不具合の修正(dev 2026-09-16、`2b86e8e`)**: ヘッダーはスマホ用/PC用で同じロゴを2つ置きCSSで片方を隠すが、SVGのグラデーション・フィルタ id が「サイズ+色」から作られて重複していた。ブラウザは最初の要素(スマホ用=PCでは display:none)に解決するため PC だけ涙型が描かれず濃紺の四角に見えていた(本番も同じ・今日の変更とは無関係)。`src/components/icons/Logo.tsx` の3部品で `useId` から固有 id を生成。Staging の `/` `/supporters` `/login` `/en` で id 重複ゼロ・未解決参照ゼロを機械確認済み。**PC ブラウザでの目視確認もユーザー完了(2026-09-22、問題なし)**
 - **熊本地震 災害SOSの受付終了(dev 2026-09-16、DB変更なし)**: `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` を null に。トップ/SOSダッシュボードのバナー非表示、`/sos/disaster` はダッシュボードへリダイレクト、`POST /api/sos/cases` は受付外イベントの災害payloadを 400「この災害SOSの受付は終了しました」で拒否(黙って通常案件に格下げするとAI分析を通らず非公開のまま残るため)。登録済み案件の表示・地域設定・承認上限1は `DISASTER_EVENTS` 参照のまま維持。ビルド 122/122、編集ファイルの eslint クリーン(リポジトリ全体の lint は既存の 6 errors / 88 warnings で今回と無関係)
 - **メール変更・現PW確認(dev マージ 2026-09-16、DB変更なし)**:
   - 本人によるメール変更 `/change-email`: 事前確認API `POST /api/auth/email-change-check`(現PW確認+`users.email` 重複チェック)→ クライアントの `supabase.auth.updateUser({ email })` が確認メールを送る。確認リンクで auth.users が切り替わり、`get-role` が次回呼び出し時に `users.email` を自己修復同期
@@ -79,8 +79,8 @@
 ## 次の一手
 0a. **検討中(ユーザー保留、2026-09-19)**: お知らせ欄に「世の中の SDGs 関連ニュースの紹介」種別を足す案。同じ枠組み(種別1つ+外部リンク+導入文+OGP カード+紹介文の構造プロンプト)で半日以内。論点は「SDGs は相談者の言語ではない」ので、SDGs 用語ではなく生活の言葉で「ここに来る誰にどう関わるか」を一言添える形にするか、誰向けに選ぶか(困っている人向けならトップに出す / 団体向けなら `/news` のみ)。ユーザーが考え中。着手は指示待ち
 0. **お知らせ欄**: ①PR #34(feature→dev)をユーザー承認後にマージ → Staging(dev 自動デプロイ)でブラウザ検証: `/admin/login` に検証用管理者でログイン → `/admin/news` で投稿(AI下書き含む)→ トップに出る → `/news/[id]` → 下書きに戻すと消える。見た目の調整はここで拾う ②OK なら PR dev→main。**本番 migration(`migrations/add_news_posts.sql`)はユーザーが SQL Editor で実行**(PR マージ前に適用しても害はない: コードが無ければ誰も触らない) ③本番反映後、最初の投稿(11月の少人数運営宣言、設計書 §6.2 のたたき台をオーナーが書き直す)を `/admin/news` から入れる ④伊藤さんの note 記事が公開されたら INTERVIEW として外部リンク投稿
-1. ~~パスワード変更の回帰修正を本番へ~~ → PR #33 で反映済み。本番で①自発パスワード変更後にログアウトしないこと をユーザーが再確認
-1b. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤(①は 9/17 に実施→ログアウト回帰を発見。変更後PWでの再ログインは可)。NGがあればこちらで修正 → dev → PR
+1. ~~パスワード変更の回帰修正を本番へ~~ → PR #33 で反映済み。~~本番で①自発パスワード変更後にログアウトしないこと をユーザーが再確認~~ → 2026-09-22 確認済み
+1b. ~~本番でのブラウザ実操作検証(ユーザー)~~ → 2026-09-22 に①③④⑤すべて問題なしで完了(①は 9/17 にログアウト回帰を発見→PR #33 で修正→再確認OK)
 2. ~~本番の確認メール件名を日本語化~~ → 2026-09-16 本番・Staging とも変更済み
 3. **Staging の SMTP(Resend)設定**は任意。再発行キーがあれば設定し、以後は Staging でメール系を検証できる
 4. **ブランチ整理は完了**(2026-09-16): 残骸18本(account-email-change 含む)を origin・ローカルとも削除、ローカル main を origin/main に追随。`feature/i18n-supporter-ui` はサポーターUI翻訳しない方針のため 9/16 に origin・ローカルとも削除済み(最終コミット 7a689d4、同梱の 6/12 レビューmd 2本も未救出)。`feature/multilingual-development`(多言語 Phase 2)は PR #10 クローズ・タグ `archive/i18n-phase2-2026-07` 保管・削除。再開時はマージせず設計書から再実装(docs/i18n_multilingual_design.md 冒頭)。`feature/variant-family-access-foundation`(ローカルのみ)はバリアント構想中止のため 9/16 に削除済み(復旧は reflog の c8a7673)
