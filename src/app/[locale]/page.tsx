@@ -10,6 +10,7 @@ import { getSupporterTypeConfig } from '@/lib/supporterType';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { ACTIVE_DISASTER_EVENT } from '@/lib/constants/disaster';
+import { NewsSection } from '@/components/news/NewsSection';
 import { Logo } from '@/components/icons/Logo';
 import { ShareButtons } from '@/components/marketing/ShareButtons';
 import { SUPPORTER_RECRUIT_URL } from '@/lib/constants/links';
@@ -148,6 +149,9 @@ export default function HomePage() {
             <Link href="/story" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
               {t('nav.story')}
             </Link>
+            <Link href="/news" className="hidden sm:block text-sm text-gray-500 hover:text-teal-600 transition-colors">
+              {t('nav.news')}
+            </Link>
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
               {t('nav.login')}
             </Link>
@@ -225,6 +229,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── お知らせ(公開中があるときだけ表示) ── */}
+      <NewsSection />
 
       {/* ── 実績カウンター ── */}
       {stats && (
@@ -491,6 +498,7 @@ export default function HomePage() {
         </div>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4 text-gray-500">
           <Link href="/story" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.story')}</Link>
+          <Link href="/news" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.news')}</Link>
           <Link href="/supporters" className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.supporters')}</Link>
           <a href={SUPPORTER_RECRUIT_URL} target="_blank" rel="noopener noreferrer"
             className="hover:text-teal-400 transition-colors tracking-wide">{t('footer.supporterRecruit')}</a>

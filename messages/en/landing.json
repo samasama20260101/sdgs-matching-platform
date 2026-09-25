@@ -6,6 +6,7 @@
   "nav": {
     "supporters": "Supporters",
     "story": "Our story",
+    "news": "News",
     "login": "Log in",
     "consult": "Ask for help"
   },
@@ -100,6 +101,7 @@
   },
   "footer": {
     "story": "Our story",
+    "news": "News",
     "supporters": "Supporters",
     "supporterRecruit": "Become a supporter",
     "contact": "Contact",
@@ -159,5 +161,24 @@
     "shareOn": "Share on {network}",
     "copy": "Copy link",
     "copied": "Link copied"
+  },
+  "news": {
+    "sectionTitle": "News",
+    "viewAll": "View all",
+    "listKicker": "News",
+    "listTitle": "News",
+    "listLead": "Announcements from the team, introductions of participating organizations, and interviews.",
+    "empty": "There are no news posts at the moment.",
+    "backToTop": "← Home",
+    "backToList": "← Back to news",
+    "external": "Read more (opens an external site)",
+    "externalHost": "Destination: {host}",
+    "metaTitle": "News | 明日もsamasama",
+    "category": {
+      "NOTICE": "Notice",
+      "MAINTENANCE": "Maintenance",
+      "SUPPORTER_JOINED": "New supporter",
+      "INTERVIEW": "Interview"
+    }
   }
 }

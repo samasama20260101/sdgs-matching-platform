@@ -6,6 +6,7 @@
   "nav": {
     "supporters": "Danh sách người hỗ trợ",
     "story": "Tấm lòng của chúng tôi",
+    "news": "Tin tức",
     "login": "Đăng nhập",
     "consult": "Tư vấn"
   },
@@ -100,6 +101,7 @@
   },
   "footer": {
     "story": "Tấm lòng của chúng tôi",
+    "news": "Tin tức",
     "supporters": "Danh sách người hỗ trợ",
     "supporterRecruit": "Tuyển người hỗ trợ",
     "contact": "Liên hệ",
@@ -159,5 +161,24 @@
     "shareOn": "Chia sẻ lên {network}",
     "copy": "Sao chép liên kết",
     "copied": "Đã sao chép liên kết"
+  },
+  "news": {
+    "sectionTitle": "Tin tức",
+    "viewAll": "Xem tất cả",
+    "listKicker": "News",
+    "listTitle": "Tin tức",
+    "listLead": "Thông báo từ ban vận hành, giới thiệu các tổ chức tham gia và phỏng vấn.",
+    "empty": "Hiện chưa có tin tức.",
+    "backToTop": "← Trang chủ",
+    "backToList": "← Về danh sách tin tức",
+    "external": "Đọc tiếp (mở trang web bên ngoài)",
+    "externalHost": "Trang đích: {host}",
+    "metaTitle": "Tin tức | 明日もsamasama",
+    "category": {
+      "NOTICE": "Thông báo",
+      "MAINTENANCE": "Bảo trì",
+      "SUPPORTER_JOINED": "Tổ chức mới",
+      "INTERVIEW": "Phỏng vấn"
+    }
   }
 }

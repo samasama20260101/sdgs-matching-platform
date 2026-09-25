@@ -28,3 +28,17 @@ export function normalizeEmail(value: unknown) {
   if (trimmed.length === 0 || trimmed.length > 254) return null
   return EMAIL_PATTERN.test(trimmed) ? trimmed : null
 }
+
+// 外部リンク用 URL。http(s) だけを許可し、javascript: 等を弾く。
+export function normalizeHttpUrl(value: unknown) {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (trimmed.length === 0 || trimmed.length > 2048) return null
+  try {
+    const url = new URL(trimmed)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    return url.toString()
+  } catch {
+    return null
+  }
+}
