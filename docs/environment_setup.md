@@ -332,13 +332,7 @@ vxcoivgulfkpblqrawif
 
 ### サポーター団体DB刷新
 
-サポーター団体DB刷新はStagingに適用済み、Productionには未適用です。
-
-Production適用時は、以下を使います。
-
-```text
-docs/production_supporter_db_refresh_runbook.md
-```
+サポーター団体DB刷新はStaging・Productionとも適用済みです（当時の手順書は git 履歴を参照）。
 
 Stagingテスト仕様は以下です。
 
@@ -415,5 +409,4 @@ vercel ls sdgs-matching-platform-czna
 
 - Vercel Dashboardで、GitHub連携先とdev/mainブランチの自動デプロイ設定を確認する
 - Stagingで `docs/staging_role_function_test_spec.md` に沿って2週間程度テストする
-- Production適用前に `docs/production_supporter_db_refresh_runbook.md` を読み直す
 - 既存のESLintエラーを別タスクとして整理する

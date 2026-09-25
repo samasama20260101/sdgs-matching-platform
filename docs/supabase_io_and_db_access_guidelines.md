@@ -255,7 +255,7 @@ create index concurrently if not exists idx_offers_case_status_created
 
 Production DBでIO・index・migration作業をする場合:
 
-1. `docs/production_supporter_db_refresh_runbook.md` または対象作業用runbookを確認する。
+1. 対象作業用のrunbookを用意し、内容を確認する。
 2. Project RefがProductionであることを作業直前に確認する。
 3. 必要に応じて `MAINTENANCE_MODE=true` にする。
 4. 実行SQLをユーザーと確認する。

@@ -145,7 +145,7 @@ GoTrue は $2a$ 形式を期待する。Admin APIを使うこと。
 - Production Supabase の project ref は、作業直前に Supabase Dashboard / Vercel 環境変数 / CLI表示で必ず再確認する。
 - Production DB作業中は、原則としてVercel Productionで `MAINTENANCE_MODE=true` を有効化してユーザー操作を止める。
 - メンテナンスモードは強制ログアウトしない。セッションを保持したまま `/maintenance` に誘導する。
-- 本番サポーター団体DB刷新は docs/production_supporter_db_refresh_runbook.md の順番に従う。
+- 本番サポーター団体DB刷新は適用済み。当時の手順書は git 履歴（docs/production_supporter_db_refresh_runbook.md、2026-09-25 削除）を参照する。
 
 ---
 
@@ -272,7 +272,7 @@ organization_memberships テーブル
 
 ### Production適用時の注意
 - StagingでSQL実行済みでもProduction DBには反映されない。
-- Production適用は docs/production_supporter_db_refresh_runbook.md に従う。
+- Production適用は事前に作業用 runbook を書き、ユーザーの明示許可を得てから行う（団体DB刷新の手順書は適用済みのため 2026-09-25 に削除。git 履歴で参照可）。
 - 事前バックアップと `MAINTENANCE_MODE=true` が必須。
 - 実行SQL、Project Ref、rollback方針を作業直前に確認する。
 

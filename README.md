@@ -13,7 +13,6 @@
 | `docs/api_security_design.md` | API認可、Supabase key、AI API、通知設計方針 |
 | `docs/environment_setup.md` | ローカル開発環境セットアップ |
 | `docs/maintenance_mode.md` | メンテナンスモード運用 |
-| `docs/production_supporter_db_refresh_runbook.md` | Production DB刷新手順 |
 
 ## 環境
 
