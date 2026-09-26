@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getCasePhotos } from '@/lib/constants/photos'
 import { getDisasterNeeds, getDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster'
+import { getCaseLabelSet } from '@/lib/constants/concerns'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id, intake_qna'
@@ -107,8 +108,12 @@ export async function GET(request: Request) {
         .map(c => {
             // 災害SOSの目印だけを渡し、intake_qna本体はレスポンスに含めない
             const { intake_qna: intakeQna, ...rest } = c as typeof c & { intake_qna?: { disaster?: { event_id?: string } } | null }
+            // お困りごとラベル: own=本人がチェックした項目から計算、ai=AI 補完(本人分は除いた差集合)
+            const labels = getCaseLabelSet(intakeQna, c.ai_sdg_suggestion)
             return {
                 ...rest,
+                concern_labels: labels.own,
+                concern_labels_ai: labels.ai,
                 disaster_event_id: intakeQna?.disaster?.event_id || null,
                 disaster_needs: getDisasterNeeds(intakeQna),
                 disaster_location: getDisasterLocation(intakeQna),

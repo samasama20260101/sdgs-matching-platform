@@ -1,12 +1,14 @@
 // ─────────────────────────────────────────────────────────────
 // 📂 src/app/sos/hearing/page.tsx
 // SOS相談フォーム（ヒアリング）
-// 設問・選択肢の文言は messages/*/sos.json（sos.questions）で管理。
-// ここには ID・緊急フラグ・排他フラグだけを持つ（多言語化・バリアント対応の前提）。
+// 新フォーム(お困りごと: 危険チェック → 括り → 項目 → 自由記述 → ほしい助け)と
+// 旧フォーム(Q1〜Q5)を CONCERN_FORM_ENABLED で切り替える(仕様_お困りごとラベル §4・§10-8)。
+// 括り・項目・ほしい助けの定義は src/lib/constants/concerns.ts、文言は messages/*/sos.json(sos.concerns)。
+// 旧フォームの設問・選択肢の文言は sos.questions。ここには ID・緊急フラグ・排他フラグだけを持つ。
 // ─────────────────────────────────────────────────────────────
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
@@ -15,6 +17,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
+import {
+  CONCERN_FORM_ENABLED,
+  CONCERN_FORM_VERSION,
+  CONCERN_GROUPS,
+  HELP_WANTED_OPTIONS,
+  getItemsForGroup,
+  type ConcernGroupId,
+  type ConcernItemId,
+  type HelpWantedId,
+} from '@/lib/constants/concerns';
 
 // 入力上限
 const CHAR_LIMITS = {
@@ -58,6 +70,7 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 export default function SOSHearingPage() {
   const t = useTranslations('sos.hearing');
   const tQ = useTranslations('sos.questions');
+  const tC = useTranslations('sos.concerns');
   const tLimit = useTranslations('sos.limitModal');
   const tForm = useTranslations('common.form');
   const router = useRouter();
@@ -80,6 +93,12 @@ export default function SOSHearingPage() {
 
   // 自由記述
   const [freeText, setFreeText] = useState({ what: '', when: '', want: '' });
+
+  // 新フォーム(お困りごと)の状態
+  const [danger, setDanger] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState<Set<ConcernGroupId>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<Set<ConcernItemId>>(new Set());
+  const [selectedHelp, setSelectedHelp] = useState<Set<HelpWantedId>>(new Set());
 
   // ログイン確認
   useEffect(() => {
@@ -127,6 +146,27 @@ export default function SOSHearingPage() {
     });
   };
 
+  const toggleInSet = <T,>(setter: Dispatch<SetStateAction<Set<T>>>, value: T) => {
+    setter(prev => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value); else next.add(value);
+      return next;
+    });
+  };
+
+  // 括りの選択。外したときは、その括りに属する項目のチェックも外す(見えないチェックを送らない)
+  const handleToggleGroup = (groupId: ConcernGroupId) => {
+    const wasSelected = selectedGroups.has(groupId);
+    toggleInSet(setSelectedGroups, groupId);
+    if (wasSelected) {
+      setSelectedItems(items => {
+        const rest = new Set(items);
+        getItemsForGroup(groupId).forEach(item => rest.delete(item.id));
+        return rest;
+      });
+    }
+  };
+
 
   // 自由記述専用の緊急語彙。機械翻訳だけで確定せず、ネイティブ/専門家確認が必要な暫定リスト。
   const detectUrgency = (text: string): boolean => {
@@ -148,12 +188,19 @@ export default function SOSHearingPage() {
   const handleSubmit = async () => {
     setError(null);
 
-    // バリデーション
-    for (const q of QA_QUESTIONS) {
-      const selected = selectedOptionIds[q.id]?.size || 0;
-      if (selected === 0) {
-        setError(t('errorAnswerRequired', { id: q.id }));
+    // バリデーション(新フォーム: 括り1つ以上 / 旧フォーム: Q1〜Q5 すべて)
+    if (CONCERN_FORM_ENABLED) {
+      if (selectedGroups.size === 0) {
+        setError(t('errorGroupRequired'));
         return;
+      }
+    } else {
+      for (const q of QA_QUESTIONS) {
+        const selected = selectedOptionIds[q.id]?.size || 0;
+        if (selected === 0) {
+          setError(t('errorAnswerRequired', { id: q.id }));
+          return;
+        }
       }
     }
 
@@ -193,12 +240,25 @@ export default function SOSHearingPage() {
         qaIds[q.id] = selectedIds;
       }
 
-      // 緊急度判定: 選択肢はurgentフラグ、自由記述は語彙リストで判定する。
-      const hasUrgentChoice = QA_QUESTIONS.some(q =>
-        [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
-      );
+      // 緊急度判定: 新フォームは危険チェック、旧フォームは選択肢のurgentフラグ。自由記述は共通の語彙リストで判定する。
+      const hasUrgentChoice = CONCERN_FORM_ENABLED
+        ? danger
+        : QA_QUESTIONS.some(q =>
+          [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
+        );
       const freeTextForUrgency = Object.values(freeText).join(' ');
       const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
+
+      // 新フォームの保存形式(仕様 §7)。labels はサーバーが項目から計算する(クライアント値は送らない)
+      const intakeQna = CONCERN_FORM_ENABLED
+        ? {
+          form_version: CONCERN_FORM_VERSION,
+          concerns: { groups: [...selectedGroups], items: [...selectedItems] },
+          help_wanted: [...selectedHelp],
+          danger,
+          locale,
+        }
+        : { qa: qaData, qa_ids: qaIds, locale };
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -216,7 +276,7 @@ export default function SOSHearingPage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          intake_qna: { qa: qaData, qa_ids: qaIds, locale },
+          intake_qna: intakeQna,
           description_free: [
             freeText.what,
             freeText.when ? `${t('whenPrefix')}${freeText.when}` : '',
@@ -259,12 +319,111 @@ export default function SOSHearingPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-800">{t('title')}</h1>
           <p className="text-gray-500 mt-1">{t('subtitle')}</p>
-          <p className="text-xs text-gray-400 mt-2">{tQ('intro')}</p>
+          {!CONCERN_FORM_ENABLED && <p className="text-xs text-gray-400 mt-2">{tQ('intro')}</p>}
         </div>
 
         <div className="space-y-6">
-          {/* Q&Aフォーム */}
-          {QA_QUESTIONS.map((question) => (
+          {/* 新フォーム: 危険チェック → 括り → 項目 */}
+          {CONCERN_FORM_ENABLED && (
+            <>
+              {/* 0. 危険チェック(旧 Q4「死にたいと思うことがある」の置き換え。urgency: High に乗せる) */}
+              <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${danger ? 'bg-red-50 border-red-400' : 'bg-white border-red-200 hover:bg-red-50/40'}`}>
+                <input
+                  type="checkbox"
+                  checked={danger}
+                  onChange={() => setDanger(v => !v)}
+                  className="mt-1 h-4 w-4 accent-red-600"
+                />
+                <span>
+                  <span className="block text-sm font-bold text-red-700 leading-relaxed">🆘 {t('dangerLabel')}</span>
+                  <span className="block text-xs text-red-600/80 mt-1">{t('dangerNote')}</span>
+                </span>
+              </label>
+
+              {/* 1. 括り(必須・複数可) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base font-medium">
+                    {t('groupsTitle')} <span className="text-red-500">*</span>
+                  </CardTitle>
+                  <p className="text-xs text-gray-400">{t('groupsHint')}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {CONCERN_GROUPS.map((group) => {
+                      const isChecked = selectedGroups.has(group.id);
+                      const isUnsure = group.id === 'unsure';
+                      return (
+                        <button
+                          key={group.id}
+                          type="button"
+                          aria-pressed={isChecked}
+                          onClick={() => handleToggleGroup(group.id)}
+                          className={`text-left p-3 rounded-xl border-2 transition-colors ${
+                            isChecked
+                              ? 'bg-blue-50 border-blue-400'
+                              : isUnsure ? 'border-dashed border-teal-300 hover:bg-teal-50/50' : 'border-gray-200 hover:bg-gray-50'
+                          } ${isUnsure ? 'sm:col-span-2' : ''}`}
+                        >
+                          <span className="flex items-start gap-2">
+                            <span className="text-lg leading-none mt-0.5">{group.emoji}</span>
+                            <span>
+                              <span className={`block text-sm font-bold ${isChecked ? 'text-blue-800' : 'text-gray-800'}`}>{tC(`groups.${group.id}`)}</span>
+                              <span className="block text-[11px] text-gray-400 mt-0.5 leading-relaxed">{tC(`groupHints.${group.id}`)}</span>
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 2. 項目(任意・複数可)。選んだ括りの項目だけを、括りごとに小見出しで束ねて出す */}
+              {selectedGroups.size > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-medium">{t('itemsTitle')}</CardTitle>
+                    <p className="text-xs text-gray-400">{t('itemsHint')}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {CONCERN_GROUPS.filter((group) => selectedGroups.has(group.id)).map((group) => (
+                      <div key={group.id}>
+                        <p className="text-xs font-bold text-gray-500 mb-2">{group.emoji} {tC(`groups.${group.id}`)}</p>
+                        {group.id === 'unsure' && (
+                          <p className="text-xs text-teal-700 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2 mb-2">{t('itemsUnsureNote')}</p>
+                        )}
+                        <div className="space-y-2">
+                          {getItemsForGroup(group.id).map((item) => {
+                            const isChecked = selectedItems.has(item.id);
+                            return (
+                              <label
+                                key={item.id}
+                                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                  isChecked ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => toggleInSet(setSelectedItems, item.id)}
+                                  className="mt-0.5 text-blue-600 rounded"
+                                />
+                                <span className="text-sm leading-relaxed">{tC(`items.${item.id}`)}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {/* 旧フォーム: Q1〜Q5 */}
+          {!CONCERN_FORM_ENABLED && QA_QUESTIONS.map((question) => (
             <Card key={question.id}>
               <CardHeader>
                 <CardTitle className="text-base font-medium">
@@ -361,6 +520,39 @@ export default function SOSHearingPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 4. ほしい助け(任意。旧 Q5 の任意化+「話を聞いてほしい」追加) */}
+          {CONCERN_FORM_ENABLED && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-medium">{t('helpTitle')}</CardTitle>
+                <p className="text-xs text-gray-400">{t('helpHint')}</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {HELP_WANTED_OPTIONS.map((option) => {
+                    const isChecked = selectedHelp.has(option.id);
+                    return (
+                      <label
+                        key={option.id}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          isChecked ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleInSet(setSelectedHelp, option.id)}
+                          className="mt-0.5 text-blue-600 rounded"
+                        />
+                        <span className="text-sm leading-relaxed">{tC(`helpWanted.${option.id}`)}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* エラーメッセージ */}
           {error && (

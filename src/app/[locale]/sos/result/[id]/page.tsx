@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { CONCERN_GROUPS, getCaseConcerns, getConcernItem } from '@/lib/constants/concerns';
 import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { MAX_CASE_PHOTOS } from '@/lib/constants/photos';
 import { compressImageToJpeg } from '@/lib/utils/imageCompress';
@@ -40,6 +41,7 @@ type CaseData = {
       explanation: string;
     }>;
     keywords: string[];
+    fallback?: boolean; // AI 失敗時の既定値で公開された(再読み込みで再試行する)
   } | null;
 };
 
@@ -65,7 +67,7 @@ export default function SOSResultPage() {
   const t = useTranslations('sos.result');
   const tDisaster = useTranslations('sos.disaster');
   const tLimit = useTranslations('sos.limitModal');
-  const tGoal = useTranslations('sdgs.goal');
+  const tConcerns = useTranslations('sos.concerns');
   const tBadge = useTranslations('sdgs.badge');
   const tSupporterType = useTranslations('common.supporterType');
   const tForm = useTranslations('common.form');
@@ -149,8 +151,10 @@ export default function SOSResultPage() {
 
     // ai_sdg_suggestion自体がない、またはai_sdg_suggestion内にtitleが未生成の場合は分析実行
     // 災害SOS案件はAI分析を行わない
+    // AI 失敗時の既定値(fallback)で公開された案件も、開き直すたびに再試行して成功すれば上書きする
     const needsAnalysis = (!caseResult.ai_sdg_suggestion
-      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>)))
+      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>))
+      || (caseResult.ai_sdg_suggestion as { fallback?: boolean }).fallback === true)
       && !caseResult.intake_qna?.disaster;
     if (needsAnalysis) {
       await runAIAnalysis(caseResult);
@@ -636,6 +640,34 @@ export default function SOSResultPage() {
           </Card>
         )}
 
+        {/* 本人が選んだお困りごと(新フォームの案件のみ)。サポーターに伝わる「本人の言葉」をそのまま見せる */}
+        {(() => {
+          const concerns = getCaseConcerns(caseData?.intake_qna);
+          if (!concerns) return null;
+          return (
+            <Card className="mb-6 border-none bg-white shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold text-gray-700">🗣️ {tConcerns('yourWordsTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {CONCERN_GROUPS.filter((g) => concerns.groups.includes(g.id)).map((g) => {
+                  const items = concerns.items.map(getConcernItem).filter((item) => item && item.group === g.id);
+                  return (
+                    <div key={g.id} className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs font-bold text-gray-600">{g.emoji} {tConcerns(`groups.${g.id}`)}</p>
+                      {items.length > 0 && (
+                        <ul className="mt-1 space-y-0.5">
+                          {items.map((item) => item && <li key={item.id} className="text-sm text-gray-700">☑ {tConcerns(`items.${item.id}`)}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {!isAnalyzing && caseData?.ai_sdg_suggestion ? (
           <div className="mb-6 space-y-4">
             <div className="text-center py-2">
@@ -652,7 +684,7 @@ export default function SOSResultPage() {
                     <div>
                       <p className="text-sm font-medium text-amber-800 mb-1">{t('noGoalsTitle')}</p>
                       <p className="text-sm text-amber-700 leading-relaxed">
-                        {caseData.ai_sdg_suggestion.summary || t('noGoalsFallback')}
+                        {caseData.ai_sdg_suggestion.fallback ? t('aiUnavailable') : (caseData.ai_sdg_suggestion.summary || t('noGoalsFallback'))}
                       </p>
                     </div>
                   </div>
@@ -660,24 +692,23 @@ export default function SOSResultPage() {
               </Card>
             ) : (
               <>
-                {(caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
+                {(caseData.ai_sdg_suggestion.fallback || caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning) && (
                   <Card className="border-none bg-gradient-to-br from-blue-50 to-teal-50 shadow-sm">
                     <CardContent className="py-4">
-                      <p className="text-sm text-gray-700 leading-relaxed">{caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning}</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {caseData.ai_sdg_suggestion.fallback ? t('aiUnavailable') : (caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning)}
+                      </p>
                     </CardContent>
                   </Card>
                 )}
                 {caseData.ai_sdg_suggestion.per_goal && caseData.ai_sdg_suggestion.per_goal.length > 0 ? (
                   <div className="space-y-3">
+                    {/* SDGs のゴール番号・名前・色は出さない(相談者の言語ではないため)。AI の寄り添う説明文だけを残す */}
                     {caseData.ai_sdg_suggestion.per_goal.map((pg) => (
                       <Card key={pg.goal} className="border-none shadow-sm overflow-hidden">
                         <div className="flex">
-                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
+                          <div className="w-2 flex-shrink-0 bg-gradient-to-b from-teal-400 to-blue-500" />
                           <div className="flex-1 p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
-                              <span className="text-xs text-gray-500">{tGoal(String(pg.goal))}</span>
-                            </div>
                             <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
                           </div>
@@ -685,23 +716,7 @@ export default function SOSResultPage() {
                       </Card>
                     ))}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
-                      <Card key={goalId} className="border-none shadow-sm overflow-hidden">
-                        <div className="flex">
-                          <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
-                          <div className="flex-1 p-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
-                              <span className="text-sm font-medium">{tGoal(String(goalId))}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                ) : null}
                 {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
                   <div className="flex flex-wrap gap-2 px-1">
                     {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (

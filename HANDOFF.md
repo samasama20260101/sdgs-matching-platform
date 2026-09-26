@@ -1,5 +1,5 @@
-# HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-09-17(パスワード変更直後ログアウトの回帰を PR #33 で本番反映)
+# HANDOFF: お困りごとラベル実装(feature/case-concerns) + 休止前整理
+更新: 2026-09-26(お困りごとラベル仕様 §11 の 1〜8 を feature/case-concerns に実装。Staging 未デプロイ・dev 未マージ)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,6 +8,8 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
+**2026-09-26 お困りごとラベル(仕様 `~/samasama/docs_退避_20260925/仕様_お困りごとラベル_20260922.html`、artifact https://claude.ai/artifact/25Z14pVyciW2teKBhRCTd2)を `feature/case-concerns`(dev から分岐)に実装した。DB 変更なし。** 内容は §11 の 1〜8 すべて: 定数 `src/lib/constants/concerns.ts`(5括り・33項目・8ラベル・SDGsヒント・項目→ラベル計算)/ 翻訳キー 6言語(`sos.concerns.*` + `sos.hearing.*` 追加、`casesList.sdgsLabel/sdgsPendingLabel` の文言変更)/ 相談フォームをフラグ `CONCERN_FORM_ENABLED`(concerns.ts、既定 true)で新旧切替 / 案件登録 API の検証と labels の保存時計算 / AI プロンプトに本人の選択+ヒント表を同梱し `labels_ai` を返す(AI 失敗時は新フォーム案件だけヒント既定値で LISTED にする)/ サポーター一覧の SDGs フィルター・バッジをラベルチップ(本人=実線・AI=破線+AI印)と「まだ整理できていない相談」に置換 / 案件詳細・相談者側 3 画面から SDGs 番号を除去し「本人の言葉」を表示 / 遡り付与 API `POST /api/admin/cases/backfill-labels`(ADMIN、`{limit, dryRun}`、既定 10 件・最大 30 件、maxDuration 300、対象は LISTED の OPEN/MATCHED、入力は analyze と同じ Q1〜Q5+自由記述、labels_ai だけを JSON マージ)。サブエージェントの独立レビュー(8 指摘)を反映済み: AI 失敗時の既定値には `fallback: true` を付け結果ページの再読み込みで再試行・相談者側は翻訳済み文言を表示 / danger はサーバーで urgency High に固定 / 本人ラベルがあるのに AI がゴール空のときはヒント既定値にして「再度見直してください」にしない。ビルド exit 0・静的 120/120(9/25 の Namia 削除で 122→120)、tsc・eslint(編集ファイル)・check:i18n クリーン。**未実施: Staging デプロイと運営のブラウザ確認、既存案件 92 件への遡り付与(Staging)、§10 の決定(文言は §3 の案を初期値として実装済み)。** ブラウザ実操作は未検証(Playwright なし)。
+
 **2026-09-17 本番でパスワード変更直後にログアウトする回帰を確認 → dev で修正(`1f652cc`)→ Staging 実測OK → PR #33 で本番反映(main = `f424824`、デプロイ success)。本番で「パスワード変更後もログアウトしない」のブラウザ確認はユーザー待ち。** 原因: PR #32 でパスワード更新を `admin.updateUserById` に切り替えたため、GoTrue が本人の現在のセッションも含めて全失効させていた(旧実装のクライアント `updateUser` は本人セッションを残す)。修正: 現PW検証は従来どおりサーバーで行い、更新は本人のトークンで GoTrue `PUT /auth/v1/user` を呼ぶ。Staging 実測: 変更した本人のトークンは get-role 200 のまま、別セッションは 401(他端末は失効)、403/400 のエラー経路も維持。
 
 **2026-09-16 PR #32 で本番反映(main = `1d0abf3`、デプロイ success 08:16Z)。内容: メール変更一式(本人/管理者)+現PW確認、熊本地震 災害SOS受付終了、PCロゴ修正、未適用migration削除。本番DB変更なし。**
@@ -22,6 +24,7 @@
 前回: 2026-09-03 PR #31 で東京リージョン化+マスク検証ラボを本番反映(hnd1 実測済み)。PR #29(8/29)、PR #30(auto-close 30日化)。DB操作はいずれもなし。
 
 ## 完了したこと
+- **お困りごとラベル(feature/case-concerns、2026-09-26、DB変更なし)**: 上記「現在地」参照。設計上の判断: ①`labels` はサーバーで項目から計算しクライアント値は捨てる(読み出し時も `getCaseConcerns` が項目から引き直すので定数表の変更に追従)②項目は選んだ括りに属するものだけ保存(見えないチェックを送らない)③括り 0 件は API が 400「困っていることを1つ以上選んでください」④AI 失敗時の公開継続は新フォーム案件のみ(旧フォームは従来の 500→結果ページ再試行)⑤`ai_sdg_suggestion.labels_ai` は 8 id 以外を捨て、本人ラベルを差集合で除き、上限 3 ⑥サポーター一覧 API が `concern_labels` / `concern_labels_ai` を計算して返す(intake_qna 本体は従来どおり返さない)⑦サポーターUIのラベル名は `nameJa` 固定(サポーターUIは翻訳しない方針)、相談者側は `sos.concerns.*` ⑧危険チェックは urgency High に乗せ、`intake_qna.danger` にも保存して詳細に赤帯で出す ⑨ほしい助けの id は `info/expert/org/peer/listen/paid`(仕様例の `welfare_info` は項目 id と衝突するため変更)⑩結果ページの per_goal カードは SDGs 番号・名前・色を外し AI の説明文だけ残した(§10-3 の案)
 - **PCでロゴの涙型が消える不具合の修正(dev 2026-09-16、`2b86e8e`)**: ヘッダーはスマホ用/PC用で同じロゴを2つ置きCSSで片方を隠すが、SVGのグラデーション・フィルタ id が「サイズ+色」から作られて重複していた。ブラウザは最初の要素(スマホ用=PCでは display:none)に解決するため PC だけ涙型が描かれず濃紺の四角に見えていた(本番も同じ・今日の変更とは無関係)。`src/components/icons/Logo.tsx` の3部品で `useId` から固有 id を生成。Staging の `/` `/supporters` `/login` `/en` で id 重複ゼロ・未解決参照ゼロを機械確認済み。**PC ブラウザでの目視確認はユーザー待ち**
 - **熊本地震 災害SOSの受付終了(dev 2026-09-16、DB変更なし)**: `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` を null に。トップ/SOSダッシュボードのバナー非表示、`/sos/disaster` はダッシュボードへリダイレクト、`POST /api/sos/cases` は受付外イベントの災害payloadを 400「この災害SOSの受付は終了しました」で拒否(黙って通常案件に格下げするとAI分析を通らず非公開のまま残るため)。登録済み案件の表示・地域設定・承認上限1は `DISASTER_EVENTS` 参照のまま維持。ビルド 122/122、編集ファイルの eslint クリーン(リポジトリ全体の lint は既存の 6 errors / 88 warnings で今回と無関係)
 - **メール変更・現PW確認(dev マージ 2026-09-16、DB変更なし)**:
@@ -58,6 +61,7 @@
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
+0. **お困りごとラベル**: (a) `feature/case-concerns` を origin に push → dev へチェックポイント PR(ユーザー承認)→ Staging で運営がフォーム・一覧・詳細を触る (b) Staging で `POST /api/admin/cases/backfill-labels` を `{"dryRun":true}` → 本実行(既定 10 件ずつ、管理者トークン+dev-auth cookie)し付き方を目で見る (c) §10 の 8 項目を依頼者に決めてもらい、文言差があれば concerns.ts と 6 言語 JSON を直す (d) 11 月前に本番へ出すか、出さずにタグ保管するかを判断(休止方針)。本番の遡り付与はユーザー明示許可のうえユーザー実行
 1. ~~パスワード変更の回帰修正を本番へ~~ → PR #33 で反映済み。本番で①自発パスワード変更後にログアウトしないこと をユーザーが再確認
 1b. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤(①は 9/17 に実施→ログアウト回帰を発見。変更後PWでの再ログインは可)。NGがあればこちらで修正 → dev → PR
 2. ~~本番の確認メール件名を日本語化~~ → 2026-09-16 本番・Staging とも変更済み
@@ -68,6 +72,7 @@
 7. (継続)技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み(**9/16 に i18n フェーズ2の列で実際に差分を確認済み**、下記「地雷」参照)。`users.supporter_type` / `users.organization_name` 列のDROP migration。本番の `display_id_backup_20260816` テーブルDROP(ユーザー実行、8/16 から1か月経過)
 
 ## 地雷・注意
+- **お困りごとラベル関連**: `CONCERN_FORM_ENABLED=false` に戻すと新規登録は旧フォームに戻るが、サポーター一覧のフィルターはラベル方式のまま(SDGs 番号フィルターは削除済み)。旧フォーム案件は本人ラベル 0 件なので「まだ整理できていない相談」に入り、遡り付与をすれば AI 補完でフィルターに乗る。`intake_qna.form_version=2` の案件には `qa` が無いので、`qa` を前提に読むコードを足さないこと(既存の analyze `buildDescriptionFromCase` は qa 無しでも動く)。AI 失敗時のフォールバックは新フォーム案件だけ `visibility: LISTED` にする(従来は AI 成功が公開条件だった)。フォールバック案件は `ai_sdg_suggestion.fallback=true` で、結果ページを開くたびに再試行する。相談者向け文言で SDGs に触れる既存キー(result.aiSectionSubtitle / analyzeStep3 / waitingBody、hearing.aiStep3)は番号ではないので据え置き。§10 の文言決定と一緒に見直す。ラベル表示名の正本は `concerns.ts` の `nameJa`(サポーター側)と `messages/*/sos.json` の `sos.concerns`(相談者側)の 2 か所にあり、文言を変えるときは両方を直す
 - **本番Supabaseへの変更操作はユーザー明示許可なしに絶対に実行しない**(こちらはread-only接続のみ。auto modeでは本番psqlがブロックされるのでユーザーが `!` で実行)
 - **現在パスワード確認は本番反映済み(PR #32)**。総当たり対策は GoTrue のトークン発行レート制限に依存。**パスワード更新は必ず本人トークンで GoTrue PUT /user を呼ぶ**(admin API だと本人セッションごと失効=即ログアウト。2026-09-17 の回帰)
 - **メール変更の確認メールは新旧両方の宛先に届く(2026-09-17 調査で確定・仕様として受容)**: Secure email change を OFF にしても、Supabase ホスト版 GoTrue は確認メールを1通・宛先2件(現在のアドレス+変更先)で送る。トークンは新アドレス側の1本のみ(`email_change_token_current` は空)で、両メールに入るリンクは同一なのでどちらを押しても同じ変更が完了する。Resend の API 送信も変更1回につき1回。**二重送信バグではない**。旧アドレスへの控えは「変更が行われる通知」として依頼者が受容(2026-09-17)。新アドレスだけに送る設定は無い。切り分けSQLは `~/samasama/メール変更調査SQL/`(メール個人情報を含むので不要なら削除)

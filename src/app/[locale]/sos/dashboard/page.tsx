@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, formatRelativeDateIntl } from '@/lib/constants/sdgs';
+import { formatRelativeDateIntl } from '@/lib/constants/sdgs';
 import { ACTIVE_DISASTER_EVENT, getDisasterEvent } from '@/lib/constants/disaster';
+import { getCaseConcerns } from '@/lib/constants/concerns';
 
 const MAX_ACTIVE_CASES = 3;
 
@@ -22,7 +23,7 @@ type Case = {
   status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED' | 'CLOSED';
   pending_offer_count?: number;
   created_at: string;
-  intake_qna?: { disaster?: { event_id?: string } } | null;
+  intake_qna?: { disaster?: { event_id?: string }; concerns?: unknown } | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -39,6 +40,7 @@ type UserData = {
 export default function SOSDashboard() {
   const t = useTranslations('sos.dashboard');
   const tDisaster = useTranslations('sos.disaster');
+  const tConcerns = useTranslations('sos.concerns');
   const tStatus = useTranslations('sdgs.caseStatus');
   const tForm = useTranslations('common.form');
   const tActions = useTranslations('common.actions');
@@ -341,19 +343,19 @@ export default function SOSDashboard() {
                           {case_.description_free}
                         </p>
 
-                        {case_.ai_sdg_suggestion?.sdgs_goals && (
-                          <div className="flex flex-wrap gap-1">
-                            {case_.ai_sdg_suggestion.sdgs_goals.slice(0, 3).map((goal) => (
-                              <span
-                                key={goal}
-                                className="px-2 py-0.5 text-xs font-medium text-white rounded"
-                                style={{ backgroundColor: SDG_COLORS[goal] }}
-                              >
-                                SDG {goal}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {/* 本人が選んだお困りごと(SDGs 番号は出さない) */}
+                        {(() => {
+                          const labels = getCaseConcerns(case_.intake_qna)?.labels ?? [];
+                          return labels.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {labels.map((id) => (
+                                <span key={id} className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
+                                  {tConcerns(`labels.${id}`)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null;
+                        })()}
 
                         <p className="text-xs text-gray-400">
                           📅 {formatRelativeDateIntl(case_.created_at, locale)}

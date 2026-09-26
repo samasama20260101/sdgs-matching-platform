@@ -3,6 +3,17 @@ import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { ACTIVE_DISASTER_EVENT, DISASTER_EVENT_IDS, getDisasterEvent } from '@/lib/constants/disaster'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
+import {
+    CONCERN_FORM_VERSION,
+    isConcernGroupId,
+    isConcernItemId,
+    isHelpWantedId,
+    getConcernItem,
+    labelsFromItems,
+    type ConcernGroupId,
+    type ConcernItemId,
+    type HelpWantedId,
+} from '@/lib/constants/concerns'
 import { NextResponse, after } from 'next/server'
 
 const DESCRIPTION_FREE_MAX_LENGTH = 2000
@@ -64,9 +75,48 @@ function sanitizeDisaster(value: unknown) {
     return { event_id: eventId, answers, ...(location ? { location } : {}) }
 }
 
+// 新フォーム(お困りごと)。id は定数表にあるものだけ通し、labels はここで項目から計算する(クライアント値は信用しない)。
+// 括り 0 件は null(呼び出し側で 400)。項目は選んだ括りに属するものだけ残す(見えないチェックを保存しない)。
+type ConcernIntake = {
+    form_version: number
+    concerns: { groups: ConcernGroupId[]; items: ConcernItemId[]; labels: ReturnType<typeof labelsFromItems> }
+    help_wanted: HelpWantedId[]
+    danger: boolean
+    locale: string
+    disaster?: undefined // 新フォームは災害SOSと排他(判別用)
+}
+
+function sanitizeConcernIntake(value: Record<string, unknown>, fallbackLocale: string): ConcernIntake | null {
+    const concernsRaw = value.concerns
+    if (!concernsRaw || typeof concernsRaw !== 'object' || Array.isArray(concernsRaw)) return null
+    const groupsRaw = (concernsRaw as { groups?: unknown }).groups
+    const itemsRaw = (concernsRaw as { items?: unknown }).items
+    const groups = [...new Set((Array.isArray(groupsRaw) ? groupsRaw : []).filter(isConcernGroupId))]
+    if (groups.length === 0) return null
+    const groupSet = new Set(groups)
+    const items = [...new Set((Array.isArray(itemsRaw) ? itemsRaw : []).filter(isConcernItemId))]
+        .filter((id) => {
+            const item = getConcernItem(id)
+            return item !== null && groupSet.has(item.group)
+        })
+    const helpRaw = value.help_wanted
+    const helpWanted = [...new Set((Array.isArray(helpRaw) ? helpRaw : []).filter(isHelpWantedId))]
+    return {
+        form_version: CONCERN_FORM_VERSION,
+        concerns: { groups, items, labels: labelsFromItems(items) },
+        help_wanted: helpWanted,
+        danger: value.danger === true,
+        locale: sanitizeLocale(value.locale) || fallbackLocale,
+    }
+}
+
 function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null
     const disaster = sanitizeDisaster((value as { disaster?: unknown }).disaster)
+    // 新フォーム(form_version 付き)は Q1〜Q5 を持たない
+    if ((value as { form_version?: unknown }).form_version === CONCERN_FORM_VERSION && !disaster) {
+        return sanitizeConcernIntake(value as Record<string, unknown>, fallbackLocale)
+    }
     const qa = (value as { qa?: unknown }).qa
     if (!qa || typeof qa !== 'object' || Array.isArray(qa)) {
         // 災害SOSはQ&Aなしで登録できる
@@ -164,7 +214,7 @@ export async function POST(request: Request) {
     }
 
     const title = sanitizeText(body.title, TITLE_MAX_LENGTH) || descriptionFree.slice(0, 50) || '相談'
-    const urgency = typeof body.urgency === 'string' && ALLOWED_URGENCIES.has(body.urgency) ? body.urgency : 'Medium'
+    const requestedUrgency = typeof body.urgency === 'string' && ALLOWED_URGENCIES.has(body.urgency) ? body.urgency : 'Medium'
     const regionCountry = typeof body.region_country === 'string' && ALLOWED_REGION_COUNTRIES.has(body.region_country)
         ? body.region_country
         : 'JP'
@@ -181,6 +231,14 @@ export async function POST(request: Request) {
     }
 
     const intakeQna = sanitizeIntakeQna(body.intake_qna, locale)
+
+    // 新フォームは「括りを 1 つ以上」が必須(仕様 §4)。id が全部不正だった場合もここで止める
+    const requestedFormVersion = (body.intake_qna as { form_version?: unknown } | null | undefined)?.form_version
+    if (requestedFormVersion === CONCERN_FORM_VERSION && !intakeQna) {
+        return NextResponse.json({ error: '困っていることを1つ以上選んでください' }, { status: 400 })
+    }
+    // 危険チェック(仕様 §4.1)はクライアントの urgency を信用せずサーバーで High に固定する
+    const urgency = intakeQna && 'danger' in intakeQna && intakeQna.danger === true ? 'High' : requestedUrgency
 
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')

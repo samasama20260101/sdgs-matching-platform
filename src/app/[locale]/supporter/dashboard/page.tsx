@@ -9,8 +9,10 @@ import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 import { getDisasterEvent, formatDisasterLocation, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey, type DisasterLocation } from '@/lib/constants/disaster';
+import { CONCERN_LABELS, sortLabels, type ConcernLabelId } from '@/lib/constants/concerns';
+import { ConcernLabelChip } from '@/components/supporter/ConcernLabelChip';
 
 type Case = {
   id: string;
@@ -26,6 +28,9 @@ type Case = {
   disaster_needs?: string[];
   disaster_location?: DisasterLocation | null;
   photo_count?: number;
+  // お困りごとラベル(API が intake_qna / ai_sdg_suggestion から計算して付与)
+  concern_labels?: ConcernLabelId[];
+  concern_labels_ai?: ConcernLabelId[];
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -66,7 +71,8 @@ type UserData = {
 };
 
 function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; showUser?: boolean; onClick: () => void; }) {
-  const sdgs = case_.ai_sdg_suggestion?.sdgs_goals || [];
+  const ownLabels = case_.concern_labels || [];
+  const aiLabels = case_.concern_labels_ai || [];
   const keywords = case_.ai_sdg_suggestion?.keywords || [];
   const engagement = case_.my_offer_status || 'none';
   const engConfig: Record<string, { label: string; color: string; icon: string; border: string }> = {
@@ -141,10 +147,10 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
                 </span>
               );
             })}
+            {/* お困りごとラベル: 実線=本人が選んだ / 破線+AI=自由記述から AI が足した推定(通常案件のみ) */}
+            {!disasterEvent && ownLabels.map((id) => <ConcernLabelChip key={id} labelId={id} />)}
+            {!disasterEvent && aiLabels.map((id) => <ConcernLabelChip key={`ai-${id}`} labelId={id} ai />)}
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
-          </div>
-          <div className="flex gap-1">
-            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={SDG_NAMES[g]}>{g}</span>)}
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -159,12 +165,13 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
 }
 
 function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (id: string) => void; }) {
-  const grouped: Record<string, { userName: string; items: Case[]; sdgs: Set<number> }> = {};
+  // 相談者ごとの束ね表示: その人の全案件の本人ラベルの和集合(SDGs 番号の和集合と同じ規則)
+  const grouped: Record<string, { userName: string; items: Case[]; labels: Set<ConcernLabelId> }> = {};
   cases.forEach((c) => {
     const uid = c.owner_user_id;
-    if (!grouped[uid]) grouped[uid] = { userName: c.users?.display_name || '不明', items: [], sdgs: new Set() };
+    if (!grouped[uid]) grouped[uid] = { userName: c.users?.display_name || '不明', items: [], labels: new Set() };
     grouped[uid].items.push(c);
-    (c.ai_sdg_suggestion?.sdgs_goals || []).forEach((s) => grouped[uid].sdgs.add(s));
+    (c.concern_labels || []).forEach((l) => grouped[uid].labels.add(l));
   });
   return (
     <div className="space-y-5">
@@ -178,8 +185,8 @@ function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (
                 <div className="text-xs text-gray-500">相談 {group.items.length}件</div>
               </div>
             </div>
-            <div className="flex gap-1">
-              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="w-6 h-6 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[s] }}>{s}</span>)}
+            <div className="flex gap-1 flex-wrap justify-end">
+              {sortLabels(group.labels).map((l) => <ConcernLabelChip key={l} labelId={l} />)}
             </div>
           </div>
           <div className="p-3 space-y-2">
@@ -243,7 +250,8 @@ export default function SupporterDashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [sdgFilter, setSdgFilter] = useState<number | null>(null);
+  // お困りごとフィルター: 複数選択・OR。'unsorted' = 本人ラベル 0 件(まだ整理できていない相談)
+  const [labelFilter, setLabelFilter] = useState<Set<ConcernLabelId | 'unsorted'>>(new Set());
   const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
@@ -331,11 +339,19 @@ export default function SupporterDashboard() {
   const scopedCases = effectiveTab === 'disaster' ? disasterCases : normalCases;
   const effectiveSort: 'newest' | 'waiting' = sortMode ?? (effectiveTab === 'disaster' ? 'waiting' : 'newest');
 
+  // OR: 選んだラベルのどれかを本人ラベル ∪ AI 補完ラベルに含む案件。'unsorted' は本人ラベル 0 件
+  const matchesLabelFilter = (c: Case) => {
+    const all = new Set<string>([...(c.concern_labels || []), ...(c.concern_labels_ai || [])]);
+    for (const key of labelFilter) {
+      if (key === 'unsorted' ? (c.concern_labels || []).length === 0 : all.has(key)) return true;
+    }
+    return false;
+  };
   const filteredCases = scopedCases.filter((c) => {
     if (waitingOnly && !waitingInfo(c)) return false;
     if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
     if (effectiveTab === 'normal') {
-      if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
+      if (labelFilter.size > 0 && !matchesLabelFilter(c)) return false;
       if (regionFilter && c.users?.prefecture !== regionFilter) return false;
     } else {
       if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
@@ -354,7 +370,14 @@ export default function SupporterDashboard() {
     : [];
   const areaCaseCount = (a: string) => disasterCases.filter((c) => c.disaster_location?.municipality === muniFilter && c.disaster_location?.area === a).length;
 
-  const allSdgs = [...new Set(normalCases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
+  // ラベル件数はチップの固定順(§3.2)で出す。対象は「本人ラベル ∪ AI 補完ラベル」
+  const labelCaseCount = (id: ConcernLabelId) => normalCases.filter((c) => (c.concern_labels || []).includes(id) || (c.concern_labels_ai || []).includes(id)).length;
+  const unsortedCaseCount = normalCases.filter((c) => (c.concern_labels || []).length === 0).length;
+  const toggleLabelFilter = (id: ConcernLabelId | 'unsorted') => setLabelFilter((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   const allRegions = [...new Set(normalCases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
   const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
   const getCaseCount = (r: string) => normalCases.filter((c) => c.users?.prefecture === r).length;
@@ -388,8 +411,8 @@ export default function SupporterDashboard() {
       })
     : filteredCases;
 
-  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
-  const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter || waitingOnly;
+  const clearFilters = () => { setLabelFilter(new Set()); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
+  const hasActiveFilter = labelFilter.size > 0 || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter || waitingOnly;
 
   // タブ切替: フィルターと並び順をタブ既定にリセット
   const switchTab = (tab: 'disaster' | 'normal') => {
@@ -512,15 +535,26 @@ export default function SupporterDashboard() {
             </div>
             </div>
           </div>
-          {/* 通常タブ: SDGsフィルター */}
+          {/* 通常タブ: お困りごとフィルター(複数選択・OR。番号も SDGs の色も使わない) */}
           {effectiveTab === 'normal' && (
           <div className="flex gap-1.5 flex-wrap items-center">
-            <span className="text-xs text-gray-400 mr-1">SDGs:</span>
-            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
-            {allSdgs.map((s) => {
-              const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
-              return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
+            <span className="text-xs text-gray-400 mr-1">お困りごと:</span>
+            <button onClick={() => setLabelFilter(new Set())} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${labelFilter.size === 0 ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>すべて ({normalCases.length})</button>
+            {CONCERN_LABELS.map((label) => {
+              const count = labelCaseCount(label.id);
+              const active = labelFilter.has(label.id);
+              return (
+                <button key={label.id} onClick={() => toggleLabelFilter(label.id)} aria-pressed={active}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${active ? 'border-indigo-500 bg-indigo-500 text-white' : count === 0 ? 'border-gray-200 bg-white text-gray-300' : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}>
+                  {label.nameJa} ({count})
+                </button>
+              );
             })}
+            {/* 本人ラベルが 0 件の案件。AI 補完があっても本人が選んでいなければここに入る。傾聴が得意な団体が真っ先に見る位置 */}
+            <button onClick={() => toggleLabelFilter('unsorted')} aria-pressed={labelFilter.has('unsorted')}
+              className={`px-3 py-1 rounded-full text-xs font-semibold border border-dashed transition-colors ${labelFilter.has('unsorted') ? 'border-teal-600 bg-teal-600 text-white' : 'border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100'}`}>
+              💬 まだ整理できていない相談 ({unsortedCaseCount})
+            </button>
           </div>
           )}
           {/* 災害タブ: ニーズフィルター */}

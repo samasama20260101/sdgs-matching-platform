@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SDG_NAMES } from '@/lib/constants/sdgs';
+import { CONCERN_GROUPS, getCaseConcerns, getCaseLabelSet, getConcernItem, getDangerFlag, getHelpWanted, getHelpWantedIds } from '@/lib/constants/concerns';
+import { ConcernLabelChip, AI_LABEL_HINT } from '@/components/supporter/ConcernLabelChip';
 import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { isCasePhotosEnabled } from '@/lib/constants/photos';
 import { isMinor } from '@/lib/utils/age';
@@ -29,11 +30,13 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
-  intake_qna: { qa: Record<string, string>; disaster?: { event_id?: string } };
+  intake_qna: { qa?: Record<string, string>; disaster?: { event_id?: string }; concerns?: unknown; help_wanted?: unknown; danger?: unknown } | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
-    reasoning: string;
+    reasoning?: string;
+    summary?: string;
     keywords: string[];
+    labels_ai?: string[];
   } | null;
   owner_user_id: string;
 };
@@ -387,8 +390,59 @@ export default function SupporterCaseDetailPage() {
               </div>
             )}
 
-            {/* Q1〜Q5 アンケート回答（折りたたみ） */}
-            {caseData?.intake_qna?.qa && Object.keys(caseData.intake_qna.qa).length > 0 && (
+            {/* 本人の言葉(新フォーム): 選んだ括り・チェックした項目・ほしい助けをそのまま出す。SDGs は出さない */}
+            {(() => {
+              const concerns = getCaseConcerns(caseData?.intake_qna);
+              if (!concerns) return null;
+              const helpWanted = getHelpWantedIds(caseData?.intake_qna);
+              const groups = CONCERN_GROUPS.filter((g) => concerns.groups.includes(g.id));
+              return (
+                <div className="border-t pt-4 space-y-3">
+                  <h3 className="text-sm font-medium text-gray-500">🗣️ 本人の言葉(相談者が選んだお困りごと)</h3>
+                  {getDangerFlag(caseData?.intake_qna) && (
+                    <p className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      🆘 本人が「いますぐ命や身の危険があります」にチェックしています
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {groups.map((g) => {
+                      const items = concerns.items.map(getConcernItem).filter((item) => item && item.group === g.id);
+                      return (
+                        <div key={g.id} className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs font-bold text-gray-600">{g.emoji} {g.nameJa}</p>
+                          {items.length > 0 ? (
+                            <ul className="mt-1.5 space-y-1">
+                              {items.map((item) => item && (
+                                <li key={item.id} className="text-sm text-gray-700 flex items-start gap-1.5">
+                                  <span className="text-indigo-500 mt-0.5">☑</span>
+                                  <span>{item.nameJa}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-1 text-xs text-gray-400">具体的な項目は選んでいません(自由記述を読んでください)</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {helpWanted.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs font-bold text-gray-600">🙏 ほしい助け</p>
+                      <ul className="mt-1.5 space-y-1">
+                        {helpWanted.map((id) => {
+                          const option = getHelpWanted(id);
+                          return option ? <li key={id} className="text-sm text-gray-700">・{option.nameJa}</li> : null;
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Q1〜Q5 アンケート回答（旧フォームの案件のみ・折りたたみ） */}
+            {!getCaseConcerns(caseData?.intake_qna) && caseData?.intake_qna?.qa && Object.keys(caseData.intake_qna.qa).length > 0 && (
               <div className="border-t pt-4">
                 <button
                   onClick={() => setShowQna(v => !v)}
@@ -415,31 +469,36 @@ export default function SupporterCaseDetailPage() {
                 )}
               </div>
             )}
-            {caseData?.ai_sdg_suggestion && (
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-3">🤖 AI分析結果</h3>
-                <div className="mb-3">
-                  <p className="text-xs text-gray-500 mb-2">関連するSDGsゴール</p>
-                  <div className="flex flex-wrap gap-2">
-                    {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
-                      <div key={goalId} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: `${SDG_COLORS[goalId]}20` }}>
-                        <span className="text-white text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>
-                          SDG {goalId}
-                        </span>
-                        <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+            {/* AI 分析: 要約 + お困りごとラベル(本人=実線 / AI 補完=破線+印) + キーワード。SDGs 番号は出さない(裏の集計用) */}
+            {caseData?.ai_sdg_suggestion && (() => {
+              const labels = getCaseLabelSet(caseData.intake_qna, caseData.ai_sdg_suggestion);
+              const summary = caseData.ai_sdg_suggestion.summary || caseData.ai_sdg_suggestion.reasoning;
+              return (
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-3">🤖 AI分析結果</h3>
+                  {summary && (
+                    <p className="text-sm text-gray-700 leading-relaxed bg-blue-50/60 rounded-lg p-3 mb-3">{summary}</p>
+                  )}
+                  {(labels.own.length > 0 || labels.ai.length > 0) && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 mb-2">お困りごとラベル</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {labels.own.map((id) => <ConcernLabelChip key={id} labelId={id} size="md" />)}
+                        {labels.ai.map((id) => <ConcernLabelChip key={`ai-${id}`} labelId={id} ai size="md" />)}
                       </div>
-                    ))}
-                  </div>
+                      {labels.ai.length > 0 && <p className="text-[11px] text-gray-400 mt-1.5">破線+AI = {AI_LABEL_HINT}</p>}
+                    </div>
+                  )}
+                  {caseData.ai_sdg_suggestion.keywords && caseData.ai_sdg_suggestion.keywords.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
+                        <span key={i} className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">#{kw}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {caseData.ai_sdg_suggestion.keywords && (
-                  <div className="flex flex-wrap gap-2">
-                    {caseData.ai_sdg_suggestion.keywords.map((kw, i) => (
-                      <span key={i} className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">#{kw}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })()}
           </CardContent>
         </Card>
 

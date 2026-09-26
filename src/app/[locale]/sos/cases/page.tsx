@@ -7,8 +7,9 @@ import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SDG_COLORS, CASE_STATUS, type CaseStatusKey } from '@/lib/constants/sdgs';
+import { CASE_STATUS, type CaseStatusKey } from '@/lib/constants/sdgs';
 import { getDisasterEvent } from '@/lib/constants/disaster';
+import { getCaseConcerns } from '@/lib/constants/concerns';
 
 type Case = {
   id: string;
@@ -17,7 +18,7 @@ type Case = {
   urgency: string;
   status: string;
   created_at: string;
-  intake_qna?: { disaster?: { event_id?: string } } | null;
+  intake_qna?: { disaster?: { event_id?: string }; concerns?: unknown } | null;
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -27,6 +28,7 @@ type Case = {
 
 export default function SOSCasesPage() {
   const t = useTranslations('sos.casesList');
+  const tConcerns = useTranslations('sos.concerns');
   const tDisaster = useTranslations('sos.disaster');
   const tStatus = useTranslations('sdgs.caseStatus');
   const tForm = useTranslations('common.form');
@@ -183,25 +185,26 @@ export default function SOSCasesPage() {
                     {c.description_free}
                   </p>
 
-                  {/* SDGsゴール（AI分析済みの場合） */}
-                  {c.ai_sdg_suggestion?.sdgs_goals ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{t('sdgsLabel')}</span>
-                      <div className="flex gap-1">
-                        {c.ai_sdg_suggestion.sdgs_goals.map((goalId) => (
-                          <span
-                            key={goalId}
-                            className="text-white text-xs font-bold px-2 py-0.5 rounded"
-                            style={{ backgroundColor: SDG_COLORS[goalId] }}
-                          >
-                            {goalId}
-                          </span>
-                        ))}
+                  {/* 本人が選んだお困りごと(SDGs 番号は出さない) */}
+                  {(() => {
+                    const labels = getCaseConcerns(c.intake_qna)?.labels ?? [];
+                    return labels.length > 0 ? (
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-gray-400 mt-0.5">{t('concernsLabel')}</span>
+                        <div className="flex gap-1 flex-wrap">
+                          {labels.map((id) => (
+                            <span key={id} className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
+                              {tConcerns(`labels.${id}`)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
+                    ) : null;
+                  })()}
+                  {/* AI 分析待ち */}
+                  {!c.ai_sdg_suggestion && !c.intake_qna?.disaster && (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{t('sdgsPendingLabel')}</span>
+                      <span className="text-xs text-gray-400">{t('aiPendingLabel')}</span>
                       <span className="text-xs text-orange-500">{t('notAnalyzed')}</span>
                     </div>
                   )}
