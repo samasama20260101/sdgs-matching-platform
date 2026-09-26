@@ -24,6 +24,7 @@
 前回: 2026-09-03 PR #31 で東京リージョン化+マスク検証ラボを本番反映(hnd1 実測済み)。PR #29(8/29)、PR #30(auto-close 30日化)。DB操作はいずれもなし。
 
 ## 完了したこと
+- **AI 直前の個人情報マスク層1(feature/case-concerns、2026-09-26、ユーザー指示)**: `src/lib/pii.ts` に `/admin/mask-lab` の層1(正規表現: URL・メール・SNS ID・郵便番号・電話・生年月日・住所・7桁以上の数字)をサーバー側へ移植し、`classifySDGs` / `classifyConcernLabels`(gemini.ts)と `classifyDisasterNeedsText`(disasterNeeds.ts)の内部で `maskPii` を通してから Gemini に渡す。置換は【電話番号】【住所】などの印で、プロンプトに「【】は伏せた印、推測しない」と明記。**DB 保存とサポーター表示は原文のまま**(9/1 の決定どおり適用先は AI 直前のみ)。未使用の legacy 関数(followUp / matching)も同様にマスク。層2(kuromoji 固有表現)は未導入。サンプル 11 件の assertion で検出・非検出(「来週の3月2日」「月10万円」は残す)を確認。ルールを変えるときは mask-lab と pii.ts の両方を揃える
 - **お困りごとラベル(feature/case-concerns、2026-09-26、DB変更なし)**: 上記「現在地」参照。設計上の判断: ①`labels` はサーバーで項目から計算しクライアント値は捨てる(読み出し時も `getCaseConcerns` が項目から引き直すので定数表の変更に追従)②項目は選んだ括りに属するものだけ保存(見えないチェックを送らない)③括り 0 件は API が 400「困っていることを1つ以上選んでください」④AI 失敗時の公開継続は新フォーム案件のみ(旧フォームは従来の 500→結果ページ再試行)⑤`ai_sdg_suggestion.labels_ai` は 8 id 以外を捨て、本人ラベルを差集合で除き、上限 3 ⑥サポーター一覧 API が `concern_labels` / `concern_labels_ai` を計算して返す(intake_qna 本体は従来どおり返さない)⑦サポーターUIのラベル名は `nameJa` 固定(サポーターUIは翻訳しない方針)、相談者側は `sos.concerns.*` ⑧危険チェックは urgency High に乗せ、`intake_qna.danger` にも保存して詳細に赤帯で出す ⑨ほしい助けの id は `info/expert/org/peer/listen/paid`(仕様例の `welfare_info` は項目 id と衝突するため変更)⑩結果ページの per_goal カードは SDGs 番号・名前・色を外し AI の説明文だけ残した(§10-3 の案)
 - **PCでロゴの涙型が消える不具合の修正(dev 2026-09-16、`2b86e8e`)**: ヘッダーはスマホ用/PC用で同じロゴを2つ置きCSSで片方を隠すが、SVGのグラデーション・フィルタ id が「サイズ+色」から作られて重複していた。ブラウザは最初の要素(スマホ用=PCでは display:none)に解決するため PC だけ涙型が描かれず濃紺の四角に見えていた(本番も同じ・今日の変更とは無関係)。`src/components/icons/Logo.tsx` の3部品で `useId` から固有 id を生成。Staging の `/` `/supporters` `/login` `/en` で id 重複ゼロ・未解決参照ゼロを機械確認済み。**PC ブラウザでの目視確認はユーザー待ち**
 - **熊本地震 災害SOSの受付終了(dev 2026-09-16、DB変更なし)**: `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` を null に。トップ/SOSダッシュボードのバナー非表示、`/sos/disaster` はダッシュボードへリダイレクト、`POST /api/sos/cases` は受付外イベントの災害payloadを 400「この災害SOSの受付は終了しました」で拒否(黙って通常案件に格下げするとAI分析を通らず非公開のまま残るため)。登録済み案件の表示・地域設定・承認上限1は `DISASTER_EVENTS` 参照のまま維持。ビルド 122/122、編集ファイルの eslint クリーン(リポジトリ全体の lint は既存の 6 errors / 88 warnings で今回と無関係)
@@ -43,7 +44,7 @@
   - 個人情報を書かない注意文を自由記述欄の直上へ `b416a5f`(災害フォームは専用文言)
   - 各Qの「その他」自由記述を廃止 `a97a84f`(翻訳キー9件×6言語削除)
 - **本番実操作検収(2026-09-01・ユーザー)**: パスワード変更(自発モード)と初回ログイン導線の回帰、管理ダッシュボードの団体名表示 → いずれもOK
-- **個人情報マスク検証ラボ**(`/admin/mask-lab`、PR #31 で本番反映済み): 依頼者が Staging で触って層2の要否と実装方針を判断する段階。詳細は git log の 2026-09-03 HANDOFF
+- **個人情報マスク検証ラボ**(`/admin/mask-lab`、PR #31 で本番反映済み): 層1は 2026-09-26 に feature/case-concerns で AI 直前へ実装済み(上記)。層2の要否は引き続き依頼者判断。詳細は git log の 2026-09-03 HANDOFF
 - 前フェーズ(2026-08-16): PR #26/#27/#28、display_id形式統一とUNIQUE付与(本番適用済み)、詳細は git log
 
 ## 試して失敗したこと ★最重要

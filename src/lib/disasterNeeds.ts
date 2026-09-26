@@ -6,6 +6,7 @@ import 'server-only'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { DISASTER_NEEDS, DISASTER_NEED_KEYS, MAX_DISASTER_NEEDS, type DisasterNeedKey } from '@/lib/constants/disaster'
+import { maskPii } from '@/lib/pii'
 
 const GEMINI_MODEL = 'gemini-2.5-flash'
 
@@ -58,7 +59,8 @@ export async function classifyDisasterNeedsText(text: string): Promise<DisasterN
         responseMimeType: 'application/json',
       },
     })
-    const result = await model.generateContent(buildPrompt(text))
+    // AI に渡す直前に個人情報をマスクする(層1)。保存・表示は原文のまま
+    const result = await model.generateContent(buildPrompt(maskPii(text)))
     const raw = result.response.text().replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(raw) as { tags?: unknown }
     if (!Array.isArray(parsed.tags)) return null
