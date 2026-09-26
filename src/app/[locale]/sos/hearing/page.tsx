@@ -23,6 +23,7 @@ import {
   CONCERN_GROUPS,
   HELP_WANTED_OPTIONS,
   getItemsForGroup,
+  getItemSectionsForGroup,
   type ConcernGroupId,
   type ConcernItemId,
   type HelpWantedId,
@@ -393,27 +394,35 @@ export default function SOSHearingPage() {
                         {group.id === 'unsure' && (
                           <p className="text-xs text-teal-700 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2 mb-2">{t('itemsUnsureNote')}</p>
                         )}
-                        <div className="space-y-2">
-                          {getItemsForGroup(group.id).map((item) => {
-                            const isChecked = selectedItems.has(item.id);
-                            return (
-                              <label
-                                key={item.id}
-                                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                                  isChecked ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => toggleInSet(setSelectedItems, item.id)}
-                                  className="mt-0.5 text-blue-600 rounded"
-                                />
-                                <span className="text-sm leading-relaxed">{tC(`items.${item.id}`)}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
+                        {/* 項目の多い括りは小見出し(お金 / 住まい / 仕事)で3つの短いリストに割る。小見出しの無い括りは1本のまま */}
+                        {getItemSectionsForGroup(group.id).map((section) => (
+                          <div key={section.subgroup ?? 'all'} className={section.subgroup ? 'mb-3 last:mb-0' : ''}>
+                            {section.subgroup && (
+                              <p className="text-[11px] font-bold text-gray-400 tracking-wide mb-1.5 pl-1">{tC(`subgroups.${section.subgroup}`)}</p>
+                            )}
+                            <div className="space-y-2">
+                              {section.items.map((item) => {
+                                const isChecked = selectedItems.has(item.id);
+                                return (
+                                  <label
+                                    key={item.id}
+                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                      isChecked ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50 border-gray-200'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleInSet(setSelectedItems, item.id)}
+                                      className="mt-0.5 text-blue-600 rounded"
+                                    />
+                                    <span className="text-sm leading-relaxed">{tC(`items.${item.id}`)}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </CardContent>

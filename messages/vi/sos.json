@@ -68,6 +68,11 @@
       "language": "Không hiểu tiếng Nhật, visa, bị phân biệt vì là người nước ngoài",
       "unsure": "Không biết bắt đầu từ đâu, không có ai để hỏi, nhiều vấn đề chồng chất"
     },
+    "subgroups": {
+      "money": "Tiền",
+      "housing": "Nhà ở",
+      "work": "Việc làm"
+    },
     "labels": {
       "money": "Tiền・chi phí sinh hoạt",
       "housing": "Nhà ở",
@@ -80,18 +85,14 @@
     },
     "items": {
       "food": "Không mua đủ thức ăn",
-      "rent_utility": "Không trả được tiền nhà hoặc tiền điện nước",
+      "low_income": "Thu nhập quá ít, cuộc sống không xoay nổi",
       "debt": "Khó khăn trong việc trả nợ",
-      "low_income": "Thu nhập quá ít, không đủ sống tối thiểu",
-      "welfare_info": "Muốn biết về trợ cấp sinh hoạt và các chế độ khác",
-      "no_home": "Không có chỗ ở・không có nơi ở an toàn",
-      "eviction": "Sắp bị đuổi khỏi nhà・đang nợ tiền nhà",
-      "unsafe_home": "Nhà bị hỏng・nơi ở nguy hiểm",
-      "utilities_off": "Không có điện・nước・internet",
+      "rent_utility": "Không trả được tiền nhà hoặc tiền điện nước・đang nợ",
+      "no_home": "Không có chỗ ở・sắp bị đuổi khỏi nhà",
+      "unsafe_home": "Nhà bị hỏng・điện hoặc nước đã bị cắt",
       "no_job": "Không có việc・sắp mất việc",
-      "unpaid": "Không được trả lương・dưới lương tối thiểu・làm thêm không lương",
-      "dangerous_job": "Làm việc ở nơi nguy hiểm dễ bị thương",
-      "cannot_work": "Không thể làm việc hoặc tìm việc vì bệnh tật hay khuyết tật",
+      "unpaid": "Không được trả lương・dưới lương tối thiểu・nơi làm việc nguy hiểm",
+      "cannot_work": "Không thể làm việc vì bệnh tật hay khuyết tật",
       "no_hospital": "Sức khỏe kém nhưng không đi bệnh viện được vì tiền hoặc lý do khác",
       "mental": "Mất ngủ・tâm trạng suy sụp・lo âu nhiều",
       "treatment": "Không thể tiếp tục thuốc hoặc điều trị",

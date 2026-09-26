@@ -63,10 +63,10 @@ export function isConcernLabelId(value: unknown): value is ConcernLabelId {
 
 // ─── 項目(本人がチェックする具体的な言葉) ─────────────────
 export type ConcernItemId =
-  // お金・住まい・仕事
-  | 'food' | 'rent_utility' | 'debt' | 'low_income' | 'welfare_info'
-  | 'no_home' | 'eviction' | 'unsafe_home' | 'utilities_off'
-  | 'no_job' | 'unpaid' | 'dangerous_job' | 'cannot_work'
+  // お金・住まい・仕事(小見出し: お金 / 住まい / 仕事)
+  | 'food' | 'low_income' | 'debt'
+  | 'rent_utility' | 'no_home' | 'unsafe_home'
+  | 'no_job' | 'unpaid' | 'cannot_work'
   // からだ・こころ
   | 'no_hospital' | 'mental' | 'treatment' | 'addiction'
   // 暴力・家族・子ども
@@ -77,23 +77,32 @@ export type ConcernItemId =
   // うまく言えない・ひとりで不安
   | 'no_one' | 'dont_know' | 'isolated' | 'peer'
 
-export type ConcernItem = { id: ConcernItemId; group: ConcernGroupId; nameJa: string; labels: ConcernLabelId[] }
+// 項目数の多い括りは、フォーム上で小見出し(subgroup)に割って見せる(2026-09-26 依頼者と合意: 入口5つは変えず、中で割る)。
+// いまは「お金・住まい・仕事」だけが お金 / 住まい / 仕事 の3つに割れる。id はラベル id と同じにしてある
+export type ConcernSubgroupId = 'money' | 'housing' | 'work'
 
+export const CONCERN_SUBGROUPS: ReadonlyArray<{ id: ConcernSubgroupId; nameJa: string }> = [
+  { id: 'money', nameJa: 'お金' },
+  { id: 'housing', nameJa: '住まい' },
+  { id: 'work', nameJa: '仕事' },
+]
+
+export type ConcernItem = { id: ConcernItemId; group: ConcernGroupId; subgroup?: ConcernSubgroupId; nameJa: string; labels: ConcernLabelId[] }
+
+// 1つの状況に1つの言葉。意味の重なる項目(家賃/滞納/電気が止まった、制度を知りたい=ほしい助け)は 2026-09-26 に統合・削除した
 export const CONCERN_ITEMS: ReadonlyArray<ConcernItem> = [
-  // お金・住まい・仕事
-  { id: 'food', group: 'living', nameJa: '食べ物が十分に買えない', labels: ['money'] },
-  { id: 'rent_utility', group: 'living', nameJa: '家賃や光熱費が払えない', labels: ['money', 'housing'] },
-  { id: 'debt', group: 'living', nameJa: '借金の返済が苦しい', labels: ['money'] },
-  { id: 'low_income', group: 'living', nameJa: '収入が少なく最低限の生活ができない', labels: ['money'] },
-  { id: 'welfare_info', group: 'living', nameJa: '生活保護などの制度を知りたい', labels: ['money'] },
-  { id: 'no_home', group: 'living', nameJa: '住む場所がない・安全に暮らせる住まいがない', labels: ['housing'] },
-  { id: 'eviction', group: 'living', nameJa: '追い出されそう・家賃を滞納している', labels: ['housing', 'money'] },
-  { id: 'unsafe_home', group: 'living', nameJa: '家が壊れている・住んでいる場所が危険', labels: ['housing'] },
-  { id: 'utilities_off', group: 'living', nameJa: '電気・水道・インターネットが使えない', labels: ['housing'] },
-  { id: 'no_job', group: 'living', nameJa: '仕事がない・失いそう', labels: ['work'] },
-  { id: 'unpaid', group: 'living', nameJa: '給料が払われない・最低賃金より低い・サービス残業', labels: ['work'] },
-  { id: 'dangerous_job', group: 'living', nameJa: 'けがをしそうな危険な職場で働いている', labels: ['work'] },
-  { id: 'cannot_work', group: 'living', nameJa: '病気や障害があって働けない・就職活動ができない', labels: ['work', 'health'] },
+  // お金・住まい・仕事 ─ お金
+  { id: 'food', group: 'living', subgroup: 'money', nameJa: '食べ物が十分に買えない', labels: ['money'] },
+  { id: 'low_income', group: 'living', subgroup: 'money', nameJa: '収入が少なく生活が回らない', labels: ['money'] },
+  { id: 'debt', group: 'living', subgroup: 'money', nameJa: '借金の返済が苦しい', labels: ['money'] },
+  // お金・住まい・仕事 ─ 住まい
+  { id: 'rent_utility', group: 'living', subgroup: 'housing', nameJa: '家賃や光熱費が払えない・滞納している', labels: ['money', 'housing'] },
+  { id: 'no_home', group: 'living', subgroup: 'housing', nameJa: '住む場所がない・追い出されそう', labels: ['housing'] },
+  { id: 'unsafe_home', group: 'living', subgroup: 'housing', nameJa: '家が壊れている・電気や水道が止まっている', labels: ['housing'] },
+  // お金・住まい・仕事 ─ 仕事
+  { id: 'no_job', group: 'living', subgroup: 'work', nameJa: '仕事がない・失いそう', labels: ['work'] },
+  { id: 'unpaid', group: 'living', subgroup: 'work', nameJa: '給料が払われない・最低賃金より低い・危険な職場', labels: ['work'] },
+  { id: 'cannot_work', group: 'living', subgroup: 'work', nameJa: '病気や障害があって働けない', labels: ['work', 'health'] },
   // からだ・こころ
   { id: 'no_hospital', group: 'health', nameJa: '体調が悪いが、お金などの理由で病院に行けない', labels: ['health', 'money'] },
   { id: 'mental', group: 'health', nameJa: '眠れない・気持ちが落ち込む・不安が強い', labels: ['health'] },
@@ -141,6 +150,17 @@ export function isConcernItemId(value: unknown): value is ConcernItemId {
 
 export function getItemsForGroup(groupId: ConcernGroupId): ConcernItem[] {
   return CONCERN_ITEMS.filter((item) => item.group === groupId)
+}
+
+// フォーム表示用: 括りの項目を小見出しごとに束ねる。小見出しの無い括りは subgroup: null の1束だけ返す
+export function getItemSectionsForGroup(groupId: ConcernGroupId): Array<{ subgroup: ConcernSubgroupId | null; items: ConcernItem[] }> {
+  const items = getItemsForGroup(groupId)
+  const sections = CONCERN_SUBGROUPS
+    .map((sub) => ({ subgroup: sub.id as ConcernSubgroupId | null, items: items.filter((item) => item.subgroup === sub.id) }))
+    .filter((section) => section.items.length > 0)
+  const rest = items.filter((item) => !item.subgroup)
+  if (rest.length > 0) sections.push({ subgroup: null, items: rest })
+  return sections
 }
 
 // ─── ほしい助け(旧 Q5・任意) ────────────────────────────────

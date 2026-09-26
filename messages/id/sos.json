@@ -68,6 +68,11 @@
       "language": "Tidak mengerti bahasa Jepang, visa, didiskriminasi sebagai orang asing",
       "unsure": "Tidak tahu mulai dari mana, tidak ada orang untuk diajak bicara, beberapa masalah menumpuk"
     },
+    "subgroups": {
+      "money": "Uang",
+      "housing": "Tempat tinggal",
+      "work": "Pekerjaan"
+    },
     "labels": {
       "money": "Uang・biaya hidup",
       "housing": "Tempat tinggal",
@@ -80,18 +85,14 @@
     },
     "items": {
       "food": "Tidak mampu membeli makanan yang cukup",
-      "rent_utility": "Tidak bisa membayar sewa atau tagihan listrik/air",
+      "low_income": "Penghasilan terlalu kecil, hidup tidak berjalan",
       "debt": "Kesulitan membayar utang",
-      "low_income": "Penghasilan terlalu kecil untuk hidup layak",
-      "welfare_info": "Ingin tahu tentang bantuan sosial dan program lainnya",
-      "no_home": "Tidak punya tempat tinggal・tidak ada tempat tinggal yang aman",
-      "eviction": "Hampir diusir・menunggak sewa",
-      "unsafe_home": "Rumah rusak・tempat tinggal berbahaya",
-      "utilities_off": "Tidak ada listrik・air・internet",
+      "rent_utility": "Tidak bisa membayar sewa atau tagihan listrik/air・sudah menunggak",
+      "no_home": "Tidak punya tempat tinggal・hampir diusir",
+      "unsafe_home": "Rumah rusak・listrik atau air sudah diputus",
       "no_job": "Tidak punya pekerjaan・hampir kehilangan pekerjaan",
-      "unpaid": "Gaji tidak dibayar・di bawah upah minimum・lembur tanpa bayaran",
-      "dangerous_job": "Bekerja di tempat berbahaya yang bisa melukai",
-      "cannot_work": "Tidak bisa bekerja atau mencari kerja karena sakit atau disabilitas",
+      "unpaid": "Gaji tidak dibayar・di bawah upah minimum・tempat kerja berbahaya",
+      "cannot_work": "Tidak bisa bekerja karena sakit atau disabilitas",
       "no_hospital": "Kondisi tubuh buruk tetapi tidak bisa ke rumah sakit karena uang atau alasan lain",
       "mental": "Tidak bisa tidur・merasa sedih・sangat cemas",
       "treatment": "Tidak bisa melanjutkan obat atau pengobatan",

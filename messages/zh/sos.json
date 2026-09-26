@@ -68,6 +68,11 @@
       "language": "不懂日语、签证问题、作为外国人受到歧视",
       "unsure": "不知从何着手、没有人可以商量、好几个问题叠在一起"
     },
+    "subgroups": {
+      "money": "钱",
+      "housing": "住处",
+      "work": "工作"
+    },
     "labels": {
       "money": "钱・生活费",
       "housing": "住处",
@@ -80,18 +85,14 @@
     },
     "items": {
       "food": "买不到足够的食物",
-      "rent_utility": "付不起房租或水电费",
+      "low_income": "收入太少，生活难以维持",
       "debt": "还债很困难",
-      "low_income": "收入太少，难以维持最低生活",
-      "welfare_info": "想了解生活保护等制度",
-      "no_home": "没有住处・没有能安全生活的住所",
-      "eviction": "快被赶出去・拖欠房租",
-      "unsafe_home": "房子坏了・住的地方很危险",
-      "utilities_off": "无法使用电・水・网络",
+      "rent_utility": "付不起房租或水电费・已经拖欠",
+      "no_home": "没有住处・快被赶出去",
+      "unsafe_home": "房子坏了・电或水已被停",
       "no_job": "没有工作・快要失业",
-      "unpaid": "工资未付・低于最低工资・无薪加班",
-      "dangerous_job": "在可能受伤的危险工作环境中工作",
-      "cannot_work": "因病或残障无法工作・无法找工作",
+      "unpaid": "工资未付・低于最低工资・危险的工作环境",
+      "cannot_work": "因病或残障无法工作",
       "no_hospital": "身体不好，但因为钱等原因去不了医院",
       "mental": "睡不着・情绪低落・非常焦虑",
       "treatment": "无法继续服药或治疗",

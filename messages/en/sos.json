@@ -68,6 +68,11 @@
       "language": "Don't understand Japanese, visa issues, discriminated against as a foreigner",
       "unsure": "Don't know where to start, nobody to talk to, several problems at once"
     },
+    "subgroups": {
+      "money": "Money",
+      "housing": "Housing",
+      "work": "Work"
+    },
     "labels": {
       "money": "Money & living costs",
       "housing": "Housing",
@@ -80,18 +85,14 @@
     },
     "items": {
       "food": "I can't afford enough food",
-      "rent_utility": "I can't pay rent or utility bills",
-      "debt": "I am struggling to repay debts",
       "low_income": "My income is too low to get by",
-      "welfare_info": "I want to learn about welfare and other support programs",
-      "no_home": "I have nowhere to live / no safe place to live",
-      "eviction": "I am behind on rent / about to be evicted",
-      "unsafe_home": "My home is damaged or where I live is dangerous",
-      "utilities_off": "I have no electricity, water or internet",
+      "debt": "I am struggling to repay debts",
+      "rent_utility": "I can't pay rent or utility bills / I'm behind on them",
+      "no_home": "I have nowhere to live / I am about to be evicted",
+      "unsafe_home": "My home is damaged / electricity or water has been cut off",
       "no_job": "I have no job or am about to lose it",
-      "unpaid": "Unpaid wages, below minimum wage, or unpaid overtime",
-      "dangerous_job": "I work in a dangerous workplace where I could get hurt",
-      "cannot_work": "I can't work or job-hunt because of illness or disability",
+      "unpaid": "Unpaid wages, below minimum wage, or a dangerous workplace",
+      "cannot_work": "I can't work because of illness or disability",
       "no_hospital": "I am unwell but can't see a doctor for money or other reasons",
       "mental": "I can't sleep, feel down, or feel very anxious",
       "treatment": "I can't keep up my medication or treatment",
