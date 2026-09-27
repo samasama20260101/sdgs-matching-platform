@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -78,6 +78,9 @@ export default function SOSResultPage() {
   const toast = useToast();
 
   const [caseData, setCaseData] = useState<CaseData | null>(null);
+  // fallback(AI 失敗時の既定値)案件の再試行は、案件を開いた最初の 1 回だけ。
+  // loadData は 60 秒ごと・タブ復帰時にも走るので、印を持たないと毎分 Gemini を呼び画面が点滅する
+  const fallbackRetriedFor = useRef<string | null>(null);
   const [offers, setOffers] = useState<OfferData[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,15 +152,17 @@ export default function SOSResultPage() {
     setCurrentUserId(roleData.user.id);
     setCaseData(caseResult);
 
-    // ai_sdg_suggestion自体がない、またはai_sdg_suggestion内にtitleが未生成の場合は分析実行
     // 災害SOS案件はAI分析を行わない
-    // AI 失敗時の既定値(fallback)で公開された案件も、開き直すたびに再試行して成功すれば上書きする
-    const needsAnalysis = (!caseResult.ai_sdg_suggestion
-      || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>))
-      || (caseResult.ai_sdg_suggestion as { fallback?: boolean }).fallback === true)
-      && !caseResult.intake_qna?.disaster;
-    if (needsAnalysis) {
-      await runAIAnalysis(caseResult);
+    if (!caseResult.intake_qna?.disaster) {
+      const suggestion = caseResult.ai_sdg_suggestion as (Record<string, unknown> & { fallback?: boolean }) | null;
+      if (!suggestion || !('title' in suggestion)) {
+        // 未分析(title 未生成)。従来どおり毎回試す。旧フォームはこれが公開までの唯一の経路
+        await runAIAnalysis(caseResult);
+      } else if (suggestion.fallback === true && fallbackRetriedFor.current !== caseResult.id) {
+        // AI 失敗時の既定値で公開済み。開いた最初の 1 回だけ、画面を差し替えず静かに再試行し、成功したら上書きする
+        fallbackRetriedFor.current = caseResult.id;
+        await runAIAnalysis(caseResult, { silent: true });
+      }
     }
 
     if (caseResult.intake_qna?.disaster) {
@@ -275,11 +280,15 @@ export default function SOSResultPage() {
     }
   };
 
-  const runAIAnalysis = async (cd: CaseData) => {
-    setIsAnalyzing(true);
-    setAnalyzeStep(1);
-    const step2 = setTimeout(() => setAnalyzeStep(2), 1500);
-    const step3 = setTimeout(() => setAnalyzeStep(3), 4000);
+  // silent: ローディング画面・演出・失敗トーストを出さない(fallback 案件の静かな再試行用)。
+  // 成功して fallback が外れたときだけ表示を差し替える
+  const runAIAnalysis = async (cd: CaseData, { silent = false }: { silent?: boolean } = {}) => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    if (!silent) {
+      setIsAnalyzing(true);
+      setAnalyzeStep(1);
+      timers.push(setTimeout(() => setAnalyzeStep(2), 1500), setTimeout(() => setAnalyzeStep(3), 4000));
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -292,21 +301,29 @@ export default function SOSResultPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ caseId: cd.id }),
       });
-      if (!response.ok) { toast.error(t('toastAnalyzeFailed')); return; }
+      if (!response.ok) { if (!silent) toast.error(t('toastAnalyzeFailed')); return; }
       const result = await response.json();
-      clearTimeout(step2);
-      clearTimeout(step3);
-      setAnalyzeStep(4);
+      timers.forEach(clearTimeout);
       const analysisWithTitle = result.analysis;
+      if (silent) {
+        // まだ fallback のままなら何も変えない(画面を揺らさない)
+        if (!analysisWithTitle || result.fallback === true) return;
+        setCaseData({ ...cd, title: analysisWithTitle.title || cd.title, ai_sdg_suggestion: analysisWithTitle });
+        return;
+      }
+      setAnalyzeStep(4);
       const aiTitle = analysisWithTitle?.title || t('fallbackTitle');
       await new Promise(r => setTimeout(r, 800));
       setCaseData({ ...cd, title: aiTitle, ai_sdg_suggestion: analysisWithTitle });
     } catch (err) {
       console.error('AI analysis error:', err);
-      toast.error(t('toastAnalyzeFailed'));
+      if (!silent) toast.error(t('toastAnalyzeFailed'));
     } finally {
-      setIsAnalyzing(false);
-      setAnalyzeStep(0);
+      timers.forEach(clearTimeout);
+      if (!silent) {
+        setIsAnalyzing(false);
+        setAnalyzeStep(0);
+      }
     }
   };
 

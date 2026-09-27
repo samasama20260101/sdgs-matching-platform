@@ -48,7 +48,7 @@ function buildConcernContext(caseData: CaseForAnalysis): ConcernContext | null {
 // sdgs_goals は本人ラベルの SDGs ヒントの和集合、labels_ai は空。案件の公開は止めない。
 // title は案件の現タイトル(本人の自由記述の冒頭)を据え置く。summary はサポーター向け(日本語固定)で、
 // 相談者側の結果ページは fallback フラグを見て翻訳済み文言を出す。
-// fallback: true の案件は結果ページの再読み込みで AI 分析を再試行し、成功すれば上書きされる(恒久固定を避ける)
+// fallback: true の案件は結果ページを開いた最初の 1 回だけ静かに AI 分析を再試行し、成功すれば上書きされる(恒久固定を避ける)
 type FallbackAnalysis = NormalizedAnalysis & { fallback: true };
 
 function buildFallbackAnalysis(caseData: CaseForAnalysis, currentTitle: string): FallbackAnalysis {

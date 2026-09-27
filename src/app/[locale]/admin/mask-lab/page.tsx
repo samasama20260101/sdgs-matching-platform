@@ -22,7 +22,7 @@ import { supabase } from '@/lib/supabase/client'
 // カテゴリ定義
 // ─────────────────────────────────────────────
 type Category =
-    | 'url' | 'email' | 'sns' | 'postal' | 'phone' | 'dob' | 'address' | 'number' // 正規表現層
+    | 'url' | 'email' | 'sns' | 'postal' | 'phone' | 'dob' | 'date' | 'address' | 'number' // 正規表現層
     | 'person' | 'place' | 'org' // 固有表現層(kuromoji)
 
 const CAT_META: Record<Category, { label: string; cls: string; source: 'regex' | 'ner' }> = {
@@ -33,6 +33,7 @@ const CAT_META: Record<Category, { label: string; cls: string; source: 'regex' |
     url: { label: 'URL', cls: 'bg-cyan-100 text-cyan-800 border-cyan-300', source: 'regex' },
     sns: { label: 'SNS ID', cls: 'bg-sky-100 text-sky-800 border-sky-300', source: 'regex' },
     dob: { label: '生年月日', cls: 'bg-violet-100 text-violet-800 border-violet-300', source: 'regex' },
+    date: { label: '日付', cls: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300', source: 'regex' },
     number: { label: '数字列', cls: 'bg-gray-200 text-gray-700 border-gray-400', source: 'regex' },
     person: { label: '人名', cls: 'bg-pink-100 text-pink-800 border-pink-300', source: 'ner' },
     place: { label: '地名', cls: 'bg-green-100 text-green-800 border-green-300', source: 'ner' },
@@ -50,16 +51,18 @@ const REGEX_RULES: { cat: Category; re: () => RegExp }[] = [
     // LINE ID: tanaka_123 / @handle 形式
     { cat: 'sns', re: () => /(?:LINE|ライン|Instagram|インスタ(?:グラム)?|Twitter|TikTok|X)\s*(?:の)?\s*(?:ID|ＩＤ|アイディー?)\s*[:：]?\s*[A-Za-z0-9_.-]{3,}|@[A-Za-z0-9_.]{3,}/g },
     { cat: 'postal', re: () => /〒\s*[0-9０-９]{3}[-−ー‐]?[0-9０-９]{4}|(?<![0-9-])[0-9]{3}[-−ー‐][0-9]{4}(?![0-9-])/g },
-    { cat: 'phone', re: () => /(?:\+81[-−ー‐\s]?|0|０)[0-9０-９]{1,4}[-−ー‐()（）.・\s]?[0-9０-９]{1,4}[-−ー‐()（）.・\s]?[0-9０-９]{3,4}/g },
-    // 年つきの日付のみ(「来週の3月2日」のような予定日は拾わない)
-    { cat: 'dob', re: () => /(?:19|20|１９|２０)[0-9０-９]{2}\s*年\s*[0-9０-９]{1,2}\s*月\s*[0-9０-９]{1,2}\s*日\s*(?:生まれ|生)?/g },
+    // 数字の途中(「1000000円」の 000000 など)から拾わないよう、前後が数字でないことを条件にする
+    { cat: 'phone', re: () => /(?<![0-9０-９])(?:\+81[-−ー‐\s]?|0|０)[0-9０-９]{1,4}[-−ー‐()（）.・\s]?[0-9０-９]{1,4}[-−ー‐()（）.・\s]?[0-9０-９]{3,4}(?![0-9０-９])/g },
+    // 年つきの日付。「生まれ/生」付きだけ生年月日、それ以外は日付(src/lib/pii.ts と同じルール。必ず揃える)
+    { cat: 'dob', re: () => /(?:19|20|１９|２０)[0-9０-９]{2}\s*年\s*[0-9０-９]{1,2}\s*月\s*[0-9０-９]{1,2}\s*日\s*(?:生まれ|生)/g },
+    { cat: 'date', re: () => /(?:19|20|１９|２０)[0-9０-９]{2}\s*年\s*[0-9０-９]{1,2}\s*月\s*[0-9０-９]{1,2}\s*日/g },
     // 市区町村+丁目・番地・号の並び(番地なしの「市役所」等は拾わない)
     { cat: 'address', re: () => /(?:[一-龥]{2,3}[都道府県])?[一-龥ぁ-んァ-ヶー]{1,8}(?:市|区|郡|町|村)(?:[一-龥ぁ-んァ-ヶー]{1,10})?(?:[0-9０-９一二三四五六七八九十]{1,4}(?:丁目|番地|番|号|[-−ー‐])\s?){1,4}[0-9０-９]{0,4}(?:号室|号)?/g },
     // 建物名+部屋番号。名前部分はひらがなも許すが、部屋番号まで来たら止まる(貪欲に後続の文へ食い込まない)。
     // 部屋番号がない建物名はひらがなを含めない(「〜に住んで」等の助詞・動詞への食い込み防止)
     { cat: 'address', re: () => /(?:コーポ|ハイツ|メゾン|アパート|マンション|レジデンス)[一-龥ぁ-んァ-ヶーA-Za-z0-9０-９]{0,12}?[0-9０-９]{1,4}\s?号室?|(?:コーポ|ハイツ|メゾン|アパート|マンション|レジデンス)[一-龥ァ-ヶーA-Za-z0-9０-９]{0,12}|[0-9０-９]{1,4}号室/g },
-    // 口座番号・マイナンバー等の7桁以上の数字列
-    { cat: 'number', re: () => /(?<![0-9])[0-9]{7,}(?![0-9])/g },
+    // 口座番号・マイナンバー等の7桁以上の数字列。直後が「円」の金額は伏せない
+    { cat: 'number', re: () => /(?<![0-9])[0-9]{7,}(?![0-9円])/g },
 ]
 
 // 検出前の正規化: 全角英数字・記号・全角スペースを半角へ(NFKC)。
