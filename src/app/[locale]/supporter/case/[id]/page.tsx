@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SDG_NAMES } from '@/lib/constants/sdgs';
+import { SDG_COLORS, SDG_NAMES, sdgWordLabel } from '@/lib/constants/sdgs';
 import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { isCasePhotosEnabled } from '@/lib/constants/photos';
 import { isMinor } from '@/lib/utils/age';
@@ -419,14 +419,15 @@ export default function SupporterCaseDetailPage() {
               <div className="border-t pt-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-3">🤖 AI分析結果</h3>
                 <div className="mb-3">
-                  <p className="text-xs text-gray-500 mb-2">関連するSDGsゴール</p>
+                  <p className="text-xs text-gray-500 mb-2">AI が読み取った困りごと</p>
                   <div className="flex flex-wrap gap-2">
+                    {/* 言葉を主役にし、SDGs の番号と正式名は小さく添える */}
                     {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
                       <div key={goalId} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: `${SDG_COLORS[goalId]}20` }}>
                         <span className="text-white text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>
-                          SDG {goalId}
+                          {sdgWordLabel(goalId)}
                         </span>
-                        <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                        <span className="text-[11px] text-gray-500">SDG {goalId} {SDG_NAMES[goalId]}</span>
                       </div>
                     ))}
                   </div>
