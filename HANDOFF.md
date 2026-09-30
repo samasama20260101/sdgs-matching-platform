@@ -58,6 +58,7 @@
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
+0a. **Supabase Security Advisor 警告(2026-09-30)**: `migrations/fix_function_search_path_and_rls_helper_grants.sql`(dev `8834e02`)を **Staging に適用済み(ユーザーが SQL Editor で実行、カタログで 13 関数の search_path=public と rls_auto_enable の anon/authenticated EXECUTE 剥奪を確認)**。残り: ①本番に同じ SQL をユーザーが流す(news_posts 関数は存在チェック付きで本番でも同じファイルでよい)②Leaked Password Protection は Dashboard の Authentication → Providers → Password で Staging→本番の順に ON(登録時のエラー文言を確認)。auto mode の分類器は Management API 経由の DDL も「デプロイ」として止めるので、Staging の DDL もユーザー実行になった
 1. ~~パスワード変更の回帰修正を本番へ~~ → PR #33 で反映済み。本番で①自発パスワード変更後にログアウトしないこと をユーザーが再確認
 1b. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤(①は 9/17 に実施→ログアウト回帰を発見。変更後PWでの再ログインは可)。NGがあればこちらで修正 → dev → PR
 2. ~~本番の確認メール件名を日本語化~~ → 2026-09-16 本番・Staging とも変更済み
