@@ -2,7 +2,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getCasePhotos } from '@/lib/constants/photos'
-import { getDisasterNeeds, getDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster'
+import { getDisasterNeeds, getDisasterLocation, getMaxSupportersForCase, DISASTER_CASES_SHOWN_TO_SUPPORTERS } from '@/lib/constants/disaster'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id, intake_qna'
@@ -69,7 +69,11 @@ export async function GET(request: Request) {
     const caseMap = new Map<string, NonNullable<typeof activeCases>[number]>()
     ;(activeCases || []).forEach(c => { if (!caseMap.has(c.id)) caseMap.set(c.id, c) })
     ;(myCases || []).forEach(c => { caseMap.set(c.id, c) })
-    const mergedCases = Array.from(caseMap.values())
+    // 災害案件を一覧に出さない設定の間は、自団体が申し出済みのものも含めてここで外す
+    const mergedCases = Array.from(caseMap.values()).filter(c =>
+        DISASTER_CASES_SHOWN_TO_SUPPORTERS
+        || !(c.intake_qna as { disaster?: { event_id?: string } } | null)?.disaster?.event_id
+    )
 
     // 4. 各案件の承認済みサポーター数を一括取得
     const allCaseIds = mergedCases.map(c => c.id)
