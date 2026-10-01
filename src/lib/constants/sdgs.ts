@@ -24,6 +24,7 @@ export const SDG_NAMES: Record<number, string> = {
 // 番号ではなくこの言葉を出す(2026-09-30 決定)。AI の分類(1〜17)と SDGs の色はそのまま使う。
 // 言葉は「サポーターが案件を探すときの語」に寄せてあり、国際目標の正式名は SDG_NAMES に残す。
 // 相談として来ることの少ないゴール(6・7・9・12〜17)も、AI が付けたときに番号だけにならないよう全 17 個を用意する。
+// 相談者側(多言語)は同じ言葉を messages/<言語>/sdgs.json の wordLabel から出す。言葉を直すときは両方をそろえる。
 export const SDG_WORD_LABELS: Record<number, string> = {
     1: 'お金・生活費',
     2: '食べ物',

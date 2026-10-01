@@ -64,5 +64,24 @@
     "15": "Đất liền",
     "16": "Hòa bình",
     "17": "Đối tác"
+  },
+  "wordLabel": {
+    "1": "Tiền bạc & chi phí sinh hoạt",
+    "2": "Thức ăn",
+    "3": "Thể chất & tinh thần",
+    "4": "Trường học & học tập",
+    "5": "Khó khăn về giới & bạo lực gia đình",
+    "6": "Nước & nhà vệ sinh",
+    "7": "Điện & năng lượng",
+    "8": "Việc làm & thu nhập",
+    "9": "Viễn thông & hạ tầng",
+    "10": "Phân biệt đối xử & bất bình đẳng",
+    "11": "Nhà ở & khu vực sinh sống",
+    "12": "Rác & tài nguyên sinh hoạt",
+    "13": "Khí hậu & thiên tai",
+    "14": "Biển & nghề cá",
+    "15": "Rừng & đất nông nghiệp",
+    "16": "Bạo lực, pháp luật & thủ tục",
+    "17": "Hợp tác giữa các tổ chức"
   }
 }

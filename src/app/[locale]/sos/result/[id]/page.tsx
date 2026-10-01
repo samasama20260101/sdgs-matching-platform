@@ -66,6 +66,7 @@ export default function SOSResultPage() {
   const tDisaster = useTranslations('sos.disaster');
   const tLimit = useTranslations('sos.limitModal');
   const tGoal = useTranslations('sdgs.goal');
+  const tWord = useTranslations('sdgs.wordLabel');
   const tBadge = useTranslations('sdgs.badge');
   const tSupporterType = useTranslations('common.supporterType');
   const tForm = useTranslations('common.form');
@@ -674,9 +675,9 @@ export default function SOSResultPage() {
                         <div className="flex">
                           <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
                           <div className="flex-1 p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>SDG {pg.goal}</span>
-                              <span className="text-xs text-gray-500">{tGoal(String(pg.goal))}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>{tWord(String(pg.goal))}</span>
+                              <span className="text-xs text-gray-500">SDG {pg.goal} {tGoal(String(pg.goal))}</span>
                             </div>
                             <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
@@ -692,9 +693,9 @@ export default function SOSResultPage() {
                         <div className="flex">
                           <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
                           <div className="flex-1 p-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>SDG {goalId}</span>
-                              <span className="text-sm font-medium">{tGoal(String(goalId))}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>{tWord(String(goalId))}</span>
+                              <span className="text-xs text-gray-500">SDG {goalId} {tGoal(String(goalId))}</span>
                             </div>
                           </div>
                         </div>
