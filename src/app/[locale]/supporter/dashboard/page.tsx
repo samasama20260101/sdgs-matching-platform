@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { SDG_COLORS, SDG_NAMES, sdgWordLabel, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 import { getDisasterEvent, formatDisasterLocation, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey, type DisasterLocation } from '@/lib/constants/disaster';
 
 type Case = {
@@ -143,8 +143,9 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
             })}
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
           </div>
-          <div className="flex gap-1">
-            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={SDG_NAMES[g]}>{g}</span>)}
+          <div className="flex gap-1 flex-wrap justify-end">
+            {/* SDGs は番号ではなく言葉で出す(色は従来どおりゴールの色)。正式名はホバーで */}
+            {sdgs.map((g) => <span key={g} className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: SDG_COLORS[g] + '20', color: SDG_COLORS[g] }} title={`SDG ${g} ${SDG_NAMES[g]}`}>{sdgWordLabel(g)}</span>)}
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -178,8 +179,8 @@ function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (
                 <div className="text-xs text-gray-500">相談 {group.items.length}件</div>
               </div>
             </div>
-            <div className="flex gap-1">
-              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="w-6 h-6 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[s] }}>{s}</span>)}
+            <div className="flex gap-1 flex-wrap justify-end">
+              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: SDG_COLORS[s] + '20', color: SDG_COLORS[s] }} title={`SDG ${s} ${SDG_NAMES[s]}`}>{sdgWordLabel(s)}</span>)}
             </div>
           </div>
           <div className="p-3 space-y-2">
@@ -515,11 +516,11 @@ export default function SupporterDashboard() {
           {/* 通常タブ: SDGsフィルター */}
           {effectiveTab === 'normal' && (
           <div className="flex gap-1.5 flex-wrap items-center">
-            <span className="text-xs text-gray-400 mr-1">SDGs:</span>
+            <span className="text-xs text-gray-400 mr-1">困りごと:</span>
             <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
             {allSdgs.map((s) => {
               const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
-              return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
+              return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} title={`SDG ${s} ${SDG_NAMES[s]}`} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>{sdgWordLabel(s)} ({count})</button>;
             })}
           </div>
           )}
