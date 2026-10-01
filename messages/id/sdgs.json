@@ -64,5 +64,24 @@
     "15": "Darat",
     "16": "Perdamaian",
     "17": "Kemitraan"
+  },
+  "wordLabel": {
+    "1": "Uang & biaya hidup",
+    "2": "Makanan",
+    "3": "Tubuh & pikiran",
+    "4": "Sekolah & belajar",
+    "5": "Masalah terkait gender & KDRT",
+    "6": "Air & toilet",
+    "7": "Listrik & energi",
+    "8": "Pekerjaan & penghasilan",
+    "9": "Komunikasi & infrastruktur",
+    "10": "Diskriminasi & ketimpangan",
+    "11": "Tempat tinggal & lingkungan",
+    "12": "Sampah & sumber daya rumah tangga",
+    "13": "Iklim & bencana",
+    "14": "Laut & perikanan",
+    "15": "Hutan & lahan pertanian",
+    "16": "Kekerasan, hukum & prosedur",
+    "17": "Kerja sama antarlembaga"
   }
 }

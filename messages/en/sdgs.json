@@ -64,5 +64,24 @@
     "15": "Land",
     "16": "Peace",
     "17": "Partnership"
+  },
+  "wordLabel": {
+    "1": "Money & living costs",
+    "2": "Food",
+    "3": "Body & mind",
+    "4": "School & learning",
+    "5": "Gender-related troubles & domestic violence",
+    "6": "Water & toilets",
+    "7": "Electricity & energy",
+    "8": "Work & income",
+    "9": "Internet & infrastructure",
+    "10": "Discrimination & inequality",
+    "11": "Housing & community",
+    "12": "Waste & household resources",
+    "13": "Climate & disasters",
+    "14": "Sea & fishing",
+    "15": "Forests & farmland",
+    "16": "Violence, law & paperwork",
+    "17": "Cooperation between groups"
   }
 }

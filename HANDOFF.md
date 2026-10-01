@@ -9,7 +9,7 @@
 
 ## 現在地
 **2026-09-30 お困りごとラベル構想(feature/case-concerns)はユーザー決定でキャンセル → タグ `archive/case-concerns-2026-09` に保管しブランチ削除(origin・ローカル)。** タグには 5括り→項目→8ラベルのフォーム、AI 補完、遡り付与 API、**AI 直前の個人情報マスク層1(`src/lib/pii.ts`)と回帰テスト(`scripts/tests/`)**が入っている。マスク層1は構想と独立に有効なので、必要になったらタグから取り出す(未着手)。
-**代替として「現行の登録ロジック(Q1〜Q5 + AI の SDGs 1〜17 分類)はそのまま、サポーター側の表示とフィルターの番号を言葉のラベルに置き換える」小改修を `feature/sdgs-word-labels`(dev 分岐)に実装。** 変更は 3 ファイル: `src/lib/constants/sdgs.ts` に `SDG_WORD_LABELS`(17 個全部・日本語固定・`sdgWordLabel()`)を追加 / サポーター一覧のフィルターチップ・カードのバッジ・相談者ごとの束ね表示を「SDG 11」→「住まい・地域」に(色はゴール色のまま、ホバーで番号と正式名)/ 案件詳細の「関連する SDGs ゴール」を「AI が読み取った困りごと」に改め、言葉を主役・番号と正式名は小さく添える。**相談者側(結果ページ・相談一覧・ダッシュボード)は触らない**(ユーザー確認済み)。DB・AI・API 変更なし。**2026-10-02 PR #35 で dev にマージ済み(`c7ee4d3`)。Staging での目視は未確認。**
+**代替として「現行の登録ロジック(Q1〜Q5 + AI の SDGs 1〜17 分類)はそのまま、サポーター側の表示とフィルターの番号を言葉のラベルに置き換える」小改修を `feature/sdgs-word-labels`(dev 分岐)に実装。** 変更は 3 ファイル: `src/lib/constants/sdgs.ts` に `SDG_WORD_LABELS`(17 個全部・日本語固定・`sdgWordLabel()`)を追加 / サポーター一覧のフィルターチップ・カードのバッジ・相談者ごとの束ね表示を「SDG 11」→「住まい・地域」に(色はゴール色のまま、ホバーで番号と正式名)/ 案件詳細の「関連する SDGs ゴール」を「AI が読み取った困りごと」に改め、言葉を主役・番号と正式名は小さく添える。相談者側は 9/30 時点では触らない方針だったが、**2026-10-02 にユーザー指示で相談者側 3 画面(相談一覧・ダッシュボード・結果ページ)も言葉ラベルに変更**(`feature/sdgs-word-labels-sos`、dev 未マージ)。相談者側は多言語なので言葉は `messages/<6言語>/sdgs.json` の `wordLabel`(17 個)から出す。日本語は `SDG_WORD_LABELS` と同じ文言で、直すときは両方をそろえる。結果ページは言葉を主・「SDG 番号+正式名」を小さく添える。en/zh/ko/vi/id の訳語は AI 訳でネイティブ未確認。DB・AI・API 変更なし。**2026-10-02 PR #35 で dev にマージ済み(`c7ee4d3`)。Staging での目視は未確認。**
 
 **2026-09-17 本番でパスワード変更直後にログアウトする回帰を確認 → dev で修正(`1f652cc`)→ Staging 実測OK → PR #33 で本番反映(main = `f424824`、デプロイ success)。本番で「パスワード変更後もログアウトしない」のブラウザ確認はユーザー待ち。** 原因: PR #32 でパスワード更新を `admin.updateUserById` に切り替えたため、GoTrue が本人の現在のセッションも含めて全失効させていた(旧実装のクライアント `updateUser` は本人セッションを残す)。修正: 現PW検証は従来どおりサーバーで行い、更新は本人のトークンで GoTrue `PUT /auth/v1/user` を呼ぶ。Staging 実測: 変更した本人のトークンは get-role 200 のまま、別セッションは 401(他端末は失効)、403/400 のエラー経路も維持。
 
@@ -61,7 +61,7 @@
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
-0. **SDGs 言葉ラベル**: PR #35 で dev にマージ済み(2026-10-02)。Staging でサポーター一覧のフィルター・カード・案件詳細を目視 → 11 月前に本番へ出すか判断。トップページのサポーター団体カード(`src/app/[locale]/page.tsx` の「SDG11」表記)は対象外のまま(言葉にするかは未決)。17 個の言葉は `SDG_WORD_LABELS` の 1 か所で直せる。相談者側は変更しない
+0. **SDGs 言葉ラベル**: PR #35 で dev にマージ済み(2026-10-02)。Staging でサポーター一覧のフィルター・カード・案件詳細を目視 → 11 月前に本番へ出すか判断。トップページのサポーター団体カード(`src/app/[locale]/page.tsx` の「SDG11」表記)は対象外のまま(言葉にするかは未決)。相談者側の言葉ラベル(`feature/sdgs-word-labels-sos`)は dev へのチェックポイント PR → ユーザー承認でマージ → Staging で相談者としてログインして 3 画面を目視(ja と en)。17 個の言葉は `SDG_WORD_LABELS` の 1 か所で直せる。相談者側は変更しない
 0a. **Supabase Security Advisor 警告(2026-09-30)**: `migrations/fix_function_search_path_and_rls_helper_grants.sql`(dev `8834e02`)を **Staging・本番とも適用済み(2026-09-30、いずれもユーザーが SQL Editor で実行。Staging はカタログで 13 関数の search_path=public と rls_auto_enable の anon/authenticated EXECUTE 剥奪を確認、本番は Advisor の再チェックで関数関連 14 件が消え WARN は Leaked Password Protection の 1 件だけになったことをユーザーが確認)**。残り: Leaked Password Protection は Dashboard の Authentication → Providers → Password で Staging→本番の順に ON(登録時のエラー文言を確認)。auto mode の分類器は Management API 経由の DDL も「デプロイ」として止めるので、Staging の DDL もユーザー実行になった
 1. ~~パスワード変更の回帰修正を本番へ~~ → PR #33 で反映済み。本番で①自発パスワード変更後にログアウトしないこと をユーザーが再確認
 1b. **本番でのブラウザ実操作検証**(ユーザー): 上記①〜⑤(①は 9/17 に実施→ログアウト回帰を発見。変更後PWでの再ログインは可)。NGがあればこちらで修正 → dev → PR

@@ -29,6 +29,7 @@ export default function SOSCasesPage() {
   const t = useTranslations('sos.casesList');
   const tDisaster = useTranslations('sos.disaster');
   const tStatus = useTranslations('sdgs.caseStatus');
+  const tWord = useTranslations('sdgs.wordLabel');
   const tForm = useTranslations('common.form');
   const locale = useLocale();
   const router = useRouter();
@@ -187,14 +188,14 @@ export default function SOSCasesPage() {
                   {c.ai_sdg_suggestion?.sdgs_goals ? (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-400">{t('sdgsLabel')}</span>
-                      <div className="flex gap-1">
+                      <div className="flex flex-wrap gap-1">
                         {c.ai_sdg_suggestion.sdgs_goals.map((goalId) => (
                           <span
                             key={goalId}
                             className="text-white text-xs font-bold px-2 py-0.5 rounded"
                             style={{ backgroundColor: SDG_COLORS[goalId] }}
                           >
-                            {goalId}
+                            {tWord(String(goalId))}
                           </span>
                         ))}
                       </div>
