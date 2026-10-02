@@ -280,5 +280,50 @@
       "saved": "Wilayah tersimpan",
       "notSet": "Belum dipilih"
     }
+  },
+  "trial": {
+    "badge": "Versi coba",
+    "title": "Coba formulir konsultasi",
+    "subtitle": "Jawab pertanyaan yang sama dengan formulir asli dan lihat alur konsultasinya. Tidak perlu mendaftar atau masuk.",
+    "safeTitle": "Isi yang Anda masukkan tidak dikirim ke mana pun",
+    "safeBody": "Versi coba ini hanya berjalan di perangkat Anda. Isi yang Anda masukkan tidak dikirim maupun disimpan, dan tidak ada analisis AI. Isi ini tidak diterima sebagai konsultasi yang sebenarnya.",
+    "fillSample": "Isi dengan contoh",
+    "sampleNote": "Contoh ini adalah isi fiktif.",
+    "submit": "Coba (tidak dikirim)",
+    "sample": {
+      "what": "Nama saya Hanako Yamada. Suami saya kehilangan pekerjaan sehingga kami tidak bisa membayar sewa, dan kami diminta pindah bulan depan. Mohon hubungi saya di 090-1234-5678 atau hanako.yamada@example.com.",
+      "when": "Sejak 3 bulan yang lalu",
+      "want": "Saya ingin tetap tinggal di rumah yang sekarang"
+    },
+    "resultTitle": "Hasil coba",
+    "resultLead": "Pada layanan asli, setelah ini AI merapikan isi konsultasi. Sebelum diteruskan ke AI, informasi pribadi seperti kontak disamarkan seperti di bawah ini.",
+    "beforeTitle": "Isi yang Anda tulis",
+    "beforeNote": "Bagian yang berwarna adalah bagian yang ditemukan sebagai informasi pribadi.",
+    "afterTitle": "Isi yang diteruskan ke AI",
+    "afterNote": "Bagian yang ditemukan diganti dengan tanda.",
+    "foundCount": "{count} bagian disamarkan",
+    "foundNone": "Tidak ditemukan bagian yang perlu disamarkan",
+    "categories": {
+      "url": "URL",
+      "email": "Alamat email",
+      "sns": "ID media sosial",
+      "postal": "Kode pos",
+      "phone": "Nomor telepon",
+      "dob": "Tanggal lahir",
+      "date": "Tanggal",
+      "address": "Alamat",
+      "number": "Deretan angka panjang"
+    },
+    "limitTitle": "Ada hal yang tidak bisa disamarkan secara otomatis",
+    "limitBody": "Nama, nama sekolah, tempat kerja, dan sejenisnya tidak bisa ditemukan secara otomatis. Selain itu, yang disamarkan hanya teks yang diteruskan ke AI; pendukung melihat tulisan Anda apa adanya. Pada formulir asli pun, mohon jangan menulis hal yang dapat mengidentifikasi diri Anda.",
+    "nextTitle": "Pada layanan asli, setelah ini",
+    "next1": "AI merapikan isi konsultasi dan menunjukkan bidang dukungan yang terkait.",
+    "next2": "Organisasi pendukung yang membaca isinya mengirimkan tawaran dukungan.",
+    "next3": "Anda hanya bercakap lewat chat dengan organisasi yang Anda setujui.",
+    "ctaSosTitle": "Bagi yang ingin berkonsultasi",
+    "ctaSos": "Buat akun dan berkonsultasi",
+    "ctaSupporterTitle": "Bagi organisasi yang ingin mendukung",
+    "ctaSupporter": "Tentang organisasi pendukung",
+    "retry": "Coba lagi"
   }
 }

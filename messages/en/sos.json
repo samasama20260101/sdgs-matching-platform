@@ -280,5 +280,50 @@
       "saved": "Your area has been saved",
       "notSet": "Not set"
     }
+  },
+  "trial": {
+    "badge": "Trial",
+    "title": "Try the consultation form",
+    "subtitle": "Answer the same questions as the real form and see how a consultation works. No sign-up or login needed.",
+    "safeTitle": "Nothing you enter is sent anywhere",
+    "safeBody": "This trial runs only on your device. What you enter is not sent or saved, and no AI analysis is run. It is not accepted as a real consultation.",
+    "fillSample": "Fill in an example",
+    "sampleNote": "The example is fictional.",
+    "submit": "Try it (nothing is sent)",
+    "sample": {
+      "what": "My name is Hanako Yamada. My husband lost his job and we cannot pay the rent, and we have been told to move out next month. Please contact me at 090-1234-5678 or hanako.yamada@example.com.",
+      "when": "For the past three months",
+      "want": "I want to keep living in our current home"
+    },
+    "resultTitle": "Trial result",
+    "resultLead": "In the real service, AI organizes your consultation next. Before the text is passed to AI, personal information such as contact details is hidden as shown below.",
+    "beforeTitle": "What you wrote",
+    "beforeNote": "The colored parts were found as personal information.",
+    "afterTitle": "What is passed to AI",
+    "afterNote": "The parts found are replaced with a marker.",
+    "foundCount": "{count} part(s) hidden",
+    "foundNone": "Nothing to hide was found",
+    "categories": {
+      "url": "URL",
+      "email": "Email address",
+      "sns": "Social media ID",
+      "postal": "Postal code",
+      "phone": "Phone number",
+      "dob": "Date of birth",
+      "date": "Date",
+      "address": "Address",
+      "number": "Long number"
+    },
+    "limitTitle": "Some things cannot be hidden automatically",
+    "limitBody": "Names, schools and workplaces cannot be found automatically. Also, only the text passed to AI is hidden; supporters see what you wrote as it is. In the real form too, please do not write anything that could identify you.",
+    "nextTitle": "What happens next in the real service",
+    "next1": "AI organizes your consultation and shows the related areas of support.",
+    "next2": "Supporter organizations that read it send you offers of support.",
+    "next3": "You chat only with the organizations you approve.",
+    "ctaSosTitle": "If you want to consult",
+    "ctaSos": "Create an account and consult",
+    "ctaSupporterTitle": "If your organization wants to help",
+    "ctaSupporter": "About supporter organizations",
+    "retry": "Try again"
   }
 }
