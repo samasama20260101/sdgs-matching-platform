@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import IntakeFormFields, { CHAR_LIMITS, QA_QUESTIONS, toggleIntakeOption, type IntakeFreeText, type IntakeSelections, type QAOption, type QAQuestion } from '@/components/sos/IntakeFormFields';
 import { SUPPORTER_RECRUIT_URL } from '@/lib/constants/links';
+import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { PII_PLACEHOLDERS, detectPiiSpans, type PiiCategory, type PiiSpan } from '@/lib/pii';
 
 const CATEGORY_CLASSES: Record<PiiCategory, string> = {
@@ -31,6 +32,9 @@ const CATEGORY_CLASSES: Record<PiiCategory, string> = {
   date: 'bg-purple-100 text-purple-800 border-purple-300',
   number: 'bg-gray-200 text-gray-700 border-gray-400',
 };
+
+// 「本番ではこのあと」の表示例で見せる支援分野(住まい・お金)
+const MOCK_GOALS = [11, 1];
 
 // 例文で選んでおく選択肢(Q1 は住まい、ほかは「該当なし」)
 const SAMPLE_OPTION_IDS: Record<number, string[]> = {
@@ -54,10 +58,33 @@ function SpanText({ text, spans, masked }: { text: string; spans: PiiSpan[]; mas
   return <p className="text-sm leading-loose whitespace-pre-wrap break-words text-gray-700">{parts}</p>;
 }
 
+// 「本番ではこのあと」の 1 段。右側に画面の表示例(架空の内容)を置く
+function NextStep({ number, title, description, exampleTag, last, children }: {
+  number: number; title: string; description: string; exampleTag: string; last?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <li className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">{number}</span>
+        {!last && <span className="mt-1 w-0.5 flex-1 bg-teal-200" />}
+      </div>
+      <div className="min-w-0 flex-1 pb-5">
+        <p className="pt-1 text-sm font-bold text-gray-800">{title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-600">{description}</p>
+        <div className="relative mt-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <span className="absolute -top-2 right-3 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">{exampleTag}</span>
+          {children}
+        </div>
+      </div>
+    </li>
+  );
+}
+
 export default function TrialPage() {
   const t = useTranslations('sos.trial');
   const tHearing = useTranslations('sos.hearing');
   const tQ = useTranslations('sos.questions');
+  const tWord = useTranslations('sdgs.wordLabel');
 
   const [selectedOptionIds, setSelectedOptionIds] = useState<IntakeSelections>({});
   const [freeText, setFreeText] = useState<IntakeFreeText>({ what: '', when: '', want: '' });
@@ -207,21 +234,45 @@ export default function TrialPage() {
               <p className="mt-2 text-xs leading-relaxed text-amber-800">{t('limitAiNote')}</p>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-medium">{t('nextTitle')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ol className="space-y-2">
-                  {[t('next1'), t('next2'), t('next3')].map((step, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{i + 1}</span>
-                      <span className="leading-relaxed">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">{t('nextTitle')}</h2>
+              <p className="mt-1 text-xs text-gray-500">{t('nextLead')}</p>
+
+              <ol className="mt-4 space-y-2">
+                <NextStep number={1} title={t('next1Title')} description={t('next1')} exampleTag={t('exampleTag')}>
+                  <p className="text-sm font-bold text-gray-800">{t('mockCaseTitle')}</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {MOCK_GOALS.map((goal) => (
+                      <span key={goal} className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: SDG_COLORS[goal] + '20', color: SDG_COLORS[goal] }}>
+                        {tWord(String(goal))}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-2 rounded-lg bg-gradient-to-br from-blue-50 to-teal-50 p-3 text-xs leading-relaxed text-gray-700">{t('mockAiMessage')}</p>
+                </NextStep>
+
+                <NextStep number={2} title={t('next2Title')} description={t('next2')} exampleTag={t('exampleTag')}>
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-lg">🤝</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-800">{t('mockOrgName')}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-gray-600">{t('mockOfferMessage')}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <span className="flex-1 rounded-lg bg-teal-600 px-3 py-2 text-center text-xs font-bold text-white">{t('mockApprove')}</span>
+                    <span className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center text-xs font-medium text-gray-600">{t('mockDecline')}</span>
+                  </div>
+                </NextStep>
+
+                <NextStep number={3} title={t('next3Title')} description={t('next3')} exampleTag={t('exampleTag')} last>
+                  <div className="space-y-2">
+                    <p className="mr-8 rounded-2xl rounded-tl-sm bg-gray-100 px-3 py-2 text-xs leading-relaxed text-gray-700">{t('mockChatSupporter')}</p>
+                    <p className="ml-8 rounded-2xl rounded-tr-sm bg-teal-600 px-3 py-2 text-xs leading-relaxed text-white">{t('mockChatUser')}</p>
+                  </div>
+                </NextStep>
+              </ol>
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-gray-200 bg-white p-4">
