@@ -204,6 +204,7 @@ export default function TrialPage() {
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm font-bold text-amber-900">{t('limitTitle')}</p>
               <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('limitBody')}</p>
+              <p className="mt-2 text-xs leading-relaxed text-amber-800">{t('limitAiNote')}</p>
             </div>
 
             <Card>

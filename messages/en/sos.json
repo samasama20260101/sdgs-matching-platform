@@ -316,6 +316,7 @@
     },
     "limitTitle": "Some things cannot be hidden automatically",
     "limitBody": "Names, schools and workplaces cannot be found automatically. Also, only the text passed to AI is hidden; supporters see what you wrote as it is. In the real form too, please do not write anything that could identify you.",
+    "limitAiNote": "In the real service, AI then reads your consultation and classifies what you need help with. The AI service we use is under terms that do not allow the text it receives to be used for training. Even if some information could not be hidden and reaches the AI, it is not used to train the AI, so please feel safe to consult.",
     "nextTitle": "What happens next in the real service",
     "next1": "AI organizes your consultation and shows the related areas of support.",
     "next2": "Supporter organizations that read it send you offers of support.",

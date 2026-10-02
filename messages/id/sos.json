@@ -316,6 +316,7 @@
     },
     "limitTitle": "Ada hal yang tidak bisa disamarkan secara otomatis",
     "limitBody": "Nama, nama sekolah, tempat kerja, dan sejenisnya tidak bisa ditemukan secara otomatis. Selain itu, yang disamarkan hanya teks yang diteruskan ke AI; pendukung melihat tulisan Anda apa adanya. Pada formulir asli pun, mohon jangan menulis hal yang dapat mengidentifikasi diri Anda.",
+    "limitAiNote": "Pada layanan asli, setelah ini AI membaca isi konsultasi dan mengelompokkan kesulitan Anda. Layanan AI yang kami gunakan terikat ketentuan untuk tidak memakai isi yang diterimanya sebagai bahan pelatihan. Kalaupun ada informasi yang tidak tersamarkan dan diteruskan ke AI, informasi itu tidak dipakai untuk melatih AI, jadi silakan berkonsultasi dengan tenang.",
     "nextTitle": "Pada layanan asli, setelah ini",
     "next1": "AI merapikan isi konsultasi dan menunjukkan bidang dukungan yang terkait.",
     "next2": "Organisasi pendukung yang membaca isinya mengirimkan tawaran dukungan.",
