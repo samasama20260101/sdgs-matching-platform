@@ -1,7 +1,7 @@
 # Vercel のデプロイ結果(本番・Staging)を Discord の「デプロイ」チャンネルへ流す。
 # Vercel が GitHub に記録するデプロイ状態(deployment_status)を拾うので、アプリ本体には触れない。
-# deployment_status で起動するワークフローは default branch(main)にこのファイルがあるときだけ動く。
-# feature ブランチのプレビューは通知しない(dev に含まれるコミット = Staging だけ流す)。
+# ワークフローはデプロイされたコミットに含まれるこのファイルで動くので、本番の通知は main に入ってから始まる。
+# feature ブランチのプレビューは通知しない(dev の先頭コミットのデプロイ = Staging だけ流す)。
 name: デプロイ通知
 
 on:
@@ -35,10 +35,11 @@ jobs:
           case "$ENVIRONMENT" in
             Production*) label="本番" ;;
             *)
-              # dev に含まれないコミットは feature ブランチのプレビューなので流さない
-              rel=$(gh api "repos/$REPO/compare/dev...$SHA" --jq .status 2>/dev/null || echo unknown)
-              if [ "$rel" != "identical" ] && [ "$rel" != "behind" ]; then
-                echo "dev に含まれないコミット($rel)のプレビューなので通知しない"
+              # dev の先頭でないコミットは feature ブランチのプレビューなので流さない。
+              # 「dev に含まれるか」で判定すると、PR マージ後に終わった feature のプレビューまで Staging と誤認する
+              heads=$(gh api "repos/$REPO/commits/$SHA/branches-where-head" --jq '.[].name' 2>/dev/null || true)
+              if ! grep -qx dev <<<"$heads"; then
+                echo "dev の先頭でないコミットのプレビューなので通知しない(先頭のブランチ: ${heads:-なし})"
                 exit 0
               fi
               label="Staging"
