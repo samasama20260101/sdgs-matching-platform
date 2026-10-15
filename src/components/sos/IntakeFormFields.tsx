@@ -1,12 +1,20 @@
-// 相談フォームの入力欄(Q1〜Q5 の選択肢 + 自由記述)。
+// 相談フォームの入力欄(困りごとの選択肢 0〜3 個 + 自由記述)。
 // 本番の相談フォーム(/sos/hearing)と体験ページ(/trial)が同じものを使う。
-// 設問・選択肢の文言は messages/*/sos.json(sos.questions / sos.hearing)で管理し、
-// ここには ID・緊急フラグ・排他フラグだけを持つ。送信や保存はしない(呼び出し側の仕事)。
+// 選択肢は SDGs のグローバル指標ごと(正本は docs/intake_indicators.md、定義は constants/intakeIndicators.ts)。
+// 文言は messages/*/sdgs.json(category / indicator)と sos.json(sos.questions / sos.hearing)。送信や保存はしない(呼び出し側の仕事)。
 'use client';
 
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { SDG_COLORS } from '@/lib/constants/sdgs';
+import {
+  MAX_INDICATOR_SELECTIONS,
+  SELECTABLE_CATEGORIES,
+  findIndicator,
+  indicatorMessageKey,
+  indicatorsInCategory,
+} from '@/lib/constants/intakeIndicators';
 
 // 入力上限
 export const CHAR_LIMITS = {
@@ -15,48 +23,13 @@ export const CHAR_LIMITS = {
   want: 200,
 };
 
-export type QAOption = {
-  id: string;
-  urgent?: boolean;
-  exclusive?: boolean;
-};
-
-export type QAQuestion = {
-  id: number;
-  options: QAOption[];
-};
-
-export type IntakeSelections = Record<number, Set<string>>;
 export type IntakeFreeText = { what: string; when: string; want: string };
 
-// ─── Q&A構造の定義（文言は sos.questions.* に外出し済み） ─────
-export const QA_QUESTIONS: QAQuestion[] = [
-  { id: 1, options: [{ id: 'q1_1' }, { id: 'q1_2' }, { id: 'q1_3' }, { id: 'q1_4' }, { id: 'q1_5', exclusive: true }] },
-  { id: 2, options: [{ id: 'q2_1' }, { id: 'q2_2' }, { id: 'q2_3' }, { id: 'q2_4' }, { id: 'q2_5', exclusive: true }] },
-  { id: 3, options: [{ id: 'q3_1' }, { id: 'q3_2' }, { id: 'q3_3' }, { id: 'q3_4' }, { id: 'q3_5', exclusive: true }] },
-  { id: 4, options: [{ id: 'q4_1' }, { id: 'q4_2', urgent: true }, { id: 'q4_3' }, { id: 'q4_4' }, { id: 'q4_5', exclusive: true }] },
-  { id: 5, options: [{ id: 'q5_1' }, { id: 'q5_2' }, { id: 'q5_3' }, { id: 'q5_4' }, { id: 'q5_5' }, { id: 'q5_6', exclusive: true }] },
-];
-
-// チェックボックスの切り替え（「該当なし」は排他制御）
-export function toggleIntakeOption(prev: IntakeSelections, question: QAQuestion, option: QAOption): IntakeSelections {
-  const current = new Set(prev[question.id] || []);
-  const exclusiveOptionId = question.options.find(item => item.exclusive)?.id;
-  if (option.exclusive) {
-    // 「該当なし」を選んだら他をすべて外す
-    if (current.has(option.id)) {
-      current.delete(option.id);
-    } else {
-      current.clear();
-      current.add(option.id);
-    }
-  } else {
-    // 他の選択肢を選んだら「該当なし」を外す
-    if (exclusiveOptionId) current.delete(exclusiveOptionId);
-    if (current.has(option.id)) current.delete(option.id);
-    else current.add(option.id);
-  }
-  return { ...prev, [question.id]: current };
+// 選択肢の切り替え(上限に達していたら追加しない)
+export function toggleIndicator(prev: string[], id: string): string[] {
+  if (prev.includes(id)) return prev.filter((item) => item !== id);
+  if (prev.length >= MAX_INDICATOR_SELECTIONS) return prev;
+  return [...prev, id];
 }
 
 // ─── 文字数カウンター ────────────────────────────────────────
@@ -69,54 +42,110 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 }
 
 type Props = {
-  selectedOptionIds: IntakeSelections;
-  onToggleOption: (question: QAQuestion, option: QAOption) => void;
+  selectedIndicatorIds: string[];
+  onToggleIndicator: (id: string) => void;
   freeText: IntakeFreeText;
   onFreeTextChange: (next: IntakeFreeText) => void;
 };
 
-export default function IntakeFormFields({ selectedOptionIds, onToggleOption, freeText, onFreeTextChange }: Props) {
+export default function IntakeFormFields({ selectedIndicatorIds, onToggleIndicator, freeText, onFreeTextChange }: Props) {
   const t = useTranslations('sos.hearing');
   const tQ = useTranslations('sos.questions');
+  const tSdgs = useTranslations('sdgs');
+  const isFull = selectedIndicatorIds.length >= MAX_INDICATOR_SELECTIONS;
 
   return (
     <>
-      {/* Q&Aフォーム */}
-      {QA_QUESTIONS.map((question) => (
-        <Card key={question.id}>
-          <CardHeader>
-            <CardTitle className="text-base font-medium">
-              Q{question.id}. {tQ(`q${question.id}.question`)} <span className="text-red-500">*</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {question.options.map((option) => {
-                const isChecked = selectedOptionIds[question.id]?.has(option.id) || false;
-                const isNone = Boolean(option.exclusive);
-                return (
-                  <label
-                    key={option.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      isChecked
-                        ? isNone ? 'bg-gray-100 border-gray-400' : 'bg-blue-50 border-blue-300'
-                        : isNone ? 'hover:bg-gray-50 border-dashed border-gray-200' : 'hover:bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => onToggleOption(question, option)}
-                      className="mt-0.5 text-blue-600 rounded"
-                    />
-                    <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{tQ(`q${question.id}.options.${option.id}`)}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {/* 困りごとの選択(0〜3 個) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-medium">{tQ('title', { max: MAX_INDICATOR_SELECTIONS })}</CardTitle>
+          <p className="text-xs text-gray-500 leading-relaxed mt-1">{tQ('intro', { max: MAX_INDICATOR_SELECTIONS })}</p>
+          <p className="text-xs text-teal-700 bg-teal-50 border border-teal-100 rounded-lg p-2.5 leading-relaxed mt-2">
+            {tQ('neighborNote', { label: tSdgs('category.18') })}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* 選んだもの */}
+          <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3">
+            <p className="text-xs font-bold text-gray-600 mb-2">
+              {tQ('selectedHeading')}
+              <span className="ml-2 font-normal text-gray-500">{tQ('selectedCount', { count: selectedIndicatorIds.length, max: MAX_INDICATOR_SELECTIONS })}</span>
+            </p>
+            {selectedIndicatorIds.length === 0 ? (
+              <p className="text-xs text-gray-400">{tQ('noneSelected')}</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {selectedIndicatorIds.map((id) => {
+                  const indicator = findIndicator(id);
+                  if (!indicator) return null;
+                  return (
+                    <li key={id} className="flex items-start gap-2 text-sm">
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: SDG_COLORS[indicator.category] }} />
+                      <span className="flex-1 leading-relaxed">{tSdgs(`indicator.${indicatorMessageKey(id)}`)}</span>
+                      <button
+                        type="button"
+                        onClick={() => onToggleIndicator(id)}
+                        className="shrink-0 text-xs text-gray-400 hover:text-red-500 underline"
+                      >
+                        {tQ('remove')}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {isFull && <p className="text-[11px] text-amber-600 mt-2">{tQ('limitReached', { max: MAX_INDICATOR_SELECTIONS })}</p>}
+          </div>
+
+          {/* 大項目ごとに開いて選ぶ */}
+          <div className="space-y-2">
+            {SELECTABLE_CATEGORIES.map((category) => {
+              const options = indicatorsInCategory(category);
+              const selectedHere = options.filter((option) => selectedIndicatorIds.includes(option.id)).length;
+              return (
+                <details key={category} className="group rounded-lg border border-gray-200 bg-white">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 p-3 text-sm font-medium text-gray-700">
+                    <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: SDG_COLORS[category] }} />
+                    <span className="flex-1">{tSdgs(`category.${category}`)}</span>
+                    {selectedHere > 0 && (
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-600">{selectedHere}</span>
+                    )}
+                    <span className="text-gray-400 transition-transform group-open:rotate-180">▾</span>
+                  </summary>
+                  <div className="space-y-2 border-t border-gray-100 p-3">
+                    {options.map((option) => {
+                      const isChecked = selectedIndicatorIds.includes(option.id);
+                      const isDisabled = !isChecked && isFull;
+                      return (
+                        <label
+                          key={option.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                            isChecked
+                              ? 'bg-blue-50 border-blue-300 cursor-pointer'
+                              : isDisabled
+                                ? 'border-gray-100 opacity-50 cursor-not-allowed'
+                                : 'hover:bg-gray-50 border-gray-200 cursor-pointer'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={isDisabled}
+                            onChange={() => onToggleIndicator(option.id)}
+                            className="mt-0.5 text-blue-600 rounded"
+                          />
+                          <span className="text-sm leading-relaxed">{tSdgs(`indicator.${indicatorMessageKey(option.id)}`)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 自由記述 */}
       <Card>

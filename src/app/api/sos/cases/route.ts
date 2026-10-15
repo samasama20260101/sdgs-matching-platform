@@ -3,6 +3,8 @@ import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { ACTIVE_DISASTER_EVENT, DISASTER_EVENT_IDS, getDisasterEvent } from '@/lib/constants/disaster'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
+import { detectUrgency } from '@/lib/urgency'
+import { MAX_INDICATOR_SELECTIONS, findIndicator, hasUrgentIndicator } from '@/lib/constants/intakeIndicators'
 import { NextResponse, after } from 'next/server'
 
 const DESCRIPTION_FREE_MAX_LENGTH = 2000
@@ -64,52 +66,35 @@ function sanitizeDisaster(value: unknown) {
     return { event_id: eventId, answers, ...(location ? { location } : {}) }
 }
 
+// 通常案件は困りごとの選択肢(指標 ID 0〜3 個)を受け取る(version 2)。旧 Q1〜Q5 形式は受け付けない。
+// 指標 ID はホワイトリストで検証し、文言スナップショットは ID と同じ数だけ残す。
 function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+    // intake_qna が無い通常案件も新形式(選択 0 個)として保存する。null にすると AI 分析が旧方式(AI が分類)に落ちるため
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return { version: 2, indicators: [] as string[], indicator_texts: [] as string[], locale: fallbackLocale }
+    }
     const disaster = sanitizeDisaster((value as { disaster?: unknown }).disaster)
-    const qa = (value as { qa?: unknown }).qa
-    if (!qa || typeof qa !== 'object' || Array.isArray(qa)) {
-        // 災害SOSはQ&Aなしで登録できる
-        if (!disaster) return null
-        return {
-            qa: {},
-            qa_ids: {},
-            disaster,
-            locale: sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale,
-        }
+    const locale = sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale
+    if (disaster) {
+        // 災害SOSは選択肢なしで登録する
+        return { qa: {}, qa_ids: {}, disaster, locale }
     }
 
-    const sanitizedQa: Record<string, string[]> = {}
-    for (const [rawKey, rawAnswers] of Object.entries(qa as Record<string, unknown>)) {
-        if (!/^[1-5]$/.test(rawKey) && !/^q[1-5]$/.test(rawKey)) continue
-        if (!Array.isArray(rawAnswers)) continue
-        sanitizedQa[rawKey] = rawAnswers
-            .filter((answer): answer is string => typeof answer === 'string')
-            .map((answer) => answer.trim().slice(0, 250))
-            .filter(Boolean)
-            .slice(0, 10)
+    const rawIds = (value as { indicators?: unknown }).indicators
+    const rawTexts = (value as { indicator_texts?: unknown }).indicator_texts
+    const indicators: string[] = []
+    const indicatorTexts: string[] = []
+    if (Array.isArray(rawIds)) {
+        rawIds.forEach((id, index) => {
+            if (indicators.length >= MAX_INDICATOR_SELECTIONS) return
+            if (typeof id !== 'string' || !findIndicator(id) || indicators.includes(id)) return
+            const text = Array.isArray(rawTexts) ? sanitizeText(rawTexts[index], 250) : ''
+            indicators.push(id)
+            indicatorTexts.push(text || findIndicator(id)!.text)
+        })
     }
 
-    const sanitizedQaIds: Record<string, string[]> = {}
-    const qaIds = (value as { qa_ids?: unknown }).qa_ids
-    if (qaIds && typeof qaIds === 'object' && !Array.isArray(qaIds)) {
-        for (const [rawKey, rawIds] of Object.entries(qaIds as Record<string, unknown>)) {
-            if (!/^[1-5]$/.test(rawKey) && !/^q[1-5]$/.test(rawKey)) continue
-            if (!Array.isArray(rawIds)) continue
-            sanitizedQaIds[rawKey] = rawIds
-                .filter((id): id is string => typeof id === 'string')
-                .map((id) => id.trim())
-                .filter((id) => /^q[1-5]_(?:[1-9][0-9]*|other)$/.test(id))
-                .slice(0, 10)
-        }
-    }
-
-    return {
-        qa: sanitizedQa,
-        qa_ids: sanitizedQaIds,
-        ...(disaster ? { disaster } : {}),
-        locale: sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale,
-    }
+    return { version: 2, indicators, indicator_texts: indicatorTexts, locale }
 }
 
 export async function GET(request: Request) {
@@ -180,7 +165,15 @@ export async function POST(request: Request) {
         }
     }
 
+    // 旧フォーム(Q1〜Q5)のまま開いていた画面からの送信は、回答が捨てられて分類 18 になるので受け付けない
+    const legacyIntake = body.intake_qna as { qa?: unknown; indicators?: unknown } | null | undefined
+    if (legacyIntake?.qa !== undefined && legacyIntake.indicators === undefined && requestedDisaster == null) {
+        return NextResponse.json({ error: 'フォームが新しくなりました。ページを再読み込みしてから、もう一度送信してください' }, { status: 400 })
+    }
+
     const intakeQna = sanitizeIntakeQna(body.intake_qna, locale)
+    // 緊急フラグ付きの選択肢・自由記述の緊急語句があれば、クライアントの判定によらず High にする
+    const caseUrgency = hasUrgentIndicator(intakeQna?.indicators ?? []) || detectUrgency(descriptionFree) ? 'High' : urgency
 
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')
@@ -189,7 +182,7 @@ export async function POST(request: Request) {
             title,
             description_free: descriptionFree,
             intake_qna: intakeQna,
-            urgency,
+            urgency: caseUrgency,
             locale,
             region_country: regionCountry,
             status: 'OPEN',

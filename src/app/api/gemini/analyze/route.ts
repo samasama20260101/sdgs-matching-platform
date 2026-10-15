@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireActiveAppUser } from '@/lib/api/auth';
 import { isUuid } from '@/lib/api/validation';
 import { classifySDGs } from '@/lib/gemini';
+import { buildIntakeTextForAi, categoriesFromIndicators, findIndicator, sanitizeIndicatorIds } from '@/lib/constants/intakeIndicators';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
 const MAX_DESCRIPTION_LENGTH = 10000;
@@ -30,7 +31,24 @@ function truncateText(value: unknown, maxLength: number) {
     return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
 
+// 新形式(version 2): 選んだ困りごとの指標 ID。旧 Q1〜Q5 形式の案件は null
+function indicatorIdsFromCase(caseData: CaseForAnalysis): string[] | null {
+    const intake = caseData.intake_qna && typeof caseData.intake_qna === 'object'
+        ? caseData.intake_qna as { version?: unknown; indicators?: unknown }
+        : null;
+    if (intake?.version !== 2) return null;
+    return sanitizeIndicatorIds(intake.indicators);
+}
+
 function buildDescriptionFromCase(caseData: CaseForAnalysis) {
+    const indicatorIds = indicatorIdsFromCase(caseData);
+    if (indicatorIds) {
+        // AI には相談者の表示言語ではなく正本(日本語)の文言を渡す
+        const texts = indicatorIds.map((id) => findIndicator(id)!.text);
+        return buildIntakeTextForAi('選んだ困りごと', texts, truncateText(caseData.description_free, MAX_DESCRIPTION_LENGTH))
+            .slice(0, MAX_DESCRIPTION_LENGTH);
+    }
+
     const qna = caseData.intake_qna && typeof caseData.intake_qna === 'object'
         ? (caseData.intake_qna as { qa?: Record<string, unknown> }).qa
         : null;
@@ -55,14 +73,15 @@ function buildDescriptionFromCase(caseData: CaseForAnalysis) {
         .slice(0, MAX_DESCRIPTION_LENGTH);
 }
 
-function normalizeAnalysis(raw: unknown): NormalizedAnalysis {
+// fixedGoals: 相談フォームの選択肢から決めた大項目。渡したときは AI の返す番号を使わない
+function normalizeAnalysis(raw: unknown, fixedGoals?: number[]): NormalizedAnalysis {
     const source = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
-    const goals = Array.isArray(source.sdgs_goals)
+    const goals = fixedGoals ?? (Array.isArray(source.sdgs_goals)
         ? [...new Set(source.sdgs_goals
             .map((goal) => Number(goal))
             .filter((goal) => Number.isInteger(goal) && goal >= 1 && goal <= 17))]
             .slice(0, 3)
-        : [];
+        : []);
 
     const rawPerGoal = Array.isArray(source.per_goal) ? source.per_goal : [];
     const perGoal = goals
@@ -108,6 +127,7 @@ export async function POST(request: NextRequest) {
         const { caseId, description } = body;
         let analysisDescription: string | null = null;
         let targetCaseId: string | null = null;
+        let fixedGoals: number[] | undefined;
 
         if (caseId !== undefined) {
             if (!isUuid(caseId)) {
@@ -155,6 +175,9 @@ export async function POST(request: NextRequest) {
             }
 
             analysisDescription = buildDescriptionFromCase(caseData as CaseForAnalysis);
+            // 新形式の案件は選択肢から大項目を決める(0 個なら 18)。AI は分類しない
+            const indicatorIds = indicatorIdsFromCase(caseData as CaseForAnalysis);
+            if (indicatorIds) fixedGoals = categoriesFromIndicators(indicatorIds);
             targetCaseId = caseData.id;
         } else {
             if (!description || typeof description !== 'string') {
@@ -180,7 +203,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await classifySDGs(analysisDescription);
+        const result = await classifySDGs(analysisDescription, fixedGoals);
 
         if (!result.success) {
             return NextResponse.json(
@@ -189,7 +212,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const analysis = normalizeAnalysis(result.data);
+        const analysis = normalizeAnalysis(result.data, fixedGoals);
 
         if (targetCaseId) {
             const { error: updateError } = await supabaseAdmin

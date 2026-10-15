@@ -16,7 +16,8 @@ import { Link } from '@/i18n/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import IntakeFormFields, { CHAR_LIMITS, QA_QUESTIONS, toggleIntakeOption, type IntakeFreeText, type IntakeSelections, type QAOption, type QAQuestion } from '@/components/sos/IntakeFormFields';
+import IntakeFormFields, { CHAR_LIMITS, toggleIndicator, type IntakeFreeText } from '@/components/sos/IntakeFormFields';
+import { buildIntakeTextForAi, indicatorMessageKey } from '@/lib/constants/intakeIndicators';
 import { SUPPORTER_RECRUIT_URL } from '@/lib/constants/links';
 import { SDG_COLORS } from '@/lib/constants/sdgs';
 import { PII_PLACEHOLDERS, detectPiiSpans, type PiiCategory, type PiiSpan } from '@/lib/pii';
@@ -33,13 +34,11 @@ const CATEGORY_CLASSES: Record<PiiCategory, string> = {
   number: 'bg-gray-200 text-gray-700 border-gray-400',
 };
 
-// 「本番ではこのあと」の表示例で見せる支援分野(住まい・お金)
-const MOCK_GOALS = [11, 1];
+// 「本番ではこのあと」の表示例で見せる大項目(例文の選択肢と同じ: 住まい・地域 / 差別・不平等)
+const MOCK_GOALS = [11, 10];
 
-// 例文で選んでおく選択肢(Q1 は住まい、ほかは「該当なし」)
-const SAMPLE_OPTION_IDS: Record<number, string[]> = {
-  1: ['q1_2'], 2: ['q2_5'], 3: ['q3_5'], 4: ['q4_5'], 5: ['q5_6'],
-};
+// 例文で選んでおく選択肢(安全に暮らせる住まいがない / 家族の失業で世帯収入が減少)
+const SAMPLE_INDICATOR_IDS = ['11.1.1', '10.1.1'];
 
 // 原文(色付き)またはマスク後(印に置き換え)を描く
 function SpanText({ text, spans, masked }: { text: string; spans: PiiSpan[]; masked: boolean }) {
@@ -84,52 +83,38 @@ export default function TrialPage() {
   const t = useTranslations('sos.trial');
   const tHearing = useTranslations('sos.hearing');
   const tQ = useTranslations('sos.questions');
-  const tWord = useTranslations('sdgs.wordLabel');
+  const tSdgs = useTranslations('sdgs');
 
-  const [selectedOptionIds, setSelectedOptionIds] = useState<IntakeSelections>({});
+  const [selectedIndicatorIds, setSelectedIndicatorIds] = useState<string[]>([]);
   const [freeText, setFreeText] = useState<IntakeFreeText>({ what: '', when: '', want: '' });
   const [error, setError] = useState<string | null>(null);
   // 「体験する」を押した時点の、AI に渡すはずの文(入力欄を直しても結果がずれないように固定する)
   const [resultText, setResultText] = useState<string | null>(null);
 
-  const handleToggleOption = (question: QAQuestion, option: QAOption) => {
-    setSelectedOptionIds(prev => toggleIntakeOption(prev, question, option));
+  const handleToggleIndicator = (id: string) => {
+    setSelectedIndicatorIds(prev => toggleIndicator(prev, id));
   };
 
   const handleFillSample = () => {
-    setSelectedOptionIds(Object.fromEntries(
-      Object.entries(SAMPLE_OPTION_IDS).map(([questionId, ids]) => [Number(questionId), new Set(ids)])
-    ));
+    setSelectedIndicatorIds(SAMPLE_INDICATOR_IDS);
     setFreeText({ what: t('sample.what'), when: t('sample.when'), want: t('sample.want') });
     setError(null);
   };
 
-  // 本番(gemini/analyze の buildDescriptionFromCase)と同じ並び: 選択した回答 → 自由記述。
-  // 「該当なし」だけの設問は載せない
+  // 本番(gemini/analyze の buildDescriptionFromCase)と同じ並び: 選んだ困りごと → 自由記述
   const buildTextForAi = () => {
-    const qaLines = QA_QUESTIONS.map((q) => {
-      const answers = q.options
-        .filter((option) => !option.exclusive && selectedOptionIds[q.id]?.has(option.id))
-        .map((option) => tQ(`q${q.id}.options.${option.id}`));
-      return answers.length > 0 ? `Q${q.id}: ${answers.join('、')}` : '';
-    }).filter(Boolean).join('\n');
+    const indicatorTexts = selectedIndicatorIds.map((id) => tSdgs(`indicator.${indicatorMessageKey(id)}`));
     const description = [
       freeText.what.trim(),
       freeText.when.trim() ? `${tHearing('whenPrefix')}${freeText.when.trim()}` : '',
       freeText.want.trim() ? `${tHearing('wantPrefix')}${freeText.want.trim()}` : '',
     ].filter(Boolean).join('\n');
-    return [qaLines, description].filter(Boolean).join('\n\n');
+    return buildIntakeTextForAi(tQ('selectedHeading'), indicatorTexts, description);
   };
 
   const handleSubmit = () => {
     setError(null);
-    // バリデーションは本番のフォームと同じ
-    for (const q of QA_QUESTIONS) {
-      if ((selectedOptionIds[q.id]?.size || 0) === 0) {
-        setError(tHearing('errorAnswerRequired', { id: q.id }));
-        return;
-      }
-    }
+    // バリデーションは本番のフォームと同じ(選択肢は 0 個でもよい。自由記述は必須)
     if (!freeText.what.trim()) {
       setError(tHearing('errorWhatRequired'));
       return;
@@ -175,8 +160,8 @@ export default function TrialPage() {
             </div>
 
             <IntakeFormFields
-              selectedOptionIds={selectedOptionIds}
-              onToggleOption={handleToggleOption}
+              selectedIndicatorIds={selectedIndicatorIds}
+              onToggleIndicator={handleToggleIndicator}
               freeText={freeText}
               onFreeTextChange={setFreeText}
             />
@@ -244,7 +229,7 @@ export default function TrialPage() {
                   <div className="mt-2 flex flex-wrap gap-1">
                     {MOCK_GOALS.map((goal) => (
                       <span key={goal} className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: SDG_COLORS[goal] + '20', color: SDG_COLORS[goal] }}>
-                        {tWord(String(goal))}
+                        {tSdgs(`category.${goal}`)}
                       </span>
                     ))}
                   </div>

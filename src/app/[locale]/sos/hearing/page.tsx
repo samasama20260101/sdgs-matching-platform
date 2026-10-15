@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────
 // 📂 src/app/sos/hearing/page.tsx
 // SOS相談フォーム（ヒアリング）
-// 設問・選択肢の文言は messages/*/sos.json（sos.questions）で管理。
-// ここには ID・緊急フラグ・排他フラグだけを持つ（多言語化・バリアント対応の前提）。
+// 困りごとの選択肢(0〜3 個)は SDGs のグローバル指標ごと。定義は constants/intakeIndicators.ts、
+// 文言は messages/*/sdgs.json(indicator)。0 個なら大項目 18「SDGsの隣のお困りごと」になる(サーバー側で決める)。
 // ─────────────────────────────────────────────────────────────
 'use client';
 
@@ -12,7 +12,9 @@ import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import IntakeFormFields, { CHAR_LIMITS, QA_QUESTIONS, toggleIntakeOption, type IntakeFreeText, type IntakeSelections, type QAOption, type QAQuestion } from '@/components/sos/IntakeFormFields';
+import IntakeFormFields, { CHAR_LIMITS, toggleIndicator, type IntakeFreeText } from '@/components/sos/IntakeFormFields';
+import { hasUrgentIndicator, indicatorMessageKey } from '@/lib/constants/intakeIndicators';
+import { detectUrgency } from '@/lib/urgency';
 import { Modal } from '@/components/ui/modal';
 
 const MAX_ACTIVE_CASES = 3;
@@ -20,7 +22,7 @@ const MAX_ACTIVE_CASES = 3;
 // ─── メインコンポーネント ────────────────────────────────────
 export default function SOSHearingPage() {
   const t = useTranslations('sos.hearing');
-  const tQ = useTranslations('sos.questions');
+  const tSdgs = useTranslations('sdgs');
   const tLimit = useTranslations('sos.limitModal');
   const tForm = useTranslations('common.form');
   const router = useRouter();
@@ -38,8 +40,8 @@ export default function SOSHearingPage() {
     { icon: '✨', label: t('aiStep4') },
   ];
 
-  // 選択された回答（複数選択可）
-  const [selectedOptionIds, setSelectedOptionIds] = useState<IntakeSelections>({});
+  // 選択された困りごと(指標 ID、0〜3 個・選んだ順)
+  const [selectedIndicatorIds, setSelectedIndicatorIds] = useState<string[]>([]);
 
   // 自由記述
   const [freeText, setFreeText] = useState<IntakeFreeText>({ what: '', when: '', want: '' });
@@ -66,40 +68,15 @@ export default function SOSHearingPage() {
     checkAuth();
   }, [router]);
 
-  const handleToggleOption = (question: QAQuestion, option: QAOption) => {
-    setSelectedOptionIds(prev => toggleIntakeOption(prev, question, option));
+  const handleToggleIndicator = (id: string) => {
+    setSelectedIndicatorIds(prev => toggleIndicator(prev, id));
   };
 
-
-  // 自由記述専用の緊急語彙。機械翻訳だけで確定せず、ネイティブ/専門家確認が必要な暫定リスト。
-  const detectUrgency = (text: string): boolean => {
-    const urgentPhrases = [
-      '死にたい', '自殺', '殺される', '消えたい', '限界', '助けて', '虐待', '暴力', '人身取引', '監禁', '戦争', '紛争',
-      '想死', '不想活', '自杀', '自殺', '救命', '虐待', '暴力', '家暴', '人口贩卖', '人口販賣',
-      '죽고 싶', '죽고싶', '자살', '도와주세요', '살려주', '학대', '폭력', '가정폭력', '인신매매', '전쟁',
-      'want to die', 'kill myself', 'end my life', 'commit suicide', 'attempt suicide', 'suicidal thoughts',
-      'suicide', 'suicidal', 'abuse', 'abused', 'violence', 'trafficked', 'trafficking',
-      'muốn chết', 'muon chet', 'tự tử', 'muon tu tu', 'cứu tôi', 'cuu toi', 'bạo lực', 'bao luc', 'bạo hành', 'bao hanh', 'buôn người', 'buon nguoi', 'chiến tranh', 'chien tranh',
-      'bunuh diri', 'ingin mati', 'mau mati', 'ingin bunuh diri', 'tolong saya', 'kekerasan', 'perdagangan orang', 'kdrt', 'penganiayaan', 'diculik',
-    ];
-    const normalizedText = text.toLowerCase();
-    return urgentPhrases.some(phrase => normalizedText.includes(phrase.toLowerCase()));
-  };
-
-  const optionText = (questionId: number, optionId: string) => tQ(`q${questionId}.options.${optionId}`);
 
   const handleSubmit = async () => {
     setError(null);
 
-    // バリデーション
-    for (const q of QA_QUESTIONS) {
-      const selected = selectedOptionIds[q.id]?.size || 0;
-      if (selected === 0) {
-        setError(t('errorAnswerRequired', { id: q.id }));
-        return;
-      }
-    }
-
+    // バリデーション(選択肢は 0 個でもよい。自由記述は必須)
     if (!freeText.what.trim()) {
       setError(t('errorWhatRequired'));
       return;
@@ -126,22 +103,13 @@ export default function SOSHearingPage() {
     }, 30000);
 
     try {
-      // 回答データ整形: qaは表示用の文字列配列（ユーザーが見た言語のスナップショット）、
-      // qa_ids は言語横断集計用。
-      const qaData: Record<number, string[]> = {};
-      const qaIds: Record<number, string[]> = {};
-      for (const q of QA_QUESTIONS) {
-        const selectedIds = [...(selectedOptionIds[q.id] || [])];
-        qaData[q.id] = selectedIds.map(id => optionText(q.id, id));
-        qaIds[q.id] = selectedIds;
-      }
+      // 回答データ整形: indicators は言語に依存しない指標 ID、
+      // indicator_texts は相談者が見た言語の文言のスナップショット(相談者側の表示用)。
+      const indicatorTexts = selectedIndicatorIds.map(id => tSdgs(`indicator.${indicatorMessageKey(id)}`));
 
-      // 緊急度判定: 選択肢はurgentフラグ、自由記述は語彙リストで判定する。
-      const hasUrgentChoice = QA_QUESTIONS.some(q =>
-        [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
-      );
+      // 緊急度判定: 選択肢は urgent フラグ、自由記述は語彙リストで判定する。
       const freeTextForUrgency = Object.values(freeText).join(' ');
-      const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
+      const isUrgent = hasUrgentIndicator(selectedIndicatorIds) || detectUrgency(freeTextForUrgency);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -159,7 +127,7 @@ export default function SOSHearingPage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          intake_qna: { qa: qaData, qa_ids: qaIds, locale },
+          intake_qna: { version: 2, indicators: selectedIndicatorIds, indicator_texts: indicatorTexts, locale },
           description_free: [
             freeText.what,
             freeText.when ? `${t('whenPrefix')}${freeText.when}` : '',
@@ -202,13 +170,12 @@ export default function SOSHearingPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-800">{t('title')}</h1>
           <p className="text-gray-500 mt-1">{t('subtitle')}</p>
-          <p className="text-xs text-gray-400 mt-2">{tQ('intro')}</p>
         </div>
 
         <div className="space-y-6">
           <IntakeFormFields
-            selectedOptionIds={selectedOptionIds}
-            onToggleOption={handleToggleOption}
+            selectedIndicatorIds={selectedIndicatorIds}
+            onToggleIndicator={handleToggleIndicator}
             freeText={freeText}
             onFreeTextChange={setFreeText}
           />
