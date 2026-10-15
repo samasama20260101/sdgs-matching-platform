@@ -3,6 +3,7 @@ import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { ACTIVE_DISASTER_EVENT, DISASTER_EVENT_IDS, getDisasterEvent } from '@/lib/constants/disaster'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
+import { detectUrgency } from '@/lib/urgency'
 import { MAX_INDICATOR_SELECTIONS, findIndicator, hasUrgentIndicator } from '@/lib/constants/intakeIndicators'
 import { NextResponse, after } from 'next/server'
 
@@ -68,7 +69,10 @@ function sanitizeDisaster(value: unknown) {
 // 通常案件は困りごとの選択肢(指標 ID 0〜3 個)を受け取る(version 2)。旧 Q1〜Q5 形式は受け付けない。
 // 指標 ID はホワイトリストで検証し、文言スナップショットは ID と同じ数だけ残す。
 function sanitizeIntakeQna(value: unknown, fallbackLocale: string) {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+    // intake_qna が無い通常案件も新形式(選択 0 個)として保存する。null にすると AI 分析が旧方式(AI が分類)に落ちるため
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return { version: 2, indicators: [] as string[], indicator_texts: [] as string[], locale: fallbackLocale }
+    }
     const disaster = sanitizeDisaster((value as { disaster?: unknown }).disaster)
     const locale = sanitizeLocale((value as { locale?: unknown }).locale) || fallbackLocale
     if (disaster) {
@@ -161,9 +165,15 @@ export async function POST(request: Request) {
         }
     }
 
+    // 旧フォーム(Q1〜Q5)のまま開いていた画面からの送信は、回答が捨てられて分類 18 になるので受け付けない
+    const legacyIntake = body.intake_qna as { qa?: unknown; indicators?: unknown } | null | undefined
+    if (legacyIntake?.qa !== undefined && legacyIntake.indicators === undefined && requestedDisaster == null) {
+        return NextResponse.json({ error: 'フォームが新しくなりました。ページを再読み込みしてから、もう一度送信してください' }, { status: 400 })
+    }
+
     const intakeQna = sanitizeIntakeQna(body.intake_qna, locale)
-    // 緊急フラグ付きの選択肢があれば、クライアントの判定によらず High にする
-    const caseUrgency = hasUrgentIndicator(intakeQna?.indicators ?? []) ? 'High' : urgency
+    // 緊急フラグ付きの選択肢・自由記述の緊急語句があれば、クライアントの判定によらず High にする
+    const caseUrgency = hasUrgentIndicator(intakeQna?.indicators ?? []) || detectUrgency(descriptionFree) ? 'High' : urgency
 
     const { data: caseData, error: caseError } = await supabaseAdmin
         .from('cases')
