@@ -1,57 +1,13 @@
 {
   "questions": {
-    "intro": "※ Jika lebih dari satu yang sesuai, silakan centang semuanya",
-    "q1": {
-      "question": "Apakah Anda mengalami kesulitan terkait kebutuhan hidup sehari-hari?",
-      "options": {
-        "q1_1": "Tidak punya cukup makanan",
-        "q1_2": "Tidak punya tempat tinggal yang aman",
-        "q1_3": "Tidak bisa menggunakan listrik",
-        "q1_4": "Tidak bisa menggunakan internet",
-        "q1_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q2": {
-      "question": "Apakah Anda mengalami kesulitan terkait kehidupan yang aman dan tenteram?",
-      "options": {
-        "q2_1": "Tinggal di daerah yang berbahaya",
-        "q2_2": "Mengalami perundungan atau pelecehan",
-        "q2_3": "Mengalami kekerasan atau pelecehan fisik・mental・seksual",
-        "q2_4": "Bekerja dengan upah di bawah upah minimum, atau lembur tanpa dibayar",
-        "q2_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q3": {
-      "question": "Apakah Anda mengalami kesulitan terkait pekerjaan, uang, atau pendidikan?",
-      "options": {
-        "q3_1": "Tidak punya pekerjaan, atau hampir kehilangan pekerjaan",
-        "q3_2": "Penghasilan terlalu kecil untuk hidup secara layak",
-        "q3_3": "Tidak bisa bersekolah",
-        "q3_4": "Berusia di bawah 15 tahun tetapi bekerja",
-        "q3_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q4": {
-      "question": "Apakah saat ini Anda mengalami kesulitan terkait kesehatan fisik atau mental?",
-      "options": {
-        "q4_1": "Badan tidak sehat tetapi tidak bisa ke rumah sakit karena alasan keuangan dll.",
-        "q4_2": "Kadang merasa ingin mati",
-        "q4_3": "Menderita karena asap rokok orang lain",
-        "q4_4": "Bekerja di lingkungan berbahaya yang rawan cedera dan merasa cemas",
-        "q4_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q5": {
-      "question": "Dukungan seperti apa yang Anda harapkan?",
-      "options": {
-        "q5_1": "Ingin tahu tentang program bantuan pemerintah",
-        "q5_2": "Ingin terhubung dengan orang yang punya masalah serupa",
-        "q5_3": "Ingin terhubung dengan NPO atau organisasi pendukung",
-        "q5_4": "Ingin berkonsultasi dengan ahli seperti pengacara atau dokter",
-        "q5_5": "Bersedia membayar untuk mendapatkan dukungan",
-        "q5_6": "Tidak ada yang sesuai"
-      }
-    }
+    "title": "Pilih masalah yang sesuai dengan keadaan Anda (maksimal {max})",
+    "intro": "Anda dapat memilih hingga {max} hal yang paling mendekati. Buka setiap bagian lalu pilih. Jika tidak ada yang sesuai, Anda boleh lanjut tanpa memilih.",
+    "neighborNote": "Jika Anda tidak memilih, konsultasi Anda akan diterima sebagai \"{label}\". Masalah yang sulit digolongkan pun akan dirapikan bersama oleh supporter sambil mendengarkan cerita Anda, lalu bersama-sama mencari jalan keluarnya.",
+    "selectedHeading": "Masalah yang Anda pilih",
+    "selectedCount": "{count} / {max}",
+    "noneSelected": "Belum ada yang dipilih (Anda tetap bisa berkonsultasi tanpa memilih)",
+    "remove": "Hapus",
+    "limitReached": "Anda hanya dapat memilih hingga {max}. Jika ingin menggantinya, hapus dulu salah satu yang sudah dipilih."
   },
   "hearing": {
     "title": "Formulir konsultasi",
@@ -78,7 +34,6 @@
     "aiStep3": "Mengklasifikasikan masalah dari sudut pandang SDGs...",
     "aiStep4": "Menyiapkan pencocokan...",
     "aiWait": "Mohon tunggu sebentar...",
-    "errorAnswerRequired": "Silakan jawab minimal satu pilihan di Q{id}",
     "errorWhatRequired": "Silakan isi 「Apa yang sedang terjadi sekarang?」",
     "errorWhatTooLong": "「Apa yang sedang terjadi sekarang?」 maksimal {max} karakter",
     "errorTimeout": "Proses memakan waktu terlalu lama. Silakan coba lagi nanti.",
@@ -212,7 +167,8 @@
     "toastContinueRequested": "Kami meminta pendukung untuk terus membantu",
     "toastEvalFailed": "Gagal mengirim penilaian",
     "toastEvalSent": "Terima kasih Anda telah dikirim ke pendukung! Terima kasih 🎉",
-    "fallbackTitle": "Silakan periksa kembali"
+    "fallbackTitle": "Silakan periksa kembali",
+    "selectedIndicatorsTitle": "Masalah yang Anda pilih"
   },
   "disaster": {
     "banner": {

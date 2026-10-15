@@ -1,57 +1,13 @@
 {
   "questions": {
-    "intro": "* If more than one applies to you, please check all that apply",
-    "q1": {
-      "question": "Are you having trouble with daily necessities?",
-      "options": {
-        "q1_1": "I don't have enough food",
-        "q1_2": "I don't have a safe place to live",
-        "q1_3": "I have no electricity",
-        "q1_4": "I have no internet access",
-        "q1_5": "None of these"
-      }
-    },
-    "q2": {
-      "question": "Are you having trouble with safety or security in your life?",
-      "options": {
-        "q2_1": "I live in a dangerous area",
-        "q2_2": "I am being bullied or harassed",
-        "q2_3": "I am experiencing physical, mental, or sexual violence or harassment",
-        "q2_4": "I work for less than minimum wage, or do unpaid overtime",
-        "q2_5": "None of these"
-      }
-    },
-    "q3": {
-      "question": "Are you having trouble with work, money, or education?",
-      "options": {
-        "q3_1": "I have no job, or I am about to lose it",
-        "q3_2": "My income is too low to cover basic living costs",
-        "q3_3": "I cannot attend school",
-        "q3_4": "I am under 15 and working",
-        "q3_5": "None of these"
-      }
-    },
-    "q4": {
-      "question": "Are you currently having trouble with your health or mental well-being?",
-      "options": {
-        "q4_1": "I feel unwell but cannot go to a hospital for financial or other reasons",
-        "q4_2": "I sometimes feel like I want to die",
-        "q4_3": "Secondhand smoke is causing me distress",
-        "q4_4": "I work in a dangerous environment and worry about getting injured",
-        "q4_5": "None of these"
-      }
-    },
-    "q5": {
-      "question": "What kind of support would you like?",
-      "options": {
-        "q5_1": "I want to learn about government support programs",
-        "q5_2": "I want to connect with people who share the same struggles",
-        "q5_3": "I want to connect with an NPO or support organization",
-        "q5_4": "I want to consult a professional such as a lawyer or doctor",
-        "q5_5": "I am willing to pay for support",
-        "q5_6": "None of these"
-      }
-    }
+    "title": "Choose the troubles that apply to you (up to {max})",
+    "intro": "You can choose up to {max} that are closest to your situation. Open a category to choose. If nothing fits, it's fine to continue without choosing.",
+    "neighborNote": "If you don't choose anything, we'll accept your request as \"{label}\". Even if you're not sure how to describe your trouble, a supporter will listen and help you sort things out and find a way forward.",
+    "selectedHeading": "Troubles you chose",
+    "selectedCount": "{count} / {max}",
+    "noneSelected": "Nothing chosen yet (you can still ask for help without choosing)",
+    "remove": "Remove",
+    "limitReached": "You can choose up to {max}. To change your choices, remove one you've already chosen."
   },
   "hearing": {
     "title": "Consultation form",
@@ -78,7 +34,6 @@
     "aiStep3": "Classifying the issues from an SDGs perspective...",
     "aiStep4": "Preparing the matching...",
     "aiWait": "Please wait a moment...",
-    "errorAnswerRequired": "Please answer at least one item in Q{id}",
     "errorWhatRequired": "Please fill in \"What is happening right now?\"",
     "errorWhatTooLong": "\"What is happening right now?\" must be {max} characters or less",
     "errorTimeout": "This is taking too long. Please try again in a little while.",
@@ -212,7 +167,8 @@
     "toastContinueRequested": "We asked the supporter to continue helping",
     "toastEvalFailed": "Failed to send your rating",
     "toastEvalSent": "Your thanks have been sent to the supporters! Thank you 🎉",
-    "fallbackTitle": "Please review again"
+    "fallbackTitle": "Please review again",
+    "selectedIndicatorsTitle": "Troubles you chose"
   },
   "disaster": {
     "banner": {

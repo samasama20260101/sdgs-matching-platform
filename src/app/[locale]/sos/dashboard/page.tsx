@@ -40,7 +40,7 @@ export default function SOSDashboard() {
   const t = useTranslations('sos.dashboard');
   const tDisaster = useTranslations('sos.disaster');
   const tStatus = useTranslations('sdgs.caseStatus');
-  const tWord = useTranslations('sdgs.wordLabel');
+  const tCategory = useTranslations('sdgs.category');
   const tForm = useTranslations('common.form');
   const tActions = useTranslations('common.actions');
   const locale = useLocale();
@@ -350,7 +350,7 @@ export default function SOSDashboard() {
                                 className="px-2 py-0.5 text-xs font-medium text-white rounded"
                                 style={{ backgroundColor: SDG_COLORS[goal] }}
                               >
-                                {tWord(String(goal))}
+                                {tCategory(String(goal))}
                               </span>
                             ))}
                           </div>

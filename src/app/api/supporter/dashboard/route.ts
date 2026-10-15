@@ -1,4 +1,5 @@
 // src/app/api/supporter/dashboard/route.ts
+import { sanitizeIndicatorIds } from '@/lib/constants/intakeIndicators'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getCasePhotos } from '@/lib/constants/photos'
@@ -109,10 +110,11 @@ export async function GET(request: Request) {
     const enriched = mergedCases
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .map(c => {
-            // 災害SOSの目印だけを渡し、intake_qna本体はレスポンスに含めない
-            const { intake_qna: intakeQna, ...rest } = c as typeof c & { intake_qna?: { disaster?: { event_id?: string } } | null }
+            // 災害SOSの目印と選択肢の指標 ID だけを渡し、intake_qna本体はレスポンスに含めない
+            const { intake_qna: intakeQna, ...rest } = c as typeof c & { intake_qna?: { disaster?: { event_id?: string }; indicators?: unknown } | null }
             return {
                 ...rest,
+                indicators: sanitizeIndicatorIds(intakeQna?.indicators),
                 disaster_event_id: intakeQna?.disaster?.event_id || null,
                 disaster_needs: getDisasterNeeds(intakeQna),
                 disaster_location: getDisasterLocation(intakeQna),

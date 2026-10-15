@@ -29,7 +29,7 @@ export default function SOSCasesPage() {
   const t = useTranslations('sos.casesList');
   const tDisaster = useTranslations('sos.disaster');
   const tStatus = useTranslations('sdgs.caseStatus');
-  const tWord = useTranslations('sdgs.wordLabel');
+  const tCategory = useTranslations('sdgs.category');
   const tForm = useTranslations('common.form');
   const locale = useLocale();
   const router = useRouter();
@@ -195,7 +195,7 @@ export default function SOSCasesPage() {
                             className="text-white text-xs font-bold px-2 py-0.5 rounded"
                             style={{ backgroundColor: SDG_COLORS[goalId] }}
                           >
-                            {tWord(String(goalId))}
+                            {tCategory(String(goalId))}
                           </span>
                         ))}
                       </div>

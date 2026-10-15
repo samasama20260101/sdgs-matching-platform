@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { findIndicator } from '@/lib/constants/intakeIndicators';
+import { SDG_COLORS, isSdgGoal, SUPPORTER_BADGES, SELECTABLE_BADGES, BadgeKey } from '@/lib/constants/sdgs';
 import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { MAX_CASE_PHOTOS } from '@/lib/constants/photos';
 import { compressImageToJpeg } from '@/lib/utils/imageCompress';
@@ -28,7 +29,7 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
-  intake_qna: { qa: Record<string, string[]>; disaster?: { event_id?: string; location?: { municipality?: string; area?: string } } } | null;
+  intake_qna: { qa?: Record<string, string[]>; version?: number; indicators?: string[]; indicator_texts?: string[]; disaster?: { event_id?: string; location?: { municipality?: string; area?: string } } } | null;
   ai_sdg_suggestion: {
     title?: string;
     sdgs_goals: number[];
@@ -66,7 +67,7 @@ export default function SOSResultPage() {
   const tDisaster = useTranslations('sos.disaster');
   const tLimit = useTranslations('sos.limitModal');
   const tGoal = useTranslations('sdgs.goal');
-  const tWord = useTranslations('sdgs.wordLabel');
+  const tCategory = useTranslations('sdgs.category');
   const tBadge = useTranslations('sdgs.badge');
   const tSupporterType = useTranslations('common.supporterType');
   const tForm = useTranslations('common.form');
@@ -637,6 +638,28 @@ export default function SOSResultPage() {
           </Card>
         )}
 
+        {/* 相談者が選んだ困りごと(新形式の案件のみ)。文言は登録時に見ていた言語のスナップショット */}
+        {caseData?.intake_qna?.indicators && caseData.intake_qna.indicators.length > 0 && (
+          <Card className="mb-6 border-none shadow-sm">
+            <CardContent className="py-4">
+              <p className="text-xs font-bold text-gray-500 mb-2">{t('selectedIndicatorsTitle')}</p>
+              <ul className="space-y-2">
+                {caseData.intake_qna.indicators.map((id, index) => {
+                  const category = findIndicator(id)?.category;
+                  return (
+                    <li key={id} className="flex flex-wrap items-start gap-2">
+                      {category !== undefined && (
+                        <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded shrink-0" style={{ backgroundColor: SDG_COLORS[category] }}>{tCategory(String(category))}</span>
+                      )}
+                      <span className="text-sm text-gray-700 leading-relaxed">{caseData.intake_qna?.indicator_texts?.[index] ?? findIndicator(id)?.text}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
         {!isAnalyzing && caseData?.ai_sdg_suggestion ? (
           <div className="mb-6 space-y-4">
             <div className="text-center py-2">
@@ -676,8 +699,8 @@ export default function SOSResultPage() {
                           <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }} />
                           <div className="flex-1 p-4">
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>{tWord(String(pg.goal))}</span>
-                              <span className="text-xs text-gray-500">SDG {pg.goal} {tGoal(String(pg.goal))}</span>
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[pg.goal] || '#888' }}>{tCategory(String(pg.goal))}</span>
+                              {isSdgGoal(pg.goal) && <span className="text-xs text-gray-500">SDG {pg.goal} {tGoal(String(pg.goal))}</span>}
                             </div>
                             <h3 className="text-sm font-bold text-gray-800 mb-1.5">{pg.title}</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">{pg.explanation}</p>
@@ -694,8 +717,8 @@ export default function SOSResultPage() {
                           <div className="w-2 flex-shrink-0" style={{ backgroundColor: SDG_COLORS[goalId] }} />
                           <div className="flex-1 p-4">
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>{tWord(String(goalId))}</span>
-                              <span className="text-xs text-gray-500">SDG {goalId} {tGoal(String(goalId))}</span>
+                              <span className="text-white text-[11px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>{tCategory(String(goalId))}</span>
+                              {isSdgGoal(goalId) && <span className="text-xs text-gray-500">SDG {goalId} {tGoal(String(goalId))}</span>}
                             </div>
                           </div>
                         </div>
