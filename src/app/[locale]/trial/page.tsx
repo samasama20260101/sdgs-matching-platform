@@ -40,6 +40,15 @@ const MOCK_GOALS = [11, 10];
 // 例文で選んでおく選択肢(安全に暮らせる住まいがない / 家族の失業で世帯収入が減少)
 const SAMPLE_INDICATOR_IDS = ['11.1.1', '10.1.1'];
 
+// 「AIを安全に使うための工夫」の各項目に添える専門用語のバッジ
+function GuardTerm({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="ml-1.5 inline-block whitespace-nowrap rounded border border-blue-300 bg-white px-1.5 py-px align-middle text-[10px] font-semibold tracking-wide text-blue-700">
+      {children}
+    </span>
+  );
+}
+
 // 原文(色付き)またはマスク後(印に置き換え)を描く
 function SpanText({ text, spans, masked }: { text: string; spans: PiiSpan[]; masked: boolean }) {
   const parts: React.ReactNode[] = [];
@@ -218,6 +227,25 @@ export default function TrialPage() {
               <p className="text-sm font-bold text-amber-900">{t('limitTitle')}</p>
               <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('limitBody')}</p>
               <p className="mt-2 text-xs leading-relaxed text-amber-800">{t('limitAiNote')}</p>
+            </div>
+
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-bold text-blue-900">🛡️ {t('guardTitle')}</p>
+              <p className="mt-1 text-xs leading-relaxed text-blue-800">
+                {t('guardLead')}
+                <GuardTerm>{t('guardLeadTerm')}</GuardTerm>
+              </p>
+              <ul className="mt-2 space-y-2">
+                {(['guard1', 'guard2', 'guard3', 'guard4'] as const).map((key) => (
+                  <li key={key} className="flex gap-2 text-xs leading-relaxed text-blue-800">
+                    <span className="text-blue-500">✓</span>
+                    <span>
+                      {t(key)}
+                      <GuardTerm>{t(`${key}Term`)}</GuardTerm>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div>
