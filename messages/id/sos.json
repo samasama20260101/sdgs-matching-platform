@@ -247,9 +247,9 @@
     "sampleNote": "Contoh ini adalah isi fiktif.",
     "submit": "Coba (tidak dikirim)",
     "sample": {
-      "what": "Nama saya Hanako Yamada. Suami saya kehilangan pekerjaan sehingga kami tidak bisa membayar sewa, dan kami diminta pindah bulan depan. Mohon hubungi saya di 090-1234-5678 atau hanako.yamada@example.com.",
-      "when": "Sejak 3 bulan yang lalu",
-      "want": "Saya ingin tetap tinggal di rumah yang sekarang"
+      "what": "Nama saya Hanako Yamada. Suami saya kehilangan pekerjaan sehingga kami tidak bisa membayar sewa, dan kami diminta pindah bulan depan. Nomor HP saya 090-1234-5678.",
+      "when": "Sejak 3 bulan yang lalu, ketika perusahaan suami saya (03-1234-5678) bangkrut",
+      "want": "Saya ingin tetap tinggal di rumah yang sekarang. Mohon hubungi saya di hanako.yamada@example.com atau LINE ID: hanako_0123"
     },
     "resultTitle": "Hasil coba",
     "resultLead": "Pada layanan asli, setelah ini AI merapikan isi konsultasi. Sebelum diteruskan ke AI, informasi pribadi seperti kontak disamarkan seperti di bawah ini.",

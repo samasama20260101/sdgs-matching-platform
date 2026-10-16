@@ -154,16 +154,17 @@ export default function TrialPage() {
 
         {resultText === null ? (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" variant="outline" onClick={handleFillSample}>{t('fillSample')}</Button>
-              <span className="text-xs text-gray-400">{t('sampleNote')}</span>
-            </div>
-
             <IntakeFormFields
               selectedIndicatorIds={selectedIndicatorIds}
               onToggleIndicator={handleToggleIndicator}
               freeText={freeText}
               onFreeTextChange={setFreeText}
+              freeTextAction={
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button" variant="outline" onClick={handleFillSample}>{t('fillSample')}</Button>
+                  <span className="text-xs text-gray-400">{t('sampleNote')}</span>
+                </div>
+              }
             />
 
             {error && (

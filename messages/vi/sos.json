@@ -247,9 +247,9 @@
     "sampleNote": "Ví dụ là nội dung hư cấu.",
     "submit": "Dùng thử (không gửi đi)",
     "sample": {
-      "what": "Tôi tên là Yamada Hanako. Chồng tôi mất việc nên không trả được tiền thuê nhà, và chúng tôi bị yêu cầu chuyển đi vào tháng sau. Xin liên hệ qua số 090-1234-5678 hoặc hanako.yamada@example.com.",
-      "when": "Từ 3 tháng trước",
-      "want": "Tôi muốn tiếp tục sống ở căn nhà hiện tại"
+      "what": "Tôi tên là Yamada Hanako. Chồng tôi mất việc nên không trả được tiền thuê nhà, và chúng tôi bị yêu cầu chuyển đi vào tháng sau. Số điện thoại di động của tôi là 090-1234-5678.",
+      "when": "Từ 3 tháng trước, khi công ty của chồng tôi (03-1234-5678) bị phá sản",
+      "want": "Tôi muốn tiếp tục sống ở căn nhà hiện tại. Xin liên hệ qua hanako.yamada@example.com hoặc LINE ID: hanako_0123"
     },
     "resultTitle": "Kết quả dùng thử",
     "resultLead": "Trong dịch vụ thật, sau bước này AI sẽ sắp xếp nội dung tư vấn. Trước khi chuyển cho AI, thông tin cá nhân như thông tin liên lạc sẽ được che đi như dưới đây.",
