@@ -247,9 +247,9 @@
     "sampleNote": "The example is fictional.",
     "submit": "Try it (nothing is sent)",
     "sample": {
-      "what": "My name is Hanako Yamada. My husband lost his job and we cannot pay the rent, and we have been told to move out next month. Please contact me at 090-1234-5678 or hanako.yamada@example.com.",
-      "when": "For the past three months",
-      "want": "I want to keep living in our current home"
+      "what": "My name is Hanako Yamada. My husband lost his job and we cannot pay the rent, and we have been told to move out next month. My mobile number is 090-1234-5678.",
+      "when": "For three months, since my husband's company (03-1234-5678) went bankrupt",
+      "want": "I want to keep living in our current home. Please contact me at hanako.yamada@example.com or LINE ID: hanako_0123"
     },
     "resultTitle": "Trial result",
     "resultLead": "In the real service, AI organizes your consultation next. Before the text is passed to AI, personal information such as contact details is hidden as shown below.",

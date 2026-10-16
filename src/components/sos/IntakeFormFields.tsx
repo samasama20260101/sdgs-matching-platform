@@ -46,9 +46,11 @@ type Props = {
   onToggleIndicator: (id: string) => void;
   freeText: IntakeFreeText;
   onFreeTextChange: (next: IntakeFreeText) => void;
+  // 自由記述欄の上に置く操作(体験ページの「例文を入れてみる」など)
+  freeTextAction?: React.ReactNode;
 };
 
-export default function IntakeFormFields({ selectedIndicatorIds, onToggleIndicator, freeText, onFreeTextChange }: Props) {
+export default function IntakeFormFields({ selectedIndicatorIds, onToggleIndicator, freeText, onFreeTextChange, freeTextAction }: Props) {
   const t = useTranslations('sos.hearing');
   const tQ = useTranslations('sos.questions');
   const tSdgs = useTranslations('sdgs');
@@ -153,6 +155,8 @@ export default function IntakeFormFields({ selectedIndicatorIds, onToggleIndicat
           <CardTitle className="text-base font-medium">{t('freeSectionTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {freeTextAction}
+
           {/* 個人情報を書かせないための注意喚起。あとからのマスキングに頼らず入力段階で防ぐ
               （設計書 §5.2 と同じ思想）。送信はブロックしない */}
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
