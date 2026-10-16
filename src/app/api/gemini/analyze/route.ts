@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireActiveAppUser } from '@/lib/api/auth';
 import { isUuid } from '@/lib/api/validation';
 import { classifySDGs } from '@/lib/gemini';
+import { stripLinks } from '@/lib/aiSafety';
 import { buildIntakeTextForAi, categoriesFromIndicators, findIndicator, sanitizeIndicatorIds } from '@/lib/constants/intakeIndicators';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
@@ -29,6 +30,11 @@ type NormalizedAnalysis = {
 
 function truncateText(value: unknown, maxLength: number) {
     return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+// AI が書いた文: URL・メールアドレスを取り除いてから長さで切る(プロンプトインジェクション対策)
+function cleanAiText(value: unknown, maxLength: number) {
+    return typeof value === 'string' ? truncateText(stripLinks(value), maxLength) : '';
 }
 
 // 新形式(version 2): 選んだ困りごとの指標 ID。旧 Q1〜Q5 形式の案件は null
@@ -92,21 +98,21 @@ function normalizeAnalysis(raw: unknown, fixedGoals?: number[]): NormalizedAnaly
             if (!match) return null;
             return {
                 goal,
-                title: truncateText(match.title, 80),
-                explanation: truncateText(match.explanation, 600),
+                title: cleanAiText(match.title, 80),
+                explanation: cleanAiText(match.explanation, 600),
             };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null && !!item.title && !!item.explanation);
 
     const title = goals.length > 0
-        ? truncateText(source.title, 40) || '相談内容を確認中'
+        ? cleanAiText(source.title, 40) || '相談内容を確認中'
         : FALLBACK_TITLE;
-    const summary = truncateText(source.summary, 1000)
+    const summary = cleanAiText(source.summary, 1000)
         || (goals.length > 0
             ? '相談内容をもとに、関連しそうな支援分野を整理しました。'
             : 'もう少し詳しく教えてもらえると、より適切な支援者につなぐことができます。');
     const keywords = Array.isArray(source.keywords)
-        ? [...new Set(source.keywords.map((keyword) => truncateText(keyword, 40)).filter(Boolean))].slice(0, 8)
+        ? [...new Set(source.keywords.map((keyword) => cleanAiText(keyword, 40)).filter(Boolean))].slice(0, 8)
         : [];
 
     return {

@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-10-16(緊急フラグ 14 個・体験ページの例文、feature/trial-sample-position)
+更新: 2026-10-16(AI のプロンプトインジェクション対策、feature/ai-injection-hardening)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,6 +8,8 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
+**2026-10-16 AI のプロンプトインジェクション対策(feature/ai-injection-hardening)。** `src/lib/aiSafety.ts` を追加: `fenceConsultation()` = 相談文を `<consultation>` で囲み、相談文の中の囲みの印(全角・大文字・属性つきも)を消す(閉じて外に指示を置く手口を防ぐ)/ `stripLinks()` = AI の出力から URL・メールアドレスを除く。`classifySDGs` の 2 つのプロンプトと `disasterNeeds` が `fenceConsultation` を使う(災害ニーズにも「命令として扱わない」の一文を追加)。`/api/gemini/analyze` の `normalizeAnalysis` は AI のタイトル・要約・説明・キーワードを `stripLinks` してから長さで切る。どこからも呼ばれていなかった `generateFollowUpQuestions` / `calculateMatchingScore` を削除。テスト `scripts/tests/aiSafety.test.ts`(`test:units` に追加)。もとから: AI は表示用の文しか返せず(ツール・DB 権限なし)、大項目はサーバーが決め、緊急度はルールで判定、災害タグは 8 種の白リスト。**残り: 案件なしで任意の文を分析させる経路(`/api/gemini/analyze` の `description`、SOS ロール)に回数制限がない(課金の使いすぎ対策、未対応)。**
+
 **2026-10-16 緊急フラグを 12 → 14 個に(16.3.2 不当な長期拘束・16.10.1 人権活動を理由にした暴力や拘束を追加、ユーザー承認)。体験ページ `/trial` の「例文を入れてみる」を自由記述欄(もう少し詳しく教えてください)の中に移動(`IntakeFormFields` に `freeTextAction` を追加)。例文は 3 欄すべてに伏せられる個人情報を入れた(何に困っているか=住所[ja のみ]・携帯 / いつから=勤め先の電話 / どうしたいか=メール・LINE ID、名前は伏せられない例として残す)。6 言語で欄ごとにマスクされることを確認。** 説明用の Claude ドキュメント「案件登録QA 作り直し(指標ベース)」(マトリックス実装版つき)を作成: https://claude.ai/code/artifact/69f7caf3-563d-4cff-b359-e5e2d30176a7 。既存案件は新しい選択肢にマッピングしていない(大項目フィルターには掛かる、選択肢フィルターには掛からない)。
 
 **2026-10-15 案件登録 QA を指標ベースに作り替え(PR #41 で dev にマージ済み `69fb260`、Staging デプロイ success。本番は未反映)。** 正本は `docs/intake_indicators.md`(依頼者の表 114 選択肢・大項目・決定事項・誤字修正 9 か所)。旧 Q1〜Q5 は廃止。相談者は選択肢を 0〜3 個選ぶ(大項目ごとに開いて選ぶ UI)。0 個なら大項目 18「SDGsの隣のお困りごと」。自由記述は必須のまま。**分類は A 案: サーバーが選択肢から大項目を決め(`categoriesFromIndicators`)、AI はタイトル・要約・説明文だけ(`classifySDGs(text, fixedGoals)`)。** 緊急 = 選択肢の ⚠ フラグ(14 個・Claude 案で依頼者確認待ち)+ 自由記述の緊急語句(`src/lib/urgency.ts`、サーバーでも判定するようにした)。保存は `intake_qna = { version: 2, indicators, indicator_texts, locale }`(DB 変更なし)、旧形式の過去案件はそのまま表示。表示: 相談者側タイル=大項目、結果ページ=「あなたが選んだ困りごと」/ サポーター側タイル=大項目、詳細=指標番号つき、フィルター=大項目 1 つ → その指標を複数選択(大項目は 0 件でも全部出す)。**旧言葉ラベル(`SDG_WORD_LABELS` / `sdgs.wordLabel`)は廃止し大項目名に統一**(「お金・生活費」→「お金・生活」等)。文言は `messages/<6言語>/sdgs.json` の `category` / `indicator`(ja 以外 AI 訳)。docs・定数・ja の一致は `npm run test:units` が検査。
