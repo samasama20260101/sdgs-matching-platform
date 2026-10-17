@@ -534,6 +534,11 @@ export default function SupporterDashboard() {
             <button onClick={() => selectCategoryFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
             {allSdgs.map((s) => {
               const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
+              // 0 件の大項目は全体像を見せるため表示はするが、選べないようにする(選択中のものは外せるように残す)
+              const isEmpty = count === 0 && sdgFilter !== s;
+              if (isEmpty) {
+                return <button key={s} type="button" disabled title={isSdgGoal(s) ? `SDG ${s} ${SDG_NAMES[s]}` : undefined} className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-300 cursor-not-allowed">{intakeCategoryLabel(s)} (0)</button>;
+              }
               return <button key={s} onClick={() => selectCategoryFilter(sdgFilter === s ? null : s)} title={isSdgGoal(s) ? `SDG ${s} ${SDG_NAMES[s]}` : undefined} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>{intakeCategoryLabel(s)} ({count})</button>;
             })}
           </div>
@@ -551,9 +556,11 @@ export default function SupporterDashboard() {
                 {indicatorsInCategory(sdgFilter).map((indicator) => {
                   const count = normalCases.filter((c) => (c.indicators || []).includes(indicator.id)).length;
                   const isOn = indicatorFilter.includes(indicator.id);
+                  // 0 件の選択肢は表示だけして選べないようにする(選択中のものは外せるように残す)
+                  const isEmpty = count === 0 && !isOn;
                   return (
-                    <label key={indicator.id} className={`flex items-start gap-2 rounded-md px-2 py-1 text-xs cursor-pointer ${isOn ? 'bg-white shadow-sm' : 'hover:bg-white/60'} ${count === 0 && !isOn ? 'text-gray-400' : 'text-gray-700'}`}>
-                      <input type="checkbox" checked={isOn} onChange={() => toggleIndicatorFilter(indicator.id)} className="mt-0.5 rounded" />
+                    <label key={indicator.id} className={`flex items-start gap-2 rounded-md px-2 py-1 text-xs ${isEmpty ? 'cursor-not-allowed text-gray-300' : `cursor-pointer text-gray-700 ${isOn ? 'bg-white shadow-sm' : 'hover:bg-white/60'}`}`}>
+                      <input type="checkbox" checked={isOn} disabled={isEmpty} onChange={() => toggleIndicatorFilter(indicator.id)} className="mt-0.5 rounded disabled:cursor-not-allowed" />
                       <span className="flex-1 leading-relaxed">{indicator.text}</span>
                       <span className="shrink-0 text-gray-400">{indicator.id}・{count}件</span>
                     </label>
