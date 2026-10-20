@@ -39,7 +39,8 @@
     "errorTimeout": "처리에 시간이 너무 오래 걸리고 있습니다. 잠시 후 다시 시도해 주세요.",
     "errorUserFetch": "사용자 정보를 가져오지 못했습니다",
     "errorSave": "저장 오류: {message}",
-    "errorSubmit": "전송 중 오류가 발생했습니다"
+    "errorSubmit": "전송 중 오류가 발생했습니다",
+    "errorDailyLimit": "오늘은 더 이상 상담을 등록할 수 없습니다. 잠시 후 다시 시도해 주세요."
   },
   "limitModal": {
     "title": "상담 건수가 상한에 도달했습니다",

@@ -12,6 +12,11 @@ const TITLE_MAX_LENGTH = 80
 const ALLOWED_URGENCIES = new Set(['Low', 'Medium', 'High'])
 const ALLOWED_REGION_COUNTRIES = new Set(['JP', 'ID'])
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'zh', 'ko', 'vi', 'id'])
+// 開いている案件(OPEN・MATCHED)は 1 人 3 件まで。画面でも止めているが、API を直接呼ばれても止める
+const MAX_ACTIVE_CASES = 3
+// 1 人が 24 時間に登録できる件数(取り消したものも数える)。登録→取り消しを繰り返して AI を動かし続けるのを防ぐ。
+// 本番だけ 10 件。Staging(Vercel の preview)とローカルはテストしやすいよう上限なし
+const DAILY_CASE_LIMIT = process.env.VERCEL_ENV === 'production' ? 10 : null
 
 type CaseRow = {
     id: string
@@ -162,6 +167,35 @@ export async function POST(request: Request) {
         const requestedEventId = (requestedDisaster as { event_id?: unknown }).event_id
         if (typeof requestedEventId !== 'string' || ACTIVE_DISASTER_EVENT?.id !== requestedEventId) {
             return NextResponse.json({ error: 'この災害SOSの受付は終了しました' }, { status: 400 })
+        }
+    }
+
+    // 登録数の上限(開いている案件の数 / 24 時間の登録数)
+    const { count: activeCount, error: activeCountError } = await supabaseAdmin
+        .from('cases')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_user_id', userData.id)
+        .in('status', ['OPEN', 'MATCHED'])
+    if (activeCountError) {
+        console.error('[sos/cases] active case count error:', activeCountError)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
+    if ((activeCount ?? 0) >= MAX_ACTIVE_CASES) {
+        return NextResponse.json({ error: 'ACTIVE_CASE_LIMIT' }, { status: 409 })
+    }
+    if (DAILY_CASE_LIMIT !== null) {
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        const { count: recentCount, error: recentCountError } = await supabaseAdmin
+            .from('cases')
+            .select('id', { count: 'exact', head: true })
+            .eq('owner_user_id', userData.id)
+            .gte('created_at', since)
+        if (recentCountError) {
+            console.error('[sos/cases] recent case count error:', recentCountError)
+            return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+        }
+        if ((recentCount ?? 0) >= DAILY_CASE_LIMIT) {
+            return NextResponse.json({ error: 'DAILY_CASE_LIMIT' }, { status: 429 })
         }
     }
 

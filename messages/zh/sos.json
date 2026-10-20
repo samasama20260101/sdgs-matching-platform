@@ -39,7 +39,8 @@
     "errorTimeout": "处理时间过长。请稍后再试。",
     "errorUserFetch": "获取用户信息失败",
     "errorSave": "保存错误: {message}",
-    "errorSubmit": "发送时发生错误"
+    "errorSubmit": "发送时发生错误",
+    "errorDailyLimit": "今天无法再登记更多咨询。请稍后再试。"
   },
   "limitModal": {
     "title": "咨询数量已达上限",
