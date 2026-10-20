@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser, type ActiveOrganizationContext, type OrganizationRole } from '@/lib/organizations'
 import { NextResponse } from 'next/server'
+import { isPwnedPasswordError, PWNED_PASSWORD_MESSAGE_JA } from '@/lib/authErrors'
 
 type PublicUser = {
     id: string
@@ -214,7 +215,8 @@ export async function POST(request: Request) {
         email_confirm: true,
     })
     if (authError || !authData.user) {
-        return NextResponse.json({ error: authError?.message ?? 'Authユーザー作成に失敗しました' }, { status: 400 })
+        const message = isPwnedPasswordError(authError) ? PWNED_PASSWORD_MESSAGE_JA : authError?.message ?? 'Authユーザー作成に失敗しました'
+        return NextResponse.json({ error: message }, { status: 400 })
     }
 
     const { data: displayIdRow, error: seqError } = await supabaseAdmin

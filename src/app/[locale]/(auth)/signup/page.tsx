@@ -6,6 +6,7 @@ import { Link, useRouter } from '@/i18n/navigation'
 import { Logo } from '@/components/icons/Logo'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
 import { supabase } from '@/lib/supabase/client'
+import { isPwnedPasswordError } from '@/lib/authErrors'
 
 const PENDING_SOS_SIGNUP_KEY = 'samasama_pending_sos_signup'
 
@@ -135,6 +136,10 @@ export default function SignupPage() {
         router.push('/sos/dashboard')
       }
     } catch (err: unknown) {
+      if (isPwnedPasswordError(err)) {
+        setError(tAuth('errorPasswordPwned'))
+        return
+      }
       const message = err instanceof Error ? err.message : t('errorGeneric')
       setError(message)
     } finally {

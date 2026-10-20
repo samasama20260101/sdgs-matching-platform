@@ -5,6 +5,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { verifyCurrentPassword, isAcceptablePassword } from '@/lib/api/password'
+import { isPwnedPasswordError } from '@/lib/authErrors'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -64,6 +65,10 @@ export async function POST(request: Request) {
     if (!updateRes.ok) {
         const detail = await updateRes.json().catch(() => null) as { msg?: string; message?: string; error_description?: string } | null
         console.error('[auth/change-password] password update error:', updateRes.status, detail)
+        // 過去に流出したパスワード(漏洩パスワードのチェック)は画面側で各言語の案内に置き換える
+        if (isPwnedPasswordError(detail)) {
+            return NextResponse.json({ error: 'PASSWORD_PWNED' }, { status: 400 })
+        }
         return NextResponse.json(
             { error: detail?.msg || detail?.message || detail?.error_description || 'パスワードの更新に失敗しました' },
             { status: 400 }
