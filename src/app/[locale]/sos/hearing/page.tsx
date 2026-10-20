@@ -143,7 +143,13 @@ export default function SOSHearingPage() {
       const caseResult = await caseRes.json();
       if (!caseRes.ok) {
         console.error('Case error:', caseResult);
-        setError(t('errorSave', { message: caseResult.error }));
+        if (caseResult.error === 'ACTIVE_CASE_LIMIT') {
+          setShowLimitModal(true);
+        } else if (caseResult.error === 'DAILY_CASE_LIMIT') {
+          setError(t('errorDailyLimit'));
+        } else {
+          setError(t('errorSave', { message: caseResult.error }));
+        }
         setIsSubmitting(false);
         return;
       }

@@ -39,7 +39,8 @@
     "errorTimeout": "This is taking too long. Please try again in a little while.",
     "errorUserFetch": "Failed to load your account information",
     "errorSave": "Save error: {message}",
-    "errorSubmit": "Something went wrong while sending"
+    "errorSubmit": "Something went wrong while sending",
+    "errorDailyLimit": "You cannot register any more consultations today. Please try again later."
   },
   "limitModal": {
     "title": "You have reached the consultation limit",

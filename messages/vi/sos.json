@@ -39,7 +39,8 @@
     "errorTimeout": "Xử lý mất quá nhiều thời gian. Vui lòng thử lại sau ít phút.",
     "errorUserFetch": "Không thể tải thông tin người dùng",
     "errorSave": "Lỗi lưu: {message}",
-    "errorSubmit": "Đã xảy ra lỗi khi gửi"
+    "errorSubmit": "Đã xảy ra lỗi khi gửi",
+    "errorDailyLimit": "Hôm nay bạn không thể đăng ký thêm yêu cầu tư vấn. Vui lòng thử lại sau."
   },
   "limitModal": {
     "title": "Đã đạt giới hạn số lượng tư vấn",

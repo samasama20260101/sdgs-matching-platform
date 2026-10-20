@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
 
             const { data: caseData, error: caseError } = await supabaseAdmin
                 .from('cases')
-                .select('id, owner_user_id, description_free, intake_qna')
+                .select('id, owner_user_id, description_free, intake_qna, ai_sdg_suggestion')
                 .eq('id', caseId)
                 .maybeSingle();
 
@@ -171,6 +171,11 @@ export async function POST(request: NextRequest) {
                 );
             }
 
+            // AI 分析は 1 案件につき 1 回(課金の使いすぎ対策)。分析済みなら AI を動かさず保存済みの結果を返す
+            if (caseData.ai_sdg_suggestion) {
+                return NextResponse.json({ success: true, analysis: caseData.ai_sdg_suggestion });
+            }
+
             // 災害SOS案件はAI分類の対象外(API直叩きでも分析させない)
             const intake = caseData.intake_qna as { disaster?: unknown } | null
             if (intake?.disaster) {
@@ -186,6 +191,10 @@ export async function POST(request: NextRequest) {
             if (indicatorIds) fixedGoals = categoriesFromIndicators(indicatorIds);
             targetCaseId = caseData.id;
         } else {
+            // 案件を指定しない分析は管理者だけ(画面では使っていない。相談者が任意の文で AI を動かせないようにする)
+            if (auth.appUser.role !== 'ADMIN') {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            }
             if (!description || typeof description !== 'string') {
                 return NextResponse.json(
                     { error: '相談内容が必要です' },

@@ -39,7 +39,8 @@
     "errorTimeout": "Proses memakan waktu terlalu lama. Silakan coba lagi nanti.",
     "errorUserFetch": "Gagal memuat informasi pengguna",
     "errorSave": "Kesalahan penyimpanan: {message}",
-    "errorSubmit": "Terjadi kesalahan saat mengirim"
+    "errorSubmit": "Terjadi kesalahan saat mengirim",
+    "errorDailyLimit": "Hari ini Anda tidak dapat mendaftarkan konsultasi lagi. Silakan coba lagi nanti."
   },
   "limitModal": {
     "title": "Jumlah konsultasi telah mencapai batas",
