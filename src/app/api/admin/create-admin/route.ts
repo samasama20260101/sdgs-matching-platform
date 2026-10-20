@@ -1,6 +1,7 @@
 // src/app/api/admin/create-admin/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { isPwnedPasswordError, PWNED_PASSWORD_MESSAGE_JA } from '@/lib/authErrors'
 
 export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization')
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
         email_confirm: true,
     })
     if (authError) {
-        return NextResponse.json({ error: authError.message }, { status: 400 })
+        return NextResponse.json({ error: isPwnedPasswordError(authError) ? PWNED_PASSWORD_MESSAGE_JA : authError.message }, { status: 400 })
     }
 
     // display_id を採番
