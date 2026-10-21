@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-10-21(体験ページへの入口、feature/trial-links)
+更新: 2026-10-21(登録サポーター一覧のスマホ表示、fix/supporters-list-mobile)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,6 +8,8 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
+**2026-10-21 登録サポーター一覧(`/supporters`)のスマホ表示を修正。** 種類フィルターのボタンが 1 行に詰め込まれて「すべ/て」「企/業」とボタン内で改行していた → 折り返し(flex-wrap)+ボタン内は改行しない。「24団体」が途中で切れないように。ついでに、種別未設定の団体で `tSupporterType(null)` が MISSING_MESSAGE を出していた既存の不具合を修正(種別の札を出さない)。**サポーター用ダッシュボード(`/supporter/dashboard`)のフィルターを横スクロール化する変更は、右端が切れるとユーザー指摘があり取り消した(未コミット)。** ダッシュボードの困りごとチップが 7 段に折り返す件は未対応(直すなら横スクロール以外の方法で)。
+
 **2026-10-21 体験ページ `/trial` への入口を追加(ユーザー指示)。** トップの「無料で相談する」「サポーターを見る」の直下に小さな文字のリンク「登録せずに、相談フォームを試してみる →」(`landing.hero.tryTrial`)、登録ページの見出しの下・フォームの上に案内枠(`auth.signup.trialLead` / `trialLink`)。6 言語。`src/app/[locale]/trial/layout.tsx` で体験ページ専用の title / description / OGP(LINE 等で共有したときの表示、画像はサイト共通の og-image.png)。体験ページ自体が本番未反映なので、入口も dev→main の反映と同時に出る。確認: tsc・eslint・check:i18n・build 122/122、HTML でリンクと og タグ、Edge headless でスマホ幅の配置。
 
 **2026-10-21 cron の認証チェックを修正(CRON_SECRET ローテーションの準備)。** `/api/cron/auto-close-cases` は `authHeader !== \`Bearer ${process.env.CRON_SECRET}\`` で比べていたため、CRON_SECRET 未設定の環境では `Authorization: Bearer undefined` で誰でも通れた。`src/lib/api/cronAuth.ts` の `isValidCronAuthorization()` に置き換え(未設定・空なら必ず拒否、sha256 同士を `timingSafeEqual` で比較)。テスト `scripts/tests/cronAuth.test.ts`、ローカルで「ヘッダーなし / Bearer undefined / 空」がすべて 401 を確認。**ローテーション手順(ユーザー作業、未実施)**: `openssl rand -hex 32` → Vercel の本番プロジェクト(app.samasama.site が付いている方)で CRON_SECRET(Production)を **Edit で上書き**(削除→追加はしない)→ 本番を Redeploy(環境変数は新しいデプロイにしか効かない、JST 2:00 の実行をまたがない)→ Settings → Cron Jobs の Run で 200 を確認。Preview にも別の値を入れておく。cron は本番デプロイでしか動かない。
