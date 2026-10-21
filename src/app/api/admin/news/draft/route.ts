@@ -2,21 +2,21 @@
 // 管理者: お知らせの AI 下書き生成。DB には書かない(結果はフォームに入れて人が直す)。
 import { NextResponse } from 'next/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
-import { isNewsCategory, NEWS_MATERIAL_MAX } from '@/lib/constants/news'
+import { isNewsCategory, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX } from '@/lib/constants/news'
 import { generateNewsDraft } from '@/lib/newsDraft'
 
-function pickText(value: unknown) {
+function pickText(value: unknown, max = NEWS_MATERIAL_MAX) {
   if (typeof value !== 'string') return undefined
   const trimmed = value.trim()
   if (!trimmed) return undefined
-  return trimmed.slice(0, NEWS_MATERIAL_MAX)
+  return trimmed.slice(0, max)
 }
 
 export async function POST(request: Request) {
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
   if ('response' in auth) return auth.response
 
-  let body: { category?: unknown; materials?: { site?: unknown; memo?: unknown; notes?: unknown } }
+  let body: { category?: unknown; materials?: { site?: unknown; memo?: unknown; notes?: unknown; pageText?: unknown } }
   try {
     body = await request.json()
   } catch {
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     site: pickText(body.materials?.site),
     memo: pickText(body.materials?.memo),
     notes: pickText(body.materials?.notes),
+    pageText: pickText(body.materials?.pageText, NEWS_PAGE_TEXT_MAX),
   }
 
   const result = await generateNewsDraft(body.category, materials)

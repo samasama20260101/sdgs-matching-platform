@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import {
-    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_TOP_LIMIT, NOTE_ARTICLE_WORKFLOW_ENABLED,
+    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX, NEWS_SOURCE_URLS_MAX, NEWS_TOP_LIMIT, NOTE_ARTICLE_WORKFLOW_ENABLED,
     type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsStatus,
 } from '@/lib/constants/news'
 import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
@@ -30,7 +30,8 @@ type FormState = {
     note_article: string
     note_checklist: string
 }
-type Materials = { notes: string }
+// notes = 手で書く材料 / urls = 読み取るページ(参加団体・インタビュー)/ pageText = ページから読み取った内容(確認・修正できる)
+type Materials = { notes: string; urls: string[]; pageText: string }
 type ListFilter = 'ALL' | NewsStatus
 
 // 日本時間の YYYY-MM-DD(sv-SE ロケールは ISO 形式で日付を出す)
@@ -42,7 +43,9 @@ const emptyForm = (): FormState => ({
     category: 'NOTICE', title: '', body: '', external_url: '', published_at: '',
     interview_source: '', note_angle: null, note_article: '', note_checklist: '',
 })
-const emptyMaterials = (): Materials => ({ notes: '' })
+const emptyMaterials = (): Materials => ({ notes: '', urls: [''], pageText: '' })
+// URL から下書きを作れる種別(材料がよそのページにあるもの)
+const URL_SOURCE_CATEGORIES: NewsCategory[] = ['SUPPORTER_JOINED', 'INTERVIEW']
 const formFromPost = (post: NewsPostAdmin): FormState => ({
     category: post.category,
     title: post.title,
@@ -128,6 +131,8 @@ export default function AdminNewsPage() {
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [generating, setGenerating] = useState(false)
+    // AI 下書きの進み具合(URL からのときは「読み取り中」→「下書き中」)
+    const [genPhase, setGenPhase] = useState<'reading' | 'writing' | null>(null)
     const [formError, setFormError] = useState<string | null>(null)
     // 押したボタン(「…しています」をそのボタンにだけ出す)
     const [savingAction, setSavingAction] = useState<'draft' | 'publish' | 'apply' | 'unpublish' | null>(null)
@@ -137,7 +142,7 @@ export default function AdminNewsPage() {
     const savedStatus: NewsStatus | null = selected?.status ?? null // null = まだ保存していない新しいお知らせ
     const busy = saving || deleting || generating
     // 未保存の変更: 新しいお知らせは「何か書いたか」で判断する(種別を選んだだけでは変更扱いにしない)
-    const hasMaterials = Object.values(materials).some((v) => v.trim())
+    const hasMaterials = Boolean(materials.notes.trim() || materials.pageText.trim() || materials.urls.some((u) => u.trim()))
     const isDirty = mode === 'new'
         ? Boolean(form.title.trim() || form.body.trim() || form.external_url.trim() || form.published_at || hasMaterials)
         : !sameForm(form, savedForm) || hasMaterials
@@ -280,32 +285,83 @@ export default function AdminNewsPage() {
 
     const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
 
+    // AI に下書きを書かせる(材料: 手で書いたメモ + ページから読み取った内容)
+    const requestDraft = async (headers: Record<string, string>, notes: string, pageText: string) => {
+        setGenPhase('writing')
+        const res = await fetch('/api/admin/news/draft', {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: form.category, materials: { notes, pageText } }),
+        })
+        const result = await res.json()
+        if (!res.ok) throw new Error(result.error || '下書きを作れませんでした')
+        setForm((prev) => ({ ...prev, title: result.draft.title, body: result.draft.body }))
+    }
+
+    const confirmOverwrite = () => !(form.title.trim() || form.body.trim()) || window.confirm('タイトルか本文が入力済みです。AIの下書きで上書きしますか?')
+
+    // 材料(メモと、読み取り済みの内容)から下書きを作る
     const handleGenerate = async () => {
         setFormError(null)
-        const payload = { notes: materials.notes }
         setAiMessage(null)
-        if (!payload.notes.trim()) {
+        if (!materials.notes.trim() && !materials.pageText.trim()) {
             setAiMessage({ kind: 'error', text: '材料を入力してください' })
             return
         }
-        if ((form.title.trim() || form.body.trim()) && !window.confirm('タイトルか本文が入力済みです。AIの下書きで上書きしますか?')) return
+        if (!confirmOverwrite()) return
         setGenerating(true)
         try {
             const headers = await authHeader()
             if (!headers) return
-            const res = await fetch('/api/admin/news/draft', {
-                method: 'POST',
-                headers: { ...headers, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category: form.category, materials: payload }),
-            })
-            const result = await res.json()
-            if (!res.ok) throw new Error(result.error || '下書きを作れませんでした')
-            setForm((prev) => ({ ...prev, title: result.draft.title, body: result.draft.body }))
+            await requestDraft(headers, materials.notes, materials.pageText)
             setAiMessage({ kind: 'ok', text: 'AIの下書きを入れました。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません' })
         } catch (err) {
             setAiMessage({ kind: 'error', text: err instanceof Error ? err.message : '下書きを作れませんでした' })
         } finally {
             setGenerating(false)
+            setGenPhase(null)
+        }
+    }
+
+    // URL のページを読み取ってから、そのまま下書きまで作る(参加団体・インタビュー)
+    const handleGenerateFromUrls = async () => {
+        setFormError(null)
+        setAiMessage(null)
+        const urls = materials.urls.map((u) => u.trim()).filter(Boolean)
+        if (urls.length === 0) {
+            setAiMessage({ kind: 'error', text: 'URL を入力してください' })
+            return
+        }
+        if (!confirmOverwrite()) return
+        setGenerating(true)
+        setGenPhase('reading')
+        try {
+            const headers = await authHeader()
+            if (!headers) return
+            const res = await fetch('/api/admin/news/fetch-page', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ urls }),
+            })
+            const result = await res.json()
+            if (!res.ok) throw new Error(result.error || 'ページを読み取れませんでした')
+            const pages = result.pages as ({ ok: true; url: string; title: string; text: string } | { ok: false; url: string; reason: string })[]
+            const okPages = pages.filter((p): p is { ok: true; url: string; title: string; text: string } => p.ok)
+            const failed = pages.filter((p): p is { ok: false; url: string; reason: string } => !p.ok)
+            if (okPages.length === 0) {
+                setAiMessage({ kind: 'error', text: `ページを読み取れませんでした(${failed.map((f) => f.reason).join(' / ')})。ページの本文をコピーして、下の「材料」の欄に貼ってください` })
+                return
+            }
+            const pageText = okPages.map((p) => `【ページ: ${p.title || p.url}】${p.url}\n${p.text}`).join('\n\n').slice(0, NEWS_PAGE_TEXT_MAX)
+            setMaterials((m) => ({ ...m, pageText }))
+            await requestDraft(headers, materials.notes, pageText)
+            const note = failed.length > 0 ? `(読み取れなかったページ: ${failed.map((f) => f.url).join('、')})` : ''
+            setAiMessage({ kind: 'ok', text: `ページを読み取って下書きを入れました${note}。AIが読んだ内容は「AI が読んだ内容を確かめる」を開くと見られます。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません` })
+        } catch (err) {
+            setAiMessage({ kind: 'error', text: err instanceof Error ? err.message : '下書きを作れませんでした' })
+        } finally {
+            setGenerating(false)
+            setGenPhase(null)
         }
     }
 
@@ -641,18 +697,67 @@ export default function AdminNewsPage() {
                                                 材料を貼って押すと、タイトルと本文の下書きが入ります。材料にない事実は書かれず、足りない所は [要確認] として残ります。
                                                 個人名・連絡先は「掲載可」と書いた場合だけ使われます。
                                             </p>
+                                            {URL_SOURCE_CATEGORIES.includes(form.category) && (
+                                                <div className="space-y-2 rounded-lg border border-teal-200 bg-white p-3">
+                                                    <p className="text-sm font-semibold text-teal-900">
+                                                        {form.category === 'INTERVIEW' ? 'note の記事の URL' : '団体のサイトの URL'}
+                                                        <span className="ml-1 text-xs font-normal text-teal-700/80">(最大{NEWS_SOURCE_URLS_MAX}つ。ページを読み取って要約します)</span>
+                                                    </p>
+                                                    {materials.urls.map((url, index) => (
+                                                        <input
+                                                            key={index}
+                                                            type="url"
+                                                            value={url}
+                                                            onChange={(e) => setMaterials((m) => ({ ...m, urls: m.urls.map((u, k) => (k === index ? e.target.value : u)) }))}
+                                                            placeholder={form.category === 'INTERVIEW' ? 'https://note.com/...' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
+                                                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                                        />
+                                                    ))}
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleGenerateFromUrls}
+                                                            disabled={busy}
+                                                            className="rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold px-4 py-2 transition"
+                                                        >
+                                                            {genPhase === 'reading' ? 'ページを読み取っています…' : genPhase === 'writing' && materials.urls.some((u) => u.trim()) ? '下書きを作っています…(20秒ほど)' : 'URL から下書きを作る'}
+                                                        </button>
+                                                        {materials.urls.length < NEWS_SOURCE_URLS_MAX && (
+                                                            <button type="button" onClick={() => setMaterials((m) => ({ ...m, urls: [...m.urls, ''] }))} disabled={busy}
+                                                                className="text-xs font-semibold text-teal-700 hover:underline disabled:opacity-50">
+                                                                ＋ URL を追加
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {materials.pageText && (
+                                                        <details className="rounded-lg bg-gray-50 px-3 py-2">
+                                                            <summary className="cursor-pointer text-xs font-semibold text-gray-600">AI が読んだ内容を確かめる({materials.pageText.length}文字。直してから「材料から下書きを作る」で作り直せます)</summary>
+                                                            <textarea
+                                                                value={materials.pageText}
+                                                                onChange={(e) => setMaterials((m) => ({ ...m, pageText: e.target.value }))}
+                                                                maxLength={NEWS_PAGE_TEXT_MAX}
+                                                                rows={8}
+                                                                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                                            />
+                                                        </details>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {URL_SOURCE_CATEGORIES.includes(form.category) && (
+                                                <p className="text-xs font-semibold text-teal-900">材料(追加のメモ。電話で聞いたことなど。URL がないときはここにページの文章を貼る)</p>
+                                            )}
                                             <textarea
                                                 value={materials.notes}
-                                                onChange={(e) => setMaterials({ notes: e.target.value })}
+                                                onChange={(e) => setMaterials((m) => ({ ...m, notes: e.target.value }))}
                                                 maxLength={NEWS_MATERIAL_MAX}
-                                                rows={isSupporterJoined ? 8 : 5}
+                                                rows={isSupporterJoined ? 6 : 5}
                                                 placeholder={
                                                     form.category === 'MAINTENANCE'
                                                         ? '例: 10月5日(日) 午前2時〜4時 サーバーメンテナンス。ログインと相談の投稿ができない'
                                                         : form.category === 'INTERVIEW'
-                                                            ? '例: noteの記事タイトル、誰に何を聞いたか、印象に残った一言'
+                                                            ? '例: 誰に何を聞いたか、印象に残った一言(URL を入れたなら空でもよい)'
                                                             : isSupporterJoined
-                                                                ? '例:\n【団体のサイトより】団体の紹介・活動内容など、必要な部分をコピペ\n【電話で聞いたこと】・担当は○○さん(掲載可) ・活動地域は熊本市\n書かないでと言われた話には「非公開」と付ける'
+                                                                ? '例:\n【電話で聞いたこと】・担当は○○さん(掲載可) ・活動地域は熊本市\n書かないでと言われた話には「非公開」と付ける'
                                                                 : '伝えたいことの箇条書き(何が・いつから・変わらないこと・変わること)'
                                                 }
                                                 className="w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
@@ -661,9 +766,9 @@ export default function AdminNewsPage() {
                                                 type="button"
                                                 onClick={handleGenerate}
                                                 disabled={busy}
-                                                className="rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 transition"
+                                                className="rounded-lg border border-teal-300 bg-white hover:bg-teal-50 disabled:opacity-60 text-teal-800 text-sm font-medium px-4 py-2 transition"
                                             >
-                                                {generating ? '下書きを作成中…(20秒ほどかかります)' : '下書きを作る'}
+                                                {genPhase === 'writing' && !materials.urls.some((u) => u.trim()) ? '下書きを作っています…(20秒ほど)' : '材料から下書きを作る'}
                                             </button>
                                             {aiMessage && (
                                                 <p role={aiMessage.kind === 'error' ? 'alert' : 'status'} className={`text-sm ${aiMessage.kind === 'error' ? 'text-red-700' : 'text-teal-800'}`}>

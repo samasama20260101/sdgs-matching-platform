@@ -36,6 +36,9 @@ export const NOTE_ARTICLE_WORKFLOW_ENABLED = false
 export const NEWS_TITLE_MAX = 120
 export const NEWS_BODY_MAX = 20000
 export const NEWS_MATERIAL_MAX = 8000
+// URL のページから読み取った内容(最大 3 ページ分)を AI に渡すときの上限
+export const NEWS_PAGE_TEXT_MAX = 18000
+export const NEWS_SOURCE_URLS_MAX = 3
 export const NEWS_INTERVIEW_SOURCE_MAX = 40000  // 取材メモ・書き起こし(1時間の逐語で 2 万字前後)
 export const NEWS_ARTICLE_MAX = 30000           // note 記事本文
 export const NEWS_CHECKLIST_MAX = 10000         // 確認リスト
