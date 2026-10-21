@@ -270,7 +270,7 @@ return NextResponse.json(
 
 ### 5.4 [F] SOSヒアリング設問 → バリアント設計の「設問外出し」と統合
 
-`docs/variant_architecture_design.md` §5.2 が既に計画している
+バリアント設計書 §5.2（構想中止・2026-09-25 削除、git 履歴で参照可）が計画していた
 **QA設問の外出し＋選択肢ID化（`q4_2` 等）＋`urgent` フラグ化**は、多言語でも同じ前提になる:
 
 - 設問・選択肢の**文言はメッセージキー**（`sos.questions.q4.options.q4_2`）にする。
@@ -508,7 +508,7 @@ GoTrue のメールテンプレートは1言語1テンプレート。当面の�
 
 ## 6. バリアント（版）構想との整合 — 重要
 
-`docs/variant_architecture_design.md` と本設計は**直交する2軸**:
+バリアント設計書（構想中止・2026-09-25 削除、git 履歴で参照可）と本設計は**直交する2軸**:
 
 | 軸 | 問い | 解決手段 | 判定場所 |
 |---|---|---|---|
@@ -604,6 +604,6 @@ D案本番適用やバリアントPhase 2のmigrationと衝突しない。**i18n
 ## 10. 関連ドキュメント
 
 - `AGENTS.md` — 作業ルール・本番保護ルール・将来対応（多言語 ja⇔id）
-- `docs/variant_architecture_design.md` — バリアント構想（§6で整合を定義）
+- バリアント設計書 — 構想中止。2026-09-25 に削除（git 履歴の `docs/variant_architecture_design.md`）
 - `docs/api_security_design.md` — APIエラー形式の変更（§5.3）が触る領域
 - next-intl 公式: https://next-intl.dev/（App Router / `[locale]` セグメント構成）

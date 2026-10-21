@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
-import { SDG_COLORS, SDG_NAMES } from '@/lib/constants/sdgs';
+import { SDG_COLORS, SDG_NAMES, isSdgGoal } from '@/lib/constants/sdgs';
+import { NEIGHBOR_CATEGORY, findIndicator, intakeCategoryLabel } from '@/lib/constants/intakeIndicators';
 import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { isCasePhotosEnabled } from '@/lib/constants/photos';
 import { isMinor } from '@/lib/utils/age';
@@ -29,7 +30,7 @@ type CaseData = {
   status: string;
   created_at: string;
   supporter_resolved_at: string | null;
-  intake_qna: { qa: Record<string, string>; disaster?: { event_id?: string } };
+  intake_qna: { qa?: Record<string, string>; version?: number; indicators?: string[]; disaster?: { event_id?: string } };
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -387,7 +388,38 @@ export default function SupporterCaseDetailPage() {
               </div>
             )}
 
-            {/* Q1〜Q5 アンケート回答（折りたたみ） */}
+            {/* 相談者が選んだ困りごと(新形式の案件)。サポーターには指標番号まで見せる。文言は日本語の正本 */}
+            {caseData?.intake_qna?.version === 2 && (
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium text-gray-500 mb-3">相談者が選んだ困りごと</h3>
+                {(caseData.intake_qna.indicators ?? []).length === 0 ? (
+                  <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
+                    選択なし(「{intakeCategoryLabel(NEIGHBOR_CATEGORY)}」として受付)。分類にとらわれず、お話を聞きながら一緒に整理してください。
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {(caseData.intake_qna.indicators ?? []).map((id) => {
+                      const indicator = findIndicator(id)
+                      if (!indicator) return null
+                      return (
+                        <li key={id} className="flex flex-wrap items-start gap-2 bg-gray-50 rounded-lg p-3">
+                          <span className="text-white text-xs font-bold px-2 py-0.5 rounded shrink-0" style={{ backgroundColor: SDG_COLORS[indicator.category] }}>
+                            {intakeCategoryLabel(indicator.category)}
+                          </span>
+                          <span className="flex-1 text-sm text-gray-700 leading-relaxed">
+                            {indicator.urgent && <span className="mr-1 text-red-500">⚠</span>}
+                            {indicator.text}
+                          </span>
+                          <span className="text-[11px] text-gray-400 shrink-0">指標 {indicator.id}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Q1〜Q5 アンケート回答（折りたたみ・旧形式の案件のみ） */}
             {caseData?.intake_qna?.qa && Object.keys(caseData.intake_qna.qa).length > 0 && (
               <div className="border-t pt-4">
                 <button
@@ -419,14 +451,15 @@ export default function SupporterCaseDetailPage() {
               <div className="border-t pt-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-3">🤖 AI分析結果</h3>
                 <div className="mb-3">
-                  <p className="text-xs text-gray-500 mb-2">関連するSDGsゴール</p>
+                  <p className="text-xs text-gray-500 mb-2">{caseData.intake_qna?.version === 2 ? '困りごとの大項目' : 'AI が読み取った困りごと'}</p>
                   <div className="flex flex-wrap gap-2">
+                    {/* 言葉を主役にし、SDGs の番号と正式名は小さく添える */}
                     {caseData.ai_sdg_suggestion.sdgs_goals?.map((goalId) => (
                       <div key={goalId} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: `${SDG_COLORS[goalId]}20` }}>
                         <span className="text-white text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: SDG_COLORS[goalId] }}>
-                          SDG {goalId}
+                          {intakeCategoryLabel(goalId)}
                         </span>
-                        <span className="text-sm font-medium">{SDG_NAMES[goalId]}</span>
+                        {isSdgGoal(goalId) && <span className="text-[11px] text-gray-500">SDG {goalId} {SDG_NAMES[goalId]}</span>}
                       </div>
                     ))}
                   </div>

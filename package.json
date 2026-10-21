@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:i18n": "tsx scripts/check-i18n-keys.ts"
+    "check:i18n": "tsx scripts/check-i18n-keys.ts",
+    "test:units": "tsx scripts/tests/pii.test.ts && tsx scripts/tests/intakeIndicators.test.ts && tsx scripts/tests/aiSafety.test.ts && tsx scripts/tests/authErrors.test.ts && tsx scripts/tests/cronAuth.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

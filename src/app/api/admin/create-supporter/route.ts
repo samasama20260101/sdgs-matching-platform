@@ -1,6 +1,7 @@
 // src/app/api/admin/create-supporter/route.ts
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { isPwnedPasswordError, PWNED_PASSWORD_MESSAGE_JA } from '@/lib/authErrors'
 
 export async function POST(request: Request) {
     // 1. Authorizationヘッダーからトークンを取得してADMIN確認
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     })
 
     if (authError) {
-        return NextResponse.json({ error: authError.message }, { status: 400 })
+        return NextResponse.json({ error: isPwnedPasswordError(authError) ? PWNED_PASSWORD_MESSAGE_JA : authError.message }, { status: 400 })
     }
 
     // 4. display_id を採番（DBのシーケンス関数を使用・競合なし）

@@ -211,7 +211,11 @@ export default function HomePage() {
               {t('hero.ctaSupporters')}
             </Link>
           </div>
-          <p className="text-xs text-gray-400 mt-4">{t('hero.note')}</p>
+          {/* 体験ページへの入口。メインの「相談する」と競合しないよう、ボタンにせず小さな文字のリンクにする */}
+          <Link href="/trial" className="mt-3 inline-block px-2 py-2 text-sm font-medium text-teal-600 hover:text-teal-700 underline-offset-4 hover:underline">
+            {t('hero.tryTrial')}
+          </Link>
+          <p className="text-xs text-gray-400 mt-2">{t('hero.note')}</p>
           <div className="mt-5 flex items-center justify-center gap-2 text-sm text-gray-400">
             <span>{t('hero.haveAccount')}</span>
             <Link href="/login" className="text-teal-600 font-bold hover:text-teal-700 border-b border-dashed border-teal-400 hover:border-teal-600 transition-colors">

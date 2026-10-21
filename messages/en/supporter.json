@@ -33,7 +33,7 @@
       "badgesSubtitle": "Badges sent by people they supported",
       "badgeCount": "{count} times",
       "ctaTitle": "Want to consult this organization?",
-      "ctaBody": "Post a consultation and choose your supporter. No personal information is shared until you approve.",
+      "ctaBody": "Post a consultation and choose your supporter. Your contact details are never passed to supporters.",
       "ctaConsult": "Try a free consultation →",
       "ctaDashboard": "To dashboard →"
     }

@@ -16,7 +16,8 @@
     "description": "Whether it's poverty, education, the environment, discrimination, or isolation — AI analyzes your situation and connects you with specialized NPOs and support organizations.",
     "ctaConsult": "Get help for free →",
     "ctaSupporters": "See supporters",
-    "note": "Free to register. No personal information is shared until you approve.",
+    "tryTrial": "Try the consultation form without signing up →",
+    "note": "Free to register. Your contact details are never passed to supporters.",
     "haveAccount": "Already have an account?",
     "loginHere": "Log in here →",
     "readStory": "Read our story"
@@ -65,7 +66,7 @@
     "step4Desc": "Review each organization before approving. You are free to decline",
     "step5Title": "Resolved — support complete",
     "step5Desc": "Confirm when your problem is solved. Express your thanks with badges",
-    "privacyNote": "🔒 No personal information is shared until you approve"
+    "privacyNote": "🔒 Your contact details are never passed to supporters"
   },
   "sdgsSection": {
     "title": "SDGs goals we cover",
@@ -83,7 +84,7 @@
   "faq": {
     "title": "Common questions and worries",
     "q1": "Is my personal information safe?",
-    "a1": "Until you approve a supporter, no personally identifiable information is shared at all. Even after approval, only the minimum necessary information is shared.",
+    "a1": "Only supporters checked and registered by our team, and our team itself, can read your consultation. Your contact details are never passed to supporters; you talk with the supporter you approve through the chat on this site.",
     "q2": "Can I decline an offer from a supporter?",
     "a2": "Yes, you are completely free to decline. You decide whether to accept an offer, and you can wait until you feel comfortable.",
     "q3": "Is it really free?",
@@ -95,7 +96,7 @@
   },
   "cta": {
     "title": "Ready to take the first step?",
-    "body": "Experts who can help with your trouble are waiting. Consultation is free, and no personal information is shared until you approve.",
+    "body": "Experts who can help with your trouble are waiting. Consultation is free, and your contact details are never passed to supporters.",
     "consult": "Get help for free →",
     "login": "Log in"
   },

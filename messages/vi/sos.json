@@ -1,64 +1,20 @@
 {
   "questions": {
-    "intro": "※ Nếu có nhiều mục phù hợp, hãy đánh dấu tất cả",
-    "q1": {
-      "question": "Bạn có gặp khó khăn về những thứ cần thiết cho cuộc sống không?",
-      "options": {
-        "q1_1": "Không có đủ thức ăn",
-        "q1_2": "Không có nơi ở an toàn",
-        "q1_3": "Không có điện để dùng",
-        "q1_4": "Không có internet để dùng",
-        "q1_5": "Không có mục nào phù hợp"
-      }
-    },
-    "q2": {
-      "question": "Bạn có gặp khó khăn về cuộc sống an toàn, yên tâm không?",
-      "options": {
-        "q2_1": "Đang sống ở khu vực nguy hiểm",
-        "q2_2": "Đang bị bắt nạt hoặc quấy rối",
-        "q2_3": "Đang chịu bạo lực hoặc quấy rối về thể chất・tinh thần・tình dục",
-        "q2_4": "Làm việc với lương thấp hơn lương tối thiểu, hoặc phải làm thêm giờ không lương",
-        "q2_5": "Không có mục nào phù hợp"
-      }
-    },
-    "q3": {
-      "question": "Bạn có gặp khó khăn về công việc, tiền bạc hay học tập không?",
-      "options": {
-        "q3_1": "Không có việc làm, hoặc sắp mất việc",
-        "q3_2": "Thu nhập quá thấp, không đủ sống ở mức tối thiểu",
-        "q3_3": "Không thể đến trường",
-        "q3_4": "Dưới 15 tuổi nhưng đang phải làm việc",
-        "q3_5": "Không có mục nào phù hợp"
-      }
-    },
-    "q4": {
-      "question": "Hiện tại bạn có gặp khó khăn về sức khỏe thể chất hay tinh thần không?",
-      "options": {
-        "q4_1": "Sức khỏe không tốt nhưng không thể đi bệnh viện vì lý do tài chính v.v.",
-        "q4_2": "Đôi khi cảm thấy muốn chết",
-        "q4_3": "Khổ sở vì hít phải khói thuốc lá (hút thuốc thụ động)",
-        "q4_4": "Làm việc trong môi trường nguy hiểm dễ bị thương và cảm thấy bất an",
-        "q4_5": "Không có mục nào phù hợp"
-      }
-    },
-    "q5": {
-      "question": "Bạn mong muốn được hỗ trợ như thế nào?",
-      "options": {
-        "q5_1": "Muốn biết về các chế độ hỗ trợ của chính quyền",
-        "q5_2": "Muốn kết nối với những người có cùng nỗi lo",
-        "q5_3": "Muốn kết nối với NPO hoặc tổ chức hỗ trợ",
-        "q5_4": "Muốn tư vấn với chuyên gia như luật sư, bác sĩ",
-        "q5_5": "Muốn nhận hỗ trợ dù phải trả phí",
-        "q5_6": "Không có mục nào phù hợp"
-      }
-    }
+    "title": "Hãy chọn những khó khăn đúng với bạn (tối đa {max} mục)",
+    "intro": "Bạn có thể chọn tối đa {max} mục gần với tình trạng của mình. Hãy mở từng mục để chọn. Nếu không có mục nào phù hợp, bạn có thể bỏ qua và tiếp tục.",
+    "neighborNote": "Nếu bạn không chọn mục nào, chúng tôi sẽ tiếp nhận yêu cầu dưới mục \"{label}\". Ngay cả khi bạn không biết khó khăn của mình thuộc loại nào, tổ chức hỗ trợ sẽ lắng nghe bạn, cùng bạn sắp xếp lại vấn đề và tìm hướng giải quyết.",
+    "selectedHeading": "Những khó khăn bạn đã chọn",
+    "selectedCount": "{count} / {max}",
+    "noneSelected": "Bạn chưa chọn mục nào (không chọn vẫn có thể gửi yêu cầu tư vấn)",
+    "remove": "Bỏ chọn",
+    "limitReached": "Bạn chỉ có thể chọn tối đa {max} mục. Nếu muốn đổi, hãy bỏ chọn một mục đã chọn trước."
   },
   "hearing": {
     "title": "Mẫu tư vấn",
     "subtitle": "Hãy cho chúng tôi biết tình trạng của bạn. AI sẽ kết nối bạn với sự hỗ trợ phù hợp nhất.",
     "freeSectionTitle": "Hãy cho chúng tôi biết thêm một chút",
     "noPersonalInfoTitle": "Xin đừng viết những gì có thể nhận ra bạn là ai",
-    "noPersonalInfoBody": "Nội dung bạn viết ở đây cũng hiển thị với người hỗ trợ trước khi bạn chấp thuận họ. Xin đừng viết họ tên, địa chỉ, số điện thoại, trường học hay nơi làm việc — chỉ cần cho chúng tôi biết tình huống của bạn. Thông tin liên lạc chỉ được chia sẻ sau khi bạn chấp thuận, và chỉ trong phạm vi cần thiết.",
+    "noPersonalInfoBody": "Nội dung bạn viết ở đây cũng hiển thị với người hỗ trợ trước khi bạn chấp thuận họ. Xin đừng viết họ tên, địa chỉ, số điện thoại, trường học hay nơi làm việc — chỉ cần cho chúng tôi biết tình huống của bạn. Thông tin liên lạc của bạn không bao giờ được chuyển cho người hỗ trợ. Bạn sẽ trao đổi với người hỗ trợ đã chấp thuận qua tính năng trò chuyện trên trang này.",
     "whatLabel": "Hiện giờ đang xảy ra chuyện gì?",
     "whatHint": "Viết càng chi tiết thì càng dễ tìm được người hỗ trợ cho bạn",
     "whatPlaceholder": "VD: Bố mẹ tôi theo một tôn giáo mới và không cho tôi đi khám bệnh. Tôi sốt cao suốt một tuần nay nhưng không được chữa trị.",
@@ -70,7 +26,7 @@
     "wantPrefix": "Mong muốn: ",
     "defaultTitle": "Tư vấn",
     "submit": "Gửi nội dung tư vấn",
-    "privacyNote": "※Nội dung bạn nhập sẽ được AI sắp xếp, phân tích và dùng để tìm tổ chức hỗ trợ phù hợp với bạn. Nội dung cũng được chia sẻ với người hỗ trợ trong phạm vi cần thiết.",
+    "privacyNote": "※Nội dung bạn nhập sẽ được những người hỗ trợ đã được ban vận hành xác nhận đọc. AI che thông tin liên lạc và các thông tin cá nhân khác, rồi sắp xếp nội dung cho dễ hiểu.",
     "aiOverlayTitle": "AI đang phân tích",
     "aiPoweredBy": "Powered by Google Gemini AI",
     "aiStep1": "Đang đọc nội dung tư vấn...",
@@ -78,13 +34,13 @@
     "aiStep3": "Đang phân loại vấn đề theo góc nhìn SDGs...",
     "aiStep4": "Đang chuẩn bị ghép nối...",
     "aiWait": "Vui lòng chờ trong giây lát...",
-    "errorAnswerRequired": "Vui lòng trả lời ít nhất một mục ở Q{id}",
     "errorWhatRequired": "Vui lòng nhập 「Hiện giờ đang xảy ra chuyện gì?」",
     "errorWhatTooLong": "「Hiện giờ đang xảy ra chuyện gì?」 tối đa {max} ký tự",
     "errorTimeout": "Xử lý mất quá nhiều thời gian. Vui lòng thử lại sau ít phút.",
     "errorUserFetch": "Không thể tải thông tin người dùng",
     "errorSave": "Lỗi lưu: {message}",
-    "errorSubmit": "Đã xảy ra lỗi khi gửi"
+    "errorSubmit": "Đã xảy ra lỗi khi gửi",
+    "errorDailyLimit": "Hôm nay bạn không thể đăng ký thêm yêu cầu tư vấn. Vui lòng thử lại sau."
   },
   "limitModal": {
     "title": "Đã đạt giới hạn số lượng tư vấn",
@@ -212,7 +168,8 @@
     "toastContinueRequested": "Đã đề nghị người hỗ trợ tiếp tục giúp đỡ",
     "toastEvalFailed": "Gửi đánh giá thất bại",
     "toastEvalSent": "Đã gửi lời cảm ơn đến người hỗ trợ! Cảm ơn bạn 🎉",
-    "fallbackTitle": "Vui lòng xem lại"
+    "fallbackTitle": "Vui lòng xem lại",
+    "selectedIndicatorsTitle": "Những khó khăn bạn đã chọn"
   },
   "disaster": {
     "banner": {
@@ -280,5 +237,77 @@
       "saved": "Đã lưu khu vực",
       "notSet": "Chưa chọn"
     }
+  },
+  "trial": {
+    "badge": "Bản dùng thử",
+    "title": "Dùng thử biểu mẫu tư vấn",
+    "subtitle": "Trả lời các câu hỏi giống như biểu mẫu thật để xem quy trình tư vấn. Không cần đăng ký hay đăng nhập.",
+    "safeTitle": "Nội dung bạn nhập không được gửi đi đâu cả",
+    "safeBody": "Bản dùng thử này chỉ chạy trên thiết bị của bạn. Nội dung bạn nhập không được gửi hay lưu lại, và cũng không có phân tích bằng AI. Nội dung này không được tiếp nhận như một yêu cầu tư vấn thật.",
+    "fillSample": "Điền thử ví dụ",
+    "sampleNote": "Ví dụ là nội dung hư cấu.",
+    "submit": "Dùng thử (không gửi đi)",
+    "sample": {
+      "what": "Tôi tên là Yamada Hanako. Chồng tôi mất việc nên không trả được tiền thuê nhà, và chúng tôi bị yêu cầu chuyển đi vào tháng sau. Số điện thoại di động của tôi là 090-1234-5678.",
+      "when": "Từ 3 tháng trước, khi công ty của chồng tôi (03-1234-5678) bị phá sản",
+      "want": "Tôi muốn tiếp tục sống ở căn nhà hiện tại. Xin liên hệ qua hanako.yamada@example.com hoặc LINE ID: hanako_0123"
+    },
+    "resultTitle": "Kết quả dùng thử",
+    "resultLead": "Trong dịch vụ thật, sau bước này AI sẽ sắp xếp nội dung tư vấn. Trước khi chuyển cho AI, thông tin cá nhân như thông tin liên lạc sẽ được che đi như dưới đây.",
+    "beforeTitle": "Nội dung bạn đã viết",
+    "beforeNote": "Phần được tô màu là chỗ được phát hiện là thông tin cá nhân.",
+    "readerTitle": "Chỉ những người hỗ trợ đã được ban vận hành xác nhận mới đọc nội dung này",
+    "readerBody": "Nội dung bạn viết chỉ được các tổ chức hỗ trợ như NPO, chính quyền địa phương (người hỗ trợ) đã được ban vận hành xác nhận và đăng ký đọc, và họ sẽ suy nghĩ cách giúp bạn. Nội dung này không bao giờ được công khai trên internet.",
+    "afterTitle": "Nội dung chuyển cho AI",
+    "afterNote": "Những chỗ được phát hiện sẽ được thay bằng ký hiệu.",
+    "foundCount": "Đã che {count} chỗ",
+    "foundNone": "Không tìm thấy chỗ nào cần che",
+    "categories": {
+      "url": "URL",
+      "email": "Địa chỉ email",
+      "sns": "ID mạng xã hội",
+      "postal": "Mã bưu chính",
+      "phone": "Số điện thoại",
+      "dob": "Ngày sinh",
+      "date": "Ngày tháng",
+      "address": "Địa chỉ",
+      "number": "Dãy số dài"
+    },
+    "limitTitle": "Có những thông tin không thể tự động che",
+    "limitBody": "Họ tên, tên trường, nơi làm việc… không thể tự động phát hiện. Ngoài ra, chỉ có nội dung chuyển cho AI được che; bên hỗ trợ sẽ thấy đúng những gì bạn đã viết. Ở biểu mẫu thật, xin cũng đừng viết những điều có thể xác định danh tính của bạn.",
+    "limitAiNote": "Trong dịch vụ thật, sau bước này AI sẽ đọc nội dung tư vấn và sắp xếp lại để người hỗ trợ dễ hiểu. Dịch vụ AI mà chúng tôi sử dụng có thỏa thuận không dùng nội dung nhận được để huấn luyện. Ngay cả khi có thông tin chưa được che bị chuyển cho AI, thông tin đó cũng không được dùng để huấn luyện AI, nên bạn hãy yên tâm gửi tư vấn.",
+    "guardTitle": "Cách chúng tôi dùng AI an toàn",
+    "guardLead": "Ngoài việc che thông tin cá nhân, chúng tôi còn có nhiều lớp bảo vệ để AI không bị lợi dụng.",
+    "guardLeadTerm": "Phòng thủ nhiều lớp",
+    "guard1": "Dù nội dung tư vấn có viết \"lệnh để lừa AI\", AI cũng được thiết lập để không làm theo.",
+    "guard1Term": "Chống tấn công prompt injection",
+    "guard2": "Nếu AI viết ra đường link hoặc địa chỉ email, nội dung đó sẽ không được hiển thị trên màn hình.",
+    "guard2Term": "Lọc đầu ra",
+    "guard3": "AI chỉ có thể viết văn bản. AI không thể xem hay thay đổi dữ liệu tư vấn.",
+    "guard3Term": "Nguyên tắc đặc quyền tối thiểu",
+    "guard4": "Việc phân loại khó khăn và xác định \"có khẩn cấp không\" do các quy tắc định sẵn quyết định, không phải do AI.",
+    "guard4Term": "Quyết định theo quy tắc",
+    "nextTitle": "Trong dịch vụ thật, sau bước này",
+    "nextLead": "Các màn hình dưới đây là ví dụ hiển thị, không liên quan đến nội dung bạn đã nhập khi dùng thử.",
+    "exampleTag": "Ví dụ",
+    "next1Title": "AI sắp xếp những khó khăn của bạn",
+    "next2Title": "Các tổ chức hỗ trợ gửi đề nghị cho bạn",
+    "next3Title": "Bạn trò chuyện với tổ chức mà bạn chấp thuận",
+    "mockCaseTitle": "Không trả được tiền thuê nhà và sắp mất chỗ ở",
+    "mockAiMessage": "Nỗi lo có thể mất chỗ ở là một gánh nặng rất lớn. Bạn không đơn độc.",
+    "mockOrgName": "Tổ chức phi lợi nhuận Phòng tư vấn đời sống (hư cấu)",
+    "mockOfferMessage": "Chúng tôi nhận tư vấn về nhà ở. Trước hết xin hãy kể cho chúng tôi nghe tình hình của bạn.",
+    "mockApprove": "Chấp thuận",
+    "mockDecline": "Để sau",
+    "mockChatSupporter": "Xin chào. Xin hãy cho chúng tôi biết tình hình hiện tại trong phạm vi bạn có thể chia sẻ.",
+    "mockChatUser": "Cảm ơn. Tôi bị yêu cầu phải chuyển đi trước tháng sau.",
+    "next1": "AI sắp xếp nội dung tư vấn và cho biết các lĩnh vực hỗ trợ liên quan.",
+    "next2": "Các tổ chức hỗ trợ đọc nội dung sẽ gửi đề nghị hỗ trợ cho bạn.",
+    "next3": "Bạn chỉ trao đổi qua trò chuyện với những tổ chức mà bạn chấp thuận.",
+    "ctaSosTitle": "Dành cho người muốn được tư vấn",
+    "ctaSos": "Tạo tài khoản và gửi tư vấn",
+    "ctaSupporterTitle": "Dành cho tổ chức muốn hỗ trợ",
+    "ctaSupporter": "Tìm hiểu về tổ chức hỗ trợ",
+    "retry": "Thử lại"
   }
 }

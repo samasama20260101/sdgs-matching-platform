@@ -423,7 +423,7 @@ Production DBに対するSQL実行を検討します。
 
 ### 本番作業者
 
-- [ ] `docs/production_supporter_db_refresh_runbook.md` を読んでいる
+- [ ] `AGENTS.md` の本番保護ルールと、対象作業のrunbookを読んでいる
 - [ ] Production project refをDashboardで確認できる
 - [ ] メンテナンスモードの有効化・解除手順を理解している
 - [ ] SQL実行前に、Project ref、SQL全文、影響範囲、rollback方針を提示できる
@@ -476,4 +476,3 @@ Next.jsアプリの通常起動では使いません。
 | `docs/supabase_io_and_db_access_guidelines.md` | DBアクセス量、Disk IO、ポーリング設計 |
 | `docs/maintenance_mode.md` | メンテナンスモード運用 |
 | `docs/staging_role_function_test_spec.md` | Stagingロール別テスト仕様 |
-| `docs/production_supporter_db_refresh_runbook.md` | Production DB刷新手順 |

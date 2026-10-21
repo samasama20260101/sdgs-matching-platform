@@ -47,6 +47,7 @@ export default function ChangePasswordPage() {
             case 'CURRENT_PASSWORD_MISMATCH': return t('errorCurrentMismatch')
             case 'SAME_AS_CURRENT': return t('errorSameAsCurrent')
             case 'INVALID_NEW_PASSWORD': return t('errorTooShort')
+            case 'PASSWORD_PWNED': return tAuth('errorPasswordPwned')
             default: return typeof code === 'string' && code ? code : t('errorGeneric')
         }
     }
