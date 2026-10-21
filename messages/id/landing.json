@@ -16,7 +16,7 @@
     "ctaConsult": "Konsultasi gratis →",
     "ctaSupporters": "Lihat pendukung",
     "tryTrial": "Coba formulir konsultasi tanpa mendaftar →",
-    "note": "Pendaftaran gratis・Informasi pribadi tidak dibagikan sampai Anda menyetujui",
+    "note": "Pendaftaran gratis・Kontak Anda tidak pernah diberikan kepada pendukung",
     "haveAccount": "Sudah punya akun?",
     "loginHere": "Masuk di sini →",
     "readStory": "Baca kisah kami"
@@ -65,7 +65,7 @@
     "step4Desc": "Periksa informasi organisasi sebelum menyetujui. Bebas juga untuk menolak",
     "step5Title": "Selesai・dukungan tuntas",
     "step5Desc": "Konfirmasi saat masalah terselesaikan. Sampaikan terima kasih dengan lencana",
-    "privacyNote": "🔒 Informasi pribadi tidak dibagikan sampai Anda menyetujui"
+    "privacyNote": "🔒 Kontak Anda tidak pernah diberikan kepada pendukung"
   },
   "sdgsSection": {
     "title": "Tujuan SDGs yang dicakup",
@@ -83,7 +83,7 @@
   "faq": {
     "title": "Kekhawatiran dan pertanyaan umum",
     "q1": "Apakah informasi pribadi saya aman?",
-    "a1": "Sampai Anda menyetujui pendukung, tidak ada informasi yang dapat mengidentifikasi pribadi yang dibagikan sama sekali. Setelah disetujui pun hanya informasi minimum yang diperlukan yang dibagikan.",
+    "a1": "Hanya pendamping yang sudah diperiksa dan didaftarkan tim kami, serta tim kami sendiri, yang dapat membaca konsultasi Anda. Kontak Anda tidak pernah diberikan kepada pendukung; Anda berbincang dengan pendukung yang Anda setujui melalui fitur obrolan di situs ini.",
     "q2": "Bisakah saya menolak tawaran dari pendukung?",
     "a2": "Ya, Anda bebas menolak. Anda yang memutuskan menerima tawaran atau tidak, dan boleh menunggu sampai merasa yakin.",
     "q3": "Benar-benar gratis?",
@@ -95,7 +95,7 @@
   },
   "cta": {
     "title": "Mau mencoba melangkah?",
-    "body": "Para ahli yang dapat menyelesaikan kesulitan Anda sedang menunggu. Konsultasi gratis. Informasi pribadi tidak dibagikan sampai Anda menyetujui.",
+    "body": "Para ahli yang dapat menyelesaikan kesulitan Anda sedang menunggu. Konsultasi gratis. Kontak Anda tidak pernah diberikan kepada pendukung.",
     "consult": "Konsultasi gratis →",
     "login": "Masuk"
   },
