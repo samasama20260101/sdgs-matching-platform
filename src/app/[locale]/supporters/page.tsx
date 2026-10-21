@@ -141,7 +141,7 @@ export default function SupportersPage() {
         <h1 className="text-2xl font-black text-gray-800 mt-3">{t('title')}</h1>
         <p className="text-gray-500 text-sm mt-1">
           {t('subtitle')}
-          {supporters.length > 0 && <span className="ml-2 text-teal-600 font-bold">{t('orgCount', { count: supporters.length })}</span>}
+          {supporters.length > 0 && <>{' '}<span className="whitespace-nowrap text-teal-600 font-bold">{t('orgCount', { count: supporters.length })}</span></>}
         </p>
 
         {userRegionCode && regionMatchCount > 0 && (
@@ -151,7 +151,8 @@ export default function SupportersPage() {
           </div>
         )}
 
-        <div className="flex gap-2 mt-5 mb-6">
+        {/* スマホでは 1 行に収まらないので折り返す。ボタンの中では改行させない */}
+        <div className="flex flex-wrap gap-2 mt-5 mb-6">
           {[
             { key: null, label: t('filterAll') },
             { key: 'NPO', label: `🌿 ${tSupporterType('NPO')}` },
@@ -160,7 +161,7 @@ export default function SupportersPage() {
             { key: 'OTHER', label: `🤝 ${tSupporterType('OTHER')}` },
           ].map(({ key, label }) => (
             <button key={String(key)} onClick={() => handleTypeFilter(key)}
-              className={`text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
+              className={`whitespace-nowrap text-xs font-bold px-4 py-2 rounded-full transition-all border ${typeFilter === key
                 ? 'bg-teal-500 text-white border-teal-500'
                 : 'bg-white text-gray-500 border-gray-200 hover:border-teal-300'}`}>
               {label}
@@ -217,9 +218,12 @@ export default function SupportersPage() {
                           </span>
                         )}
                       </div>
-                      <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${getSupporterTypeConfig(s.supporter_type).badgeClass} border`}>
-                        {tSupporterType(s.supporter_type)}
-                      </span>
+                      {/* 種別が未設定の団体は種別の札を出さない(翻訳キーが null になり MISSING_MESSAGE が出ていた) */}
+                      {s.supporter_type && (
+                        <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${getSupporterTypeConfig(s.supporter_type).badgeClass} border`}>
+                          {tSupporterType(s.supporter_type)}
+                        </span>
+                      )}
                     </div>
                   </div>
 
