@@ -30,7 +30,7 @@ type FormState = {
     note_article: string
     note_checklist: string
 }
-type Materials = { site: string; memo: string; notes: string }
+type Materials = { notes: string }
 type ListFilter = 'ALL' | NewsStatus
 
 // 日本時間の YYYY-MM-DD(sv-SE ロケールは ISO 形式で日付を出す)
@@ -41,7 +41,7 @@ const emptyForm = (): FormState => ({
     category: 'NOTICE', title: '', body: '', external_url: '', published_at: '',
     interview_source: '', note_angle: null, note_article: '', note_checklist: '',
 })
-const emptyMaterials = (): Materials => ({ site: '', memo: '', notes: '' })
+const emptyMaterials = (): Materials => ({ notes: '' })
 const formFromPost = (post: NewsPostAdmin): FormState => ({
     category: post.category,
     title: post.title,
@@ -241,10 +241,8 @@ export default function AdminNewsPage() {
 
     const handleGenerate = async () => {
         setFormError(null)
-        const payload = form.category === 'SUPPORTER_JOINED'
-            ? { site: materials.site, memo: materials.memo }
-            : { notes: materials.notes }
-        if (!Object.values(payload).some((v) => v.trim())) {
+        const payload = { notes: materials.notes }
+        if (!payload.notes.trim()) {
             setFormError('材料を入力してください')
             return
         }
@@ -587,41 +585,22 @@ export default function AdminNewsPage() {
                                                 材料を貼って押すと、タイトルと本文の下書きが入ります。材料にない事実は書かれず、足りない所は [要確認] として残ります。
                                                 個人名・連絡先は「掲載可」と書いた場合だけ使われます。
                                             </p>
-                                            {isSupporterJoined ? (
-                                                <>
-                                                    <textarea
-                                                        value={materials.site}
-                                                        onChange={(e) => setMaterials((m) => ({ ...m, site: e.target.value }))}
-                                                        maxLength={NEWS_MATERIAL_MAX}
-                                                        rows={4}
-                                                        placeholder="団体のサイトから写した文(団体の紹介・活動内容など、必要な部分をコピペ)"
-                                                        className="w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
-                                                    />
-                                                    <textarea
-                                                        value={materials.memo}
-                                                        onChange={(e) => setMaterials((m) => ({ ...m, memo: e.target.value }))}
-                                                        maxLength={NEWS_MATERIAL_MAX}
-                                                        rows={5}
-                                                        placeholder={'電話などで聞いたメモ(箇条書きでOK)\n例: ・担当は○○さん(掲載可) ・活動地域は熊本市 ・ここは書かないで、と言われた話は「非公開」と付ける'}
-                                                        className="w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
-                                                    />
-                                                </>
-                                            ) : (
-                                                <textarea
-                                                    value={materials.notes}
-                                                    onChange={(e) => setMaterials((m) => ({ ...m, notes: e.target.value }))}
-                                                    maxLength={NEWS_MATERIAL_MAX}
-                                                    rows={5}
-                                                    placeholder={
-                                                        form.category === 'MAINTENANCE'
-                                                            ? '例: 10月5日(日) 午前2時〜4時 サーバーメンテナンス。ログインと相談の投稿ができない'
-                                                            : form.category === 'INTERVIEW'
-                                                                ? '例: noteの記事タイトル、誰に何を聞いたか、印象に残った一言'
+                                            <textarea
+                                                value={materials.notes}
+                                                onChange={(e) => setMaterials({ notes: e.target.value })}
+                                                maxLength={NEWS_MATERIAL_MAX}
+                                                rows={isSupporterJoined ? 8 : 5}
+                                                placeholder={
+                                                    form.category === 'MAINTENANCE'
+                                                        ? '例: 10月5日(日) 午前2時〜4時 サーバーメンテナンス。ログインと相談の投稿ができない'
+                                                        : form.category === 'INTERVIEW'
+                                                            ? '例: noteの記事タイトル、誰に何を聞いたか、印象に残った一言'
+                                                            : isSupporterJoined
+                                                                ? '例:\n【団体のサイトより】団体の紹介・活動内容など、必要な部分をコピペ\n【電話で聞いたこと】・担当は○○さん(掲載可) ・活動地域は熊本市\n書かないでと言われた話には「非公開」と付ける'
                                                                 : '伝えたいことの箇条書き(何が・いつから・変わらないこと・変わること)'
-                                                    }
-                                                    className="w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
-                                                />
-                                            )}
+                                                }
+                                                className="w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={handleGenerate}

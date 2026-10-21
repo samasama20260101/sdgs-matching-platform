@@ -3,9 +3,9 @@
 import { type NewsCategory, NEWS_MATERIAL_MAX } from '../constants/news'
 
 export type NewsDraftMaterials = {
-  site?: string  // 参加団体: 団体のサイトから写した文
-  memo?: string  // 参加団体: 電話などで聞いたメモ
-  notes?: string // その他の種別: 伝えたいことのメモ
+  notes?: string // 材料(全種別で 1 欄。参加団体ならサイトの文と電話で聞いたことをまとめて貼る)
+  site?: string  // 旧: 参加団体の「団体のサイトから写した文」欄(2026-10-21 に 1 欄へ統合。古い画面からの送信用に残す)
+  memo?: string  // 旧: 参加団体の「電話などで聞いたメモ」欄
 }
 
 export type NewsDraft = { title: string; body: string }
@@ -62,19 +62,12 @@ function materialBlock(label: string, value: string) {
 }
 
 // 材料を種別に応じて整形する。空なら null(呼び出し側で 400 にする)
+// 2026-10-21: 参加団体も他の種別と同じ 1 欄にした(画面の記入例で「サイトより」「電話で聞いたこと」を書き分けてもらう)
 export function buildMaterialSection(category: NewsCategory, materials: NewsDraftMaterials) {
-  if (category === 'SUPPORTER_JOINED') {
-    const site = clip(materials.site)
-    const memo = clip(materials.memo)
-    if (!site && !memo) return null
-    const blocks = []
-    if (site) blocks.push(materialBlock('団体のサイトから写した文', site))
-    if (memo) blocks.push(materialBlock('電話などで聞いたメモ', memo))
-    return blocks.join('\n\n')
-  }
-  const notes = clip(materials.notes)
-  if (!notes) return null
-  return materialBlock('伝えたいことのメモ', notes)
+  const parts = [clip(materials.notes), clip(materials.site), clip(materials.memo)].filter(Boolean)
+  if (parts.length === 0) return null
+  const label = category === 'SUPPORTER_JOINED' ? '団体についての材料(団体のサイトの文・電話などで聞いたこと)' : '伝えたいことのメモ'
+  return materialBlock(label, parts.join('\n\n').slice(0, NEWS_MATERIAL_MAX))
 }
 
 export function buildNewsDraftPrompt(category: NewsCategory, materials: NewsDraftMaterials) {
