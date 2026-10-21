@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-10-21(セキュリティヘッダー、feature/security-headers)
+更新: 2026-10-21(cron 認証の修正、fix/cron-secret-check)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,6 +8,8 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
+**2026-10-21 cron の認証チェックを修正(CRON_SECRET ローテーションの準備)。** `/api/cron/auto-close-cases` は `authHeader !== \`Bearer ${process.env.CRON_SECRET}\`` で比べていたため、CRON_SECRET 未設定の環境では `Authorization: Bearer undefined` で誰でも通れた。`src/lib/api/cronAuth.ts` の `isValidCronAuthorization()` に置き換え(未設定・空なら必ず拒否、sha256 同士を `timingSafeEqual` で比較)。テスト `scripts/tests/cronAuth.test.ts`、ローカルで「ヘッダーなし / Bearer undefined / 空」がすべて 401 を確認。**ローテーション手順(ユーザー作業、未実施)**: `openssl rand -hex 32` → Vercel の本番プロジェクト(app.samasama.site が付いている方)で CRON_SECRET(Production)を **Edit で上書き**(削除→追加はしない)→ 本番を Redeploy(環境変数は新しいデプロイにしか効かない、JST 2:00 の実行をまたがない)→ Settings → Cron Jobs の Run で 200 を確認。Preview にも別の値を入れておく。cron は本番デプロイでしか動かない。
+
 **2026-10-21 セキュリティヘッダーを追加(指示書_セキュリティヘッダー.md、PR #47 で dev にマージ済み `7ae6405`、本番は未反映)。** `next.config.ts` の `headers()` で全パスに `X-Frame-Options: DENY` / `X-Content-Type-Options: nosniff` / `Referrer-Policy: strict-origin-when-cross-origin` / `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`。CSP は入れていない(GA・インラインスクリプトと衝突しやすい。`frame-ancestors 'none'` だけ足す案は保留)。埋め込み: 会社サイトからはリンクで移るだけ(ユーザー回答)なので DENY で問題なし。検証: tsc・build 122/122、ローカルで `/` `/en` `/api/health` `/trial` に 4 つとも付くことを curl で確認。本番 app.samasama.site は HSTS(`max-age=63072000`)付与済み、他 4 つは未設定(本番反映で付く)。ユーザーがブラウザで確認済み(写真アップロード・リンクコピー・mask-lab・GA、問題なし)。Staging でも `/`(dev-login へのリダイレクト)と `/api/health` に 4 つとも付くことを curl で確認。
 
 **2026-10-20 案件登録と AI 分析の回数制限(課金の使いすぎ対策)。** 案件登録 API(`/api/sos/cases` POST): 開いている案件(OPEN・MATCHED)は 1 人 3 件まで(画面だけでなくサーバーでも、`ACTIVE_CASE_LIMIT` 409)/ 24 時間の登録は本番だけ 10 件まで(取り消しも数える、`DAILY_CASE_LIMIT` 429、`VERCEL_ENV === 'production'` で判定。Staging・ローカルは上限なし)。AI 分析 API(`/api/gemini/analyze`): 分析済みの案件は AI を動かさず保存済みの結果を返す(1 案件 1 回)/ 案件を指定しない分析は管理者だけ。CAPTCHA はオフのまま(設定だけでオンにすると全員ログイン不可。入れるなら Cloudflare Turnstile、パスワード変更の現 PW 確認もトークンを渡す形に)。登録総数の上限(MAX_SOS_USERS = 1000)はロボットに埋められると弱点になる点は未対応。流出パスワードの案内は PR #45(dev マージ済み)。

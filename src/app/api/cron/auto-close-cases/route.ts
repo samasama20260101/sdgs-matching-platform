@@ -5,11 +5,11 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
 import { NextResponse } from 'next/server'
+import { isValidCronAuthorization } from '@/lib/api/cronAuth'
 
 export async function GET(request: Request) {
     // Vercel Cronからのリクエストのみ許可
-    const authHeader = request.headers.get('Authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!isValidCronAuthorization(request.headers.get('Authorization'), process.env.CRON_SECRET)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
