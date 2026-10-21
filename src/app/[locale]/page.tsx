@@ -96,7 +96,10 @@ export default function HomePage() {
           .then(async (d) => {
             if (d.role === 'SOS') router.replace('/sos/dashboard');
             else if (d.role === 'SUPPORTER') router.replace('/supporter/dashboard');
-            else if (d.role === 'ADMIN') router.replace('/admin/dashboard');
+            else if (d.role === 'ADMIN') {
+              // 運営がお知らせなどの見え方を確かめるとき(/?view=home)は転送しない。運営だけ(2026-10-22)
+              if (new URLSearchParams(window.location.search).get('view') !== 'home') router.replace('/admin/dashboard');
+            }
             else if (!d.role && session.user.user_metadata?.real_name) {
               // メール確認リンクからの着地: ログイン済みだがプロフィール未作成の状態。
               // 認証メタデータから登録を完成させてそのままダッシュボードへ
