@@ -26,7 +26,7 @@
     "wantPrefix": "希望的状态: ",
     "defaultTitle": "咨询",
     "submit": "发送咨询内容",
-    "privacyNote": "※您填写的内容将由AI整理和分析，用于寻找适合您的支援组织。在支援所需的范围内，也会与支援者共享。",
+    "privacyNote": "※您填写的内容将由经运营方确认的支援者阅读。AI会先隐去联系方式等信息，再把内容整理得便于理解。",
     "aiOverlayTitle": "AI正在分析",
     "aiPoweredBy": "Powered by Google Gemini AI",
     "aiStep1": "正在读取咨询内容...",

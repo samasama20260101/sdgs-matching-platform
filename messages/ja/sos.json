@@ -26,7 +26,7 @@
     "wantPrefix": "どうなりたい: ",
     "defaultTitle": "相談",
     "submit": "相談内容を送信する",
-    "privacyNote": "※入力いただいた内容はAIが整理・分析し、あなたに合った支援組織を探すために使われます。支援に必要な範囲でサポーターにも共有されます。",
+    "privacyNote": "※入力いただいた内容は、運営が確認したサポーターが読みます。AIは連絡先などを伏せたうえで、内容を伝わりやすく整理します。",
     "aiOverlayTitle": "AIが分析しています",
     "aiPoweredBy": "Powered by Google Gemini AI",
     "aiStep1": "相談内容を読み取っています...",

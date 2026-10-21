@@ -26,7 +26,7 @@
     "wantPrefix": "Mong muốn: ",
     "defaultTitle": "Tư vấn",
     "submit": "Gửi nội dung tư vấn",
-    "privacyNote": "※Nội dung bạn nhập sẽ được AI sắp xếp, phân tích và dùng để tìm tổ chức hỗ trợ phù hợp với bạn. Nội dung cũng được chia sẻ với người hỗ trợ trong phạm vi cần thiết.",
+    "privacyNote": "※Nội dung bạn nhập sẽ được những người hỗ trợ đã được ban vận hành xác nhận đọc. AI che thông tin liên lạc và các thông tin cá nhân khác, rồi sắp xếp nội dung cho dễ hiểu.",
     "aiOverlayTitle": "AI đang phân tích",
     "aiPoweredBy": "Powered by Google Gemini AI",
     "aiStep1": "Đang đọc nội dung tư vấn...",
