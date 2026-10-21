@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-10-21(cron 認証の修正、fix/cron-secret-check)
+更新: 2026-10-21(体験ページへの入口、feature/trial-links)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,6 +8,8 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
+**2026-10-21 体験ページ `/trial` への入口を追加(ユーザー指示)。** トップの「無料で相談する」「サポーターを見る」の直下に小さな文字のリンク「登録せずに、相談フォームを試してみる →」(`landing.hero.tryTrial`)、登録ページの見出しの下・フォームの上に案内枠(`auth.signup.trialLead` / `trialLink`)。6 言語。`src/app/[locale]/trial/layout.tsx` で体験ページ専用の title / description / OGP(LINE 等で共有したときの表示、画像はサイト共通の og-image.png)。体験ページ自体が本番未反映なので、入口も dev→main の反映と同時に出る。確認: tsc・eslint・check:i18n・build 122/122、HTML でリンクと og タグ、Edge headless でスマホ幅の配置。
+
 **2026-10-21 cron の認証チェックを修正(CRON_SECRET ローテーションの準備)。** `/api/cron/auto-close-cases` は `authHeader !== \`Bearer ${process.env.CRON_SECRET}\`` で比べていたため、CRON_SECRET 未設定の環境では `Authorization: Bearer undefined` で誰でも通れた。`src/lib/api/cronAuth.ts` の `isValidCronAuthorization()` に置き換え(未設定・空なら必ず拒否、sha256 同士を `timingSafeEqual` で比較)。テスト `scripts/tests/cronAuth.test.ts`、ローカルで「ヘッダーなし / Bearer undefined / 空」がすべて 401 を確認。**ローテーション手順(ユーザー作業、未実施)**: `openssl rand -hex 32` → Vercel の本番プロジェクト(app.samasama.site が付いている方)で CRON_SECRET(Production)を **Edit で上書き**(削除→追加はしない)→ 本番を Redeploy(環境変数は新しいデプロイにしか効かない、JST 2:00 の実行をまたがない)→ Settings → Cron Jobs の Run で 200 を確認。Preview にも別の値を入れておく。cron は本番デプロイでしか動かない。
 
 **2026-10-21 セキュリティヘッダーを追加(指示書_セキュリティヘッダー.md、PR #47 で dev にマージ済み `7ae6405`、本番は未反映)。** `next.config.ts` の `headers()` で全パスに `X-Frame-Options: DENY` / `X-Content-Type-Options: nosniff` / `Referrer-Policy: strict-origin-when-cross-origin` / `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`。CSP は入れていない(GA・インラインスクリプトと衝突しやすい。`frame-ancestors 'none'` だけ足す案は保留)。埋め込み: 会社サイトからはリンクで移るだけ(ユーザー回答)なので DENY で問題なし。検証: tsc・build 122/122、ローカルで `/` `/en` `/api/health` `/trial` に 4 つとも付くことを curl で確認。本番 app.samasama.site は HSTS(`max-age=63072000`)付与済み、他 4 つは未設定(本番反映で付く)。ユーザーがブラウザで確認済み(写真アップロード・リンクコピー・mask-lab・GA、問題なし)。Staging でも `/`(dev-login へのリダイレクト)と `/api/health` に 4 つとも付くことを curl で確認。

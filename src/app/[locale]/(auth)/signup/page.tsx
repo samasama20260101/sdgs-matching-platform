@@ -165,6 +165,13 @@ export default function SignupPage() {
         <p className="mt-2 text-center text-sm text-gray-500">
           {t('supporterNote')}
         </p>
+        {/* 体験ページへの入口。登録をためらっている人が、先に質問の中身を確かめられるように */}
+        <div className="mx-4 mt-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-center sm:mx-0">
+          <p className="text-xs text-teal-800">{t('trialLead')}</p>
+          <Link href="/trial" className="mt-1 inline-block py-1 text-sm font-bold text-teal-700 hover:text-teal-800 hover:underline">
+            {t('trialLink')}
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
