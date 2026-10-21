@@ -14,9 +14,11 @@ import {
 } from '@/lib/constants/news'
 import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
 import { NewsBodyView } from '@/components/news/NewsBodyView'
+import { LinkCardView } from '@/components/news/LinkCardView'
+import type { LinkPreview } from '@/lib/news/linkPreview'
 import { NewsCategoryChip } from '@/components/news/NewsCategoryChip'
 import { formatNewsDate } from '@/lib/news/format'
-import { hasUnresolvedPlaceholder } from '@/lib/news/bodyBlocks'
+import { hasUnresolvedPlaceholder, parseNewsBody } from '@/lib/news/bodyBlocks'
 
 type FormState = {
     category: NewsCategory
@@ -66,18 +68,31 @@ function hostnameOf(url: string) {
     try { return new URL(url).hostname } catch { return url }
 }
 
-// 管理画面のプレビュー用の仮のリンクカード(公開ページではサーバーが OGP を取ってカードにする)
-function PreviewLinkCard({ url }: { url: string }) {
+// 管理画面のプレビュー用のリンクカード。リンク先の情報が取れたら公開ページと同じカード、取得中・失敗は仮の枠
+type PreviewMap = Record<string, LinkPreview | 'loading' | 'error'>
+function PreviewLinkCard({ url, previews }: { url: string; previews: PreviewMap }) {
+    const state = previews[url]
+    if (state && state !== 'loading' && state !== 'error') return <LinkCardView preview={state} />
     return (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
-            <p className="text-xs text-gray-500">公開ページでは、ここにリンク先のカード(画像・タイトル)が出ます</p>
+            <p className="text-xs text-gray-500">{state === 'error' ? 'リンク先のカードを取得できませんでした(公開ページではドメインだけのカードになります)' : 'リンク先のカードを読み込んでいます…'}</p>
             <p className="mt-1 text-sm font-medium text-gray-700 break-all">{hostnameOf(url)}</p>
         </div>
     )
 }
 
+// 見え方の確認でカードにする URL(本文で 1 行だけの URL と、外部リンク)
+const URL_ONLY = /^https?:\/\/\S+$/
+function previewUrlsOf(form: FormState) {
+    const urls = parseNewsBody(form.body)
+        .filter((b) => b.kind === 'paragraph' && b.lines.length === 1 && URL_ONLY.test(b.lines[0]))
+        .map((b) => (b.kind === 'paragraph' ? b.lines[0].replace(/[.,;:!?)\]'"]+$/, '') : ''))
+    if (form.external_url.trim()) urls.push(form.external_url.trim())
+    return [...new Set(urls)]
+}
+
 // 記事ページと同じ見た目(タイトル・日付・種別・本文・外部リンク)
-function ArticlePreview({ form }: { form: FormState }) {
+function ArticlePreview({ form, previews }: { form: FormState; previews: PreviewMap }) {
     const dateIso = form.published_at ? `${form.published_at}T00:00:00+09:00` : new Date().toISOString()
     return (
         <article className="rounded-xl border border-gray-200 bg-white px-5 py-8 sm:px-8">
@@ -89,11 +104,11 @@ function ArticlePreview({ form }: { form: FormState }) {
                 <h1 className="mt-3 text-2xl sm:text-3xl font-black text-gray-900 leading-snug">{form.title || '(タイトル未入力)'}</h1>
             </div>
             {form.body.trim()
-                ? <NewsBodyView body={form.body} renderLinkCard={(url, key) => <PreviewLinkCard key={key} url={url} />} />
+                ? <NewsBodyView body={form.body} renderLinkCard={(url, key) => <PreviewLinkCard key={key} url={url} previews={previews} />} />
                 : <p className="text-sm text-gray-400">(本文なし)</p>}
             {form.external_url.trim() && (
                 <div className="mt-10 space-y-4">
-                    <PreviewLinkCard url={form.external_url.trim()} />
+                    <PreviewLinkCard url={form.external_url.trim()} previews={previews} />
                     <span className="inline-flex items-center gap-2 rounded-2xl bg-teal-500 px-6 py-3 text-sm font-bold text-white">
                         続きを読む(外部サイトが開きます) <span aria-hidden="true">↗</span>
                     </span>
@@ -137,6 +152,8 @@ export default function AdminNewsPage() {
     // 押したボタン(「…しています」をそのボタンにだけ出す)
     const [savingAction, setSavingAction] = useState<'draft' | 'publish' | 'apply' | 'unpublish' | null>(null)
     const editorRef = useRef<HTMLElement>(null)
+    // 見え方の確認で出すリンクカードの情報(URL ごとに 1 回だけ取る)
+    const [previews, setPreviews] = useState<PreviewMap>({})
 
     const selected = posts.find((p) => p.id === selectedId) ?? null
     const savedStatus: NewsStatus | null = selected?.status ?? null // null = まだ保存していない新しいお知らせ
@@ -187,6 +204,26 @@ export default function AdminNewsPage() {
     }, [authHeader, router])
 
     useEffect(() => { loadPosts() }, [loadPosts])
+
+    useEffect(() => {
+        if (tab !== 'preview') return
+        const missing = previewUrlsOf(form).filter((url) => !(url in previews))
+        if (missing.length === 0) return
+        setPreviews((prev) => ({ ...prev, ...Object.fromEntries(missing.map((url) => [url, 'loading' as const])) }))
+        ;(async () => {
+            const headers = await authHeader()
+            if (!headers) return
+            await Promise.all(missing.map(async (url) => {
+                try {
+                    const res = await fetch('/api/admin/news/link-preview', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
+                    const result = await res.json()
+                    setPreviews((prev) => ({ ...prev, [url]: res.ok ? result.preview as LinkPreview : 'error' }))
+                } catch {
+                    setPreviews((prev) => ({ ...prev, [url]: 'error' }))
+                }
+            }))
+        })()
+    }, [tab, form, previews, authHeader])
 
     // 保存のあとに編集を始めたら、前の結果(「公開しました」など)は消す
     useEffect(() => {
@@ -355,8 +392,12 @@ export default function AdminNewsPage() {
             const pageText = okPages.map((p) => `【ページ: ${p.title || p.url}】${p.url}\n${p.text}`).join('\n\n').slice(0, NEWS_PAGE_TEXT_MAX)
             setMaterials((m) => ({ ...m, pageText }))
             await requestDraft(headers, materials.notes, pageText)
+            // 読み取ったページ(1 つ目)を記事の外部リンクにする(空のときだけ。記事の下にカードとボタンが出る)
+            const firstUrl = urls[pages.findIndex((p) => p.ok)]
+            const linked = !form.external_url.trim() && Boolean(firstUrl)
+            if (linked) setForm((prev) => ({ ...prev, external_url: firstUrl }))
             const note = failed.length > 0 ? `(読み取れなかったページ: ${failed.map((f) => f.url).join('、')})` : ''
-            setAiMessage({ kind: 'ok', text: `ページを読み取って下書きを入れました${note}。AIが読んだ内容は「AI が読んだ内容を確かめる」を開くと見られます。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません` })
+            setAiMessage({ kind: 'ok', text: `ページを読み取って下書きを入れました${note}。${linked ? '読み取ったページを外部リンクに入れました。' : ''}AIが読んだ内容は「AI が読んだ内容を確かめる」を開くと見られます。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません` })
         } catch (err) {
             setAiMessage({ kind: 'error', text: err instanceof Error ? err.message : '下書きを作れませんでした' })
         } finally {
@@ -667,8 +708,8 @@ export default function AdminNewsPage() {
 
                             {tab === 'preview' ? (
                                 <div className="space-y-2">
-                                    <p className="text-xs text-gray-500">公開したときの記事ページの見え方です(リンク先のカードだけは公開後に出ます)。</p>
-                                    <ArticlePreview form={form} />
+                                    <p className="text-xs text-gray-500">公開したときの記事ページの見え方です。</p>
+                                    <ArticlePreview form={form} previews={previews} />
                                 </div>
                             ) : (
                                 <>

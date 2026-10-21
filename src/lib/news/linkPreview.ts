@@ -3,6 +3,8 @@
 // 取れなくても記事は落とさない(ドメインだけのカードにフォールバック)。
 import 'server-only'
 
+import { safeFetchHtml } from '@/lib/news/pageText'
+
 export type LinkPreview = {
   url: string
   hostname: string
@@ -13,11 +15,8 @@ export type LinkPreview = {
 }
 
 const MAX_BYTES = 512 * 1024          // 先頭 512KB だけ見る(meta は head にある)
-const MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 const TIMEOUT_MS = 4000
 const REVALIDATE_SECONDS = 60 * 60 * 24
-// 内部ネットワークへ向けた取得は拒否(URL は管理者入力だが念のため)
-const BLOCKED_HOST = /^(localhost|127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|::1$)/i
 
 function decodeEntities(value: string) {
   return value
@@ -62,69 +61,38 @@ export function emptyPreview(url: string): LinkPreview {
   return { url, hostname: safeHostname(url), title: null, description: null, image: null, siteName: null }
 }
 
+// 内部ネットワークへ向けた取得の拒否・転送先の確認は safeFetchHtml がする(2026-10-21 に共通化)
 export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
   const fallback = emptyPreview(url)
-  let parsed: URL
-  try {
-    parsed = new URL(url)
-  } catch {
-    return fallback
+  // 遅いサイトで記事の描画を止めない。取れなければドメインだけのカードにする
+  const result = await safeFetchHtml(url, { timeoutMs: TIMEOUT_MS, maxBytes: MAX_BYTES, revalidateSeconds: REVALIDATE_SECONDS })
+  if (!result.ok) return fallback
+  const { html, finalUrl } = result
+
+  const title = metaContent(html, 'og:title')
+    ?? metaContent(html, 'twitter:title')
+    ?? clean(html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1])
+  const description = metaContent(html, 'og:description')
+    ?? metaContent(html, 'twitter:description')
+    ?? metaContent(html, 'description')
+  const rawImage = metaContent(html, 'og:image')
+    ?? metaContent(html, 'og:image:url')
+    ?? metaContent(html, 'twitter:image')
+  let image: string | null = null
+  if (rawImage) {
+    try {
+      const resolved = new URL(rawImage, finalUrl)
+      if (resolved.protocol === 'https:' || resolved.protocol === 'http:') image = resolved.toString()
+    } catch {
+      image = null
+    }
   }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return fallback
-  if (BLOCKED_HOST.test(parsed.hostname)) return fallback
-
-  try {
-    // 遅いサイトで記事の描画を止めない。タイムアウト時はドメインだけのカードにする
-    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), TIMEOUT_MS))
-    const response = await Promise.race([
-      fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; samasama-link-preview/1.0; +https://app.samasama.site)',
-          Accept: 'text/html,application/xhtml+xml',
-        },
-        redirect: 'follow',
-        next: { revalidate: REVALIDATE_SECONDS },
-      }),
-      timeout,
-    ])
-    if (!response || !response.ok) return fallback
-    const contentType = response.headers.get('content-type') ?? ''
-    if (!contentType.includes('html')) return fallback
-    const contentLength = Number(response.headers.get('content-length') ?? 0)
-    if (contentLength > MAX_CONTENT_LENGTH) return fallback
-
-    const buffer = await response.arrayBuffer()
-    const html = new TextDecoder('utf-8').decode(buffer.slice(0, MAX_BYTES))
-    const finalUrl = response.url || url
-
-    const title = metaContent(html, 'og:title')
-      ?? metaContent(html, 'twitter:title')
-      ?? clean(html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1])
-    const description = metaContent(html, 'og:description')
-      ?? metaContent(html, 'twitter:description')
-      ?? metaContent(html, 'description')
-    const rawImage = metaContent(html, 'og:image')
-      ?? metaContent(html, 'og:image:url')
-      ?? metaContent(html, 'twitter:image')
-    let image: string | null = null
-    if (rawImage) {
-      try {
-        const resolved = new URL(rawImage, finalUrl)
-        if (resolved.protocol === 'https:' || resolved.protocol === 'http:') image = resolved.toString()
-      } catch {
-        image = null
-      }
-    }
-    return {
-      url,
-      hostname: safeHostname(finalUrl),
-      title,
-      description,
-      image,
-      siteName: metaContent(html, 'og:site_name'),
-    }
-  } catch (error) {
-    console.error('[linkPreview] fetch error:', url, error instanceof Error ? error.message : error)
-    return fallback
+  return {
+    url,
+    hostname: safeHostname(finalUrl),
+    title,
+    description,
+    image,
+    siteName: metaContent(html, 'og:site_name'),
   }
 }

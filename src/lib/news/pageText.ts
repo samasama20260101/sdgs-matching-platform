@@ -28,12 +28,20 @@ async function assertPublicHost(url: URL) {
   if (addresses.length === 0 || addresses.some((a) => isBlockedAddress(a.address))) throw new Error('この URL は読み取れません')
 }
 
-export async function fetchPageText(rawUrl: string): Promise<PageTextResult> {
+export type SafeHtmlResult =
+  | { ok: true; html: string; finalUrl: string }
+  | { ok: false; reason: string }
+
+// 外部ページの HTML を安全に取る(ページの読み取りとリンクカードで共用)
+export async function safeFetchHtml(
+  rawUrl: string,
+  { timeoutMs = TIMEOUT_MS, maxBytes = MAX_BYTES, revalidateSeconds }: { timeoutMs?: number; maxBytes?: number; revalidateSeconds?: number } = {},
+): Promise<SafeHtmlResult> {
   let url: URL
   try {
     url = new URL(rawUrl.trim())
   } catch {
-    return { ok: false, url: rawUrl, reason: 'URL の形が正しくありません' }
+    return { ok: false, reason: 'URL の形が正しくありません' }
   }
   try {
     let response: Response | null = null
@@ -41,12 +49,13 @@ export async function fetchPageText(rawUrl: string): Promise<PageTextResult> {
       await assertPublicHost(url)
       response = await fetch(url, {
         redirect: 'manual',
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; samasama-news-draft/1.0; +https://app.samasama.site)',
+          'User-Agent': 'Mozilla/5.0 (compatible; samasama-news/1.0; +https://app.samasama.site)',
           Accept: 'text/html,application/xhtml+xml',
           'Accept-Language': 'ja,en;q=0.5',
         },
+        ...(revalidateSeconds ? { next: { revalidate: revalidateSeconds } } : {}),
       })
       const location = response.headers.get('location')
       if (response.status >= 300 && response.status < 400 && location) {
@@ -55,17 +64,24 @@ export async function fetchPageText(rawUrl: string): Promise<PageTextResult> {
       }
       break
     }
-    if (!response || (response.status >= 300 && response.status < 400)) return { ok: false, url: rawUrl, reason: '転送が多すぎて読み取れませんでした' }
-    if (!response.ok) return { ok: false, url: rawUrl, reason: `ページを開けませんでした(${response.status})` }
+    if (!response || (response.status >= 300 && response.status < 400)) return { ok: false, reason: '転送が多すぎて読み取れませんでした' }
+    if (!response.ok) return { ok: false, reason: `ページを開けませんでした(${response.status})` }
     const type = response.headers.get('content-type') ?? ''
-    if (!/text\/html|application\/xhtml/i.test(type)) return { ok: false, url: rawUrl, reason: 'HTML のページではありません' }
+    if (!/text\/html|application\/xhtml/i.test(type)) return { ok: false, reason: 'HTML のページではありません' }
+    const length = Number(response.headers.get('content-length') ?? 0)
+    if (length > maxBytes * 4) return { ok: false, reason: 'ページが大きすぎます' }
     const buffer = await response.arrayBuffer()
-    if (buffer.byteLength > MAX_BYTES) return { ok: false, url: rawUrl, reason: 'ページが大きすぎます' }
-    const { title, text } = extractPageText(new TextDecoder('utf-8').decode(buffer), PAGE_TEXT_MAX)
-    if (text.length < 50) return { ok: false, url: rawUrl, reason: '本文を読み取れませんでした(画面を後から組み立てるページの可能性があります)' }
-    return { ok: true, url: url.toString(), title, text }
+    return { ok: true, html: new TextDecoder('utf-8').decode(buffer.slice(0, maxBytes)), finalUrl: url.toString() }
   } catch (err) {
-    const message = err instanceof Error && err.name === 'TimeoutError' ? '時間内に読み取れませんでした' : err instanceof Error ? err.message : '読み取れませんでした'
-    return { ok: false, url: rawUrl, reason: message }
+    const reason = err instanceof Error && err.name === 'TimeoutError' ? '時間内に読み取れませんでした' : err instanceof Error ? err.message : '読み取れませんでした'
+    return { ok: false, reason }
   }
+}
+
+export async function fetchPageText(rawUrl: string): Promise<PageTextResult> {
+  const result = await safeFetchHtml(rawUrl)
+  if (!result.ok) return { ok: false, url: rawUrl, reason: result.reason }
+  const { title, text } = extractPageText(result.html, PAGE_TEXT_MAX)
+  if (text.length < 50) return { ok: false, url: rawUrl, reason: '本文を読み取れませんでした(画面を後から組み立てるページの可能性があります)' }
+  return { ok: true, url: result.finalUrl, title, text }
 }
