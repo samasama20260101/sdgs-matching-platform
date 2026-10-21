@@ -78,6 +78,8 @@ export default function HomePage() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [featuredSupporters, setFeaturedSupporters] = useState<Supporter[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // 運営が /?view=home でトップを見ているとき、管理画面へ戻る帯を出す(運営向けなので翻訳しない)
+  const [adminViewing, setAdminViewing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -98,7 +100,8 @@ export default function HomePage() {
             else if (d.role === 'SUPPORTER') router.replace('/supporter/dashboard');
             else if (d.role === 'ADMIN') {
               // 運営がお知らせなどの見え方を確かめるとき(/?view=home)は転送しない。運営だけ(2026-10-22)
-              if (new URLSearchParams(window.location.search).get('view') !== 'home') router.replace('/admin/dashboard');
+              if (new URLSearchParams(window.location.search).get('view') === 'home') setAdminViewing(true);
+              else router.replace('/admin/dashboard');
             }
             else if (!d.role && session.user.user_metadata?.real_name) {
               // メール確認リンクからの着地: ログイン済みだがプロフィール未作成の状態。
@@ -141,6 +144,17 @@ export default function HomePage() {
 
       {/* ── ヘッダー ── */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
+        {adminViewing && (
+          <div className="bg-gray-800 text-white text-xs">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+              <span>運営としてログインしたまま、トップページを見ています</span>
+              <span className="flex items-center gap-4">
+                <Link href="/admin/news" className="font-semibold underline underline-offset-2 hover:text-teal-200">お知らせ管理へ戻る</Link>
+                <Link href="/admin/dashboard" className="font-semibold underline underline-offset-2 hover:text-teal-200">管理ダッシュボード</Link>
+              </span>
+            </div>
+          </div>
+        )}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           {/* スマホはアイコンのみ(テキスト込みだと言語スイッチャーと合わせて幅超過) */}
           <span className="sm:hidden"><Logo variant="default" size="sm" showText={false} /></span>
