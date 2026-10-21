@@ -198,8 +198,13 @@ export default function TrialPage() {
                 <CardTitle className="text-base font-medium">{t('beforeTitle')}</CardTitle>
                 <p className="text-xs text-gray-400">{t('beforeNote')}</p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <SpanText text={resultText} spans={spans} masked={false} />
+                {/* 誰がこの内容を読むのかを、相談者が安心できる形で伝える */}
+                <div className="rounded-lg border border-teal-200 bg-teal-50 p-3">
+                  <p className="text-sm font-bold text-teal-900">{t('readerTitle')}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-teal-800">{t('readerBody')}</p>
+                </div>
               </CardContent>
             </Card>
 

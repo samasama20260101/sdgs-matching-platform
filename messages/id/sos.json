@@ -256,6 +256,8 @@
     "resultLead": "Pada layanan asli, setelah ini AI merapikan isi konsultasi. Sebelum diteruskan ke AI, informasi pribadi seperti kontak disamarkan seperti di bawah ini.",
     "beforeTitle": "Isi yang Anda tulis",
     "beforeNote": "Bagian yang berwarna adalah bagian yang ditemukan sebagai informasi pribadi.",
+    "readerTitle": "Hanya pendamping yang sudah diperiksa tim kami yang membaca ini",
+    "readerBody": "Isi yang Anda tulis dibaca oleh NPO, pemerintah daerah, dan organisasi pendukung lain (pendamping) yang sudah diperiksa dan didaftarkan oleh tim kami, lalu mereka memikirkan cara membantu Anda. Isi ini tidak pernah dipublikasikan di internet.",
     "afterTitle": "Isi yang diteruskan ke AI",
     "afterNote": "Bagian yang ditemukan diganti dengan tanda.",
     "foundCount": "{count} bagian disamarkan",
