@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
-import { NOTE_ARTICLE_WORKFLOW_ENABLED, type NewsPostAdmin } from '@/lib/constants/news'
+import { NOTE_ARTICLE_WORKFLOW_ENABLED, type NewsPostListItem, type NewsPostAdmin } from '@/lib/constants/news'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
 // 列名を string にすると supabase-js の select 型推論(文字列パーサ)を通らないので、返り型は returns<>() で明示する
@@ -15,12 +15,13 @@ export async function GET(request: Request) {
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
   if ('response' in auth) return auth.response
 
+  // 一覧には本文を入れない(件数が増えても軽く保つ。本文は GET /api/admin/news/[id] で 1 件ずつ)
   const { data, error } = await supabaseAdmin
     .from('news_posts')
-    .select(ADMIN_NEWS_COLUMNS)
+    .select('id, category, title, external_url, status, published_at, created_at, updated_at')
     .order('published_at', { ascending: false, nullsFirst: true })
     .order('created_at', { ascending: false })
-    .returns<NewsPostAdmin[]>()
+    .returns<NewsPostListItem[]>()
   if (error) {
     console.error('[admin/news] list error:', error)
     return NextResponse.json({ error: 'お知らせの取得に失敗しました' }, { status: 500 })

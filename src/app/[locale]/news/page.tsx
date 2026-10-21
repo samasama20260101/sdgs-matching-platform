@@ -5,7 +5,7 @@ import { Link } from '@/i18n/navigation'
 import { Logo } from '@/components/icons/Logo'
 import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice'
 import { NewsCategoryChip } from '@/components/news/NewsCategoryChip'
-import { NEWS_LIST_MAX, type NewsPostPublic } from '@/lib/constants/news'
+import { NEWS_LIST_MAX, NEWS_LIST_PAGE_CAP, type NewsPostPublic } from '@/lib/constants/news'
 import { formatNewsDate, formatNewsYear } from '@/lib/news/format'
 import { getPublishedNews } from '@/lib/news/queries'
 
@@ -23,7 +23,7 @@ function groupByYear(posts: NewsPostPublic[], locale: string) {
   return groups
 }
 
-type PageProps = { params: Promise<{ locale: string }> }
+type PageProps = { params: Promise<{ locale: string }>; searchParams: Promise<{ show?: string }> }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params
@@ -31,10 +31,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: t('metaTitle') }
 }
 
-export default async function NewsListPage({ params }: PageProps) {
+export default async function NewsListPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'landing.news' })
-  const posts = await getPublishedNews(NEWS_LIST_MAX)
+  // 最初は 50 件。「次の 50 件を見る」で ?show=100, 150… と広げる(古い記事も一覧からたどれるように)
+  const requested = Number((await searchParams).show)
+  const show = Number.isFinite(requested) && requested > NEWS_LIST_MAX
+    ? Math.min(Math.ceil(requested / NEWS_LIST_MAX) * NEWS_LIST_MAX, NEWS_LIST_PAGE_CAP)
+    : NEWS_LIST_MAX
+  const fetched = await getPublishedNews(show + 1, NEWS_LIST_PAGE_CAP + 1)
+  const hasMore = fetched.length > show
+  const posts = fetched.slice(0, show)
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,6 +90,14 @@ export default async function NewsListPage({ params }: PageProps) {
                 </ul>
               </section>
             ))}
+            {hasMore && (
+              <div className="text-center">
+                <Link href={`/news?show=${show + NEWS_LIST_MAX}`} scroll={false}
+                  className="inline-flex items-center gap-2 rounded-full border border-teal-300 px-6 py-3 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50">
+                  {t('more', { count: NEWS_LIST_MAX })}
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </main>

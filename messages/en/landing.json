@@ -180,6 +180,7 @@
       "MAINTENANCE": "Maintenance",
       "SUPPORTER_JOINED": "New supporter",
       "INTERVIEW": "Interview"
-    }
+    },
+    "more": "Show the next {count}"
   }
 }

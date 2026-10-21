@@ -180,6 +180,7 @@
       "MAINTENANCE": "Bảo trì",
       "SUPPORTER_JOINED": "Tổ chức mới",
       "INTERVIEW": "Phỏng vấn"
-    }
+    },
+    "more": "Xem {count} tin tiếp theo"
   }
 }

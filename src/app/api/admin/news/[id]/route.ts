@@ -1,5 +1,5 @@
 // src/app/api/admin/news/[id]/route.ts
-// 管理者: お知らせの更新(公開/下書き切替を含む)・削除
+// 管理者: お知らせ 1 件の取得(編集を開いたとき)・更新(公開/下書き切替を含む)・削除
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -22,6 +22,25 @@ async function writeAudit(actorId: string, action: string, targetId: string, met
     target_id: targetId,
     metadata,
   })
+}
+
+export async function GET(request: Request, { params }: Params) {
+  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  if ('response' in auth) return auth.response
+  const { id } = await params
+  if (!isUuid(id)) return NextResponse.json({ error: 'お知らせが見つかりません' }, { status: 404 })
+  const { data, error } = await supabaseAdmin
+    .from('news_posts')
+    .select(COLUMNS)
+    .eq('id', id)
+    .returns<NewsPostAdmin[]>()
+    .maybeSingle()
+  if (error) {
+    console.error('[admin/news] get error:', error)
+    return NextResponse.json({ error: 'お知らせの取得に失敗しました' }, { status: 500 })
+  }
+  if (!data) return NextResponse.json({ error: 'お知らせが見つかりません(削除された可能性があります)' }, { status: 404 })
+  return NextResponse.json({ post: data })
 }
 
 export async function PATCH(request: Request, { params }: Params) {

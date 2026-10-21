@@ -180,6 +180,7 @@
       "MAINTENANCE": "점검",
       "SUPPORTER_JOINED": "참여 단체",
       "INTERVIEW": "인터뷰"
-    }
+    },
+    "more": "다음 {count}건 보기"
   }
 }

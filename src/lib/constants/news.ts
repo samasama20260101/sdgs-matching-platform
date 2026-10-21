@@ -46,6 +46,8 @@ export const NEWS_CHECKLIST_MAX = 10000         // 確認リスト
 // トップページに並べる件数と一覧の上限
 export const NEWS_TOP_LIMIT = 3
 export const NEWS_LIST_MAX = 50
+// お知らせ一覧ページで「次の 50 件を見る」を押して広げられる上限
+export const NEWS_LIST_PAGE_CAP = 1000
 
 // 公開APIが返す形(公開してよい列だけ。本文は記事ページがサーバーで直接読む)
 export type NewsPostPublic = {
@@ -74,6 +76,13 @@ export type NewsAngle = {
 
 // 管理画面が扱う形(note 記事ワークフローの列を含む)
 // 4列は NOTE_ARTICLE_WORKFLOW_ENABLED が true のときだけ API が返す
+// 管理画面の一覧用(本文を含まない軽い形。本文は編集を開いたときに 1 件だけ読む)
+export type NewsPostListItem = NewsPostPublic & {
+  status: NewsStatus
+  created_at: string
+  updated_at: string
+}
+
 export type NewsPostAdmin = NewsPost & {
   interview_source?: string
   note_angle?: NewsAngle | null

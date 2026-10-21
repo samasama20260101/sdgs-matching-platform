@@ -180,6 +180,7 @@
       "MAINTENANCE": "维护",
       "SUPPORTER_JOINED": "新加入团体",
       "INTERVIEW": "访谈"
-    }
+    },
+    "more": "查看后{count}条"
   }
 }

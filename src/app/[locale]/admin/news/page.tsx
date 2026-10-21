@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import {
     NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX, NEWS_SOURCE_URLS_MAX, NEWS_TOP_LIMIT, NOTE_ARTICLE_WORKFLOW_ENABLED,
-    type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsStatus,
+    type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsPostListItem, type NewsStatus,
 } from '@/lib/constants/news'
 import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
 import { NewsBodyView } from '@/components/news/NewsBodyView'
@@ -125,7 +125,7 @@ function ArticlePreview({ form, previews }: { form: FormState; previews: Preview
 
 export default function AdminNewsPage() {
     const router = useRouter()
-    const [posts, setPosts] = useState<NewsPostAdmin[]>([])
+    const [posts, setPosts] = useState<NewsPostListItem[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     // 操作の結果(操作欄のボタンのすぐ上に出す。成功は次に編集を始めるまで残す)
@@ -138,6 +138,11 @@ export default function AdminNewsPage() {
     // 保存した記事の行を一覧でしばらく光らせる
     const [flashId, setFlashId] = useState<string | null>(null)
     const [listFilter, setListFilter] = useState<ListFilter>('ALL')
+    // 一覧の検索(タイトル)と種別の絞り込み
+    const [listQuery, setListQuery] = useState('')
+    const [listCategory, setListCategory] = useState<NewsCategory | 'ALL'>('ALL')
+    // 編集を開くときに本文を読み込んでいる記事
+    const [openingId, setOpeningId] = useState<string | null>(null)
 
     const [selectedId, setSelectedId] = useState<string | null>(null)
     // 編集欄の状態: none = 何も開いていない / new = 新しいお知らせ / edit = 既存の記事
@@ -163,7 +168,7 @@ export default function AdminNewsPage() {
 
     const selected = posts.find((p) => p.id === selectedId) ?? null
     const savedStatus: NewsStatus | null = selected?.status ?? null // null = まだ保存していない新しいお知らせ
-    const busy = saving || deleting || generating
+    const busy = saving || deleting || generating || openingId !== null
     // 未保存の変更: 新しいお知らせは「何か書いたか」で判断する(種別を選んだだけでは変更扱いにしない)
     const hasMaterials = Boolean(materials.notes.trim() || materials.pageText.trim() || materials.urls.some((u) => u.trim()))
     const isDirty = mode === 'new'
@@ -198,7 +203,7 @@ export default function AdminNewsPage() {
             const res = await fetch('/api/admin/news', { headers, cache: 'no-store' })
             const result = await res.json()
             if (!res.ok) throw new Error(result.error || 'お知らせの取得に失敗しました')
-            const list = (result.posts ?? []) as NewsPostAdmin[]
+            const list = (result.posts ?? []) as NewsPostListItem[]
             setPosts(list)
             return list
         } catch (err) {
@@ -334,22 +339,36 @@ export default function AdminNewsPage() {
         scrollToEditor()
     }
 
-    const selectPost = (post: NewsPostAdmin) => {
+    // 編集を開く。一覧には本文が入っていないので、ここで 1 件だけ読む
+    const selectPost = async (post: NewsPostListItem) => {
         if (busy || post.id === selectedId) { scrollToEditor(); return }
         if (isDirty && !window.confirm(DISCARD_MESSAGE)) return
-        const next = formFromPost(post)
-        setMode('edit')
-        setSelectedId(post.id)
-        setForm(next)
-        setSavedForm(next)
-        setMaterials(emptyMaterials())
-        setTab('write')
-        setAiOpen(false)
-        setFormError(null)
-        setNotice(null)
-        setNoticeLink(null)
-        setAiMessage(null)
-        scrollToEditor()
+        setOpeningId(post.id)
+        try {
+            const headers = await authHeader()
+            if (!headers) return
+            const res = await fetch(`/api/admin/news/${post.id}`, { headers, cache: 'no-store' })
+            const result = await res.json()
+            if (!res.ok) throw new Error(result.error || 'お知らせを開けませんでした')
+            const next = formFromPost(result.post as NewsPostAdmin)
+            setMode('edit')
+            setSelectedId(post.id)
+            setForm(next)
+            setSavedForm(next)
+            setMaterials(emptyMaterials())
+            setTab('write')
+            setAiOpen(false)
+            setFormError(null)
+            setNotice(null)
+            setNoticeLink(null)
+            setAiMessage(null)
+            scrollToEditor()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'お知らせを開けませんでした')
+            await loadPosts()
+        } finally {
+            setOpeningId(null)
+        }
     }
 
     const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
@@ -561,7 +580,7 @@ export default function AdminNewsPage() {
     }
 
     // 削除(一覧の「削除」と編集欄の「この記事を削除…」の両方から使う)
-    const deletePost = async (post: NewsPostAdmin) => {
+    const deletePost = async (post: NewsPostListItem) => {
         if (busy) return
         const message = post.status === 'PUBLISHED'
             ? `「${post.title}」を削除します。元に戻せません。\nサイトから下げるだけなら、削除せずに「サイトから下げる」を使ってください。\n削除していいですか?`
@@ -595,7 +614,20 @@ export default function AdminNewsPage() {
     const isSupporterJoined = form.category === 'SUPPORTER_JOINED'
     // AI の下書きが残す「[要確認]」(公開はサーバーでも止める)
     const hasPlaceholder = hasUnresolvedPlaceholder(form.title, form.body)
-    const visiblePosts = listFilter === 'ALL' ? posts : posts.filter((p) => p.status === listFilter)
+    const query = listQuery.trim().toLowerCase()
+    const visiblePosts = posts.filter((p) =>
+        (listFilter === 'ALL' || p.status === listFilter)
+        && (listCategory === 'ALL' || p.category === listCategory)
+        && (!query || p.title.toLowerCase().includes(query)))
+    // 下書きを先頭にまとめ、公開中は公開日の年ごとに区切る(一覧 API は公開日の新しい順)
+    const listGroups: { label: string; items: NewsPostListItem[] }[] = []
+    for (const p of visiblePosts) {
+        const label = p.status === 'DRAFT' ? '下書き' : `${toDateInput(p.published_at).slice(0, 4) || '日付なし'}年`
+        const group = listGroups.find((g) => g.label === label)
+        if (group) group.items.push(p)
+        else listGroups.push({ label, items: [p] })
+    }
+    listGroups.sort((a, b) => (a.label === '下書き' ? -1 : b.label === '下書き' ? 1 : b.label.localeCompare(a.label)))
     const counts = { ALL: posts.length, PUBLISHED: posts.filter((p) => p.status === 'PUBLISHED').length, DRAFT: posts.filter((p) => p.status === 'DRAFT').length }
 
     return (
@@ -642,14 +674,40 @@ export default function AdminNewsPage() {
                                     </button>
                                 ))}
                             </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="search"
+                                    value={listQuery}
+                                    onChange={(e) => setListQuery(e.target.value)}
+                                    placeholder="タイトルで探す"
+                                    aria-label="タイトルで探す"
+                                    className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                />
+                                <select
+                                    value={listCategory}
+                                    onChange={(e) => setListCategory(e.target.value as NewsCategory | 'ALL')}
+                                    aria-label="種別で絞り込む"
+                                    className="shrink-0 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                >
+                                    <option value="ALL">すべての種別</option>
+                                    {NEWS_CATEGORIES.map((c) => <option key={c} value={c}>{NEWS_CATEGORY_META[c].labelJa}</option>)}
+                                </select>
+                            </div>
+                            {(query || listCategory !== 'ALL') && (
+                                <p className="text-xs text-gray-500">{visiblePosts.length}件見つかりました <button type="button" onClick={() => { setListQuery(''); setListCategory('ALL') }} className="ml-1 text-teal-700 underline">条件を外す</button></p>
+                            )}
                         </div>
                         {visiblePosts.length === 0 ? (
                             <p className="px-5 py-8 text-sm text-gray-500 text-center">
                                 {posts.length === 0 ? 'まだ投稿がありません。「＋ 新しいお知らせ」から始めてください。' : 'この条件の投稿はありません。'}
                             </p>
                         ) : (
+                            <div className="lg:max-h-[calc(100vh-16rem)] lg:overflow-y-auto">
+                            {listGroups.map((group) => (
+                            <div key={group.label}>
+                            <p className="sticky top-0 z-10 border-b border-gray-100 bg-gray-50/95 px-5 py-1.5 text-xs font-bold text-gray-500 backdrop-blur">{group.label}({group.items.length})</p>
                             <ul className="divide-y divide-gray-100">
-                                {visiblePosts.map((post) => {
+                                {group.items.map((post) => {
                                     const isSelected = post.id === selectedId
                                     return (
                                         <li key={post.id} className={`flex items-stretch border-l-4 transition-colors duration-700 ${flashId === post.id ? 'bg-green-100' : isSelected ? 'bg-teal-50' : 'hover:bg-gray-50'} ${isSelected ? 'border-teal-500' : 'border-transparent'}`}>
@@ -674,7 +732,7 @@ export default function AdminNewsPage() {
                                                 ) : (
                                                     <button type="button" onClick={() => selectPost(post)} disabled={busy}
                                                         className="rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-                                                        編集
+                                                        {openingId === post.id ? '開いています…' : '編集'}
                                                     </button>
                                                 )}
                                                 <button type="button" onClick={() => deletePost(post)} disabled={busy}
@@ -686,6 +744,9 @@ export default function AdminNewsPage() {
                                     )
                                 })}
                             </ul>
+                            </div>
+                            ))}
+                            </div>
                         )}
                     </section>
 

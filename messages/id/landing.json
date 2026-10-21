@@ -180,6 +180,7 @@
       "MAINTENANCE": "Pemeliharaan",
       "SUPPORTER_JOINED": "Organisasi baru",
       "INTERVIEW": "Wawancara"
-    }
+    },
+    "more": "Lihat {count} berikutnya"
   }
 }

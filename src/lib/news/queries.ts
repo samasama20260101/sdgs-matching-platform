@@ -8,13 +8,14 @@ import { NEWS_LIST_MAX, type NewsPost, type NewsPostPublic } from '@/lib/constan
 const PUBLIC_COLUMNS = 'id, category, title, external_url, published_at'
 const FULL_COLUMNS = 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
 
-export function clampNewsLimit(value: unknown, fallback: number) {
+export function clampNewsLimit(value: unknown, fallback: number, max = NEWS_LIST_MAX) {
   const n = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(n)) return fallback
-  return Math.min(Math.max(1, Math.floor(n)), NEWS_LIST_MAX)
+  return Math.min(Math.max(1, Math.floor(n)), max)
 }
 
-export async function getPublishedNews(limit: number): Promise<NewsPostPublic[]> {
+// max: 取得件数の上限(公開 API は NEWS_LIST_MAX、一覧ページは「次の 50 件」で広げるので大きめ)
+export async function getPublishedNews(limit: number, max = NEWS_LIST_MAX): Promise<NewsPostPublic[]> {
   const { data, error } = await supabaseAdmin
     .from('news_posts')
     .select(PUBLIC_COLUMNS)
@@ -23,7 +24,7 @@ export async function getPublishedNews(limit: number): Promise<NewsPostPublic[]>
     .order('published_at', { ascending: false })
     // 公開日は日単位(フォームの date 入力)なので同日は同点になる。登録が新しい順で並べる
     .order('created_at', { ascending: false })
-    .limit(clampNewsLimit(limit, NEWS_LIST_MAX))
+    .limit(clampNewsLimit(limit, NEWS_LIST_MAX, max))
   if (error) {
     console.error('[news] list error:', error)
     return []
