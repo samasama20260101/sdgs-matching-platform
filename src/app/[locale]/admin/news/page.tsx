@@ -65,8 +65,6 @@ const sameForm = (a: FormState, b: FormState) => JSON.stringify(a) === JSON.stri
 
 const STATUS_LABEL: Record<NewsStatus, string> = { DRAFT: '下書き', PUBLISHED: '公開中' }
 const DISCARD_MESSAGE = '保存していない変更があります。破棄して移動しますか?'
-// ログインしたまま運営がトップを見るための URL(トップの自動転送は運営だけ view=home で止まる)
-const TOP_PREVIEW_HREF = '/?view=home'
 
 function hostnameOf(url: string) {
     try { return new URL(url).hostname } catch { return url }
@@ -133,7 +131,6 @@ export default function AdminNewsPage() {
     // 操作の結果(操作欄のボタンのすぐ上に出す。成功は次に編集を始めるまで残す)
     const [notice, setNotice] = useState<string | null>(null)
     const [noticeLink, setNoticeLink] = useState<string | null>(null)
-    const [noticeOnTop, setNoticeOnTop] = useState(false)
     // AI 下書きの結果(AI の欄の中に出す)
     const [aiMessage, setAiMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
     // 削除の知らせ(編集欄ごと消えることがあるので、画面の下にしばらく出す)
@@ -267,7 +264,7 @@ export default function AdminNewsPage() {
 
     // 保存のあとに編集を始めたら、前の結果(「公開しました」など)は消す
     useEffect(() => {
-        if (isDirty) { setNotice(null); setNoticeLink(null); setNoticeOnTop(false) }
+        if (isDirty) { setNotice(null); setNoticeLink(null) }
     }, [isDirty])
 
     useEffect(() => {
@@ -312,7 +309,7 @@ export default function AdminNewsPage() {
         if (isDirty && !window.confirm('保存していない変更があります。破棄して閉じますか?')) return
         resetEditor('none')
         setNotice(null)
-        setNoticeLink(null); setNoticeOnTop(false)
+        setNoticeLink(null)
         setAiMessage(null)
     }
 
@@ -337,7 +334,7 @@ export default function AdminNewsPage() {
         setAiOpen(true)
         setFormError(null)
         setNotice(null)
-        setNoticeLink(null); setNoticeOnTop(false)
+        setNoticeLink(null)
         setAiMessage(null)
         scrollToEditor()
     }
@@ -363,7 +360,7 @@ export default function AdminNewsPage() {
             setAiOpen(false)
             setFormError(null)
             setNotice(null)
-            setNoticeLink(null); setNoticeOnTop(false)
+            setNoticeLink(null)
             setAiMessage(null)
             scrollToEditor()
         } catch (err) {
@@ -484,7 +481,7 @@ export default function AdminNewsPage() {
     const save = async (action: SaveAction, publishedAtOverride?: string) => {
         setFormError(null)
         setNotice(null)
-        setNoticeLink(null); setNoticeOnTop(false)
+        setNoticeLink(null)
         if (!form.title.trim()) { setFormError('タイトルを入力してください'); return }
         if (!form.body.trim() && !form.external_url.trim()) { setFormError('本文か外部リンクのどちらかは必要です'); return }
         const status: NewsStatus = action === 'publish' || action === 'apply' ? 'PUBLISHED' : 'DRAFT'
@@ -534,7 +531,6 @@ export default function AdminNewsPage() {
             }
             setNotice(message[action])
             setNoticeLink(status === 'PUBLISHED' ? `/news/${saved.id}` : null)
-            setNoticeOnTop(status === 'PUBLISHED' && onTop)
             setFlashId(saved.id)
         } catch (err) {
             const message = err instanceof Error ? err.message : '保存できませんでした'
@@ -645,19 +641,13 @@ export default function AdminNewsPage() {
                             トップページの「お知らせ」欄に出す記事を作成・公開します。公開中の新しい{NEWS_TOP_LIMIT}件がトップに、全件がお知らせ一覧ページに並びます。
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                        {/* ログインしたままトップを見る(トップは通常ログイン中だとダッシュボードへ移るため) */}
-                        <a href={TOP_PREVIEW_HREF} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline">
-                            トップページを見る ↗
-                        </a>
-                        <Link
-                            href="/admin/dashboard"
-                            onClick={(e) => { if (isDirty && !window.confirm(DISCARD_MESSAGE)) e.preventDefault() }}
-                            className="text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline"
-                        >
-                            管理ダッシュボードへ戻る
-                        </Link>
-                    </div>
+                    <Link
+                        href="/admin/dashboard"
+                        onClick={(e) => { if (isDirty && !window.confirm(DISCARD_MESSAGE)) e.preventDefault() }}
+                        className="text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline"
+                    >
+                        管理ダッシュボードへ戻る
+                    </Link>
                 </div>
             </header>
 
@@ -779,11 +769,6 @@ export default function AdminNewsPage() {
                                     {selected?.status === 'PUBLISHED' && (
                                         <a href={`/news/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-700 hover:underline">
                                             公開ページを見る ↗
-                                        </a>
-                                    )}
-                                    {selected && topIds.has(selected.id) && (
-                                        <a href={TOP_PREVIEW_HREF} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-700 hover:underline">
-                                            トップで見る ↗
                                         </a>
                                     )}
                                     <button type="button" onClick={closeEditor} disabled={busy}
@@ -1066,11 +1051,6 @@ export default function AdminNewsPage() {
                                         {noticeLink && (
                                             <a href={noticeLink} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-teal-700 underline underline-offset-2 hover:text-teal-900">
                                                 サイトで見る ↗
-                                            </a>
-                                        )}
-                                        {noticeOnTop && (
-                                            <a href={TOP_PREVIEW_HREF} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-teal-700 underline underline-offset-2 hover:text-teal-900">
-                                                トップで見る ↗
                                             </a>
                                         )}
                                     </p>
