@@ -256,6 +256,8 @@
     "resultLead": "In the real service, AI organizes your consultation next. Before the text is passed to AI, personal information such as contact details is hidden as shown below.",
     "beforeTitle": "What you wrote",
     "beforeNote": "The colored parts were found as personal information.",
+    "readerTitle": "Only supporters checked by our team read this",
+    "readerBody": "What you write is read by NPOs, local governments and other support organizations (supporters) that our team has checked and registered, and they think about how they can help you. It is never made public on the internet.",
     "afterTitle": "What is passed to AI",
     "afterNote": "The parts found are replaced with a marker.",
     "foundCount": "{count} part(s) hidden",

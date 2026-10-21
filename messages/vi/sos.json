@@ -256,6 +256,8 @@
     "resultLead": "Trong dịch vụ thật, sau bước này AI sẽ sắp xếp nội dung tư vấn. Trước khi chuyển cho AI, thông tin cá nhân như thông tin liên lạc sẽ được che đi như dưới đây.",
     "beforeTitle": "Nội dung bạn đã viết",
     "beforeNote": "Phần được tô màu là chỗ được phát hiện là thông tin cá nhân.",
+    "readerTitle": "Chỉ những người hỗ trợ đã được ban vận hành xác nhận mới đọc nội dung này",
+    "readerBody": "Nội dung bạn viết chỉ được các tổ chức hỗ trợ như NPO, chính quyền địa phương (người hỗ trợ) đã được ban vận hành xác nhận và đăng ký đọc, và họ sẽ suy nghĩ cách giúp bạn. Nội dung này không bao giờ được công khai trên internet.",
     "afterTitle": "Nội dung chuyển cho AI",
     "afterNote": "Những chỗ được phát hiện sẽ được thay bằng ký hiệu.",
     "foundCount": "Đã che {count} chỗ",
