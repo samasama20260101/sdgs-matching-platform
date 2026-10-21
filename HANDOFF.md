@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-10-20(案件登録と AI 分析の回数制限、feature/case-and-ai-limits)
+更新: 2026-10-21(セキュリティヘッダー、feature/security-headers)
 
 ## ゴール(完成条件)
 災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
@@ -8,6 +8,8 @@
 将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
 
 ## 現在地
+**2026-10-21 セキュリティヘッダーを追加(指示書_セキュリティヘッダー.md、feature/security-headers → dev PR、マージはユーザー承認待ち)。** `next.config.ts` の `headers()` で全パスに `X-Frame-Options: DENY` / `X-Content-Type-Options: nosniff` / `Referrer-Policy: strict-origin-when-cross-origin` / `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`。CSP は入れていない(GA・インラインスクリプトと衝突しやすい。`frame-ancestors 'none'` だけ足す案は保留)。埋め込み: 会社サイトからはリンクで移るだけ(ユーザー回答)なので DENY で問題なし。検証: tsc・build 122/122、ローカルで `/` `/en` `/api/health` `/trial` に 4 つとも付くことを curl で確認。本番 app.samasama.site は HSTS(`max-age=63072000`)付与済み、他 4 つは未設定(本番反映で付く)。**未確認(ユーザーのブラウザ確認待ち)**: スマホの写真アップロード、共有ボタンのリンクコピー、`/admin/mask-lab`(kuromoji)、GA の計測。Staging での curl 確認は dev マージ後。
+
 **2026-10-20 案件登録と AI 分析の回数制限(課金の使いすぎ対策)。** 案件登録 API(`/api/sos/cases` POST): 開いている案件(OPEN・MATCHED)は 1 人 3 件まで(画面だけでなくサーバーでも、`ACTIVE_CASE_LIMIT` 409)/ 24 時間の登録は本番だけ 10 件まで(取り消しも数える、`DAILY_CASE_LIMIT` 429、`VERCEL_ENV === 'production'` で判定。Staging・ローカルは上限なし)。AI 分析 API(`/api/gemini/analyze`): 分析済みの案件は AI を動かさず保存済みの結果を返す(1 案件 1 回)/ 案件を指定しない分析は管理者だけ。CAPTCHA はオフのまま(設定だけでオンにすると全員ログイン不可。入れるなら Cloudflare Turnstile、パスワード変更の現 PW 確認もトークンを渡す形に)。登録総数の上限(MAX_SOS_USERS = 1000)はロボットに埋められると弱点になる点は未対応。流出パスワードの案内は PR #45(dev マージ済み)。
 
 **2026-10-16 AI のプロンプトインジェクション対策(feature/ai-injection-hardening)。** `src/lib/aiSafety.ts` を追加: `fenceConsultation()` = 相談文を `<consultation>` で囲み、相談文の中の囲みの印(全角・大文字・属性つきも)を消す(閉じて外に指示を置く手口を防ぐ)/ `stripLinks()` = AI の出力から URL・メールアドレスを除く。`classifySDGs` の 2 つのプロンプトと `disasterNeeds` が `fenceConsultation` を使う(災害ニーズにも「命令として扱わない」の一文を追加)。`/api/gemini/analyze` の `normalizeAnalysis` は AI のタイトル・要約・説明・キーワードを `stripLinks` してから長さで切る。どこからも呼ばれていなかった `generateFollowUpQuestions` / `calculateMatchingScore` を削除。テスト `scripts/tests/aiSafety.test.ts`(`test:units` に追加)。もとから: AI は表示用の文しか返せず(ツール・DB 権限なし)、大項目はサーバーが決め、緊急度はルールで判定、災害タグは 8 種の白リスト。体験ページの結果画面に「AIを安全に使うための工夫」(4 項目+専門用語バッジ: 多層防御・プロンプトインジェクション対策・出力フィルタリング・最小権限の原則・ルールベース判定)を追加し、「AIがお困りごとを分類」の文言を「整理」に直した。**残り: 案件なしで任意の文を分析させる経路(`/api/gemini/analyze` の `description`、SOS ロール)に回数制限がない(課金の使いすぎ対策、未対応)。**
