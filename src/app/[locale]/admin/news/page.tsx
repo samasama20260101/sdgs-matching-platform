@@ -37,6 +37,7 @@ type ListFilter = 'ALL' | NewsStatus
 const JST_DATE = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' })
 const toDateInput = (iso: string | null) => (iso ? JST_DATE.format(new Date(iso)) : '')
 const todayInput = () => JST_DATE.format(new Date())
+const JST_TIME = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
 const emptyForm = (): FormState => ({
     category: 'NOTICE', title: '', body: '', external_url: '', published_at: '',
     interview_source: '', note_angle: null, note_article: '', note_checklist: '',
@@ -105,7 +106,15 @@ export default function AdminNewsPage() {
     const [posts, setPosts] = useState<NewsPostAdmin[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    // 操作の結果(操作欄のボタンのすぐ上に出す。成功は次に編集を始めるまで残す)
     const [notice, setNotice] = useState<string | null>(null)
+    const [noticeLink, setNoticeLink] = useState<string | null>(null)
+    // AI 下書きの結果(AI の欄の中に出す)
+    const [aiMessage, setAiMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+    // 削除の知らせ(編集欄ごと消えることがあるので、画面の下にしばらく出す)
+    const [toast, setToast] = useState<string | null>(null)
+    // 保存した記事の行を一覧でしばらく光らせる
+    const [flashId, setFlashId] = useState<string | null>(null)
     const [listFilter, setListFilter] = useState<ListFilter>('ALL')
 
     const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -120,12 +129,18 @@ export default function AdminNewsPage() {
     const [deleting, setDeleting] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [formError, setFormError] = useState<string | null>(null)
+    // 押したボタン(「…しています」をそのボタンにだけ出す)
+    const [savingAction, setSavingAction] = useState<'draft' | 'publish' | 'apply' | 'unpublish' | null>(null)
     const editorRef = useRef<HTMLElement>(null)
 
     const selected = posts.find((p) => p.id === selectedId) ?? null
     const savedStatus: NewsStatus | null = selected?.status ?? null // null = まだ保存していない新しいお知らせ
     const busy = saving || deleting || generating
-    const isDirty = !sameForm(form, savedForm) || Object.values(materials).some((v) => v.trim())
+    // 未保存の変更: 新しいお知らせは「何か書いたか」で判断する(種別を選んだだけでは変更扱いにしない)
+    const hasMaterials = Object.values(materials).some((v) => v.trim())
+    const isDirty = mode === 'new'
+        ? Boolean(form.title.trim() || form.body.trim() || form.external_url.trim() || form.published_at || hasMaterials)
+        : !sameForm(form, savedForm) || hasMaterials
 
     // トップに出ている記事(公開中の新しい順に NEWS_TOP_LIMIT 件。一覧 API と同じ並び)
     const topIds = useMemo(() => new Set(
@@ -155,15 +170,35 @@ export default function AdminNewsPage() {
             const res = await fetch('/api/admin/news', { headers, cache: 'no-store' })
             const result = await res.json()
             if (!res.ok) throw new Error(result.error || 'お知らせの取得に失敗しました')
-            setPosts(result.posts ?? [])
+            const list = (result.posts ?? []) as NewsPostAdmin[]
+            setPosts(list)
+            return list
         } catch (err) {
             setError(err instanceof Error ? err.message : 'お知らせの取得に失敗しました')
         } finally {
             setLoading(false)
         }
+        return null
     }, [authHeader, router])
 
     useEffect(() => { loadPosts() }, [loadPosts])
+
+    // 保存のあとに編集を始めたら、前の結果(「公開しました」など)は消す
+    useEffect(() => {
+        if (isDirty) { setNotice(null); setNoticeLink(null) }
+    }, [isDirty])
+
+    useEffect(() => {
+        if (!toast) return
+        const timer = setTimeout(() => setToast(null), 6000)
+        return () => clearTimeout(timer)
+    }, [toast])
+
+    useEffect(() => {
+        if (!flashId) return
+        const timer = setTimeout(() => setFlashId(null), 2000)
+        return () => clearTimeout(timer)
+    }, [flashId])
 
     // 未保存の変更があるまま、タブを閉じる・再読み込みするときに止める
     useEffect(() => {
@@ -195,6 +230,8 @@ export default function AdminNewsPage() {
         if (isDirty && !window.confirm('保存していない変更があります。破棄して閉じますか?')) return
         resetEditor('none')
         setNotice(null)
+        setNoticeLink(null)
+        setAiMessage(null)
     }
 
     // 保存した時点の内容に戻す(編集は続ける)
@@ -218,6 +255,8 @@ export default function AdminNewsPage() {
         setAiOpen(true)
         setFormError(null)
         setNotice(null)
+        setNoticeLink(null)
+        setAiMessage(null)
         scrollToEditor()
     }
 
@@ -234,6 +273,8 @@ export default function AdminNewsPage() {
         setAiOpen(false)
         setFormError(null)
         setNotice(null)
+        setNoticeLink(null)
+        setAiMessage(null)
         scrollToEditor()
     }
 
@@ -242,8 +283,9 @@ export default function AdminNewsPage() {
     const handleGenerate = async () => {
         setFormError(null)
         const payload = { notes: materials.notes }
+        setAiMessage(null)
         if (!payload.notes.trim()) {
-            setFormError('材料を入力してください')
+            setAiMessage({ kind: 'error', text: '材料を入力してください' })
             return
         }
         if ((form.title.trim() || form.body.trim()) && !window.confirm('タイトルか本文が入力済みです。AIの下書きで上書きしますか?')) return
@@ -259,9 +301,9 @@ export default function AdminNewsPage() {
             const result = await res.json()
             if (!res.ok) throw new Error(result.error || '下書きを作れませんでした')
             setForm((prev) => ({ ...prev, title: result.draft.title, body: result.draft.body }))
-            setNotice('AIの下書きを入れました。内容を確認して直してください([要確認]の箇所は必ず埋める)。まだ保存していません')
+            setAiMessage({ kind: 'ok', text: 'AIの下書きを入れました。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません' })
         } catch (err) {
-            setFormError(err instanceof Error ? err.message : '下書きを作れませんでした')
+            setAiMessage({ kind: 'error', text: err instanceof Error ? err.message : '下書きを作れませんでした' })
         } finally {
             setGenerating(false)
         }
@@ -276,18 +318,22 @@ export default function AdminNewsPage() {
             title: prev.title.trim() ? prev.title : title.slice(0, NEWS_TITLE_MAX),
             body: prev.body.trim() ? prev.body : lead,
         }))
-        setNotice('note 記事の本文を入れました。投稿のタイトルと導入文が空だった場合はあわせて入れています。最後に保存してください')
+        setAiMessage({ kind: 'ok', text: 'note 記事の本文を入れました。投稿のタイトルと導入文が空だった場合はあわせて入れています。最後に保存してください' })
     }
 
-    // 保存の本体。status は押したボタンで決まる(下書き保存・公開する・変更を反映・公開をやめる)
-    const save = async (status: NewsStatus, successMessage: string, publishedAtOverride?: string) => {
+    // 保存の本体。押したボタン(action)で、送る状態と結果の文言が決まる
+    type SaveAction = 'draft' | 'publish' | 'apply' | 'unpublish'
+    const save = async (action: SaveAction, publishedAtOverride?: string) => {
         setFormError(null)
         setNotice(null)
+        setNoticeLink(null)
         if (!form.title.trim()) { setFormError('タイトルを入力してください'); return }
         if (!form.body.trim() && !form.external_url.trim()) { setFormError('本文か外部リンクのどちらかは必要です'); return }
+        const status: NewsStatus = action === 'publish' || action === 'apply' ? 'PUBLISHED' : 'DRAFT'
         const requestId = selectedId
         const sentForm = publishedAtOverride !== undefined ? { ...form, published_at: publishedAtOverride } : form
         setSaving(true)
+        setSavingAction(action)
         try {
             const headers = await authHeader()
             if (!headers) return
@@ -310,7 +356,7 @@ export default function AdminNewsPage() {
                 }),
             })
             const result = await res.json()
-            if (!res.ok) throw new Error(result.error || '保存に失敗しました')
+            if (!res.ok) throw new Error(result.error || '保存できませんでした')
             const saved = result.post as NewsPostAdmin
             const next = { ...sentForm, published_at: toDateInput(saved.published_at) }
             setMode('edit')
@@ -318,19 +364,31 @@ export default function AdminNewsPage() {
             setForm(next)
             setSavedForm(next)
             setMaterials(emptyMaterials())
-            setNotice(successMessage)
-            await loadPosts()
+            const list = await loadPosts()
+            const onTop = (list ?? []).filter((p) => p.status === 'PUBLISHED').slice(0, NEWS_TOP_LIMIT).some((p) => p.id === saved.id)
+            const where = onTop ? 'トップページとお知らせ一覧ページに出ています' : 'お知らせ一覧ページに出ています(トップには、より新しい記事が出ています)'
+            const time = JST_TIME.format(new Date())
+            const message: Record<SaveAction, string> = {
+                draft: `✓ ${time} 下書き保存しました。サイトにはまだ出ていません`,
+                publish: `✓ ${time} 公開しました。いま${where}`,
+                apply: `✓ ${time} サイトの記事を更新しました。${where}`,
+                unpublish: `✓ ${time} サイトから下げました。記事は下書きとして残っています`,
+            }
+            setNotice(message[action])
+            setNoticeLink(status === 'PUBLISHED' ? `/news/${saved.id}` : null)
+            setFlashId(saved.id)
         } catch (err) {
-            const message = err instanceof Error ? err.message : '保存に失敗しました'
+            const message = err instanceof Error ? err.message : '保存できませんでした'
             // 新規作成で通信が途中で切れた場合、サーバー側では作られていることがある。一覧を読み直して二重登録を防ぐ
             if (!requestId) {
                 await loadPosts()
-                setFormError(`${message}。一覧に同じ記事ができていないか確かめてから、保存し直してください`)
+                setFormError(`保存できませんでした(${message})。一覧に同じ記事ができていないか確かめてから、もう一度押してください`)
             } else {
-                setFormError(message)
+                setFormError(`保存できませんでした。サイトの状態は変わっていません(${message})`)
             }
         } finally {
             setSaving(false)
+            setSavingAction(null)
         }
     }
 
@@ -342,36 +400,36 @@ export default function AdminNewsPage() {
             return window.confirm(`公開日が ${date} のままです。今日(${today})の日付にしますか?\n「キャンセル」なら ${date} のまま公開します。`) ? today : undefined
         }
         if (date && date > today) {
-            return window.confirm(`公開日が未来(${date})になっています。予約公開ではなく、今すぐサイトに出ます(日付だけ ${date} と表示されます)。よろしいですか?`) ? undefined : null
+            return window.confirm(`公開日が未来(${date})です。予約公開ではなく、今すぐサイトに出ます。いいですか?`) ? undefined : null
         }
         return undefined
     }
 
-    const handleSaveDraft = () => save('DRAFT', savedStatus === null ? '下書きとして保存しました(サイトには出ていません)' : '下書きを保存しました(サイトには出ていません)')
+    const handleSaveDraft = () => save('draft')
 
     const handlePublish = () => {
-        if (!window.confirm('この記事をサイトに公開します。トップページと「お知らせ」一覧にすぐ表示されます。よろしいですか?')) return
+        if (!window.confirm('この記事をサイトに公開します。トップページとお知らせ一覧ページにすぐ出ます。いいですか?')) return
         const date = confirmPublishDate()
         if (date === null) return
-        save('PUBLISHED', '公開しました。いまサイトに出ています', date)
+        save('publish', date)
     }
 
     const handleApplyChanges = () => {
-        if (!window.confirm('公開中の記事を書き換えます。保存するとすぐにサイトに反映されます。よろしいですか?')) return
-        save('PUBLISHED', '変更をサイトに反映しました')
+        if (!window.confirm('サイトの記事を、この内容に変えます。いいですか?')) return
+        save('apply')
     }
 
     const handleUnpublish = () => {
-        if (!window.confirm('この記事をサイトから取り下げます。削除はしないので、あとで公開し直せます。\n入力中の変更も一緒に保存されます。よろしいですか?')) return
-        save('DRAFT', '公開をやめました。サイトには出ていません(下書きとして残っています)')
+        if (!window.confirm('この記事をサイトから下げます。記事は下書きとして残ります。いいですか?')) return
+        save('unpublish')
     }
 
     // 削除(一覧の「削除」と編集欄の「この記事を削除…」の両方から使う)
     const deletePost = async (post: NewsPostAdmin) => {
         if (busy) return
         const message = post.status === 'PUBLISHED'
-            ? `「${post.title}」を削除します。元に戻せません。\n公開をやめるだけなら、削除せずに「公開をやめる」を使ってください。\n削除してよろしいですか?`
-            : `「${post.title}」を削除します。元に戻せません。よろしいですか?`
+            ? `「${post.title}」を削除します。元に戻せません。\nサイトから下げるだけなら、削除せずに「サイトから下げる」を使ってください。\n削除していいですか?`
+            : `「${post.title}」を削除します。元に戻せません。いいですか?`
         if (!window.confirm(message)) return
         setDeleting(true)
         setFormError(null)
@@ -383,7 +441,7 @@ export default function AdminNewsPage() {
             if (!res.ok) throw new Error(result.error || '削除に失敗しました')
             // 開いていた記事を消したときだけ編集欄を閉じる(別の記事を編集中なら、その内容はそのまま)
             if (post.id === selectedId) resetEditor('none')
-            setNotice(`「${post.title}」を削除しました`)
+            setToast(`「${post.title}」を削除しました`)
             await loadPosts()
         } catch (err) {
             const message = err instanceof Error ? err.message : '削除に失敗しました'
@@ -412,7 +470,7 @@ export default function AdminNewsPage() {
                         <p className="text-xs text-gray-500">管理者メニュー</p>
                         <h1 className="text-2xl font-bold text-gray-900">お知らせ管理</h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            トップページの「お知らせ」欄に出す記事を作成・公開します。公開中の新しい{NEWS_TOP_LIMIT}件がトップに、全件が /news に並びます。
+                            トップページの「お知らせ」欄に出す記事を作成・公開します。公開中の新しい{NEWS_TOP_LIMIT}件がトップに、全件がお知らせ一覧ページに並びます。
                         </p>
                     </div>
                     <Link
@@ -458,7 +516,7 @@ export default function AdminNewsPage() {
                                 {visiblePosts.map((post) => {
                                     const isSelected = post.id === selectedId
                                     return (
-                                        <li key={post.id} className={`flex items-stretch border-l-4 transition ${isSelected ? 'border-teal-500 bg-teal-50' : 'border-transparent hover:bg-gray-50'}`}>
+                                        <li key={post.id} className={`flex items-stretch border-l-4 transition-colors duration-700 ${flashId === post.id ? 'bg-green-100' : isSelected ? 'bg-teal-50' : 'hover:bg-gray-50'} ${isSelected ? 'border-teal-500' : 'border-transparent'}`}>
                                             <button
                                                 onClick={() => selectPost(post)}
                                                 disabled={busy && !isSelected}
@@ -498,7 +556,6 @@ export default function AdminNewsPage() {
                     {/* ── 編集欄 ── */}
                     {mode === 'none' ? (
                         <section className="rounded-xl bg-white border border-dashed border-gray-200 self-start px-6 py-10 text-center">
-                            {notice && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{notice}</div>}
                             <p className="text-sm text-gray-600">一覧から記事の「編集」を押すか、「＋ 新しいお知らせ」を押してください。</p>
                             <button onClick={startNew} disabled={busy} className="mt-4 text-sm font-medium bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition">
                                 ＋ 新しいお知らせ
@@ -525,12 +582,12 @@ export default function AdminNewsPage() {
                             </div>
                             {/* 今の状態(サイトに出ているかどうか)を常に見せる */}
                             {savedStatus === 'PUBLISHED' ? (
-                                <div className="rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-800">
-                                    <span className="font-bold">● 公開中</span> — いまサイトに出ています({selected && topIds.has(selected.id) ? 'トップページと一覧に表示中' : '一覧(/news)に表示中。トップには出ていません'})
+                                <div className="rounded-lg bg-green-50 border border-green-300 px-3 py-2 text-sm text-green-900">
+                                    <span className="font-bold">● サイトに公開中</span> — {selected && topIds.has(selected.id) ? 'トップページとお知らせ一覧ページに出ています' : 'お知らせ一覧ページに出ています(トップには出ていません)'}
                                 </div>
                             ) : savedStatus === 'DRAFT' ? (
-                                <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
-                                    <span className="font-bold">○ 下書き</span> — この記事はサイトに出ていません
+                                <div className="rounded-lg bg-gray-100 border border-gray-300 px-3 py-2 text-sm text-gray-800">
+                                    <span className="font-bold">○ 下書き</span> — まだサイトに出ていません
                                 </div>
                             ) : (
                                 <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
@@ -541,7 +598,6 @@ export default function AdminNewsPage() {
                         </div>
 
                         <div className="p-5 space-y-5">
-                            {notice && <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{notice}</div>}
 
                             {/* 書く / 見え方 の切り替え */}
                             <div className="flex gap-1 rounded-lg bg-gray-100 p-0.5 text-sm">
@@ -609,6 +665,11 @@ export default function AdminNewsPage() {
                                             >
                                                 {generating ? '下書きを作成中…(20秒ほどかかります)' : '下書きを作る'}
                                             </button>
+                                            {aiMessage && (
+                                                <p role={aiMessage.kind === 'error' ? 'alert' : 'status'} className={`text-sm ${aiMessage.kind === 'error' ? 'text-red-700' : 'text-teal-800'}`}>
+                                                    {aiMessage.kind === 'error' ? '✕ ' : '✓ '}{aiMessage.text}
+                                                </p>
+                                            )}
                                         </div>
                                     </details>
 
@@ -683,7 +744,7 @@ export default function AdminNewsPage() {
                                     </div>
 
                                     {isSupporterJoined && (
-                                        <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">参加団体の記事は、下書きとして保存し、本文を団体に送って OK をもらってから公開してください</p>
+                                        <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">参加団体の記事は、下書き保存して、本文を団体に送って OK をもらってから公開してください</p>
                                     )}
                                 </>
                             )}
@@ -693,59 +754,84 @@ export default function AdminNewsPage() {
                                     「[要確認]」が残っています。AI が材料から分からなかった所なので、正しい内容に書き換えてください。残っている間は公開できません(下書きとしては保存できます)。
                                 </div>
                             )}
-                            {formError && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</div>}
                         </div>
 
-                        {/* 操作ボタン(状態ごとに押すものを決める。スマホでは画面下に固定) */}
-                        <div className="sticky bottom-0 lg:static rounded-b-xl border-t border-gray-100 bg-white/95 backdrop-blur px-5 py-3 lg:py-4 space-y-3">
+                        {/* 操作欄(状態ごとに押すものを決める。スマホでは画面下に固定)。結果はボタンのすぐ上に出す */}
+                        <div className="sticky bottom-0 lg:static rounded-b-xl border-t border-gray-100 bg-white/95 backdrop-blur px-5 py-3 lg:py-4 space-y-2.5">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                                <span className={`font-bold ${savedStatus === 'PUBLISHED' ? 'text-green-800' : 'text-gray-700'}`}>
+                                    状態：{savedStatus === 'PUBLISHED' ? '● サイトに公開中' : savedStatus === 'DRAFT' ? '○ 下書き(サイトに出ていません)' : 'まだ保存していません'}
+                                </span>
+                                {isDirty && <span className="font-semibold text-amber-700">● 保存していない変更があります</span>}
+                            </div>
+                            {/* 結果の行(読み上げにも伝わるよう、要素は常に置いて中身だけ変える) */}
+                            <div role="status" aria-live="polite" className="empty:hidden">
+                                {notice && (
+                                    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm font-semibold text-green-800">
+                                        <span>{notice}</span>
+                                        {noticeLink && (
+                                            <a href={noticeLink} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-teal-700 underline underline-offset-2 hover:text-teal-900">
+                                                サイトで見る ↗
+                                            </a>
+                                        )}
+                                    </p>
+                                )}
+                            </div>
+                            {formError && (
+                                <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm font-semibold text-red-700">✕ {formError}</p>
+                            )}
                             <div className="flex flex-wrap items-center gap-2">
                                 {savedStatus === 'PUBLISHED' ? (
                                     <>
-                                        <button type="button" onClick={handleApplyChanges} disabled={busy || hasPlaceholder}
-                                            className="rounded-lg bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white text-sm font-bold px-5 py-2.5 transition">
-                                            {saving ? '保存中…' : '変更をサイトに反映'}
+                                        <button type="button" onClick={handleApplyChanges} disabled={busy || hasPlaceholder || !isDirty} aria-busy={savingAction === 'apply'}
+                                            className={`rounded-lg bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold px-5 py-2.5 transition disabled:cursor-not-allowed ${savingAction === 'apply' ? '' : 'disabled:opacity-40'}`}>
+                                            {savingAction === 'apply' ? 'サイトを更新しています…' : isDirty ? '直した内容でサイトを更新' : '変更はありません'}
                                         </button>
-                                        <button type="button" onClick={handleUnpublish} disabled={busy}
-                                            className="rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 text-sm font-medium px-4 py-2.5 transition">
-                                            公開をやめる
+                                        <button type="button" onClick={handleUnpublish} disabled={busy} aria-busy={savingAction === 'unpublish'}
+                                            className={`rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium px-4 py-2.5 transition ${savingAction === 'unpublish' ? '' : 'disabled:opacity-40'}`}>
+                                            {savingAction === 'unpublish' ? 'サイトから下げています…' : 'サイトから下げる(記事は残ります)'}
                                         </button>
                                     </>
                                 ) : (
                                     <>
-                                        <button type="button" onClick={handlePublish} disabled={busy || hasPlaceholder}
-                                            className="rounded-lg bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white text-sm font-bold px-5 py-2.5 transition">
-                                            {saving ? '保存中…' : '公開する'}
+                                        <button type="button" onClick={handlePublish} disabled={busy || hasPlaceholder} aria-busy={savingAction === 'publish'}
+                                            className={`rounded-lg bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold px-5 py-2.5 transition disabled:cursor-not-allowed ${savingAction === 'publish' ? '' : 'disabled:opacity-40'}`}>
+                                            {savingAction === 'publish' ? '公開しています…' : 'サイトに公開する'}
                                         </button>
-                                        <button type="button" onClick={handleSaveDraft} disabled={busy}
-                                            className="rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 text-sm font-medium px-4 py-2.5 transition">
-                                            下書きとして保存
+                                        <button type="button" onClick={handleSaveDraft} disabled={busy} aria-busy={savingAction === 'draft'}
+                                            className={`rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium px-4 py-2.5 transition ${savingAction === 'draft' ? '' : 'disabled:opacity-40'}`}>
+                                            {savingAction === 'draft' ? '下書きを保存しています…' : '下書き保存(サイトには出ません)'}
                                         </button>
                                     </>
                                 )}
-                                {isDirty && (
+                                {isDirty && savedStatus !== null && (
                                     <button type="button" onClick={revertChanges} disabled={busy}
-                                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:underline disabled:opacity-50">
+                                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:underline disabled:opacity-40">
                                         変更を取り消す
                                     </button>
                                 )}
                                 {selected && (
                                     <button type="button" onClick={() => deletePost(selected)} disabled={busy}
-                                        className="ml-auto rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 text-sm font-medium px-4 py-2.5 transition">
-                                        {deleting ? '削除中…' : 'この記事を削除…'}
+                                        className="ml-auto rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40 text-sm font-medium px-4 py-2.5 transition">
+                                        {deleting ? '削除しています…' : 'この記事を削除…'}
                                     </button>
                                 )}
                             </div>
-                            {/* 説明はスマホでは隠す(画面下に固定した操作欄が高くなりすぎないように) */}
-                            <p className="hidden lg:block text-xs text-gray-400">
-                                {savedStatus === 'PUBLISHED'
-                                    ? '「変更をサイトに反映」はすぐに公開ページが書き換わります。サイトから下ろすだけなら「公開をやめる」(削除はしません)'
-                                    : '「下書きとして保存」はサイトに出ません。「公開する」でトップページと一覧に出ます'}
-                            </p>
                         </div>
                     </section>
                     )}
                 </div>
             </main>
+
+            {/* 削除の知らせ(編集欄ごと消えることがあるので、画面の下に 6 秒出す) */}
+            <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 flex justify-center sm:inset-x-auto sm:right-6 sm:justify-end">
+                {toast && (
+                    <div className="pointer-events-auto flex items-center gap-3 rounded-xl bg-gray-900 px-4 py-3 text-sm text-white shadow-lg sm:w-96">
+                        <span className="flex-1">✓ {toast}</span>
+                        <button type="button" onClick={() => setToast(null)} aria-label="閉じる" className="text-gray-300 hover:text-white">✕</button>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
