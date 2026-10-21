@@ -109,6 +109,8 @@ export default function AdminNewsPage() {
     const [listFilter, setListFilter] = useState<ListFilter>('ALL')
 
     const [selectedId, setSelectedId] = useState<string | null>(null)
+    // 編集欄の状態: none = 何も開いていない / new = 新しいお知らせ / edit = 既存の記事
+    const [mode, setMode] = useState<'none' | 'new' | 'edit'>('none')
     const [form, setForm] = useState<FormState>(emptyForm)
     const [savedForm, setSavedForm] = useState<FormState>(emptyForm)
     const [materials, setMaterials] = useState<Materials>(emptyMaterials)
@@ -172,12 +174,42 @@ export default function AdminNewsPage() {
     }, [isDirty])
 
     const scrollToEditor = () => {
-        if (typeof window !== 'undefined' && window.innerWidth < 1024) editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        // 編集欄は開いたあとに描画されるので、描画を待ってから移動する
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+    }
+
+    const resetEditor = (nextMode: 'none' | 'new') => {
+        setMode(nextMode)
+        setSelectedId(null)
+        setForm(emptyForm())
+        setSavedForm(emptyForm())
+        setMaterials(emptyMaterials())
+        setTab('write')
+        setAiOpen(true)
+        setFormError(null)
+    }
+
+    // 編集をやめて、何も開いていない状態に戻る
+    const closeEditor = () => {
+        if (busy) return
+        if (isDirty && !window.confirm('保存していない変更があります。破棄して閉じますか?')) return
+        resetEditor('none')
+        setNotice(null)
+    }
+
+    // 保存した時点の内容に戻す(編集は続ける)
+    const revertChanges = () => {
+        if (!window.confirm('保存していない変更を取り消して、保存した時点の内容に戻します。よろしいですか?')) return
+        setForm(savedForm)
+        setMaterials(emptyMaterials())
+        setFormError(null)
+        setNotice('変更を取り消しました')
     }
 
     const startNew = () => {
         if (busy) return
         if (isDirty && !window.confirm(DISCARD_MESSAGE)) return
+        setMode('new')
         setSelectedId(null)
         setForm(emptyForm())
         setSavedForm(emptyForm())
@@ -193,6 +225,7 @@ export default function AdminNewsPage() {
         if (busy || post.id === selectedId) { scrollToEditor(); return }
         if (isDirty && !window.confirm(DISCARD_MESSAGE)) return
         const next = formFromPost(post)
+        setMode('edit')
         setSelectedId(post.id)
         setForm(next)
         setSavedForm(next)
@@ -282,6 +315,7 @@ export default function AdminNewsPage() {
             if (!res.ok) throw new Error(result.error || '保存に失敗しました')
             const saved = result.post as NewsPostAdmin
             const next = { ...sentForm, published_at: toDateInput(saved.published_at) }
+            setMode('edit')
             setSelectedId(saved.id)
             setForm(next)
             setSavedForm(next)
@@ -334,30 +368,29 @@ export default function AdminNewsPage() {
         save('DRAFT', '公開をやめました。サイトには出ていません(下書きとして残っています)')
     }
 
-    const handleDelete = async () => {
-        if (!selectedId || busy) return
-        const title = selected?.title ?? ''
-        const message = selected?.status === 'PUBLISHED'
-            ? `「${title}」を削除します。元に戻せません。\n公開をやめるだけなら、削除せずに「公開をやめる」を使ってください。\n削除してよろしいですか?`
-            : `「${title}」を削除します。元に戻せません。よろしいですか?`
+    // 削除(一覧の「削除」と編集欄の「この記事を削除…」の両方から使う)
+    const deletePost = async (post: NewsPostAdmin) => {
+        if (busy) return
+        const message = post.status === 'PUBLISHED'
+            ? `「${post.title}」を削除します。元に戻せません。\n公開をやめるだけなら、削除せずに「公開をやめる」を使ってください。\n削除してよろしいですか?`
+            : `「${post.title}」を削除します。元に戻せません。よろしいですか?`
         if (!window.confirm(message)) return
         setDeleting(true)
         setFormError(null)
         try {
             const headers = await authHeader()
             if (!headers) return
-            const res = await fetch(`/api/admin/news/${selectedId}`, { method: 'DELETE', headers })
+            const res = await fetch(`/api/admin/news/${post.id}`, { method: 'DELETE', headers })
             const result = await res.json()
             if (!res.ok) throw new Error(result.error || '削除に失敗しました')
-            setSelectedId(null)
-            setForm(emptyForm())
-            setSavedForm(emptyForm())
-            setMaterials(emptyMaterials())
-            setTab('write')
-            setNotice('削除しました')
+            // 開いていた記事を消したときだけ編集欄を閉じる(別の記事を編集中なら、その内容はそのまま)
+            if (post.id === selectedId) resetEditor('none')
+            setNotice(`「${post.title}」を削除しました`)
             await loadPosts()
         } catch (err) {
-            setFormError(err instanceof Error ? err.message : '削除に失敗しました')
+            const message = err instanceof Error ? err.message : '削除に失敗しました'
+            if (post.id === selectedId) setFormError(message)
+            else setError(message)
         } finally {
             setDeleting(false)
         }
@@ -427,11 +460,11 @@ export default function AdminNewsPage() {
                                 {visiblePosts.map((post) => {
                                     const isSelected = post.id === selectedId
                                     return (
-                                        <li key={post.id}>
+                                        <li key={post.id} className={`flex items-stretch border-l-4 transition ${isSelected ? 'border-teal-500 bg-teal-50' : 'border-transparent hover:bg-gray-50'}`}>
                                             <button
                                                 onClick={() => selectPost(post)}
                                                 disabled={busy && !isSelected}
-                                                className={`w-full text-left px-5 py-3 transition border-l-4 disabled:opacity-50 ${isSelected ? 'border-teal-500 bg-teal-50' : 'border-transparent hover:bg-gray-50'}`}
+                                                className="min-w-0 flex-1 text-left pl-4 pr-2 py-3 disabled:opacity-50"
                                             >
                                                 <div className="flex flex-wrap items-center gap-2 text-xs">
                                                     <span className={`rounded-full px-2 py-0.5 font-bold ${post.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -439,13 +472,24 @@ export default function AdminNewsPage() {
                                                     </span>
                                                     {topIds.has(post.id) && <span className="rounded-full bg-teal-100 px-2 py-0.5 font-bold text-teal-700">トップに表示中</span>}
                                                     <span className="text-gray-500">{NEWS_CATEGORY_META[post.category]?.labelJa ?? post.category}</span>
-                                                    <span className="text-gray-400 ml-auto tabular-nums">{toDateInput(post.published_at) || '日付なし'}</span>
+                                                    <span className="text-gray-400 tabular-nums">{toDateInput(post.published_at) || '日付なし'}</span>
                                                 </div>
-                                                <div className="mt-1 flex items-start gap-2">
-                                                    <p className="flex-1 text-sm font-medium text-gray-900 line-clamp-2">{post.title}</p>
-                                                    <span className={`shrink-0 text-xs font-semibold ${isSelected ? 'text-teal-700' : 'text-gray-400'}`}>{isSelected ? '編集中' : '編集 ›'}</span>
-                                                </div>
+                                                <p className="mt-1 text-sm font-medium text-gray-900 line-clamp-2">{post.title}</p>
                                             </button>
+                                            <div className="flex shrink-0 flex-col justify-center gap-1.5 pr-3 py-2">
+                                                {isSelected ? (
+                                                    <span className="rounded-md px-2.5 py-1 text-center text-xs font-bold text-teal-700">編集中</span>
+                                                ) : (
+                                                    <button type="button" onClick={() => selectPost(post)} disabled={busy}
+                                                        className="rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                                                        編集
+                                                    </button>
+                                                )}
+                                                <button type="button" onClick={() => deletePost(post)} disabled={busy}
+                                                    className="rounded-md border border-red-100 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                                                    削除
+                                                </button>
+                                            </div>
                                         </li>
                                     )
                                 })}
@@ -454,17 +498,32 @@ export default function AdminNewsPage() {
                     </section>
 
                     {/* ── 編集欄 ── */}
+                    {mode === 'none' ? (
+                        <section className="rounded-xl bg-white border border-dashed border-gray-200 self-start px-6 py-10 text-center">
+                            {notice && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{notice}</div>}
+                            <p className="text-sm text-gray-600">一覧から記事の「編集」を押すか、「＋ 新しいお知らせ」を押してください。</p>
+                            <button onClick={startNew} disabled={busy} className="mt-4 text-sm font-medium bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition">
+                                ＋ 新しいお知らせ
+                            </button>
+                        </section>
+                    ) : (
                     <section ref={editorRef} className="rounded-xl bg-white border border-gray-100 scroll-mt-4">
                         <div className="px-5 py-4 border-b border-gray-100 space-y-3">
                             <div className="flex items-start justify-between gap-3">
                                 <h2 className="font-semibold text-gray-900 line-clamp-2">
                                     {selectedId ? `編集中:「${savedForm.title || selected?.title || ''}」` : '新しいお知らせ'}
                                 </h2>
-                                {selected?.status === 'PUBLISHED' && (
-                                    <a href={`/news/${selected.id}`} target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs text-teal-700 hover:underline">
-                                        公開ページを見る ↗
-                                    </a>
-                                )}
+                                <div className="flex shrink-0 items-center gap-3">
+                                    {selected?.status === 'PUBLISHED' && (
+                                        <a href={`/news/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-700 hover:underline">
+                                            公開ページを見る ↗
+                                        </a>
+                                    )}
+                                    <button type="button" onClick={closeEditor} disabled={busy}
+                                        className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+                                        ✕ 閉じる
+                                    </button>
+                                </div>
                             </div>
                             {/* 今の状態(サイトに出ているかどうか)を常に見せる */}
                             {savedStatus === 'PUBLISHED' ? (
@@ -684,8 +743,14 @@ export default function AdminNewsPage() {
                                         </button>
                                     </>
                                 )}
-                                {selectedId && (
-                                    <button type="button" onClick={handleDelete} disabled={busy}
+                                {isDirty && (
+                                    <button type="button" onClick={revertChanges} disabled={busy}
+                                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:underline disabled:opacity-50">
+                                        変更を取り消す
+                                    </button>
+                                )}
+                                {selected && (
+                                    <button type="button" onClick={() => deletePost(selected)} disabled={busy}
                                         className="ml-auto rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 text-sm font-medium px-4 py-2.5 transition">
                                         {deleting ? '削除中…' : 'この記事を削除…'}
                                     </button>
@@ -699,6 +764,7 @@ export default function AdminNewsPage() {
                             </p>
                         </div>
                     </section>
+                    )}
                 </div>
             </main>
         </div>
