@@ -1,13 +1,46 @@
-# HANDOFF: 休止前整理 + PR #32 本番反映(メール変更・熊本SOS終了・ロゴ修正)
-更新: 2026-10-21(登録サポーター一覧のスマホ表示、fix/supporters-list-mobile)
+# HANDOFF: 休止前整理 — dev に新しい相談フォーム・AI安全対策など(本番反映待ち)
+更新: 2026-10-21(全体のまとめを冒頭に追加)
 
 ## ゴール(完成条件)
-災害SOS拡散フェーズと並行して、本番稼働で見えてきた技術負債とUXの穴を潰す。
-今回のスコープ (1) admin APIのレガシー列参照 (2) ログイン中のパスワード変更導線 (3) 8/26〜29の小改善4件 は **本番反映済み**。
-(4) メール変更+現在パスワード確認+管理者によるユーザーメール変更 は **dev 取り込み済み・Staging検証待ち**。
-将来は「マッチ済みサポーターが行政等を招待して連携」方式を設計する(現1対1はその布石)。
+11月からの少人数運営(開発休止)の前に、dev にたまった改善(新しい相談フォーム・AI の安全対策・セキュリティ・スマホ表示)を本番へ出せる状態にし、本番へ反映する。
+本番反映は dev → main の PR 1 本で行う(DB 変更なし)。反映の前にユーザーが決めること・依頼者に確認することは下の「まとめ」を参照。
+これより前のスコープ(admin API、パスワード変更、メール変更、熊本SOS終了など)は本番反映済み。
 
 ## 現在地
+### まとめ(2026-10-21 時点)
+**dev と main の差: PR #35〜#50(57 コミット)。本番 DB に流す migration はなし**(dev にだけある Security Advisor の migration は本番適用済み)。dev → main の PR 1 本で反映できる。Staging は最新の dev(`815bc9f`)でデプロイ済み。
+
+dev にあって本番にないもの(利用者に見える順):
+- 新しい相談フォーム: 114 の選択肢から 0〜3 個+自由記述、0 個は大項目 18「SDGsの隣のお困りごと」、大項目はサーバーが決め AI は説明だけ(#41)。緊急フラグ 14 個(#42)
+- サポーター一覧: 大項目フィルター → 選択肢のドリルダウン、0 件の項目は押せない(#41・#44)
+- AI まわり: AI に渡す前の個人情報マスク(#38 内)、プロンプトインジェクション対策・出力のリンク除去(#43)、AI 分析は 1 案件 1 回・案件なし分析は管理者のみ(#46)
+- 回数制限: 開いている案件 3 件までをサーバーでも、本番だけ 24 時間 10 件まで(#46)
+- 体験ページ `/trial` と入口(トップの文字リンク・登録ページの案内枠・専用 OGP)(#38・#42・#43・#49)
+- セキュリティ: セキュリティヘッダー 4 つ(#47)、流出パスワードの日本語案内(#45)、cron 認証の穴(CRON_SECRET 未設定で `Bearer undefined` が通る)を修正(#48)
+- 表示: SDGs 言葉ラベル → 大項目名(#35・#36・#41)、災害案件をサポーター一覧から外すフラグ(#37)、登録サポーター一覧のスマホ表示(#50)
+- 開発者向け: デプロイ結果の Discord 通知(#39・#40)
+
+**本番に出す前にユーザーが決めること**
+1. AI マスクを本番に入れてよいか(本番の AI 入力が変わる。体験ページ・営業資料はマスクがある前提で書いてある)
+2. 依頼者の確認がどこまで済んだか: 緊急フラグ 14 個 / 日本向きでない選択肢 / 内容が近い組(`docs/intake_indicators.md` の「内容面の気づき」)/ 日本語以外の訳(公開は ja・en・zh のみ、言語切替は非表示)
+3. 既存案件は新しい選択肢にマッピングしていない(大項目フィルターには掛かる、選択肢フィルターには掛からない)。このままでよいか
+
+**ユーザーの作業(未実施)**
+- CRON_SECRET のローテーション: 値を作る(`openssl rand -hex 32`)→ Vercel の本番プロジェクト(app.samasama.site が付いている方)で **Edit で上書き**(削除→追加はしない)→ 本番を Redeploy → Settings → Cron Jobs の Run で 200 を確認。#48 は本番未反映なので、反映前に行うなら必ず上書きで
+- 本番反映後のブラウザ確認: 相談登録(スマホ・写真)、サポーターのフィルター、体験ページ、流出パスワード(`password123` で日本語の案内が出るか)
+
+**リポジトリの外にあるもの**
+- 営業用 PowerPoint テンプレート v2: `~/samasama/営業資料/`(`.pptx`・`.potx`・`素材/`・生成スクリプト `build/`、旧版 `_v1`)。本番未公開の機能には「次回の更新で公開」の注記。会社の所在地・代表・利用料・公開予定月などは「(記入)」で残してある
+- 説明ドキュメント(Claude Docs)「案件登録QA 作り直し(指標ベース)」: https://claude.ai/code/artifact/69f7caf3-563d-4cff-b359-e5e2d30176a7(マトリックス実装版つき)
+- Staging の開いていた案件 42 件を 2026-10-16 に一括で CANCELLED にした控え: `~/samasama/staging_cases_cancelled_2026-10-16.json`(元に戻すときに使う)
+
+**残っている小さな課題**
+- サポーター用ダッシュボードの困りごとチップが、スマホで 7 段に折り返す(横スクロール化は右端が切れるとユーザー指摘があり取り消し。直すなら別の方法で)
+- 結果ページの見出し「AIが分析しました」は、AI が分類しなくなったので文言を見直す余地
+- AI が書く説明文は日本語固定(日本語以外の画面でも日本語で出る)
+- 登録総数の上限(MAX_SOS_USERS = 1000)は、ロボットに埋められると弱点になる。CAPTCHA はオフのまま(設定だけでオンにすると全員ログイン不可。入れるなら Cloudflare Turnstile)
+
+### 作業の記録(新しい順)
 **2026-10-21 登録サポーター一覧(`/supporters`)のスマホ表示を修正。** 種類フィルターのボタンが 1 行に詰め込まれて「すべ/て」「企/業」とボタン内で改行していた → 折り返し(flex-wrap)+ボタン内は改行しない。「24団体」が途中で切れないように。ついでに、種別未設定の団体で `tSupporterType(null)` が MISSING_MESSAGE を出していた既存の不具合を修正(種別の札を出さない)。**サポーター用ダッシュボード(`/supporter/dashboard`)のフィルターを横スクロール化する変更は、右端が切れるとユーザー指摘があり取り消した(未コミット)。** ダッシュボードの困りごとチップが 7 段に折り返す件は未対応(直すなら横スクロール以外の方法で)。
 
 **2026-10-21 体験ページ `/trial` への入口を追加(ユーザー指示)。** トップの「無料で相談する」「サポーターを見る」の直下に小さな文字のリンク「登録せずに、相談フォームを試してみる →」(`landing.hero.tryTrial`)、登録ページの見出しの下・フォームの上に案内枠(`auth.signup.trialLead` / `trialLink`)。6 言語。`src/app/[locale]/trial/layout.tsx` で体験ページ専用の title / description / OGP(LINE 等で共有したときの表示、画像はサイト共通の og-image.png)。体験ページ自体が本番未反映なので、入口も dev→main の反映と同時に出る。確認: tsc・eslint・check:i18n・build 122/122、HTML でリンクと og タグ、Edge headless でスマホ幅の配置。
@@ -90,6 +123,7 @@
 - 前フェーズまでの教訓は git log の過去HANDOFF参照
 
 ## 次の一手
+00. **本番反映(dev → main)**: 上の「まとめ」の 3 つが決まったら、dev → main の PR を作り、マージ → 本番デプロイ → 本番で curl(セキュリティヘッダー 4 つ、`/trial` の 200)とブラウザ確認。DB 変更なし。反映したら HANDOFF・メモリの「本番未反映」を直す
 0. **SDGs 言葉ラベル**: PR #35 で dev にマージ済み(2026-10-02)。Staging でサポーター一覧のフィルター・カード・案件詳細を目視 → 11 月前に本番へ出すか判断。トップページのサポーター団体カード(`src/app/[locale]/page.tsx` の「SDG11」表記)は対象外のまま(言葉にするかは未決)。相談者側の言葉ラベルは PR #36 で dev にマージ済み(2026-10-02)。Staging で相談者としてログインして 3 画面を目視(ja と en)。17 個の言葉は `SDG_WORD_LABELS` の 1 か所で直せる。相談者側は変更しない
 0b. **Supabase API キーの新方式移行 — 2026-10-03 に Staging・本番とも切り替え完了。** Vercel の Preview / Production の `NEXT_PUBLIC_SUPABASE_ANON_KEY`(Config)と `SUPABASE_SERVICE_ROLE_KEY`(Type=Secret、旧 Sensitive)を `sb_publishable_` / `sb_secret_` に差し替え(ユーザー操作)。本番は最初の再デプロイで秘密用キーが通らず `/api/regions` 等が 500 `Invalid API key` になった(数分)が、ユーザーが直して再デプロイし復旧。外からの確認(配信 JS のキー形式・公開 API・401)は両環境とも OK。**残り: 本番ブラウザ確認(ログイン・管理画面・パスワード変更)、翌 2 時の cron ログ確認、旧キーの Disable は 1〜2 週間後に検討(まだ押していない)。** 以下は実施時の手順(記録): 本番 Vercel は旧 JWT 形式(anon / service_role)だった。ローカル `.env.local` は新形式(`sb_publishable_` / `sb_secret_`)で Staging に対して動作実績あり。コード側は env 経由でしか使っておらず(`src/lib/supabase/{client,server}.ts`、`src/lib/api/password.ts`、`change-password` の `apikey` ヘッダー)変更不要。手順: ①Vercel Preview の `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` を Staging の新キーに差し替え → dev 再デプロイ → ログイン・相談登録・サポーター一覧・管理画面を確認 ②本番 Supabase で Secret key を `vercel-production` 名で新規作成 ③Vercel Production の 2 変数を差し替え(秘密側は Sensitive)→ 再デプロイ(NEXT_PUBLIC_ はビルド時埋め込み)④ログイン・相談登録・一覧・管理画面・`/api/health`・翌 2 時の cron を確認 ⑤旧キーの Disable は 1〜2 週間様子を見てから(押さなければいつでも戻せる)。②〜④は本番変更なのでユーザー実行。11 月の休止前に完了させる
 0a. **Supabase Security Advisor 警告(2026-09-30)**: `migrations/fix_function_search_path_and_rls_helper_grants.sql`(dev `8834e02`)を **Staging・本番とも適用済み(2026-09-30、いずれもユーザーが SQL Editor で実行。Staging はカタログで 13 関数の search_path=public と rls_auto_enable の anon/authenticated EXECUTE 剥奪を確認、本番は Advisor の再チェックで関数関連 14 件が消え WARN は Leaked Password Protection の 1 件だけになったことをユーザーが確認)**。残り: Leaked Password Protection は Dashboard の Authentication → Providers → Password で Staging→本番の順に ON(登録時のエラー文言を確認)。auto mode の分類器は Management API 経由の DDL も「デプロイ」として止めるので、Staging の DDL もユーザー実行になった
@@ -103,6 +137,9 @@
 7. (継続)技術負債: スキーマ差分照合スクリプト(read-only本番PG vs Staging)をリリース手順に組込み(**9/16 に i18n フェーズ2の列で実際に差分を確認済み**、下記「地雷」参照)。`users.supporter_type` / `users.organization_name` 列のDROP migration。本番の `display_id_backup_20260816` テーブルDROP(ユーザー実行、8/16 から1か月経過)
 
 ## 地雷・注意
+- **公開している言語は ja・en・zh のみ**(`src/i18n/routing.ts` の `locales`)。ko・vi・id は翻訳ファイルだけある。言語切替は `LANGUAGE_SWITCHER_ENABLED = false` で非表示。資料などで「6 言語対応」と書かない
+- **画面の確認方法**: Playwright はプロジェクトに入れていない。`~/samasama/.qa-tools/` に `playwright-core` と撮影スクリプト(`shot.js`=サポーターでログインしてダッシュボード、`shot_pub.js`=公開ページ)がある。ブラウザ本体は `~/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell`。絵文字は四角で写る(書体がないだけ)。PowerPoint の見た目確認は Windows の PowerPoint を PowerShell の COM で PNG に書き出す(WSL に LibreOffice なし)
+- **画面の横スクロール化は慎重に**: サポーター用ダッシュボードで試したところ、右端が切れて見えるとユーザーに却下された(2026-10-21)
 - **本番Supabaseへの変更操作はユーザー明示許可なしに絶対に実行しない**(こちらはread-only接続のみ。auto modeでは本番psqlがブロックされるのでユーザーが `!` で実行)
 - **現在パスワード確認は本番反映済み(PR #32)**。総当たり対策は GoTrue のトークン発行レート制限に依存。**パスワード更新は必ず本人トークンで GoTrue PUT /user を呼ぶ**(admin API だと本人セッションごと失効=即ログアウト。2026-09-17 の回帰)
 - **メール変更の確認メールは新旧両方の宛先に届く(2026-09-17 調査で確定・仕様として受容)**: Secure email change を OFF にしても、Supabase ホスト版 GoTrue は確認メールを1通・宛先2件(現在のアドレス+変更先)で送る。トークンは新アドレス側の1本のみ(`email_change_token_current` は空)で、両メールに入るリンクは同一なのでどちらを押しても同じ変更が完了する。Resend の API 送信も変更1回につき1回。**二重送信バグではない**。旧アドレスへの控えは「変更が行われる通知」として依頼者が受容(2026-09-17)。新アドレスだけに送る設定は無い。切り分けSQLは `~/samasama/メール変更調査SQL/`(メール個人情報を含むので不要なら削除)
@@ -120,6 +157,6 @@
 - ローカルの Vercel CLI は古い個人プロジェクト(stanabe/...)にリンクされたまま。samasamaチームのデプロイ状況は `gh api repos/.../commits/<sha>/status` で見る
 - ローカルの `main` ref は origin/main より大幅に古い(PRはGitHub画面で作るので実害なし)
 - チャットに貼られたResend APIキーは落ち着いたら再発行→Supabase SMTP再設定
-- `docs/staging_users_20260806.csv` はユーザー一覧のためコミット禁止。docs/配布物(pptx・PDF・インスタ画像)は未追跡のまま
+- `docs/staging_users_20260806.csv` はユーザー一覧のためコミット禁止(2026-10-20 時点で手元に見当たらない)。配布物(pptx・PDF・インスタ画像)は `~/samasama/docs_退避_20260925/配布物/` に退避済み
 - 将来の招待方式を作る際、共有メモ(APPROVED_SUPPORTERS)の過去データはDBに残っている(表示のみ廃止)
 - 本番のテスト用SOSアカウント(捨てアドレス2件: SOS-00003 / SOS-00011)は **2026-09-16 に削除済み**(案件4件・写真7件・auth含む。ユーザーが Dashboard の SQL Editor と Storage UI で実施)。手順の要点: ①read-only psql は auth/storage スキーマを読めないので確認も SQL Editor で行う ②storage.objects は保護トリガーで SQL から消せず Storage UI(またはStorage API)で消す ③削除は1トランザクションで cases(NO ACTION) → public.users → auth.users の順、FK を pg_constraint から動的に辿る。SQL は `~/samasama/本番アカウント削除SQL/` に保管
