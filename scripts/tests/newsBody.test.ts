@@ -19,6 +19,8 @@ assert.deepEqual(parseNewsBody(''), [])
 
 assert.equal(hasUnresolvedPlaceholder('ABC団体は[要確認: 団体の種別]です'), true)
 assert.equal(hasUnresolvedPlaceholder('タイトル', '［要確認：日時］'), true)
+assert.equal(hasUnresolvedPlaceholder('【要確認】団体名'), true)
+assert.equal(hasUnresolvedPlaceholder('(要確認: 日時)'), true)
 assert.equal(hasUnresolvedPlaceholder('確認済みの文章です', '要確認という言葉だけ'), false)
 
 console.log('newsBody: ok')

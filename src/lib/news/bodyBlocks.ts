@@ -32,7 +32,7 @@ export function parseNewsBody(body: string): NewsBlock[] {
 }
 
 // AI の下書きが「材料にない情報」に残す印。これが残ったままでは公開させない
-const PLACEHOLDER_PATTERN = /[[［]\s*要確認/
+const PLACEHOLDER_PATTERN = /[[［【(（]\s*要確認/
 
 export function hasUnresolvedPlaceholder(...texts: string[]) {
   return texts.some((text) => PLACEHOLDER_PATTERN.test(text))
