@@ -16,6 +16,8 @@ import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/Not
 import { NewsBodyView } from '@/components/news/NewsBodyView'
 import { LinkCardView } from '@/components/news/LinkCardView'
 import type { LinkPreview } from '@/lib/news/linkPreview'
+import { SupporterTileView } from '@/components/news/SupporterTileView'
+import { supporterIdFromUrl, supporterPageUrl, type SupporterTileData } from '@/lib/news/supporterTile'
 import { NewsCategoryChip } from '@/components/news/NewsCategoryChip'
 import { formatNewsDate } from '@/lib/news/format'
 import { hasUnresolvedPlaceholder, parseNewsBody } from '@/lib/news/bodyBlocks'
@@ -69,13 +71,15 @@ function hostnameOf(url: string) {
 }
 
 // 管理画面のプレビュー用のリンクカード。リンク先の情報が取れたら公開ページと同じカード、取得中・失敗は仮の枠
-type PreviewMap = Record<string, LinkPreview | 'loading' | 'error'>
+type PreviewMap = Record<string, LinkPreview | { tile: SupporterTileData } | 'loading' | 'error'>
 function PreviewLinkCard({ url, previews }: { url: string; previews: PreviewMap }) {
     const state = previews[url]
-    if (state && state !== 'loading' && state !== 'error') return <LinkCardView preview={state} />
+    if (state && state !== 'loading' && state !== 'error') {
+        return 'tile' in state ? <SupporterTileView data={state.tile} /> : <LinkCardView preview={state} />
+    }
     return (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
-            <p className="text-xs text-gray-500">{state === 'error' ? 'リンク先のカードを取得できませんでした(公開ページではドメインだけのカードになります)' : 'リンク先のカードを読み込んでいます…'}</p>
+            <p className="text-xs text-gray-500">{state === 'error' ? (supporterIdFromUrl(url) ? 'サイト内の団体が見つかりませんでした(公開ページでは何も出ません)' : 'リンク先のカードを取得できませんでした(公開ページではドメインだけのカードになります)') : 'リンク先のカードを読み込んでいます…'}</p>
             <p className="mt-1 text-sm font-medium text-gray-700 break-all">{hostnameOf(url)}</p>
         </div>
     )
@@ -154,6 +158,8 @@ export default function AdminNewsPage() {
     const editorRef = useRef<HTMLElement>(null)
     // 見え方の確認で出すリンクカードの情報(URL ごとに 1 回だけ取る)
     const [previews, setPreviews] = useState<PreviewMap>({})
+    // 「サイト内の団体」の選択肢(登録済みで公開中の団体)
+    const [supporterOptions, setSupporterOptions] = useState<{ id: string; name: string }[] | null>(null)
 
     const selected = posts.find((p) => p.id === selectedId) ?? null
     const savedStatus: NewsStatus | null = selected?.status ?? null // null = まだ保存していない新しいお知らせ
@@ -215,6 +221,22 @@ export default function AdminNewsPage() {
             if (!headers) return
             await Promise.all(missing.map(async (url) => {
                 try {
+                    const supporterId = supporterIdFromUrl(url)
+                    if (supporterId) {
+                        const res = await fetch(`/api/public/supporters/${supporterId}`, { cache: 'no-store' })
+                        const result = await res.json()
+                        if (!res.ok) { setPreviews((prev) => ({ ...prev, [url]: 'error' })); return }
+                        const sp = result.supporter
+                        const tile: SupporterTileData = {
+                            id: sp.id, name: sp.organization_name ?? sp.display_name, supporterType: sp.supporter_type, createdAt: sp.created_at, bio: sp.bio,
+                            resolvedCount: sp.resolved_count ?? 0,
+                            badgeCount: Object.values((result.badges ?? {}) as Record<string, number>).reduce((a, b) => a + b, 0),
+                            nationwide: Boolean(sp.service_area_nationwide),
+                            areaNames: ((sp.service_areas ?? []) as { name_local: string }[]).map((a) => a.name_local),
+                        }
+                        setPreviews((prev) => ({ ...prev, [url]: { tile } }))
+                        return
+                    }
                     const res = await fetch('/api/admin/news/link-preview', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
                     const result = await res.json()
                     setPreviews((prev) => ({ ...prev, [url]: res.ok ? result.preview as LinkPreview : 'error' }))
@@ -224,6 +246,16 @@ export default function AdminNewsPage() {
             }))
         })()
     }, [tab, form, previews, authHeader])
+
+    useEffect(() => {
+        if (form.category !== 'SUPPORTER_JOINED' || supporterOptions !== null) return
+        fetch('/api/public/supporters', { cache: 'no-store' })
+            .then((res) => res.json())
+            .then((d) => setSupporterOptions(((d.supporters ?? []) as { id: string; organization_name?: string; display_name?: string }[])
+                .map((sp) => ({ id: sp.id, name: sp.organization_name ?? sp.display_name ?? '' }))
+                .sort((a, b) => a.name.localeCompare(b.name, 'ja'))))
+            .catch(() => setSupporterOptions([]))
+    }, [form.category, supporterOptions])
 
     // 保存のあとに編集を始めたら、前の結果(「公開しました」など)は消す
     useEffect(() => {
@@ -321,6 +353,13 @@ export default function AdminNewsPage() {
     }
 
     const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
+
+    // 本文の最後に置く「サイト内の団体ページ」の行(表示のときに団体タイルになる)
+    const linkedSupporterId = form.body.split('\n').map((line) => supporterIdFromUrl(line.trim())).find(Boolean) ?? ''
+    const setLinkedSupporter = (id: string) => setForm((prev) => {
+        const kept = prev.body.split('\n').filter((line) => !supporterIdFromUrl(line.trim())).join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()
+        return { ...prev, body: id ? `${kept}${kept ? '\n\n' : ''}${supporterPageUrl(id)}` : kept }
+    })
 
     // AI に下書きを書かせる(材料: 手で書いたメモ + ページから読み取った内容)
     const requestDraft = async (headers: Record<string, string>, notes: string, pageText: string) => {
@@ -863,6 +902,25 @@ export default function AdminNewsPage() {
                                         />
                                         <p className="mt-1 text-xs text-gray-400">書式は3つだけ: 空行で段落を分ける / 行頭「## 」で小見出し / https:// から始まるURLは自動でリンクになる。見た目は上の「見え方を確認」で確かめられます</p>
                                     </div>
+
+                                    {/* サイト内の団体(参加団体のみ) */}
+                                    {isSupporterJoined && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">サイト内の団体 <span className="text-xs font-normal text-gray-400">(選ぶと、本文の下に団体のタイルと「この団体のページを見る」ボタンが出ます)</span></label>
+                                            <select
+                                                value={linkedSupporterId}
+                                                onChange={(e) => setLinkedSupporter(e.target.value)}
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                            >
+                                                <option value="">{supporterOptions === null ? '読み込んでいます…' : '選ばない'}</option>
+                                                {(supporterOptions ?? []).map((sp) => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
+                                                {linkedSupporterId && supporterOptions && !supporterOptions.some((sp) => sp.id === linkedSupporterId) && (
+                                                    <option value={linkedSupporterId}>(公開されていない団体)</option>
+                                                )}
+                                            </select>
+                                            <p className="mt-1 text-xs text-gray-400">本文の最後に団体ページのアドレスが 1 行入ります(消すと外れます)。団体サイトのカードは、下の外部リンクで出ます</p>
+                                        </div>
+                                    )}
 
                                     {/* 外部リンク */}
                                     <div>

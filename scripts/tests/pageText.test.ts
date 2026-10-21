@@ -29,3 +29,15 @@ assert.ok(!section.includes('本文"""'))
 assert.equal(buildMaterialSection('INTERVIEW', { pageText: '  ', notes: '' }), null)
 
 console.log('pageText: ok')
+
+// サイト内の団体ページのアドレス → 団体 ID(このサイトのホストだけ)
+import { supporterIdFromUrl, supporterPageUrl } from '../../src/lib/news/supporterTile'
+const ORG = '8b3a6da9-6904-4c49-a0cb-d216df0a4942'
+assert.equal(supporterIdFromUrl(supporterPageUrl(ORG)), ORG)
+assert.equal(supporterIdFromUrl(`https://app.samasama.site/en/supporters/${ORG}/`), ORG)
+assert.equal(supporterIdFromUrl(`https://sdgs-matching-platform-git-dev-samasama.vercel.app/supporters/${ORG}`), ORG)
+assert.equal(supporterIdFromUrl(`http://localhost:3000/supporters/${ORG}`), ORG)
+assert.equal(supporterIdFromUrl(`https://evil.example.com/supporters/${ORG}`), null)
+assert.equal(supporterIdFromUrl('https://app.samasama.site/supporters/not-a-uuid'), null)
+assert.equal(supporterIdFromUrl(`https://app.samasama.site/news/${ORG}`), null)
+console.log('supporterTile: ok')
