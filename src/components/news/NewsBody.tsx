@@ -3,6 +3,7 @@
 // React 要素で組み立てるので dangerouslySetInnerHTML は使わない。
 import React from 'react'
 import { LinkPreviewCard } from '@/components/news/LinkPreviewCard'
+import { parseNewsBody } from '@/lib/news/bodyBlocks'
 
 // URL は ASCII だけ(日本語の文が URL の直後に続いても巻き込まない)。末尾の句読点・閉じ括弧は URL に含めない
 const URL_SOURCE = "https?:\\/\\/[A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
@@ -35,33 +36,24 @@ function linkify(text: string, keyPrefix: string): React.ReactNode[] {
   return nodes
 }
 
-export function splitNewsBlocks(body: string) {
-  return body
-    .replace(/\r\n?/g, '\n')
-    .split(/\n[ \t]*\n+/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-}
-
 export function NewsBody({ body }: { body: string }) {
-  const blocks = splitNewsBlocks(body)
+  const blocks = parseNewsBody(body)
   return (
     <div className="space-y-5 text-[15px] leading-8 text-gray-700 sm:text-base">
       {blocks.map((block, blockIndex) => {
-        if (block.startsWith('## ')) {
+        if (block.kind === 'heading') {
           return (
             <h2 key={blockIndex} className="pt-4 text-lg font-bold text-gray-900">
-              {block.slice(3).trim()}
+              {block.text}
             </h2>
           )
         }
-        if (URL_ONLY_LINE.test(block)) {
-          return <LinkPreviewCard key={blockIndex} url={block.replace(TRAILING_PUNCTUATION, '')} />
+        if (block.lines.length === 1 && URL_ONLY_LINE.test(block.lines[0])) {
+          return <LinkPreviewCard key={blockIndex} url={block.lines[0].replace(TRAILING_PUNCTUATION, '')} />
         }
-        const lines = block.split('\n')
         return (
           <p key={blockIndex}>
-            {lines.map((line, lineIndex) => (
+            {block.lines.map((line, lineIndex) => (
               <React.Fragment key={lineIndex}>
                 {lineIndex > 0 && <br />}
                 {linkify(line, `${blockIndex}-${lineIndex}`)}

@@ -2,6 +2,7 @@
 import 'server-only'
 
 import { normalizeHttpUrl } from '@/lib/api/validation'
+import { hasUnresolvedPlaceholder } from '@/lib/news/bodyBlocks'
 import {
   isNewsAngle, isNewsCategory, isNewsStatus, NOTE_ARTICLE_WORKFLOW_ENABLED,
   NEWS_ARTICLE_MAX, NEWS_BODY_MAX, NEWS_CHECKLIST_MAX, NEWS_INTERVIEW_SOURCE_MAX, NEWS_TITLE_MAX,
@@ -59,6 +60,10 @@ export function parseNewsInput(raw: unknown): ParseResult {
   if (!body && !externalUrl) return { ok: false, error: '本文か外部リンクのどちらかは必要です' }
 
   const status: NewsStatus = isNewsStatus(input.status) ? input.status : 'DRAFT'
+  // AI の下書きが残す「[要確認: ○○]」を埋めないまま公開しない(下書き保存はできる)
+  if (status === 'PUBLISHED' && hasUnresolvedPlaceholder(title, body)) {
+    return { ok: false, error: '「[要確認]」が残っています。埋めてから公開してください(下書きとしては保存できます)' }
+  }
 
   const publishedAt = parsePublishedAt(input.published_at)
   if (!publishedAt.ok) return { ok: false, error: '公開日の形式が不正です' }

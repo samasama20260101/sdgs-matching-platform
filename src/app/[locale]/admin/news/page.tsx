@@ -11,6 +11,20 @@ import {
     type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsStatus,
 } from '@/lib/constants/news'
 import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
+import { parseNewsBody, hasUnresolvedPlaceholder } from '@/lib/news/bodyBlocks'
+
+// 本文の見え方の確認用(公開ページと同じ段落分け。リンクカードは URL だけ出す)
+function NewsBodyPreview({ body }: { body: string }) {
+    const blocks = parseNewsBody(body)
+    if (blocks.length === 0) return <p className="text-xs text-gray-400">本文が空です</p>
+    return (
+        <div className="space-y-3 text-sm leading-7 text-gray-700">
+            {blocks.map((block, i) => block.kind === 'heading'
+                ? <h3 key={i} className="pt-2 text-base font-bold text-gray-900">{block.text}</h3>
+                : <p key={i}>{block.lines.map((line, j) => <span key={j}>{j > 0 && <br />}{line}</span>)}</p>)}
+        </div>
+    )
+}
 
 type FormState = {
     category: NewsCategory
@@ -229,6 +243,9 @@ export default function AdminNewsPage() {
     const isSupporterJoined = form.category === 'SUPPORTER_JOINED'
     const selected = posts.find((p) => p.id === selectedId) ?? null
 
+    // AI の下書きが残す「[要確認]」(公開はサーバーでも止める)
+    const hasPlaceholder = hasUnresolvedPlaceholder(form.title, form.body)
+
     return (
         <div className="min-h-screen bg-gray-50">
             <header className="bg-white border-b border-gray-200">
@@ -414,6 +431,14 @@ export default function AdminNewsPage() {
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-300"
                                 />
                                 <p className="mt-1 text-xs text-gray-400">書式は3つだけ: 空行で段落を分ける / 行頭「## 」で小見出し / https:// から始まるURLは自動でリンクになる</p>
+                                {form.body.trim() && (
+                                    <details className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                                        <summary className="cursor-pointer text-xs font-medium text-gray-600">公開したときの見え方を確認する</summary>
+                                        <div className="mt-3 rounded-lg bg-white p-4">
+                                            <NewsBodyPreview body={form.body} />
+                                        </div>
+                                    </details>
+                                )}
                             </div>
 
                             {/* 外部リンク */}
@@ -460,12 +485,18 @@ export default function AdminNewsPage() {
                                 </div>
                             </div>
 
+                            {hasPlaceholder && (
+                                <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                    「[要確認]」が残っています。AI が材料から分からなかった所なので、正しい内容に書き換えてください。残っている間は公開できません(下書きとしては保存できます)。
+                                </div>
+                            )}
+
                             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
                                         onClick={handleSave}
-                                        disabled={saving || generating}
+                                        disabled={saving || generating || (form.status === 'PUBLISHED' && hasPlaceholder)}
                                         className="rounded-lg bg-teal-500 hover:bg-teal-600 disabled:opacity-60 text-white text-sm font-bold px-5 py-2 transition"
                                     >
                                         {saving ? '保存中…' : form.status === 'PUBLISHED' ? '保存して公開' : '下書きを保存'}
