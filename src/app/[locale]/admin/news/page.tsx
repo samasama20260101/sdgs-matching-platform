@@ -784,14 +784,28 @@ export default function AdminNewsPage() {
                                                         <span className="ml-1 text-xs font-normal text-teal-700/80">(最大{NEWS_SOURCE_URLS_MAX}つ。ページを読み取って要約します)</span>
                                                     </p>
                                                     {materials.urls.map((url, index) => (
-                                                        <input
-                                                            key={index}
-                                                            type="url"
-                                                            value={url}
-                                                            onChange={(e) => setMaterials((m) => ({ ...m, urls: m.urls.map((u, k) => (k === index ? e.target.value : u)) }))}
-                                                            placeholder={form.category === 'INTERVIEW' ? 'https://note.com/...' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
-                                                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
-                                                        />
+                                                        <div key={index} className="flex items-center gap-2">
+                                                            <input
+                                                                type="url"
+                                                                value={url}
+                                                                onChange={(e) => setMaterials((m) => ({ ...m, urls: m.urls.map((u, k) => (k === index ? e.target.value : u)) }))}
+                                                                placeholder={form.category === 'INTERVIEW' ? 'https://note.com/...' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
+                                                                aria-label={`URL ${index + 1}`}
+                                                                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+                                                            />
+                                                            {/* 欄が 1 つなら中身を消す、2 つ以上なら欄ごと消す */}
+                                                            {(materials.urls.length > 1 || url) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setMaterials((m) => ({ ...m, urls: m.urls.length > 1 ? m.urls.filter((_, k) => k !== index) : [''] }))}
+                                                                    disabled={busy}
+                                                                    aria-label={`URL ${index + 1} を消す`}
+                                                                    className="shrink-0 rounded-md border border-gray-200 px-2.5 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-800 disabled:opacity-50"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     ))}
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <button
