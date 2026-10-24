@@ -1,5 +1,5 @@
 # HANDOFF: 休止前整理 — dev に新しい相談フォーム・AI安全対策など(本番反映待ち)
-更新: 2026-10-22(お知らせ機能は feature/news-section で仕上げ済み・ユーザーのテストとクライアント確認待ち)
+更新: 2026-10-24(お知らせ機能は feature/news-section で仕上げ済み・10/24 ブラッシュアップ・ユーザーのテストとクライアント確認待ち)
 
 ## ゴール(完成条件)
 11月からの少人数運営(開発休止)の前に、dev にたまった改善(新しい相談フォーム・AI の安全対策・セキュリティ・スマホ表示)を本番へ出せる状態にし、本番へ反映する。
@@ -10,6 +10,7 @@
 ### お知らせ機能(feature/news-section、2026-10-22 時点)
 **機能は仕上げ済み。次はユーザーのテスト → クライアントに触ってもらう → OK なら dev へ PR(マージはユーザー承認)。** プレビュー: https://sdgs-matching-platform-git-feature-news-section-samasama.vercel.app/admin/login(Staging DB。news_posts は Staging に適用済み)
 - できていること: 管理画面 `/admin/news`(状態ごとの操作ボタン・結果表示・閉じる/取り消し・一覧の削除・検索/種別/年の区切り・本文の後読み)、AI 下書き(材料 1 欄+「URL から下書きを作る」、SSRF 対策つき取得)、見え方の確認(本物のリンクカード・サイト内の団体タイル)、公開 `/news` の「次の50件を見る」。設計書 `docs/news_section_design.md` の決定ログが正本、細かい経緯は下の「作業の記録」
+- 2026-10-24 ブラッシュアップ: note 記事ワークフローのコードを削除(タグ `archive/news-note-article-2026-10` に保管)/ トップのお知らせをサーバーで読む(欄が遅れて出てずれる問題をなくす、`/api/public/news` は廃止)/ 記事ごとのタイトル入り共有画像 `/api/public/news/[id]/og`(X は大きい画像のカード)。ローカル+Staging DB で表示・画像・ビルドを確認済み
 - 取りやめたもの: ログイン中の運営がトップを見る仕組み(2026-10-22 revert)。トップ全体の見え方はシークレットウィンドウで確認する
 - 指摘が来たら: feature/news-section に足して push → プレビューで確認してもらう
 - dev に入れたあと: **本番 DB に news_posts の migration が必要**(dev→main の前にユーザーが SQL Editor で実行。その前に `update_news_posts_updated_at()` に `SET search_path = public` を足す)。「SQL の話は後日」とユーザー判断済み

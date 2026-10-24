@@ -38,6 +38,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = await loadPost(id)
   if (!post) return { title: t('metaTitle'), robots: { index: false, follow: false } }
   const description = summarize(post.body) || undefined
+  // タイトル入りの共有用画像。更新日時を付けて、タイトルを直したら別の画像として読み直されるようにする
+  const image = {
+    url: `/api/public/news/${post.id}/og?v=${new Date(post.updated_at).getTime()}`,
+    width: 1200,
+    height: 630,
+    alt: post.title,
+  }
   return {
     title: `${post.title} | 明日もsamasama`,
     description,
@@ -47,8 +54,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       siteName: '明日もsamasama',
       publishedTime: post.published_at,
+      images: [image],
     },
-    twitter: { card: 'summary', title: post.title, description },
+    twitter: { card: 'summary_large_image', title: post.title, description, images: [image] },
   }
 }
 
