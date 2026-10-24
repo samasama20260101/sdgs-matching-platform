@@ -9,10 +9,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import {
-    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX, NEWS_SOURCE_URLS_MAX, NEWS_TOP_LIMIT, NOTE_ARTICLE_WORKFLOW_ENABLED,
-    type NewsAngle, type NewsCategory, type NewsPostAdmin, type NewsPostListItem, type NewsStatus,
+    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX, NEWS_SOURCE_URLS_MAX, NEWS_TOP_LIMIT,
+    type NewsCategory, type NewsPostAdmin, type NewsPostListItem, type NewsStatus,
 } from '@/lib/constants/news'
-import { NoteArticlePanel, type NoteArticleFields } from '@/components/admin/NoteArticlePanel'
 import { NewsBodyView } from '@/components/news/NewsBodyView'
 import { LinkCardView } from '@/components/news/LinkCardView'
 import type { LinkPreview } from '@/lib/news/linkPreview'
@@ -28,11 +27,6 @@ type FormState = {
     body: string
     external_url: string
     published_at: string   // "YYYY-MM-DD" または空(空なら公開した日が入る)
-    // note 記事ワークフロー(INTERVIEW 用)
-    interview_source: string
-    note_angle: NewsAngle | null
-    note_article: string
-    note_checklist: string
 }
 // notes = 手で書く材料 / urls = 読み取るページ(参加団体・インタビュー)/ pageText = ページから読み取った内容(確認・修正できる)
 type Materials = { notes: string; urls: string[]; pageText: string }
@@ -45,7 +39,6 @@ const todayInput = () => JST_DATE.format(new Date())
 const JST_TIME = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
 const emptyForm = (): FormState => ({
     category: 'NOTICE', title: '', body: '', external_url: '', published_at: '',
-    interview_source: '', note_angle: null, note_article: '', note_checklist: '',
 })
 const emptyMaterials = (): Materials => ({ notes: '', urls: [''], pageText: '' })
 // URL から下書きを作れる種別(材料がよそのページにあるもの)
@@ -56,10 +49,6 @@ const formFromPost = (post: NewsPostAdmin): FormState => ({
     body: post.body,
     external_url: post.external_url ?? '',
     published_at: toDateInput(post.published_at),
-    interview_source: post.interview_source ?? '',
-    note_angle: post.note_angle ?? null,
-    note_article: post.note_article ?? '',
-    note_checklist: post.note_checklist ?? '',
 })
 const sameForm = (a: FormState, b: FormState) => JSON.stringify(a) === JSON.stringify(b)
 
@@ -464,18 +453,6 @@ export default function AdminNewsPage() {
         }
     }
 
-    const handleNoteFields = (patch: Partial<NoteArticleFields>) => setForm((prev) => ({ ...prev, ...patch }))
-
-    // note 記事の本文ができたら、投稿のタイトルと導入文が空のときだけ埋める(入力済みなら触らない)
-    const handleDraftWritten = ({ title, lead }: { title: string; lead: string }) => {
-        setForm((prev) => ({
-            ...prev,
-            title: prev.title.trim() ? prev.title : title.slice(0, NEWS_TITLE_MAX),
-            body: prev.body.trim() ? prev.body : lead,
-        }))
-        setAiMessage({ kind: 'ok', text: 'note 記事の本文を入れました。投稿のタイトルと導入文が空だった場合はあわせて入れています。最後に保存してください' })
-    }
-
     // 保存の本体。押したボタン(action)で、送る状態と結果の文言が決まる
     type SaveAction = 'draft' | 'publish' | 'apply' | 'unpublish'
     const save = async (action: SaveAction, publishedAtOverride?: string) => {
@@ -502,12 +479,6 @@ export default function AdminNewsPage() {
                     external_url: sentForm.external_url.trim() || null,
                     published_at: sentForm.published_at || null,
                     status,
-                    ...(NOTE_ARTICLE_WORKFLOW_ENABLED ? {
-                        interview_source: sentForm.interview_source,
-                        note_angle: sentForm.note_angle,
-                        note_article: sentForm.note_article,
-                        note_checklist: sentForm.note_checklist,
-                    } : {}),
                 }),
             })
             const result = await res.json()
@@ -932,22 +903,6 @@ export default function AdminNewsPage() {
                                             )}
                                         </div>
                                     </details>
-
-                                    {/* note 記事ワークフロー(インタビューのみ) */}
-                                    {NOTE_ARTICLE_WORKFLOW_ENABLED && form.category === 'INTERVIEW' && (
-                                        <NoteArticlePanel
-                                            title={form.title}
-                                            fields={{
-                                                interview_source: form.interview_source,
-                                                note_angle: form.note_angle,
-                                                note_article: form.note_article,
-                                                note_checklist: form.note_checklist,
-                                            }}
-                                            onChange={handleNoteFields}
-                                            onDraftWritten={handleDraftWritten}
-                                            authHeader={authHeader}
-                                        />
-                                    )}
 
                                     {/* タイトル */}
                                     <div>

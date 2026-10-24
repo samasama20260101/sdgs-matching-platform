@@ -3,13 +3,11 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
-import { NOTE_ARTICLE_WORKFLOW_ENABLED, type NewsPostListItem, type NewsPostAdmin } from '@/lib/constants/news'
+import { type NewsPostListItem, type NewsPostAdmin } from '@/lib/constants/news'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
 // 列名を string にすると supabase-js の select 型推論(文字列パーサ)を通らないので、返り型は returns<>() で明示する
-const ADMIN_NEWS_COLUMNS: string = NOTE_ARTICLE_WORKFLOW_ENABLED
-    ? 'id, category, title, body, external_url, status, published_at, interview_source, note_angle, note_article, note_checklist, created_at, updated_at'
-    : 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
+const ADMIN_NEWS_COLUMNS: string = 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
 
 export async function GET(request: Request) {
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })

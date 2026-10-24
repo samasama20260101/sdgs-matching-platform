@@ -27,11 +27,6 @@ export function isNewsStatus(value: unknown): value is NewsStatus {
   return typeof value === 'string' && (NEWS_STATUSES as readonly string[]).includes(value)
 }
 
-// note 記事ワークフロー(設計 §4.5)の有効化フラグ。
-// 2026-09-19 に実装したが、gemini-2.5-pro がこの API キーで使えないため当面 false(ユーザー判断)。
-// true にするときは migrations/add_news_note_article_columns.sql を先に適用する(4列が要る)。
-export const NOTE_ARTICLE_WORKFLOW_ENABLED = false
-
 // 入力上限(設計 §3.3 / §4.4 / §4.5)
 export const NEWS_TITLE_MAX = 120
 export const NEWS_BODY_MAX = 20000
@@ -39,9 +34,6 @@ export const NEWS_MATERIAL_MAX = 8000
 // URL のページから読み取った内容(最大 3 ページ分)を AI に渡すときの上限
 export const NEWS_PAGE_TEXT_MAX = 18000
 export const NEWS_SOURCE_URLS_MAX = 3
-export const NEWS_INTERVIEW_SOURCE_MAX = 40000  // 取材メモ・書き起こし(1時間の逐語で 2 万字前後)
-export const NEWS_ARTICLE_MAX = 30000           // note 記事本文
-export const NEWS_CHECKLIST_MAX = 10000         // 確認リスト
 
 // トップページに並べる件数と一覧の上限
 export const NEWS_TOP_LIMIT = 3
@@ -66,16 +58,6 @@ export type NewsPost = NewsPostPublic & {
   updated_at: string
 }
 
-// note 記事の切り口(INTERVIEW 用。AI が3案出し、書き手が1つ選ぶ)
-export type NewsAngle = {
-  title: string    // タイトル案
-  audience: string // 誰に何を伝える記事か
-  hook: string     // 冒頭の一文
-  why: string      // なぜこの切り口が材料に合うか
-}
-
-// 管理画面が扱う形(note 記事ワークフローの列を含む)
-// 4列は NOTE_ARTICLE_WORKFLOW_ENABLED が true のときだけ API が返す
 // 管理画面の一覧用(本文を含まない軽い形。本文は編集を開いたときに 1 件だけ読む)
 export type NewsPostListItem = NewsPostPublic & {
   status: NewsStatus
@@ -83,15 +65,5 @@ export type NewsPostListItem = NewsPostPublic & {
   updated_at: string
 }
 
-export type NewsPostAdmin = NewsPost & {
-  interview_source?: string
-  note_angle?: NewsAngle | null
-  note_article?: string
-  note_checklist?: string
-}
-
-export function isNewsAngle(value: unknown): value is NewsAngle {
-  if (!value || typeof value !== 'object') return false
-  const v = value as Record<string, unknown>
-  return ['title', 'audience', 'hook', 'why'].every((k) => typeof v[k] === 'string' && (v[k] as string).length <= 1000)
-}
+// 管理画面が扱う形(下書きを含む 1 件。今は公開側の記事と同じ列)
+export type NewsPostAdmin = NewsPost
