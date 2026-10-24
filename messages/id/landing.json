@@ -179,7 +179,8 @@
       "NOTICE": "Pengumuman",
       "MAINTENANCE": "Pemeliharaan",
       "SUPPORTER_JOINED": "Organisasi baru",
-      "INTERVIEW": "Wawancara"
+      "INTERVIEW": "Wawancara",
+      "TOPIC": "Topik"
     },
     "more": "Lihat {count} berikutnya"
   }

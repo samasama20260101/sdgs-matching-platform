@@ -179,7 +179,8 @@
       "NOTICE": "お知らせ",
       "MAINTENANCE": "メンテナンス",
       "SUPPORTER_JOINED": "参加団体",
-      "INTERVIEW": "インタビュー"
+      "INTERVIEW": "インタビュー",
+      "TOPIC": "話題"
     },
     "more": "次の{count}件を見る"
   }

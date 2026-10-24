@@ -179,7 +179,8 @@
       "NOTICE": "Notice",
       "MAINTENANCE": "Maintenance",
       "SUPPORTER_JOINED": "New supporter",
-      "INTERVIEW": "Interview"
+      "INTERVIEW": "Interview",
+      "TOPIC": "Topics"
     },
     "more": "Show the next {count}"
   }

@@ -54,6 +54,17 @@ const STRUCTURE: Record<NewsCategory, string> = {
 - 本文は100〜200字の導入文。小見出しは付けない
 - 順番: 誰に何を聞いたか → 印象に残った一言(材料にある言葉だけを使う) → {{CLOSING}}
 - URLは本文に書かない(外部リンク欄に別途入る)`,
+  TOPIC: `種別: 話題(運営以外の人が書いた記事やページの紹介)
+- 材料は、行政・他の団体・報道機関など、明日もsamasama の運営ではない人が書いた記事やページです。それを読者に短く紹介します
+- タイトルは記事の芯が伝わる20〜30字。元の記事の見出しはそのまま写さず、自分の言葉で書く
+- 本文は、最後の「時点」と「リンク先」の2文を除いて150〜200字(超えない)。小見出しは付けない
+- 順番: 出典(どこの、いつの情報か。例「熊本市のホームページ(2026年10月20日掲載)によると」。掲載日が材料から分からなければ「[要確認: 掲載日]」) → 何が書かれているか(2〜3文。自分の言葉で要約) → 読者にとっての意味を1文(困っている人がどう使えるか。どこに相談すればよいか分からないときは明日もsamasama からも相談できる、と添えてよい) → 「{{TODAY}}時点の情報です。」 → {{CLOSING}}
+- 条件は全部を並べず、読者が「自分に関係あるか」を判断できるもの(いつから・誰が対象か・費用など)に絞る。細かい時間や手続きはリンク先に任せる
+- 書く条件(金額・期限・対象となる人など)は材料のとおりに書く。材料から読み取れないときは「[要確認: 期限]」のように残す
+- 書き手(市・団体・新聞社など)を主語にして「〜によると」「〜が発表しました」「〜で紹介されています」と書く。明日もsamasama がその取り組みに関わった・連携している・推奨している、とは書かない(材料に明記がある場合を除く)
+- 記事に出てくる個人(被災した人・助けを求めた人など)の名前・年齢・職業・住んでいる地域・苦しい事情は書かない。「どんな支援が、どう届いたか」を書く
+- 行政や団体の取り組みを良い・悪いと評価しない
+- URLは本文に書かない(外部リンク欄に別途入る)`,
 }
 
 // インタビューの締めの一文。記事の置き場所(外部リンク)で決める。
@@ -68,6 +79,14 @@ export function interviewClosing(externalUrl?: string) {
     : '続きはリンク先の記事でお読みください'
   return `「${sentence}」で締める`
 }
+
+// 話題の締めの一文。紹介した記事(外部リンク)へ案内する。外部リンクが無ければ書かせない
+export function topicClosing(externalUrl?: string) {
+  if (!externalUrl) return '締めの一文は書かない(紹介する記事へのリンクはない)'
+  return '「最新の内容や詳しいことは、リンク先でご確認ください」で締める'
+}
+
+const JST_DATE = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })
 
 function clip(value: string | undefined, max = NEWS_MATERIAL_MAX) {
   // 囲みの記号(""")が材料の中にあると囲みを閉じられてしまうので、ふつうの引用符に置き換える
@@ -89,17 +108,21 @@ export function buildMaterialSection(category: NewsCategory, materials: NewsDraf
   if (notes) {
     const label = category === 'SUPPORTER_JOINED'
       ? (pageText ? '追加のメモ(電話などで聞いたこと)' : '団体についての材料(団体のサイトの文・電話などで聞いたこと)')
-      : (pageText ? '追加のメモ' : '伝えたいことのメモ')
+      : category === 'TOPIC'
+        ? (pageText ? '追加のメモ(紹介したい理由など)' : '紹介する記事の文章と、紹介したい理由のメモ')
+        : (pageText ? '追加のメモ' : '伝えたいことのメモ')
     blocks.push(materialBlock(label, notes))
   }
   return blocks.join('\n\n')
 }
 
-// externalUrl: 投稿の外部リンク(インタビューの締めの一文に使う。他の種別では使わない)
-export function buildNewsDraftPrompt(category: NewsCategory, materials: NewsDraftMaterials, externalUrl?: string) {
+// externalUrl: 投稿の外部リンク(インタビュー・話題の締めの一文に使う。他の種別では使わない)
+// today: 話題の「○年○月○日時点の情報です」に入れる日(日本時間。テストで固定できるように引数にしている)
+export function buildNewsDraftPrompt(category: NewsCategory, materials: NewsDraftMaterials, externalUrl?: string, today = new Date()) {
   const section = buildMaterialSection(category, materials)
   if (!section) return null
-  const structure = STRUCTURE[category].replace('{{CLOSING}}', interviewClosing(externalUrl))
+  const closing = category === 'TOPIC' ? topicClosing(externalUrl) : interviewClosing(externalUrl)
+  const structure = STRUCTURE[category].replace('{{CLOSING}}', closing).replace('{{TODAY}}', JST_DATE.format(today))
   return `${VOICE}
 
 ${RULES}

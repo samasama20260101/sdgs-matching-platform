@@ -22,6 +22,7 @@ const CHIP_COLORS: Record<NewsCategory, { bg: string; fg: string }> = {
   MAINTENANCE:      { bg: '#fffbeb', fg: '#b45309' },
   SUPPORTER_JOINED: { bg: '#eff6ff', fg: '#1d4ed8' },
   INTERVIEW:        { bg: '#fff1f2', fg: '#be123c' },
+  TOPIC:            { bg: '#f5f3ff', fg: '#6d28d9' },
 }
 
 // public/brand/logo-mark.svg と同じしずく(画像描画は filter に対応しないので外してある)

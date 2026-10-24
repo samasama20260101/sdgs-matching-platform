@@ -3,12 +3,15 @@
 -- 設計: docs/news_section_design.md §3.1
 -- 実行場所: Staging は Management API、本番は Supabase Dashboard → SQL Editor(ユーザー実行)
 -- rollback: DROP TABLE news_posts;(他テーブルから参照されない)
+-- 2026-10-24: 種別に TOPIC(話題)を追加。Staging は作成済みだったので CHECK 制約だけ差し替えた:
+--   ALTER TABLE news_posts DROP CONSTRAINT news_posts_category_check,
+--     ADD CONSTRAINT news_posts_category_check CHECK (category IN ('NOTICE', 'MAINTENANCE', 'SUPPORTER_JOINED', 'INTERVIEW', 'TOPIC'));
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS news_posts (
     id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     category      text NOT NULL
-                  CHECK (category IN ('NOTICE', 'MAINTENANCE', 'SUPPORTER_JOINED', 'INTERVIEW')),
+                  CHECK (category IN ('NOTICE', 'MAINTENANCE', 'SUPPORTER_JOINED', 'INTERVIEW', 'TOPIC')),
     title         text NOT NULL,
     body          text NOT NULL DEFAULT '',   -- プレーンテキスト(空行=段落 / 行頭「## 」=小見出し / URL自動リンク)
     external_url  text,                       -- あればトップ・一覧から直接外部へ(note など)

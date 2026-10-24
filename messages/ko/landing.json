@@ -179,7 +179,8 @@
       "NOTICE": "안내",
       "MAINTENANCE": "점검",
       "SUPPORTER_JOINED": "참여 단체",
-      "INTERVIEW": "인터뷰"
+      "INTERVIEW": "인터뷰",
+      "TOPIC": "화제"
     },
     "more": "다음 {count}건 보기"
   }

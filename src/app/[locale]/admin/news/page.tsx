@@ -42,7 +42,7 @@ const emptyForm = (): FormState => ({
 })
 const emptyMaterials = (): Materials => ({ notes: '', urls: [''], pageText: '' })
 // URL から下書きを作れる種別(材料がよそのページにあるもの)
-const URL_SOURCE_CATEGORIES: NewsCategory[] = ['SUPPORTER_JOINED', 'INTERVIEW']
+const URL_SOURCE_CATEGORIES: NewsCategory[] = ['SUPPORTER_JOINED', 'INTERVIEW', 'TOPIC']
 const formFromPost = (post: NewsPostAdmin): FormState => ({
     category: post.category,
     title: post.title,
@@ -800,6 +800,7 @@ export default function AdminNewsPage() {
                                                 </button>
                                             ))}
                                         </div>
+                                        <p className="mt-1.5 text-xs text-gray-500">{NEWS_CATEGORY_META[form.category].hintJa}</p>
                                     </div>
 
                                     {/* AI 下書き(新しいお知らせでは開いた状態、編集中は閉じた状態から) */}
@@ -810,10 +811,22 @@ export default function AdminNewsPage() {
                                                 材料を貼って押すと、タイトルと本文の下書きが入ります。材料にない事実は書かれず、足りない所は [要確認] として残ります。
                                                 個人名・連絡先は「掲載可」と書いた場合だけ使われます。
                                             </p>
+                                            {/* 話題: 外の記事を紹介するときの決まり(設計 §5・決定ログ 2026-10-24) */}
+                                            {form.category === 'TOPIC' && (
+                                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                                                    <p className="font-semibold">話題に載せるときの決まり</p>
+                                                    <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                                                        <li>DV・虐待・自殺・未成年・裁判中の、個人の話は載せない(報道された記事でも)</li>
+                                                        <li>金額・期限・対象・受付時間は、公開前に元のページと照らし合わせる</li>
+                                                        <li>明日もsamasama が関わっていない取り組みを、関わったように書かない(「連携」「推奨」も使わない)</li>
+                                                        <li>このサイトを使った人の記事を載せるときは、記事の本人と媒体に一言断ってから</li>
+                                                    </ul>
+                                                </div>
+                                            )}
                                             {URL_SOURCE_CATEGORIES.includes(form.category) && (
                                                 <div className="space-y-2 rounded-lg border border-teal-200 bg-white p-3">
                                                     <p className="text-sm font-semibold text-teal-900">
-                                                        {form.category === 'INTERVIEW' ? 'インタビュー記事の URL(note・新聞社・団体のブログなど)' : '団体のサイトの URL'}
+                                                        {form.category === 'INTERVIEW' ? 'インタビュー記事の URL(note・新聞社・団体のブログなど)' : form.category === 'TOPIC' ? '紹介する記事・ページの URL(市のホームページ・新聞社・団体のブログなど)' : '団体のサイトの URL'}
                                                         <span className="ml-1 text-xs font-normal text-teal-700/80">(最大{NEWS_SOURCE_URLS_MAX}つ。ページを読み取って要約します)</span>
                                                     </p>
                                                     {materials.urls.map((url, index) => (
@@ -822,7 +835,7 @@ export default function AdminNewsPage() {
                                                                 type="url"
                                                                 value={url}
                                                                 onChange={(e) => setMaterials((m) => ({ ...m, urls: m.urls.map((u, k) => (k === index ? e.target.value : u)) }))}
-                                                                placeholder={form.category === 'INTERVIEW' ? 'https://(記事のページ)' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
+                                                                placeholder={form.category === 'INTERVIEW' || form.category === 'TOPIC' ? 'https://(記事のページ)' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
                                                                 aria-label={`URL ${index + 1}`}
                                                                 className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                                                             />
@@ -883,6 +896,8 @@ export default function AdminNewsPage() {
                                                         ? '例: 10月5日(日) 午前2時〜4時 サーバーメンテナンス。ログインと相談の投稿ができない'
                                                         : form.category === 'INTERVIEW'
                                                             ? '例: 誰に何を聞いたか、印象に残った一言(URL を入れたなら空でもよい)'
+                                                        : form.category === 'TOPIC'
+                                                            ? '例: 紹介したい理由、読者に伝えたいこと(URL を入れたなら空でもよい。読み取れないページは、ここに本文を貼る)'
                                                             : isSupporterJoined
                                                                 ? '例:\n【電話で聞いたこと】・担当は○○さん(掲載可) ・活動地域は熊本市\n書かないでと言われた話には「非公開」と付ける'
                                                                 : '伝えたいことの箇条書き(何が・いつから・変わらないこと・変わること)'

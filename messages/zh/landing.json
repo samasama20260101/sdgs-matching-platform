@@ -179,7 +179,8 @@
       "NOTICE": "通知",
       "MAINTENANCE": "维护",
       "SUPPORTER_JOINED": "新加入团体",
-      "INTERVIEW": "访谈"
+      "INTERVIEW": "访谈",
+      "TOPIC": "话题"
     },
     "more": "查看后{count}条"
   }
