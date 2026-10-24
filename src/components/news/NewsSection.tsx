@@ -1,28 +1,18 @@
 'use client';
 
 // トップページの「お知らせ」ブロック。公開中の新しい数件を1行ずつ並べる。
+// 投稿はトップページ(page.tsx)がサーバーで読んで渡す。
 // リンク先は常にサイト内の記事ページ(外部リンクがある投稿も、記事ページで導入文を読んでから外へ出る)。
 // 公開中が0件・取得失敗のときはブロックごと出さない(空の欄を見せない)。
-import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { NewsCategoryChip } from '@/components/news/NewsCategoryChip';
-import { NEWS_TOP_LIMIT, type NewsPostPublic } from '@/lib/constants/news';
+import type { NewsPostPublic } from '@/lib/constants/news';
 import { formatNewsDate } from '@/lib/news/format';
 
-export function NewsSection() {
+export function NewsSection({ posts }: { posts: NewsPostPublic[] }) {
   const t = useTranslations('landing.news');
   const locale = useLocale();
-  const [posts, setPosts] = useState<NewsPostPublic[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/public/news?limit=${NEWS_TOP_LIMIT}`)
-      .then((r) => (r.ok ? r.json() : { posts: [] }))
-      .then((d) => { if (!cancelled) setPosts(Array.isArray(d?.posts) ? d.posts : []); })
-      .catch(() => { /* 取得失敗時は何も出さない */ });
-    return () => { cancelled = true; };
-  }, []);
 
   if (posts.length === 0) return null;
 

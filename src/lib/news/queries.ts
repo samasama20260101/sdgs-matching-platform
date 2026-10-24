@@ -8,7 +8,7 @@ import { NEWS_LIST_MAX, type NewsPost, type NewsPostPublic } from '@/lib/constan
 const PUBLIC_COLUMNS = 'id, category, title, external_url, published_at'
 const FULL_COLUMNS = 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
 
-export function clampNewsLimit(value: unknown, fallback: number, max = NEWS_LIST_MAX) {
+function clampNewsLimit(value: unknown, fallback: number, max = NEWS_LIST_MAX) {
   const n = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(n)) return fallback
   return Math.min(Math.max(1, Math.floor(n)), max)
