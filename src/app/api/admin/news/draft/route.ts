@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isNewsCategory, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX } from '@/lib/constants/news'
+import { normalizeHttpUrl } from '@/lib/api/validation'
 import { generateNewsDraft } from '@/lib/newsDraft'
 
 function pickText(value: unknown, max = NEWS_MATERIAL_MAX) {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
   if ('response' in auth) return auth.response
 
-  let body: { category?: unknown; materials?: { site?: unknown; memo?: unknown; notes?: unknown; pageText?: unknown } }
+  let body: { category?: unknown; externalUrl?: unknown; materials?: { site?: unknown; memo?: unknown; notes?: unknown; pageText?: unknown } }
   try {
     body = await request.json()
   } catch {
@@ -33,7 +34,10 @@ export async function POST(request: Request) {
     pageText: pickText(body.materials?.pageText, NEWS_PAGE_TEXT_MAX),
   }
 
-  const result = await generateNewsDraft(body.category, materials)
+  // 投稿の外部リンク(インタビューの締めの一文に使う)。http(s) 以外は無いものとして扱う
+  const externalUrl = normalizeHttpUrl(body.externalUrl) ?? undefined
+
+  const result = await generateNewsDraft(body.category, materials, externalUrl)
   if (result.ok) return NextResponse.json({ draft: result.draft })
 
   if (result.code === 'EMPTY_MATERIALS') {

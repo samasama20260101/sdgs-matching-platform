@@ -12,11 +12,11 @@ export type NewsDraftResult =
   | { ok: true; draft: NewsDraft }
   | { ok: false; code: 'NO_API_KEY' | 'EMPTY_MATERIALS' | 'GENERATION_FAILED' }
 
-export async function generateNewsDraft(category: NewsCategory, materials: NewsDraftMaterials): Promise<NewsDraftResult> {
+export async function generateNewsDraft(category: NewsCategory, materials: NewsDraftMaterials, externalUrl?: string): Promise<NewsDraftResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''
   if (!apiKey) return { ok: false, code: 'NO_API_KEY' }
 
-  const prompt = buildNewsDraftPrompt(category, materials)
+  const prompt = buildNewsDraftPrompt(category, materials, externalUrl)
   if (!prompt) return { ok: false, code: 'EMPTY_MATERIALS' }
 
   try {

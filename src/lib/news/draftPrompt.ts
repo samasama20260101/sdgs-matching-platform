@@ -52,8 +52,21 @@ const STRUCTURE: Record<NewsCategory, string> = {
   INTERVIEW: `種別: インタビュー記事の紹介
 - タイトルは記事の芯が伝わる20〜30字
 - 本文は100〜200字の導入文。小見出しは付けない
-- 順番: 誰に何を聞いたか → 印象に残った一言(材料にある言葉だけを使う) → 「続きは note の記事でお読みください」で締める
+- 順番: 誰に何を聞いたか → 印象に残った一言(材料にある言葉だけを使う) → {{CLOSING}}
 - URLは本文に書かない(外部リンク欄に別途入る)`,
+}
+
+// インタビューの締めの一文。記事の置き場所(外部リンク)で決める。
+// 置き場所は note とは限らない(新聞社・団体のブログなど)ので、サイト名を AI に推測させず、知っている所だけ名前を出す。
+// 外部リンクが無いとき(全文をこのサイトに載せるとき)は「続きは」を書かせない
+export function interviewClosing(externalUrl?: string) {
+  if (!externalUrl) return '締めの一文は書かない(続きの記事へのリンクはない)'
+  let host = ''
+  try { host = new URL(externalUrl).hostname.replace(/^www\./, '') } catch { /* 読めない URL は名前を出さない */ }
+  const sentence = host === 'note.com' || host.endsWith('.note.com')
+    ? '続きは note の記事でお読みください'
+    : '続きはリンク先の記事でお読みください'
+  return `「${sentence}」で締める`
 }
 
 function clip(value: string | undefined, max = NEWS_MATERIAL_MAX) {
@@ -82,16 +95,18 @@ export function buildMaterialSection(category: NewsCategory, materials: NewsDraf
   return blocks.join('\n\n')
 }
 
-export function buildNewsDraftPrompt(category: NewsCategory, materials: NewsDraftMaterials) {
+// externalUrl: 投稿の外部リンク(インタビューの締めの一文に使う。他の種別では使わない)
+export function buildNewsDraftPrompt(category: NewsCategory, materials: NewsDraftMaterials, externalUrl?: string) {
   const section = buildMaterialSection(category, materials)
   if (!section) return null
+  const structure = STRUCTURE[category].replace('{{CLOSING}}', interviewClosing(externalUrl))
   return `${VOICE}
 
 ${RULES}
 
 ${FORMAT}
 
-${STRUCTURE[category]}
+${structure}
 
 材料(ここに書かれていることだけを使う):
 ${section}

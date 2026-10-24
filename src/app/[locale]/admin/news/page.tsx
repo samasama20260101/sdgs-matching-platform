@@ -370,12 +370,13 @@ export default function AdminNewsPage() {
     })
 
     // AI に下書きを書かせる(材料: 手で書いたメモ + ページから読み取った内容)
-    const requestDraft = async (headers: Record<string, string>, notes: string, pageText: string) => {
+    // externalUrl: 記事の外部リンク(インタビューの締めの一文が、リンク先に合わせて変わる)
+    const requestDraft = async (headers: Record<string, string>, notes: string, pageText: string, externalUrl: string) => {
         setGenPhase('writing')
         const res = await fetch('/api/admin/news/draft', {
             method: 'POST',
             headers: { ...headers, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category: form.category, materials: { notes, pageText } }),
+            body: JSON.stringify({ category: form.category, externalUrl: externalUrl || null, materials: { notes, pageText } }),
         })
         const result = await res.json()
         if (!res.ok) throw new Error(result.error || '下書きを作れませんでした')
@@ -397,7 +398,7 @@ export default function AdminNewsPage() {
         try {
             const headers = await authHeader()
             if (!headers) return
-            await requestDraft(headers, materials.notes, materials.pageText)
+            await requestDraft(headers, materials.notes, materials.pageText, form.external_url.trim())
             setAiMessage({ kind: 'ok', text: 'AIの下書きを入れました。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません' })
         } catch (err) {
             setAiMessage({ kind: 'error', text: err instanceof Error ? err.message : '下書きを作れませんでした' })
@@ -438,10 +439,10 @@ export default function AdminNewsPage() {
             }
             const pageText = okPages.map((p) => `【ページ: ${p.title || p.url}】${p.url}\n${p.text}`).join('\n\n').slice(0, NEWS_PAGE_TEXT_MAX)
             setMaterials((m) => ({ ...m, pageText }))
-            await requestDraft(headers, materials.notes, pageText)
             // 読み取ったページ(1 つ目)を記事の外部リンクにする(空のときだけ。記事の下にカードとボタンが出る)
             const firstUrl = urls[pages.findIndex((p) => p.ok)]
             const linked = !form.external_url.trim() && Boolean(firstUrl)
+            await requestDraft(headers, materials.notes, pageText, form.external_url.trim() || firstUrl)
             if (linked) setForm((prev) => ({ ...prev, external_url: firstUrl }))
             const note = failed.length > 0 ? `(読み取れなかったページ: ${failed.map((f) => f.url).join('、')})` : ''
             setAiMessage({ kind: 'ok', text: `ページを読み取って下書きを入れました${note}。${linked ? '読み取ったページを外部リンクに入れました。' : ''}AIが読んだ内容は「AI が読んだ内容を確かめる」を開くと見られます。内容を確かめて直してください([要確認]の所は必ず書き換える)。まだ保存していません` })
@@ -812,7 +813,7 @@ export default function AdminNewsPage() {
                                             {URL_SOURCE_CATEGORIES.includes(form.category) && (
                                                 <div className="space-y-2 rounded-lg border border-teal-200 bg-white p-3">
                                                     <p className="text-sm font-semibold text-teal-900">
-                                                        {form.category === 'INTERVIEW' ? 'note の記事の URL' : '団体のサイトの URL'}
+                                                        {form.category === 'INTERVIEW' ? 'インタビュー記事の URL(note・新聞社・団体のブログなど)' : '団体のサイトの URL'}
                                                         <span className="ml-1 text-xs font-normal text-teal-700/80">(最大{NEWS_SOURCE_URLS_MAX}つ。ページを読み取って要約します)</span>
                                                     </p>
                                                     {materials.urls.map((url, index) => (
@@ -821,7 +822,7 @@ export default function AdminNewsPage() {
                                                                 type="url"
                                                                 value={url}
                                                                 onChange={(e) => setMaterials((m) => ({ ...m, urls: m.urls.map((u, k) => (k === index ? e.target.value : u)) }))}
-                                                                placeholder={form.category === 'INTERVIEW' ? 'https://note.com/...' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
+                                                                placeholder={form.category === 'INTERVIEW' ? 'https://(記事のページ)' : 'https://(団体の「私たちについて」「活動内容」などのページ)'}
                                                                 aria-label={`URL ${index + 1}`}
                                                                 className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                                                             />
@@ -954,12 +955,12 @@ export default function AdminNewsPage() {
 
                                     {/* 外部リンク */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">外部リンク <span className="text-xs font-normal text-gray-400">(任意。note の記事など)</span></label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">外部リンク <span className="text-xs font-normal text-gray-400">(任意。note・新聞社・団体のブログの記事など)</span></label>
                                         <input
                                             type="url"
                                             value={form.external_url}
                                             onChange={(e) => update('external_url', e.target.value)}
-                                            placeholder="https://note.com/..."
+                                            placeholder="https://(記事のページ)"
                                             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
                                         />
                                         <p className="mt-1 text-xs text-gray-400">入れると、記事ページの本文の下に「続きを読む(外部サイトが開きます)」ボタンが出ます。トップと一覧からは必ずサイト内の記事ページに入るので、本文に2〜3行の導入文を書いてください</p>
