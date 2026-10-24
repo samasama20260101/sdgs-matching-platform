@@ -333,7 +333,10 @@ export default function AdminDashboardPage() {
         <div className="min-h-screen bg-gray-100">
             <header className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
                 <h1 className="text-xl font-bold">SDGsマッチング 管理画面</h1>
-                <button onClick={handleLogout} className="text-sm text-gray-300 hover:text-white transition">ログアウト</button>
+                <div className="flex items-center gap-5">
+                    <Link href="/admin/news" className="text-sm text-gray-300 hover:text-white transition">お知らせ管理</Link>
+                    <button onClick={handleLogout} className="text-sm text-gray-300 hover:text-white transition">ログアウト</button>
+                </div>
             </header>
 
             <main className="max-w-6xl mx-auto px-6 py-8">
