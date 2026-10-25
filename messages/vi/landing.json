@@ -15,7 +15,8 @@
     "description": "Khó khăn về đời sống, giáo dục, môi trường, phân biệt đối xử, cô lập... AI sẽ phân tích các vấn đề xã hội của bạn và kết nối với NPO, tổ chức hỗ trợ chuyên môn.",
     "ctaConsult": "Tư vấn miễn phí →",
     "ctaSupporters": "Xem người hỗ trợ",
-    "note": "Đăng ký miễn phí・Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận",
+    "tryTrial": "Dùng thử mẫu tư vấn mà không cần đăng ký →",
+    "note": "Đăng ký miễn phí・Thông tin liên lạc của bạn không bao giờ được chuyển cho người hỗ trợ",
     "haveAccount": "Đã có tài khoản?",
     "loginHere": "Đăng nhập tại đây →",
     "readStory": "Đọc tấm lòng của chúng tôi"
@@ -64,7 +65,7 @@
     "step4Desc": "Xem thông tin của tổ chức trước khi chấp nhận. Bạn cũng có thể tự do từ chối",
     "step5Title": "Giải quyết・hoàn tất hỗ trợ",
     "step5Desc": "Xác nhận khi vấn đề được giải quyết. Gửi lời cảm ơn bằng huy hiệu",
-    "privacyNote": "🔒 Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận"
+    "privacyNote": "🔒 Thông tin liên lạc của bạn không bao giờ được chuyển cho người hỗ trợ"
   },
   "sdgsSection": {
     "title": "Các mục tiêu SDGs được hỗ trợ",
@@ -82,7 +83,7 @@
   "faq": {
     "title": "Những lo lắng và câu hỏi thường gặp",
     "q1": "Thông tin cá nhân có an toàn không?",
-    "a1": "Cho đến khi bạn chấp nhận người hỗ trợ, không có bất kỳ thông tin định danh cá nhân nào được chia sẻ. Sau khi chấp nhận cũng chỉ chia sẻ thông tin tối thiểu cần thiết.",
+    "a1": "Chỉ những người hỗ trợ đã được ban vận hành xác nhận và đăng ký, cùng ban vận hành, mới đọc được nội dung tư vấn. Thông tin liên lạc của bạn không bao giờ được chuyển cho người hỗ trợ; bạn trao đổi với người hỗ trợ đã chấp thuận qua tính năng trò chuyện trên trang này.",
     "q2": "Tôi có thể từ chối đề nghị của người hỗ trợ không?",
     "a2": "Có, bạn hoàn toàn tự do từ chối. Bạn là người quyết định có nhận đề nghị hay không, và có thể chờ đến khi cảm thấy yên tâm.",
     "q3": "Thực sự miễn phí chứ?",
@@ -94,7 +95,7 @@
   },
   "cta": {
     "title": "Hãy thử bước một bước đầu tiên?",
-    "body": "Các chuyên gia có thể giải quyết khó khăn của bạn đang chờ đợi. Tư vấn miễn phí. Thông tin cá nhân không được chia sẻ cho đến khi bạn chấp nhận.",
+    "body": "Các chuyên gia có thể giải quyết khó khăn của bạn đang chờ đợi. Tư vấn miễn phí. Thông tin liên lạc của bạn không bao giờ được chuyển cho người hỗ trợ.",
     "consult": "Tư vấn miễn phí →",
     "login": "Đăng nhập"
   },

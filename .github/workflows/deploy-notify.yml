@@ -1,0 +1,84 @@
+# Vercel のデプロイ結果(本番・Staging)を Discord の「デプロイ」チャンネルへ流す。
+# Vercel が GitHub に記録するデプロイ状態(deployment_status)を拾うので、アプリ本体には触れない。
+# ワークフローはデプロイされたコミットに含まれるこのファイルで動くので、本番の通知は main に入ってから始まる。
+# feature ブランチのプレビューは通知しない(dev の先頭コミットのデプロイ = Staging だけ流す)。
+name: デプロイ通知
+
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: contains(fromJSON('["success", "failure", "error"]'), github.event.deployment_status.state)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord に投稿
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          STATE: ${{ github.event.deployment_status.state }}
+          ENVIRONMENT: ${{ github.event.deployment.environment }}
+          SHA: ${{ github.event.deployment.sha }}
+          ENV_URL: ${{ github.event.deployment_status.environment_url }}
+          TARGET_URL: ${{ github.event.deployment_status.target_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_DEPLOY_WEBHOOK_URL が未設定なので何もしない"
+            exit 0
+          fi
+
+          case "$ENVIRONMENT" in
+            Production*) label="本番" ;;
+            *)
+              # dev の先頭でないコミットは feature ブランチのプレビューなので流さない。
+              # 「dev に含まれるか」で判定すると、PR マージ後に終わった feature のプレビューまで Staging と誤認する
+              heads=$(gh api "repos/$REPO/commits/$SHA/branches-where-head" --jq '.[].name' 2>/dev/null || true)
+              if ! grep -qx dev <<<"$heads"; then
+                echo "dev の先頭でないコミットのプレビューなので通知しない(先頭のブランチ: ${heads:-なし})"
+                exit 0
+              fi
+              label="Staging"
+              ;;
+          esac
+
+          if [ "$STATE" = "success" ]; then
+            result="成功"; color=3066993; link="${ENV_URL:-$TARGET_URL}"
+          else
+            result="失敗"; color=15158332; link="${TARGET_URL:-$ENV_URL}"
+          fi
+          link="${link:-なし}"
+
+          commit=$(gh api "repos/$REPO/commits/$SHA")
+          subject=$(jq -r '.commit.message | split("\n")[0]' <<<"$commit")
+          author=$(jq -r '.author.login // .commit.author.name' <<<"$commit")
+          commit_url=$(jq -r '.html_url' <<<"$commit")
+
+          jq -n \
+            --arg title "${label}デプロイ ${result}" \
+            --arg desc "$subject" \
+            --arg sha "${SHA:0:7}" \
+            --arg commit_url "$commit_url" \
+            --arg author "$author" \
+            --arg link "$link" \
+            --argjson color "$color" \
+            '{
+              allowed_mentions: {parse: []},
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: $color,
+                fields: [
+                  {name: "コミット", value: "[\($sha)](\($commit_url))", inline: true},
+                  {name: "作成者", value: $author, inline: true},
+                  {name: (if $color == 3066993 then "URL" else "ログ" end), value: $link}
+                ],
+                timestamp: (now | todate)
+              }]
+            }' > payload.json
+
+          curl -sS --fail-with-body -H "Content-Type: application/json" -d @payload.json "$WEBHOOK_URL"

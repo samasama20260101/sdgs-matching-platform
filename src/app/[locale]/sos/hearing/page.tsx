@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────
 // 📂 src/app/sos/hearing/page.tsx
 // SOS相談フォーム（ヒアリング）
-// 設問・選択肢の文言は messages/*/sos.json（sos.questions）で管理。
-// ここには ID・緊急フラグ・排他フラグだけを持つ（多言語化・バリアント対応の前提）。
+// 困りごとの選択肢(0〜3 個)は SDGs のグローバル指標ごと。定義は constants/intakeIndicators.ts、
+// 文言は messages/*/sdgs.json(indicator)。0 個なら大項目 18「SDGsの隣のお困りごと」になる(サーバー側で決める)。
 // ─────────────────────────────────────────────────────────────
 'use client';
 
@@ -12,52 +12,17 @@ import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import IntakeFormFields, { CHAR_LIMITS, toggleIndicator, type IntakeFreeText } from '@/components/sos/IntakeFormFields';
+import { hasUrgentIndicator, indicatorMessageKey } from '@/lib/constants/intakeIndicators';
+import { detectUrgency } from '@/lib/urgency';
 import { Modal } from '@/components/ui/modal';
 
-// 入力上限
-const CHAR_LIMITS = {
-  what: 1000,
-  when: 200,
-  want: 200,
-};
-
 const MAX_ACTIVE_CASES = 3;
-
-type QAOption = {
-  id: string;
-  urgent?: boolean;
-  exclusive?: boolean;
-};
-
-type QAQuestion = {
-  id: number;
-  options: QAOption[];
-};
-
-// ─── Q&A構造の定義（文言は sos.questions.* に外出し済み） ─────
-const QA_QUESTIONS: QAQuestion[] = [
-  { id: 1, options: [{ id: 'q1_1' }, { id: 'q1_2' }, { id: 'q1_3' }, { id: 'q1_4' }, { id: 'q1_5', exclusive: true }] },
-  { id: 2, options: [{ id: 'q2_1' }, { id: 'q2_2' }, { id: 'q2_3' }, { id: 'q2_4' }, { id: 'q2_5', exclusive: true }] },
-  { id: 3, options: [{ id: 'q3_1' }, { id: 'q3_2' }, { id: 'q3_3' }, { id: 'q3_4' }, { id: 'q3_5', exclusive: true }] },
-  { id: 4, options: [{ id: 'q4_1' }, { id: 'q4_2', urgent: true }, { id: 'q4_3' }, { id: 'q4_4' }, { id: 'q4_5', exclusive: true }] },
-  { id: 5, options: [{ id: 'q5_1' }, { id: 'q5_2' }, { id: 'q5_3' }, { id: 'q5_4' }, { id: 'q5_5' }, { id: 'q5_6', exclusive: true }] },
-];
-
-// ─── 文字数カウンター ────────────────────────────────────────
-function CharCounter({ current, max }: { current: number; max: number }) {
-  return (
-    <div className={`text-right text-[11px] mt-1 ${current > max ? 'text-red-500 font-medium' : current > max * 0.8 ? 'text-amber-500' : 'text-gray-400'}`}>
-      {current} / {max}
-    </div>
-  );
-}
 
 // ─── メインコンポーネント ────────────────────────────────────
 export default function SOSHearingPage() {
   const t = useTranslations('sos.hearing');
-  const tQ = useTranslations('sos.questions');
+  const tSdgs = useTranslations('sdgs');
   const tLimit = useTranslations('sos.limitModal');
   const tForm = useTranslations('common.form');
   const router = useRouter();
@@ -75,11 +40,11 @@ export default function SOSHearingPage() {
     { icon: '✨', label: t('aiStep4') },
   ];
 
-  // 選択された回答（複数選択可）
-  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<number, Set<string>>>({});
+  // 選択された困りごと(指標 ID、0〜3 個・選んだ順)
+  const [selectedIndicatorIds, setSelectedIndicatorIds] = useState<string[]>([]);
 
   // 自由記述
-  const [freeText, setFreeText] = useState({ what: '', when: '', want: '' });
+  const [freeText, setFreeText] = useState<IntakeFreeText>({ what: '', when: '', want: '' });
 
   // ログイン確認
   useEffect(() => {
@@ -103,60 +68,15 @@ export default function SOSHearingPage() {
     checkAuth();
   }, [router]);
 
-  // チェックボックスの変更（「該当なし」は排他制御）
-  const handleToggleOption = (question: QAQuestion, option: QAOption) => {
-    setSelectedOptionIds(prev => {
-      const questionId = question.id;
-      const current = new Set(prev[questionId] || []);
-      const exclusiveOptionId = question.options.find(item => item.exclusive)?.id;
-      if (option.exclusive) {
-        // 「該当なし」を選んだら他をすべて外す
-        if (current.has(option.id)) {
-          current.delete(option.id);
-        } else {
-          current.clear();
-          current.add(option.id);
-        }
-      } else {
-        // 他の選択肢を選んだら「該当なし」を外す
-        if (exclusiveOptionId) current.delete(exclusiveOptionId);
-        if (current.has(option.id)) current.delete(option.id);
-        else current.add(option.id);
-      }
-      return { ...prev, [questionId]: current };
-    });
+  const handleToggleIndicator = (id: string) => {
+    setSelectedIndicatorIds(prev => toggleIndicator(prev, id));
   };
 
-
-  // 自由記述専用の緊急語彙。機械翻訳だけで確定せず、ネイティブ/専門家確認が必要な暫定リスト。
-  const detectUrgency = (text: string): boolean => {
-    const urgentPhrases = [
-      '死にたい', '自殺', '殺される', '消えたい', '限界', '助けて', '虐待', '暴力', '人身取引', '監禁', '戦争', '紛争',
-      '想死', '不想活', '自杀', '自殺', '救命', '虐待', '暴力', '家暴', '人口贩卖', '人口販賣',
-      '죽고 싶', '죽고싶', '자살', '도와주세요', '살려주', '학대', '폭력', '가정폭력', '인신매매', '전쟁',
-      'want to die', 'kill myself', 'end my life', 'commit suicide', 'attempt suicide', 'suicidal thoughts',
-      'suicide', 'suicidal', 'abuse', 'abused', 'violence', 'trafficked', 'trafficking',
-      'muốn chết', 'muon chet', 'tự tử', 'muon tu tu', 'cứu tôi', 'cuu toi', 'bạo lực', 'bao luc', 'bạo hành', 'bao hanh', 'buôn người', 'buon nguoi', 'chiến tranh', 'chien tranh',
-      'bunuh diri', 'ingin mati', 'mau mati', 'ingin bunuh diri', 'tolong saya', 'kekerasan', 'perdagangan orang', 'kdrt', 'penganiayaan', 'diculik',
-    ];
-    const normalizedText = text.toLowerCase();
-    return urgentPhrases.some(phrase => normalizedText.includes(phrase.toLowerCase()));
-  };
-
-  const optionText = (questionId: number, optionId: string) => tQ(`q${questionId}.options.${optionId}`);
 
   const handleSubmit = async () => {
     setError(null);
 
-    // バリデーション
-    for (const q of QA_QUESTIONS) {
-      const selected = selectedOptionIds[q.id]?.size || 0;
-      if (selected === 0) {
-        setError(t('errorAnswerRequired', { id: q.id }));
-        return;
-      }
-    }
-
+    // バリデーション(選択肢は 0 個でもよい。自由記述は必須)
     if (!freeText.what.trim()) {
       setError(t('errorWhatRequired'));
       return;
@@ -183,22 +103,13 @@ export default function SOSHearingPage() {
     }, 30000);
 
     try {
-      // 回答データ整形: qaは表示用の文字列配列（ユーザーが見た言語のスナップショット）、
-      // qa_ids は言語横断集計用。
-      const qaData: Record<number, string[]> = {};
-      const qaIds: Record<number, string[]> = {};
-      for (const q of QA_QUESTIONS) {
-        const selectedIds = [...(selectedOptionIds[q.id] || [])];
-        qaData[q.id] = selectedIds.map(id => optionText(q.id, id));
-        qaIds[q.id] = selectedIds;
-      }
+      // 回答データ整形: indicators は言語に依存しない指標 ID、
+      // indicator_texts は相談者が見た言語の文言のスナップショット(相談者側の表示用)。
+      const indicatorTexts = selectedIndicatorIds.map(id => tSdgs(`indicator.${indicatorMessageKey(id)}`));
 
-      // 緊急度判定: 選択肢はurgentフラグ、自由記述は語彙リストで判定する。
-      const hasUrgentChoice = QA_QUESTIONS.some(q =>
-        [...(selectedOptionIds[q.id] || [])].some(id => q.options.find(option => option.id === id)?.urgent)
-      );
+      // 緊急度判定: 選択肢は urgent フラグ、自由記述は語彙リストで判定する。
       const freeTextForUrgency = Object.values(freeText).join(' ');
-      const isUrgent = hasUrgentChoice || detectUrgency(freeTextForUrgency);
+      const isUrgent = hasUrgentIndicator(selectedIndicatorIds) || detectUrgency(freeTextForUrgency);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -216,7 +127,7 @@ export default function SOSHearingPage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          intake_qna: { qa: qaData, qa_ids: qaIds, locale },
+          intake_qna: { version: 2, indicators: selectedIndicatorIds, indicator_texts: indicatorTexts, locale },
           description_free: [
             freeText.what,
             freeText.when ? `${t('whenPrefix')}${freeText.when}` : '',
@@ -232,7 +143,13 @@ export default function SOSHearingPage() {
       const caseResult = await caseRes.json();
       if (!caseRes.ok) {
         console.error('Case error:', caseResult);
-        setError(t('errorSave', { message: caseResult.error }));
+        if (caseResult.error === 'ACTIVE_CASE_LIMIT') {
+          setShowLimitModal(true);
+        } else if (caseResult.error === 'DAILY_CASE_LIMIT') {
+          setError(t('errorDailyLimit'));
+        } else {
+          setError(t('errorSave', { message: caseResult.error }));
+        }
         setIsSubmitting(false);
         return;
       }
@@ -259,108 +176,15 @@ export default function SOSHearingPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-800">{t('title')}</h1>
           <p className="text-gray-500 mt-1">{t('subtitle')}</p>
-          <p className="text-xs text-gray-400 mt-2">{tQ('intro')}</p>
         </div>
 
         <div className="space-y-6">
-          {/* Q&Aフォーム */}
-          {QA_QUESTIONS.map((question) => (
-            <Card key={question.id}>
-              <CardHeader>
-                <CardTitle className="text-base font-medium">
-                  Q{question.id}. {tQ(`q${question.id}.question`)} <span className="text-red-500">*</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {question.options.map((option) => {
-                    const isChecked = selectedOptionIds[question.id]?.has(option.id) || false;
-                    const isNone = Boolean(option.exclusive);
-                    return (
-                      <label
-                        key={option.id}
-                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                          isChecked
-                            ? isNone ? 'bg-gray-100 border-gray-400' : 'bg-blue-50 border-blue-300'
-                            : isNone ? 'hover:bg-gray-50 border-dashed border-gray-200' : 'hover:bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleToggleOption(question, option)}
-                          className="mt-0.5 text-blue-600 rounded"
-                        />
-                        <span className={`text-sm leading-relaxed ${isNone ? 'text-gray-400' : ''}`}>{optionText(question.id, option.id)}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {/* 自由記述 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-medium">{t('freeSectionTitle')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* 個人情報を書かせないための注意喚起。あとからのマスキングに頼らず入力段階で防ぐ
-                  （設計書 §5.2 と同じ思想）。送信はブロックしない */}
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-sm font-bold text-amber-900">{t('noPersonalInfoTitle')}</p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('noPersonalInfoBody')}</p>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="what">
-                  {t('whatLabel')} <span className="text-red-500">*</span>
-                </Label>
-                <p className="text-xs text-gray-400 mb-1">
-                  {t('whatHint')}
-                </p>
-                <textarea
-                  id="what"
-                  rows={4}
-                  maxLength={CHAR_LIMITS.what}
-                  className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder={t('whatPlaceholder')}
-                  value={freeText.what}
-                  onChange={(e) => setFreeText({ ...freeText, what: e.target.value })}
-                />
-                <CharCounter current={freeText.what.length} max={CHAR_LIMITS.what} />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="when">{t('whenLabel')}</Label>
-                <textarea
-                  id="when"
-                  rows={2}
-                  maxLength={CHAR_LIMITS.when}
-                  className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder={t('whenPlaceholder')}
-                  value={freeText.when}
-                  onChange={(e) => setFreeText({ ...freeText, when: e.target.value })}
-                />
-                <CharCounter current={freeText.when.length} max={CHAR_LIMITS.when} />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="want">{t('wantLabel')}</Label>
-                <textarea
-                  id="want"
-                  rows={2}
-                  maxLength={CHAR_LIMITS.want}
-                  className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  placeholder={t('wantPlaceholder')}
-                  value={freeText.want}
-                  onChange={(e) => setFreeText({ ...freeText, want: e.target.value })}
-                />
-                <CharCounter current={freeText.want.length} max={CHAR_LIMITS.want} />
-              </div>
-            </CardContent>
-          </Card>
+          <IntakeFormFields
+            selectedIndicatorIds={selectedIndicatorIds}
+            onToggleIndicator={handleToggleIndicator}
+            freeText={freeText}
+            onFreeTextChange={setFreeText}
+          />
 
           {/* エラーメッセージ */}
           {error && (

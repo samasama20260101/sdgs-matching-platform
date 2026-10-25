@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabase/client';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { SDG_COLORS, SDG_NAMES, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { SDG_COLORS, SDG_NAMES, isSdgGoal, REGION_BLOCKS, formatRelativeDate, SUPPORTER_BADGES, BadgeKey } from '@/lib/constants/sdgs';
+import { NEIGHBOR_CATEGORY, SELECTABLE_CATEGORIES, indicatorsInCategory, intakeCategoryLabel } from '@/lib/constants/intakeIndicators';
 import { getDisasterEvent, formatDisasterLocation, DISASTER_NEEDS, DISASTER_NEED_KEYS, type DisasterNeedKey, type DisasterLocation } from '@/lib/constants/disaster';
 
 type Case = {
@@ -26,6 +27,7 @@ type Case = {
   disaster_needs?: string[];
   disaster_location?: DisasterLocation | null;
   photo_count?: number;
+  indicators?: string[]; // 相談者が選んだ困りごとの指標 ID(新形式の案件のみ)
   ai_sdg_suggestion: {
     sdgs_goals: number[];
     reasoning: string;
@@ -143,8 +145,9 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
             })}
             {keywords.slice(0, 3).map((kw) => <span key={kw} className="text-[11px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">#{kw}</span>)}
           </div>
-          <div className="flex gap-1">
-            {sdgs.map((g) => <span key={g} className="w-5 h-5 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[g] }} title={SDG_NAMES[g]}>{g}</span>)}
+          <div className="flex gap-1 flex-wrap justify-end">
+            {/* SDGs は番号ではなく言葉で出す(色は従来どおりゴールの色)。正式名はホバーで */}
+            {sdgs.map((g) => <span key={g} className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: SDG_COLORS[g] + '20', color: SDG_COLORS[g] }} title={isSdgGoal(g) ? `SDG ${g} ${SDG_NAMES[g]}` : undefined}>{intakeCategoryLabel(g)}</span>)}
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -178,8 +181,8 @@ function UserGroupedView({ cases, onCaseClick }: { cases: Case[]; onCaseClick: (
                 <div className="text-xs text-gray-500">相談 {group.items.length}件</div>
               </div>
             </div>
-            <div className="flex gap-1">
-              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="w-6 h-6 rounded text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: SDG_COLORS[s] }}>{s}</span>)}
+            <div className="flex gap-1 flex-wrap justify-end">
+              {[...group.sdgs].sort((a, b) => a - b).map((s) => <span key={s} className="text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: SDG_COLORS[s] + '20', color: SDG_COLORS[s] }} title={isSdgGoal(s) ? `SDG ${s} ${SDG_NAMES[s]}` : undefined}>{intakeCategoryLabel(s)}</span>)}
             </div>
           </div>
           <div className="p-3 space-y-2">
@@ -243,7 +246,16 @@ export default function SupporterDashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 大項目は 1 つだけ選べる。選ぶとその下の選択肢(指標)が出て、複数選択で絞り込める
   const [sdgFilter, setSdgFilter] = useState<number | null>(null);
+  const [indicatorFilter, setIndicatorFilter] = useState<string[]>([]);
+  const selectCategoryFilter = (category: number | null) => {
+    setSdgFilter(category);
+    setIndicatorFilter([]);
+  };
+  const toggleIndicatorFilter = (id: string) => {
+    setIndicatorFilter((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
+  };
   const [engagementFilter, setEngagementFilter] = useState<string | null>(null);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [needFilter, setNeedFilter] = useState<DisasterNeedKey | null>(null);
@@ -336,6 +348,8 @@ export default function SupporterDashboard() {
     if (engagementFilter && getCaseDisplayStatus(c) !== engagementFilter) return false;
     if (effectiveTab === 'normal') {
       if (sdgFilter && !(c.ai_sdg_suggestion?.sdgs_goals || []).includes(sdgFilter)) return false;
+      // 選択肢は「どれかに当てはまる」で絞る(旧形式の案件は選択肢を持たないので外れる)
+      if (indicatorFilter.length > 0 && !(c.indicators || []).some((id) => indicatorFilter.includes(id))) return false;
       if (regionFilter && c.users?.prefecture !== regionFilter) return false;
     } else {
       if (needFilter && !(c.disaster_needs || []).includes(needFilter)) return false;
@@ -354,7 +368,8 @@ export default function SupporterDashboard() {
     : [];
   const areaCaseCount = (a: string) => disasterCases.filter((c) => c.disaster_location?.municipality === muniFilter && c.disaster_location?.area === a).length;
 
-  const allSdgs = [...new Set(normalCases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || []))].sort((a, b) => a - b);
+  // 大項目は案件が 0 件でも全部出す(相談フォームの全体像をサポーターに見せる)。15 など過去案件だけにある番号も足す
+  const allSdgs = [...new Set([...SELECTABLE_CATEGORIES, NEIGHBOR_CATEGORY, ...normalCases.flatMap((c) => c.ai_sdg_suggestion?.sdgs_goals || [])])].sort((a, b) => a - b);
   const allRegions = [...new Set(normalCases.map((c) => c.users?.prefecture).filter(Boolean) as string[])].sort();
   const activityRegions = (userData?.service_areas || []).map((a) => a.name_local);
   const getCaseCount = (r: string) => normalCases.filter((c) => c.users?.prefecture === r).length;
@@ -388,7 +403,7 @@ export default function SupporterDashboard() {
       })
     : filteredCases;
 
-  const clearFilters = () => { setSdgFilter(null); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
+  const clearFilters = () => { setSdgFilter(null); setIndicatorFilter([]); setEngagementFilter(null); setRegionFilter(null); setNeedFilter(null); setMuniFilter(null); setAreaFilter(null); setWaitingOnly(false); };
   const hasActiveFilter = sdgFilter || engagementFilter || regionFilter || needFilter || muniFilter || areaFilter || waitingOnly;
 
   // タブ切替: フィルターと並び順をタブ既定にリセット
@@ -515,13 +530,44 @@ export default function SupporterDashboard() {
           {/* 通常タブ: SDGsフィルター */}
           {effectiveTab === 'normal' && (
           <div className="flex gap-1.5 flex-wrap items-center">
-            <span className="text-xs text-gray-400 mr-1">SDGs:</span>
-            <button onClick={() => setSdgFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
+            <span className="text-xs text-gray-400 mr-1">困りごと:</span>
+            <button onClick={() => selectCategoryFilter(null)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${sdgFilter === null ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500'}`}>すべて ({normalCases.length})</button>
             {allSdgs.map((s) => {
               const count = normalCases.filter((c) => (c.ai_sdg_suggestion?.sdgs_goals || []).includes(s)).length;
-              return <button key={s} onClick={() => setSdgFilter(sdgFilter === s ? null : s)} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>SDG {s} ({count})</button>;
+              // 0 件の大項目は全体像を見せるため表示はするが、選べないようにする(選択中のものは外せるように残す)
+              const isEmpty = count === 0 && sdgFilter !== s;
+              if (isEmpty) {
+                return <button key={s} type="button" disabled title={isSdgGoal(s) ? `SDG ${s} ${SDG_NAMES[s]}` : undefined} className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-300 cursor-not-allowed">{intakeCategoryLabel(s)} (0)</button>;
+              }
+              return <button key={s} onClick={() => selectCategoryFilter(sdgFilter === s ? null : s)} title={isSdgGoal(s) ? `SDG ${s} ${SDG_NAMES[s]}` : undefined} className="px-3 py-1 rounded-full text-xs font-semibold transition-colors" style={{ backgroundColor: sdgFilter === s ? SDG_COLORS[s] : SDG_COLORS[s] + '20', color: sdgFilter === s ? '#fff' : SDG_COLORS[s] }}>{intakeCategoryLabel(s)} ({count})</button>;
             })}
           </div>
+          )}
+          {/* 通常タブ: 大項目を選んだときの選択肢(指標)ドリルダウン。複数選択可 */}
+          {effectiveTab === 'normal' && sdgFilter !== null && indicatorsInCategory(sdgFilter).length > 0 && (
+            <div className="rounded-lg border p-3 space-y-1.5" style={{ borderColor: SDG_COLORS[sdgFilter] + '60', backgroundColor: SDG_COLORS[sdgFilter] + '08' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">「{intakeCategoryLabel(sdgFilter)}」の困りごとで絞り込む(複数選択可・どれかに当てはまる案件)</span>
+                {indicatorFilter.length > 0 && (
+                  <button onClick={() => setIndicatorFilter([])} className="text-xs text-gray-400 hover:text-gray-600 underline">選択を外す</button>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                {indicatorsInCategory(sdgFilter).map((indicator) => {
+                  const count = normalCases.filter((c) => (c.indicators || []).includes(indicator.id)).length;
+                  const isOn = indicatorFilter.includes(indicator.id);
+                  // 0 件の選択肢は表示だけして選べないようにする(選択中のものは外せるように残す)
+                  const isEmpty = count === 0 && !isOn;
+                  return (
+                    <label key={indicator.id} className={`flex items-start gap-2 rounded-md px-2 py-1 text-xs ${isEmpty ? 'cursor-not-allowed text-gray-300' : `cursor-pointer text-gray-700 ${isOn ? 'bg-white shadow-sm' : 'hover:bg-white/60'}`}`}>
+                      <input type="checkbox" checked={isOn} disabled={isEmpty} onChange={() => toggleIndicatorFilter(indicator.id)} className="mt-0.5 rounded disabled:cursor-not-allowed" />
+                      <span className="flex-1 leading-relaxed">{indicator.text}</span>
+                      <span className="shrink-0 text-gray-400">{indicator.id}・{count}件</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           )}
           {/* 災害タブ: ニーズフィルター */}
           {effectiveTab === 'disaster' && (

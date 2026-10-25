@@ -1,64 +1,20 @@
 {
   "questions": {
-    "intro": "※ Jika lebih dari satu yang sesuai, silakan centang semuanya",
-    "q1": {
-      "question": "Apakah Anda mengalami kesulitan terkait kebutuhan hidup sehari-hari?",
-      "options": {
-        "q1_1": "Tidak punya cukup makanan",
-        "q1_2": "Tidak punya tempat tinggal yang aman",
-        "q1_3": "Tidak bisa menggunakan listrik",
-        "q1_4": "Tidak bisa menggunakan internet",
-        "q1_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q2": {
-      "question": "Apakah Anda mengalami kesulitan terkait kehidupan yang aman dan tenteram?",
-      "options": {
-        "q2_1": "Tinggal di daerah yang berbahaya",
-        "q2_2": "Mengalami perundungan atau pelecehan",
-        "q2_3": "Mengalami kekerasan atau pelecehan fisik・mental・seksual",
-        "q2_4": "Bekerja dengan upah di bawah upah minimum, atau lembur tanpa dibayar",
-        "q2_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q3": {
-      "question": "Apakah Anda mengalami kesulitan terkait pekerjaan, uang, atau pendidikan?",
-      "options": {
-        "q3_1": "Tidak punya pekerjaan, atau hampir kehilangan pekerjaan",
-        "q3_2": "Penghasilan terlalu kecil untuk hidup secara layak",
-        "q3_3": "Tidak bisa bersekolah",
-        "q3_4": "Berusia di bawah 15 tahun tetapi bekerja",
-        "q3_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q4": {
-      "question": "Apakah saat ini Anda mengalami kesulitan terkait kesehatan fisik atau mental?",
-      "options": {
-        "q4_1": "Badan tidak sehat tetapi tidak bisa ke rumah sakit karena alasan keuangan dll.",
-        "q4_2": "Kadang merasa ingin mati",
-        "q4_3": "Menderita karena asap rokok orang lain",
-        "q4_4": "Bekerja di lingkungan berbahaya yang rawan cedera dan merasa cemas",
-        "q4_5": "Tidak ada yang sesuai"
-      }
-    },
-    "q5": {
-      "question": "Dukungan seperti apa yang Anda harapkan?",
-      "options": {
-        "q5_1": "Ingin tahu tentang program bantuan pemerintah",
-        "q5_2": "Ingin terhubung dengan orang yang punya masalah serupa",
-        "q5_3": "Ingin terhubung dengan NPO atau organisasi pendukung",
-        "q5_4": "Ingin berkonsultasi dengan ahli seperti pengacara atau dokter",
-        "q5_5": "Bersedia membayar untuk mendapatkan dukungan",
-        "q5_6": "Tidak ada yang sesuai"
-      }
-    }
+    "title": "Pilih masalah yang sesuai dengan keadaan Anda (maksimal {max})",
+    "intro": "Anda dapat memilih hingga {max} hal yang paling mendekati. Buka setiap bagian lalu pilih. Jika tidak ada yang sesuai, Anda boleh lanjut tanpa memilih.",
+    "neighborNote": "Jika Anda tidak memilih, konsultasi Anda akan diterima sebagai \"{label}\". Masalah yang sulit digolongkan pun akan dirapikan bersama oleh supporter sambil mendengarkan cerita Anda, lalu bersama-sama mencari jalan keluarnya.",
+    "selectedHeading": "Masalah yang Anda pilih",
+    "selectedCount": "{count} / {max}",
+    "noneSelected": "Belum ada yang dipilih (Anda tetap bisa berkonsultasi tanpa memilih)",
+    "remove": "Hapus",
+    "limitReached": "Anda hanya dapat memilih hingga {max}. Jika ingin menggantinya, hapus dulu salah satu yang sudah dipilih."
   },
   "hearing": {
     "title": "Formulir konsultasi",
     "subtitle": "Ceritakan situasi Anda. AI akan menghubungkan Anda dengan dukungan yang paling sesuai.",
     "freeSectionTitle": "Ceritakan sedikit lebih detail",
     "noPersonalInfoTitle": "Mohon jangan tulis hal yang dapat mengidentifikasi Anda",
-    "noPersonalInfoBody": "Apa yang Anda tulis di sini juga terlihat oleh pendukung sebelum Anda menyetujui mereka. Jangan tulis nama, alamat, nomor telepon, sekolah, atau tempat kerja — cukup ceritakan situasinya. Kontak Anda hanya dibagikan setelah Anda menyetujui, dan hanya seperlunya.",
+    "noPersonalInfoBody": "Apa yang Anda tulis di sini juga terlihat oleh pendukung sebelum Anda menyetujui mereka. Jangan tulis nama, alamat, nomor telepon, sekolah, atau tempat kerja — cukup ceritakan situasinya. Kontak Anda tidak pernah diberikan kepada pendukung. Anda berbincang dengan pendukung yang Anda setujui melalui fitur obrolan di situs ini.",
     "whatLabel": "Apa yang sedang terjadi sekarang?",
     "whatHint": "Semakin detail Anda menulis, semakin mudah menemukan pendukung untuk Anda",
     "whatPlaceholder": "Contoh: Orang tua saya penganut agama baru dan melarang saya berobat ke rumah sakit. Sudah seminggu demam tinggi tetapi tidak bisa mendapat perawatan medis.",
@@ -70,7 +26,7 @@
     "wantPrefix": "Harapan: ",
     "defaultTitle": "Konsultasi",
     "submit": "Kirim konsultasi",
-    "privacyNote": "※Apa yang Anda tulis akan disusun dan dianalisis oleh AI untuk mencari organisasi pendukung yang cocok untuk Anda. Konten juga dibagikan kepada pendukung sebatas yang diperlukan.",
+    "privacyNote": "※Isi yang Anda tulis dibaca oleh pendamping yang sudah diperiksa tim kami. AI menyamarkan kontak dan informasi pribadi lainnya, lalu merapikan isinya agar mudah dipahami.",
     "aiOverlayTitle": "AI sedang menganalisis",
     "aiPoweredBy": "Powered by Google Gemini AI",
     "aiStep1": "Membaca isi konsultasi...",
@@ -78,13 +34,13 @@
     "aiStep3": "Mengklasifikasikan masalah dari sudut pandang SDGs...",
     "aiStep4": "Menyiapkan pencocokan...",
     "aiWait": "Mohon tunggu sebentar...",
-    "errorAnswerRequired": "Silakan jawab minimal satu pilihan di Q{id}",
     "errorWhatRequired": "Silakan isi 「Apa yang sedang terjadi sekarang?」",
     "errorWhatTooLong": "「Apa yang sedang terjadi sekarang?」 maksimal {max} karakter",
     "errorTimeout": "Proses memakan waktu terlalu lama. Silakan coba lagi nanti.",
     "errorUserFetch": "Gagal memuat informasi pengguna",
     "errorSave": "Kesalahan penyimpanan: {message}",
-    "errorSubmit": "Terjadi kesalahan saat mengirim"
+    "errorSubmit": "Terjadi kesalahan saat mengirim",
+    "errorDailyLimit": "Hari ini Anda tidak dapat mendaftarkan konsultasi lagi. Silakan coba lagi nanti."
   },
   "limitModal": {
     "title": "Jumlah konsultasi telah mencapai batas",
@@ -212,7 +168,8 @@
     "toastContinueRequested": "Kami meminta pendukung untuk terus membantu",
     "toastEvalFailed": "Gagal mengirim penilaian",
     "toastEvalSent": "Terima kasih Anda telah dikirim ke pendukung! Terima kasih 🎉",
-    "fallbackTitle": "Silakan periksa kembali"
+    "fallbackTitle": "Silakan periksa kembali",
+    "selectedIndicatorsTitle": "Masalah yang Anda pilih"
   },
   "disaster": {
     "banner": {
@@ -280,5 +237,77 @@
       "saved": "Wilayah tersimpan",
       "notSet": "Belum dipilih"
     }
+  },
+  "trial": {
+    "badge": "Versi coba",
+    "title": "Coba formulir konsultasi",
+    "subtitle": "Jawab pertanyaan yang sama dengan formulir asli dan lihat alur konsultasinya. Tidak perlu mendaftar atau masuk.",
+    "safeTitle": "Isi yang Anda masukkan tidak dikirim ke mana pun",
+    "safeBody": "Versi coba ini hanya berjalan di perangkat Anda. Isi yang Anda masukkan tidak dikirim maupun disimpan, dan tidak ada analisis AI. Isi ini tidak diterima sebagai konsultasi yang sebenarnya.",
+    "fillSample": "Isi dengan contoh",
+    "sampleNote": "Contoh ini adalah isi fiktif.",
+    "submit": "Coba (tidak dikirim)",
+    "sample": {
+      "what": "Nama saya Hanako Yamada. Suami saya kehilangan pekerjaan sehingga kami tidak bisa membayar sewa, dan kami diminta pindah bulan depan. Nomor HP saya 090-1234-5678.",
+      "when": "Sejak 3 bulan yang lalu, ketika perusahaan suami saya (03-1234-5678) bangkrut",
+      "want": "Saya ingin tetap tinggal di rumah yang sekarang. Mohon hubungi saya di hanako.yamada@example.com atau LINE ID: hanako_0123"
+    },
+    "resultTitle": "Hasil coba",
+    "resultLead": "Pada layanan asli, setelah ini AI merapikan isi konsultasi. Sebelum diteruskan ke AI, informasi pribadi seperti kontak disamarkan seperti di bawah ini.",
+    "beforeTitle": "Isi yang Anda tulis",
+    "beforeNote": "Bagian yang berwarna adalah bagian yang ditemukan sebagai informasi pribadi.",
+    "readerTitle": "Hanya pendamping yang sudah diperiksa tim kami yang membaca ini",
+    "readerBody": "Isi yang Anda tulis dibaca oleh NPO, pemerintah daerah, dan organisasi pendukung lain (pendamping) yang sudah diperiksa dan didaftarkan oleh tim kami, lalu mereka memikirkan cara membantu Anda. Isi ini tidak pernah dipublikasikan di internet.",
+    "afterTitle": "Isi yang diteruskan ke AI",
+    "afterNote": "Bagian yang ditemukan diganti dengan tanda.",
+    "foundCount": "{count} bagian disamarkan",
+    "foundNone": "Tidak ditemukan bagian yang perlu disamarkan",
+    "categories": {
+      "url": "URL",
+      "email": "Alamat email",
+      "sns": "ID media sosial",
+      "postal": "Kode pos",
+      "phone": "Nomor telepon",
+      "dob": "Tanggal lahir",
+      "date": "Tanggal",
+      "address": "Alamat",
+      "number": "Deretan angka panjang"
+    },
+    "limitTitle": "Ada hal yang tidak bisa disamarkan secara otomatis",
+    "limitBody": "Nama, nama sekolah, tempat kerja, dan sejenisnya tidak bisa ditemukan secara otomatis. Selain itu, yang disamarkan hanya teks yang diteruskan ke AI; pendukung melihat tulisan Anda apa adanya. Pada formulir asli pun, mohon jangan menulis hal yang dapat mengidentifikasi diri Anda.",
+    "limitAiNote": "Pada layanan asli, setelah ini AI membaca isi konsultasi dan merapikannya agar mudah dipahami pendamping. Layanan AI yang kami gunakan terikat ketentuan untuk tidak memakai isi yang diterimanya sebagai bahan pelatihan. Kalaupun ada informasi yang tidak tersamarkan dan diteruskan ke AI, informasi itu tidak dipakai untuk melatih AI, jadi silakan berkonsultasi dengan tenang.",
+    "guardTitle": "Cara kami menggunakan AI dengan aman",
+    "guardLead": "Selain menyamarkan informasi pribadi, kami memasang beberapa lapis perlindungan agar AI tidak disalahgunakan.",
+    "guardLeadTerm": "Pertahanan berlapis",
+    "guard1": "Meskipun isi konsultasi berisi \"perintah untuk menipu AI\", AI diatur agar tidak mengikutinya.",
+    "guard1Term": "Perlindungan prompt injection",
+    "guard2": "Jika AI menulis tautan atau alamat email, isi tersebut tidak ditampilkan di layar.",
+    "guard2Term": "Penyaringan keluaran",
+    "guard3": "AI hanya bisa menulis teks. AI tidak bisa melihat atau mengubah data konsultasi.",
+    "guard3Term": "Prinsip hak akses minimum",
+    "guard4": "Jenis kesulitan dan apakah kasusnya mendesak ditentukan oleh aturan yang sudah ditetapkan, bukan oleh AI.",
+    "guard4Term": "Keputusan berbasis aturan",
+    "nextTitle": "Pada layanan asli, setelah ini",
+    "nextLead": "Tampilan di bawah ini adalah contoh, tidak berkaitan dengan isi yang Anda masukkan saat mencoba.",
+    "exampleTag": "Contoh",
+    "next1Title": "AI merapikan kesulitan Anda",
+    "next2Title": "Organisasi pendukung mengirimkan tawaran",
+    "next3Title": "Anda berkonsultasi lewat chat dengan organisasi yang Anda setujui",
+    "mockCaseTitle": "Tidak bisa membayar sewa dan terancam kehilangan tempat tinggal",
+    "mockAiMessage": "Kekhawatiran akan kehilangan tempat tinggal adalah beban yang sangat berat. Anda tidak sendirian.",
+    "mockOrgName": "NPO Ruang Konsultasi Kehidupan (fiktif)",
+    "mockOfferMessage": "Kami menerima konsultasi tentang tempat tinggal. Pertama-tama, ceritakan keadaan Anda kepada kami.",
+    "mockApprove": "Setujui",
+    "mockDecline": "Nanti dulu",
+    "mockChatSupporter": "Salam kenal. Mohon ceritakan keadaan Anda saat ini, sejauh yang bisa Anda sampaikan.",
+    "mockChatUser": "Terima kasih. Saya diminta pindah sebelum bulan depan.",
+    "next1": "AI merapikan isi konsultasi dan menunjukkan bidang dukungan yang terkait.",
+    "next2": "Organisasi pendukung yang membaca isinya mengirimkan tawaran dukungan.",
+    "next3": "Anda hanya bercakap lewat chat dengan organisasi yang Anda setujui.",
+    "ctaSosTitle": "Bagi yang ingin berkonsultasi",
+    "ctaSos": "Buat akun dan berkonsultasi",
+    "ctaSupporterTitle": "Bagi organisasi yang ingin mendukung",
+    "ctaSupporter": "Tentang organisasi pendukung",
+    "retry": "Coba lagi"
   }
 }

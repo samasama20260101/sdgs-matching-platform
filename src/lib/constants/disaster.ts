@@ -58,6 +58,12 @@ export const DISASTER_EVENTS: DisasterEvent[] = [
 // 熊本地震(kumamoto-eq-2026)は 2026-09-16 に受付終了。再開するときは DISASTER_EVENTS[0] を指す。
 export const ACTIVE_DISASTER_EVENT: DisasterEvent | null = null
 
+// サポーターの案件一覧に災害案件を出すかどうか。false の間は、登録済みの災害案件が残っていても
+// 一覧 API が災害案件を返さないので、災害タブ・ニーズ/市町村フィルター・全体状況もまとめて消える。
+// DB の案件は消さない(true に戻せば元どおり出る)。災害SOSの受付を再開するときは true に戻すこと。
+// 2026-10-02: 受付終了後に滞留した案件だけで災害タブが出続けるため false にした。
+export const DISASTER_CASES_SHOWN_TO_SUPPORTERS: boolean = false
+
 export const DISASTER_EVENT_IDS = new Set(DISASTER_EVENTS.map((e) => e.id))
 
 export type DisasterLocation = { municipality?: string; area?: string }

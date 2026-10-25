@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { isPwnedPasswordError } from '@/lib/authErrors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +28,7 @@ const EyeIcon = ({ show }: { show: boolean }) => (
 
 export default function ResetPasswordPage() {
     const t = useTranslations('auth.reset');
+    const tAuth = useTranslations('auth.common');
     const router = useRouter();
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
@@ -53,7 +55,10 @@ export default function ResetPasswordPage() {
         try {
             const { error: updateError } = await supabase.auth.updateUser({ password });
             if (updateError) {
-                if (updateError.message.includes('same password') || updateError.message.includes('different')) {
+                // 流出パスワードの文にも different が含まれるので、先に判定する
+                if (isPwnedPasswordError(updateError)) {
+                    setError(tAuth('errorPasswordPwned'));
+                } else if (updateError.message.includes('same password') || updateError.message.includes('different')) {
                     setError(t('errorSamePassword'));
                 } else {
                     setError(t('errorUpdateFailed'));

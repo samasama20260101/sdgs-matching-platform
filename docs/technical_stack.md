@@ -134,7 +134,7 @@ Productionには未適用です。
 - 団体内の所属停止は `organization_memberships.status = SUSPENDED` で表現し、`users.is_suspended` は管理者による全体アカウント停止専用にする。
 - 団体の物理削除は避け、`ARCHIVED` 運用へ寄せる。
 
-Production適用手順は `docs/production_supporter_db_refresh_runbook.md` を参照します。
+Production適用は完了済みです（当時の手順書は git 履歴を参照）。
 
 ### Supabase Admin Client
 
@@ -409,5 +409,4 @@ Staging / Preview環境
 | `docs/technical_stack.md` | この文書 |
 | `docs/api_security_design.md` | API認可・Supabase key・AI API・通知設計方針 |
 | `docs/maintenance_mode.md` | メンテナンスモード運用 |
-| `docs/production_supporter_db_refresh_runbook.md` | Productionサポーター団体DB刷新手順 |
 | `docs/staging_role_function_test_spec.md` | Stagingロール別機能仕様・テスト観点 |
