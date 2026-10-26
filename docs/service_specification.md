@@ -176,7 +176,6 @@ Q1〜Q5は必須情報です。
 |---|---|
 | `/api/sos/cases` | 相談作成・取得 |
 | `/api/sos/cases/[id]` | 相談詳細取得 |
-| `/api/classify-sdgs` | SDGs分類 |
 | `/api/gemini/analyze` | 相談内容分析 |
 
 ### 8.4 支援申し出の確認

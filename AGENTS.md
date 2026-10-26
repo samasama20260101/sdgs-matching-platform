@@ -409,6 +409,8 @@ CREATE TABLE case_sdg_classifications (
 
 ## 機能5：インパクトダッシュボード
 
+> 設計書 `docs/sdgs_impact_dashboard_design.md` は 2026-10-26 にタグ `archive/sdgs-impact-dashboard-2026-10` へ移した(教師データ待ちで休止)。再開時は `git show archive/sdgs-impact-dashboard-2026-10:docs/sdgs_impact_dashboard_design.md` で取り出す。
+
 ### ドリルダウン構造
 ```
 17ゴール（タイル表示）
