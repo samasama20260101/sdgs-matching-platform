@@ -156,6 +156,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
+  // 取り消した相談に申し出中のものを残さない(あとから承認できてしまうため)
+  if (body.status === 'CANCELLED') {
+    const { error: declineError } = await supabaseAdmin
+      .from('offers')
+      .update({ status: 'DECLINED', declined_at: new Date().toISOString(), declined_by_user_id: auth.appUser.id })
+      .eq('case_id', id)
+      .eq('status', 'PENDING')
+    if (declineError) {
+      console.error('[sos/cases] pending offers decline on cancel error:', declineError)
+    }
+  }
+
   // マッチ済み案件の取消は担当サポーターに知らせる(OPENは読み手がいないため不要)
   if (body.status === 'CANCELLED' && caseData.status === 'MATCHED') {
     const { error: messageError } = await supabaseAdmin.from('messages').insert({
