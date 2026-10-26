@@ -32,7 +32,8 @@
 ### 2026-10-26 の整理
 - 削除: 開発用ページ `/test-ai` と `/api/classify-sdgs`、`scripts/list-models.js`・`test-gemini-connection.js`・`create-test-users.ts`、ルートの残骸(`er.email`・`fix_routing.sh`・`restructure_sdgs.sh`・空ファイル `next`・`sdgs-matching-platform@0.1.0`)、マージ済みブランチ、リポジトリ外の `~/samasama/メール変更調査SQL/`・`本番アカウント削除SQL/`・`staging_cases_cancelled_2026-10-16.json`
 - `docs/sdgs_impact_dashboard_design.md` はタグ `archive/sdgs-impact-dashboard-2026-10` へ(教師データ待ちで休止)
-- タグ保管の一覧: `archive/i18n-phase2-2026-07`(多言語 Phase 2)、`archive/case-concerns-2026-09`(お困りごとラベル)、`archive/news-note-article-2026-10`(note 記事)、`archive/sdgs-impact-dashboard-2026-10`(ダッシュボード設計)。再開時はマージせず取り出して作り直す
+- **docs を 9 本 → 4 本に作り直し**: `docs/service_specification.md`(コードを読み直して全面書き直し、§15 に見つけた既知の課題)、`docs/operations.md`(環境構築 2 本・技術構成・API 設計・DB アクセス・メンテナンスモードを統合)、`intake_indicators.md`・`news_section_design.md` はそのまま。テスト観点の文書は仕様書 §16 へ。`AGENTS.md` は作業ルールと地雷だけに短縮(7 月末エンハンス計画は削除)。多言語設計書はタグ `archive/i18n-design-doc-2026-10` へ
+- タグ保管の一覧: `archive/i18n-phase2-2026-07`(多言語 Phase 2)、`archive/case-concerns-2026-09`(お困りごとラベル)、`archive/news-note-article-2026-10`(note 記事)、`archive/sdgs-impact-dashboard-2026-10`(ダッシュボード設計)、`archive/i18n-design-doc-2026-10`(多言語設計書)。再開時はマージせず取り出して作り直す
 
 ## 試して失敗したこと ★最重要
 - **auto mode の分類器は「一括削除っぽい」コマンドをブロックする**(xargs や for ループでのブランチ削除)。名前を明示列挙した単一コマンドなら通る。本番 psql も止まるのでユーザーが `!` で実行
