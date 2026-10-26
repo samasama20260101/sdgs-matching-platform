@@ -1,9 +1,9 @@
 # トップページお知らせ欄 設計書
 
 作成日: 2026-09-17
-ステータス: 実装済み(`feature/news-section`、2026-09-17)。Staging DB に migration 適用済み・本番未適用。dev への PR とブラウザ検証待ち
-正本方針: `AGENTS.md`(サービスの思想 / 本番保護ルール / API セキュリティ)、`docs/api_security_design.md`
-関連: `docs/proposals/npo_interview_strategy.md`(インタビュー作戦)、`docs/articles/`(note 記事の制作パッケージ)、`docs/maintenance_mode.md`
+ステータス: 実装済み。2026-10-26 に dev へマージ、本番 DB に `news_posts` 作成済み。本番反映(dev → main)待ち
+正本方針: `AGENTS.md`(サービスの思想 / 作業ルール)、`docs/operations.md` §7(API を作るとき)
+関連: `~/samasama/docs_退避_20260925/proposals/npo_interview_strategy.md`(インタビュー作戦)、`~/samasama/docs_退避_20260925/articles/`(note 記事の制作パッケージ)。どちらもリポジトリの外
 
 ---
 
@@ -160,14 +160,14 @@ URL を貼ると自動でサイトを読みに行く機能は **作らない**(�
 - `src/lib/newsDraft.ts` を新設(`disasterNeeds.ts` と同じく `gemini.ts` から独立)。モデルは既存と同じ `gemini-2.5-flash`。
 - `gemini-2.5-flash` は思考トークンが `maxOutputTokens` を内側から消費する(`gemini.ts` の注記)。本文 600 字 + 思考分を見て `maxOutputTokens` は 4,096 程度に取る。
 - 材料は各欄 8,000 文字まで。API キー未設定時は 503 を返し、フォームに「AI 下書きは使えません(手で書けます)」と出す(既存のデモモードのような偽の下書きは返さない)。
-- **品質は実装前に確かめる**(§8 前提 1)。伊藤さんの取材材料(`docs/articles/`)を「参加団体」の 2 欄に見立てて 1 回流し、オーナーの手直しで済む文が出るかを見る。
+- **品質は実装前に確かめる**(§8 前提 1)。伊藤さんの取材材料(`~/samasama/docs_退避_20260925/articles/`)を「参加団体」の 2 欄に見立てて 1 回流し、オーナーの手直しで済む文が出るかを見る。
 
 ### 4.5 note 記事ワークフロー(INTERVIEW 用、2026-09-19 追加 → 同日に無効化 → **2026-10-24 にコードを削除、タグ `archive/news-note-article-2026-10` に保管**)
 
 **状態: コードはこのブランチにない。** 再開するときはタグからパネル・プロンプト・生成 API・4 列の migration を戻す(以下はタグ時点の説明)。削除前は `NOTE_ARTICLE_WORKFLOW_ENABLED = false` で眠らせていた。 理由: 長文の品質に必要な `gemini-2.5-pro` がこの API キーで使えない(404)ため、ユーザーが「今は必要ない」と判断(2026-09-19)。無効時はパネル非表示・生成 API は 404・管理 API は 4 列を読み書きしない。**DB の 4 列は `migrations/add_news_note_article_columns.sql` に分離し、本番・Staging とも未適用**(Staging はいったん追加したあと DROP、データ 0 件を確認済み)。有効化するときは、その migration を先に流してからフラグを true にする。
 
 
-インタビューの取材メモから、note に貼る長文記事を管理画面で起こす。2026-09-08 の伊藤さん記事(`docs/articles/`)を私(Claude)が手作業で作った手順を、オーナーが一人で回せるようにしたもの。材料はテキストのみ(録音の文字起こしは対象外、2026-09-19 ユーザー判断)。
+インタビューの取材メモから、note に貼る長文記事を管理画面で起こす。2026-09-08 の伊藤さん記事(`~/samasama/docs_退避_20260925/articles/`)を私(Claude)が手作業で作った手順を、オーナーが一人で回せるようにしたもの。材料はテキストのみ(録音の文字起こしは対象外、2026-09-19 ユーザー判断)。
 
 **工程は 3 つ + 貼り付け**(`/admin/news` で種別「インタビュー」を選ぶと出るパネル):
 
