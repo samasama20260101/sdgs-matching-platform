@@ -43,3 +43,13 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。2 団体目以降は「承認済みの団体が招待する」形を検討中なので、並列マッチングに戻さない。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
 - 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す(CI はない)。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
