@@ -74,7 +74,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         const { data: taken, error: takenError } = await supabaseAdmin
             .from('users')
             .select('id')
-            .ilike('email', newEmail)
+            .eq('email', newEmail)
             .maybeSingle()
         if (takenError) {
             console.error('[admin/users] duplicate check error:', takenError)

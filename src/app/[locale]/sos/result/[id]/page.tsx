@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -99,6 +99,9 @@ export default function SOSResultPage() {
   const [locMunicipality, setLocMunicipality] = useState('');
   const [locArea, setLocArea] = useState('');
   const [locSaving, setLocSaving] = useState(false);
+  // 分析をこのマウント中に試みた案件ID。ポーリング/タブ復帰のたびに
+  // 未完了案件へ Gemini を呼び直して課金が出るのを防ぐ。
+  const analysisRequestedRef = useRef<string | null>(null);
   const tPhotos = useTranslations('sos.disaster.photos');
 
   useEffect(() => {
@@ -154,7 +157,10 @@ export default function SOSResultPage() {
     const needsAnalysis = (!caseResult.ai_sdg_suggestion
       || !('title' in (caseResult.ai_sdg_suggestion as Record<string, unknown>)))
       && !caseResult.intake_qna?.disaster;
-    if (needsAnalysis) {
+    // 1案件につきこのマウント中1回だけ試みる。失敗した案件を毎ポーリングで
+    // 呼び直さない(再試行はページを開き直したとき)。
+    if (needsAnalysis && analysisRequestedRef.current !== caseResult.id) {
+      analysisRequestedRef.current = caseResult.id;
       await runAIAnalysis(caseResult);
     }
 
@@ -446,15 +452,19 @@ export default function SOSResultPage() {
   const handleNewConsultation = async () => {
     if (isActionLoading) return;
     setIsActionLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { router.push('/login'); return; }
-    const casesRes = await fetch('/api/sos/cases', {
-      headers: { 'Authorization': `Bearer ${session.access_token}` },
-    });
-    const casesData = await casesRes.json();
-    const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
-    if ((userCases?.length || 0) >= MAX_ACTIVE_CASES) { setLimitModal(true); return; }
-    router.push('/sos/hearing');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/login'); return; }
+      const casesRes = await fetch('/api/sos/cases', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      const casesData = await casesRes.json();
+      const userCases = (casesData.cases || []).filter((c: { status: string }) => c.status === 'OPEN');
+      if ((userCases?.length || 0) >= MAX_ACTIVE_CASES) { setLimitModal(true); return; }
+      router.push('/sos/hearing');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const formatDate = (dateStr: string) =>

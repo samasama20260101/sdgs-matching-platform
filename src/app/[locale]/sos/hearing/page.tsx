@@ -137,7 +137,7 @@ export default function SOSHearingPage() {
           urgency: isUrgent ? 'High' : 'Medium',
           locale,
           status: 'OPEN',
-          region_country: 'ID',
+          region_country: 'JP',
         }),
       });
       const caseResult = await caseRes.json();

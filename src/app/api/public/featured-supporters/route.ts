@@ -12,14 +12,12 @@ export async function GET() {
             .order('featured_order', { ascending: true })
 
         if (error) {
-            return NextResponse.json({ supporters: [], debug_error: error.message })
+            console.error('[featured-supporters] fetch error:', error)
+            return NextResponse.json({ supporters: [] }, { headers: { 'Cache-Control': 'no-store' } })
         }
 
         if (!supporters || supporters.length === 0) {
-            // デバッグ：DBのfeatured状態を確認
-            const { data: debug } = await supabaseAdmin
-                .from('organizations').select('id, is_featured, featured_order').eq('status', 'ACTIVE')
-            return NextResponse.json({ supporters: [], debug_db: debug })
+            return NextResponse.json({ supporters: [] }, { headers: { 'Cache-Control': 'no-store' } })
         }
 
         const ids = supporters.map((s: { id: string }) => s.id)
@@ -88,7 +86,7 @@ export async function GET() {
         }, { headers: { 'Cache-Control': 'no-store' } })
 
     } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e)
-        return NextResponse.json({ supporters: [], debug_error: msg })
+        console.error('[featured-supporters] unexpected error:', e)
+        return NextResponse.json({ supporters: [] }, { headers: { 'Cache-Control': 'no-store' } })
     }
 }

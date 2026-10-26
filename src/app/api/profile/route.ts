@@ -2,6 +2,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { requireActiveAppUser } from '@/lib/api/auth'
+import { normalizeHttpUrl } from '@/lib/api/validation'
 import { isAppLocale } from '@/i18n/routing'
 import { NextResponse } from 'next/server'
 
@@ -58,7 +59,18 @@ function sanitizeSocialLinks(value: unknown) {
         if (!SOCIAL_LINK_KEYS.has(key)) return
         const maxLength = key === 'website' || key === 'facebook' ? 200 : 80
         const text = sanitizeText(rawValue, maxLength)
-        if (text) sanitized[key] = text
+        if (!text) return
+        if (key === 'website' || key === 'facebook') {
+            // 公開プロフィールで href になるため http(s) の URL だけ通す(javascript: 等を弾く)
+            const url = normalizeHttpUrl(text)
+            if (url) sanitized[key] = url
+        } else if (/^https?:\/\//i.test(text)) {
+            // twitter / instagram は URL 形式なら検証。ハンドル(@name)はそのまま残す
+            const url = normalizeHttpUrl(text)
+            if (url) sanitized[key] = url
+        } else {
+            sanitized[key] = text
+        }
     })
     return Object.keys(sanitized).length > 0 ? sanitized : null
 }
