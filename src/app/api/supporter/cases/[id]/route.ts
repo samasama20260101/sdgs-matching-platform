@@ -5,12 +5,9 @@ import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
+import { isMinor } from '@/lib/utils/age'
 
 const ACTIVE_CASE_STATUSES = new Set(['OPEN', 'MATCHED'])
-
-function isValidTimestamp(value: unknown) {
-    return typeof value === 'string' && Number.isFinite(Date.parse(value))
-}
 
 function serverError() {
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
@@ -82,7 +79,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             : null,
     }))
 
-    // オーナーの birth_date を取得（未成年判定用）
+    // 相談者が未成年かだけを返す(生年月日そのものはサポーターに渡さない)
     const { data: ownerData } = await supabaseAdmin
         .from('users')
         .select('birth_date')
@@ -94,7 +91,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         supporterUserId: auth.appUser.id,
         supporterOrganizationId: organizationContext.organizationId,
         acceptedOffers: acceptedOffersWithProfile,
-        ownerBirthDate: ownerData?.birth_date ?? null,
+        ownerIsMinor: isMinor(ownerData?.birth_date),
     })
 }
 
@@ -145,12 +142,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json()
-    if (!body.supporter_resolved_at || Object.keys(body).length !== 1 || !isValidTimestamp(body.supporter_resolved_at)) {
+    if (!body.supporter_resolved_at || Object.keys(body).length !== 1) {
         return NextResponse.json({ error: 'Invalid update' }, { status: 400 })
     }
     const { data: updatedCase, error: updateError } = await supabaseAdmin
         .from('cases')
-        .update({ supporter_resolved_at: body.supporter_resolved_at })
+        // 報告日時はサーバーの時刻(送られた値を使うと、14 日の確認期間を飛ばせてしまう)
+        .update({ supporter_resolved_at: new Date().toISOString() })
         .eq('id', id)
         .eq('status', 'MATCHED')
         .is('supporter_resolved_at', null)

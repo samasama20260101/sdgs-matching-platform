@@ -20,7 +20,6 @@ import { SDG_COLORS, SDG_NAMES, isSdgGoal } from '@/lib/constants/sdgs';
 import { NEIGHBOR_CATEGORY, findIndicator, intakeCategoryLabel } from '@/lib/constants/intakeIndicators';
 import { getDisasterEvent, getDisasterLocation, formatDisasterLocation, getMaxSupportersForCase } from '@/lib/constants/disaster';
 import { isCasePhotosEnabled } from '@/lib/constants/photos';
-import { isMinor } from '@/lib/utils/age';
 
 type CaseData = {
   id: string;
@@ -75,7 +74,7 @@ export default function SupporterCaseDetailPage() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  const [ownerBirthDate, setOwnerBirthDate] = useState<string | null>(null);
+  const [ownerIsMinor, setOwnerIsMinor] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -105,7 +104,7 @@ export default function SupporterCaseDetailPage() {
       router.push('/supporter/dashboard');
       return;
     }
-    const { case: caseResult, supporterUserId, supporterOrganizationId, acceptedOffers: aOffers, ownerBirthDate: birthDate } = await caseRes.json();
+    const { case: caseResult, supporterUserId, supporterOrganizationId, acceptedOffers: aOffers, ownerIsMinor: minor } = await caseRes.json();
     setCaseData(caseResult);
 
     // 案件写真(災害SOSのみ。マッチング前でも閲覧可)
@@ -121,7 +120,7 @@ export default function SupporterCaseDetailPage() {
     setCurrentUserId(supporterUserId);
     setCurrentOrganizationId(supporterOrganizationId);
     setAcceptedOfferOrders(aOffers ?? []);
-    setOwnerBirthDate(birthDate ?? null);
+    setOwnerIsMinor(minor === true);
 
     // 自分のオファー取得（API経由）
     const offerRes = await fetch(`/api/supporter/cases/${params.id}/offer`, {
@@ -346,7 +345,7 @@ export default function SupporterCaseDetailPage() {
                   {caseData?.urgency === 'High' && (
                     <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ 緊急</span>
                   )}
-                  {isMinor(ownerBirthDate) && (
+                  {ownerIsMinor && (
                     <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
                       🔰 未成年
                     </span>

@@ -1,6 +1,5 @@
 // src/app/supporter/dashboard/page.tsx
 'use client';
-import { isMinor } from '@/lib/utils/age'
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
@@ -36,7 +35,7 @@ type Case = {
   users?: {
     display_name: string;
     prefecture?: string | null;
-    birth_date?: string | null;
+    is_minor?: boolean;
   };
   my_offer_status?: string | null;
   accepted_count?: number;
@@ -117,7 +116,7 @@ function SupporterCaseCard({ case_, showUser = true, onClick }: { case_: Case; s
                 </span>
               ) : null;
             })()}
-            {isMinor(case_.users?.birth_date) && (
+            {case_.users?.is_minor && (
               <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                 🔰 未成年
               </span>
