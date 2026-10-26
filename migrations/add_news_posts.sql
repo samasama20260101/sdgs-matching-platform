@@ -6,6 +6,8 @@
 -- 2026-10-24: 種別に TOPIC(話題)を追加。Staging は作成済みだったので CHECK 制約だけ差し替えた:
 --   ALTER TABLE news_posts DROP CONSTRAINT news_posts_category_check,
 --     ADD CONSTRAINT news_posts_category_check CHECK (category IN ('NOTICE', 'MAINTENANCE', 'SUPPORTER_JOINED', 'INTERVIEW', 'TOPIC'));
+-- 2026-10-26: 関数に SET search_path = public を追加。Staging は ALTER FUNCTION update_news_posts_updated_at() SET search_path = public で合わせた。
+-- 2026-10-26: 本番に適用済み(ユーザーが SQL Editor で実行。関数の search_path は ALTER FUNCTION で後から付けた。確認 SQL で RLS・CHECK 5 種・trigger・index・proconfig を確認)。
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS news_posts (
@@ -35,7 +37,8 @@ BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = public;  -- Security Advisor の function_search_path_mutable 対策(fix_function_search_path_... と同じ)
 
 DROP TRIGGER IF EXISTS set_news_posts_updated_at ON news_posts;
 CREATE TRIGGER set_news_posts_updated_at

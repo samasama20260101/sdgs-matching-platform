@@ -15,7 +15,7 @@
 - 2026-10-24 種別「話題」(TOPIC)を追加: 外の人が書いた記事の URL 要約紹介。**Staging は CHECK 制約を差し替え済み、本番は `add_news_posts.sql`(修正済み)を流すだけ**。インタビューの締めも外部リンクに合わせた(note 以外対応)
 - 取りやめたもの: ログイン中の運営がトップを見る仕組み(2026-10-22 revert)。トップ全体の見え方はシークレットウィンドウで確認する
 - 指摘が来たら: feature/news-section に足して push → プレビューで確認してもらう
-- dev に入れたあと: **本番 DB に news_posts の migration が必要**(dev→main の前にユーザーが SQL Editor で実行。その前に `update_news_posts_updated_at()` に `SET search_path = public` を足す)。「SQL の話は後日」とユーザー判断済み
+- **2026-10-26 PR #34 で dev にマージ、本番 DB に news_posts を作成済み**(ユーザーが SQL Editor で実行、確認 SQL で RLS・CHECK 5 種・trigger・index・search_path を確認)。残りは dev → main(ユーザーが GitHub 上で PR #57 と同じ手順)
 - untracked の `指示書_セキュリティヘッダー.md` はコミットしない
 
 ### まとめ(2026-10-21 時点、PR #54 まで)
