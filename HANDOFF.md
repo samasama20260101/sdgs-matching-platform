@@ -56,7 +56,7 @@
 - **メール変更は新アドレスのみの 1 段階確認**(Secure email change OFF)。確認メールは新旧両方の宛先に届くが仕様(二重送信バグではない)。リンクの有効期限 1 時間。Staging は SMTP 未設定で届かない
 - **管理者は `/profile` に入れない**ので、管理者自身のパスワード変更は forgot-password 頼み
 - 災害SOSは受付終了(`ACTIVE_DISASTER_EVENT = null`)、災害案件はサポーター一覧から外す(`DISASTER_CASES_SHOWN_TO_SUPPORTERS = false`)。再開時は両方戻す。災害データは `cases.intake_qna.disaster` 配下(正本 `src/lib/constants/disaster.ts`)
-- Staging テストユーザー: sos01@gmail.com / npo01_1@gmail.com(testpass123)、管理者 x25660@yahoo.co.jp(PW 不明)
+- Staging テストユーザー(2026-10-26 確認): SOS `sos01@gmail.com` / サポーター `npo01_1@gmail.com`(団体 tanabe の OWNER)、どちらも `testpass123`。管理者 `admin0001@example.com`(`SamaAdmin#2026kq`、ADM-00004、ダミー)と `newsadmin01@example.com`(`NewsAdmin#2026`、ADM-00003)。旧管理者 `x25660@yahoo.co.jp`(ADM-00001)は 2026-10-26 にユーザー指示で Staging から削除(本番は触っていない)
 - Staging と本番のスキーマは一致(i18n 列は `users.locale` / `cases.locale` のみ、`news_posts` は両方にある)
 - 環境差: Staging はメール確認 OFF・dev-login ゲートあり / 本番はメール確認 ON
 - ローカルの Vercel CLI は古い個人プロジェクトにリンクされたまま。デプロイ状況は `gh api repos/samasama20260101/sdgs-matching-platform/commits/<sha>/status` で見る
