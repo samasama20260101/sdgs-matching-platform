@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!offer) return NextResponse.json({ error: 'Offer not found' }, { status: 404 })
 
     const { data: caseData } = await supabaseAdmin
-        .from('cases').select('id, owner_user_id, intake_qna').eq('id', offer.case_id).single()
+        .from('cases').select('id, owner_user_id, status, intake_qna').eq('id', offer.case_id).single()
 
     if (!caseData || caseData.owner_user_id !== userData.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -43,6 +43,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             return NextResponse.json(
                 { error: 'OFFER_NOT_PENDING', message: 'この申し出はすでに取り下げられているか、無効な状態です' },
                 { status: 400 }
+            )
+        }
+
+        // 受付中・支援中の相談だけ承認できる(取り消し・解決・終了した相談に承認済みの申し出を付けない)
+        if (!['OPEN', 'MATCHED'].includes(caseData.status)) {
+            return NextResponse.json(
+                { error: 'CASE_NOT_ACTIVE', message: 'この相談は終了しているため、申し出を承認できません' },
+                { status: 409 }
             )
         }
 
