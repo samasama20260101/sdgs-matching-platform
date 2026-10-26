@@ -86,7 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body.status !== 'DECLINED' || offer.status !== 'PENDING') {
         return NextResponse.json({ error: 'OFFER_NOT_PENDING', message: '他の操作が先に完了しています' }, { status: 409 })
     }
-    const updateData = { status: 'DECLINED', declined_at: body.declined_at, declined_by_user_id: userData.id }
+    const updateData = { status: 'DECLINED', declined_at: new Date().toISOString(), declined_by_user_id: userData.id }
     const { error: updateError } = await supabaseAdmin
         .from('offers').update(updateData).eq('id', id).eq('status', 'PENDING')
 

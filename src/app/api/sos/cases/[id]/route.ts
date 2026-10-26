@@ -97,7 +97,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Invalid resolved_at' }, { status: 400 })
     }
     updateData.status = 'RESOLVED'
-    updateData.resolved_at = body.resolved_at
+    updateData.resolved_at = new Date().toISOString() // 送られた値は使わない
   }
   if (body.supporter_resolved_at === null && !caseData.supporter_resolved_at) {
     return NextResponse.json({ error: 'STALE_STATE', message: '他の操作が先に完了しています' }, { status: 409 })

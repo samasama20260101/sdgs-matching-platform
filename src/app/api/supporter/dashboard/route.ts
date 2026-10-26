@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getCasePhotos } from '@/lib/constants/photos'
 import { getDisasterNeeds, getDisasterLocation, getMaxSupportersForCase, DISASTER_CASES_SHOWN_TO_SUPPORTERS } from '@/lib/constants/disaster'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { isMinor } from '@/lib/utils/age'
 
 const CASE_SELECT = 'id, title, description_free, status, urgency, created_at, ai_sdg_suggestion, owner_user_id, intake_qna'
 
@@ -92,7 +93,8 @@ export async function GET(request: Request) {
 
     // 5. owner_user_idを収集して users を2ステップで取得
     const ownerIds = [...new Set(mergedCases.map(c => c.owner_user_id).filter(Boolean))]
-    const userMap: Record<string, { display_name: string; prefecture?: string | null; birth_date?: string | null }> = {}
+    // 生年月日はサポーターに渡さず、未成年かどうかだけを返す
+    const userMap: Record<string, { display_name: string; prefecture?: string | null; is_minor: boolean }> = {}
     if (ownerIds.length > 0) {
         const { data: owners, error: ownerErr } = await supabaseAdmin
             .from('users')
@@ -100,7 +102,7 @@ export async function GET(request: Request) {
             .in('id', ownerIds)
         if (ownerErr) console.error('owners error:', JSON.stringify(ownerErr))
         ;(owners || []).forEach((u: { id: string; display_name: string; prefecture?: string | null; birth_date?: string | null }) => {
-            userMap[u.id] = { display_name: u.display_name, prefecture: u.prefecture, birth_date: u.birth_date }
+            userMap[u.id] = { display_name: u.display_name, prefecture: u.prefecture, is_minor: isMinor(u.birth_date) }
         })
     }
 
