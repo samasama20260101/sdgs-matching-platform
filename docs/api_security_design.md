@@ -104,7 +104,6 @@ AI APIはコストと個人情報の両面で保護が必要です。
 | API | 許可ロール | 追加確認 |
 |---|---|---|
 | `/api/gemini/analyze` | SOS / ADMIN | `caseId` がある場合、SOS本人の案件か確認 |
-| `/api/classify-sdgs` | ADMIN | 開発・検証用 |
 
 実装ルール:
 
