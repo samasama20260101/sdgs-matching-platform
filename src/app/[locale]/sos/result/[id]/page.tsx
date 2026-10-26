@@ -161,6 +161,9 @@ export default function SOSResultPage() {
     // 呼び直さない(再試行はページを開き直したとき)。
     if (needsAnalysis && analysisRequestedRef.current !== caseResult.id) {
       analysisRequestedRef.current = caseResult.id;
+      // 読み込み中の表示を先に外し、AI を待つ数秒は「AI が準備中」の画面を出す
+      // (外さないと、分析が終わるまで汎用のぐるぐるのままになる)
+      setIsLoading(false);
       await runAIAnalysis(caseResult);
     }
 
