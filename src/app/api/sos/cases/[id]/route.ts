@@ -97,7 +97,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Invalid resolved_at' }, { status: 400 })
     }
     updateData.status = 'RESOLVED'
-    updateData.resolved_at = body.resolved_at
+    updateData.resolved_at = new Date().toISOString() // 送られた値は使わない
   }
   if (body.supporter_resolved_at === null && !caseData.supporter_resolved_at) {
     return NextResponse.json({ error: 'STALE_STATE', message: '他の操作が先に完了しています' }, { status: 409 })
@@ -153,6 +153,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     })
     if (messageError) {
       console.error('[sos/cases] resolution rejection system message insert error:', messageError)
+    }
+  }
+
+  // 取り消した相談に申し出中のものを残さない(あとから承認できてしまうため)
+  if (body.status === 'CANCELLED') {
+    const { error: declineError } = await supabaseAdmin
+      .from('offers')
+      .update({ status: 'DECLINED', declined_at: new Date().toISOString(), declined_by_user_id: auth.appUser.id })
+      .eq('case_id', id)
+      .eq('status', 'PENDING')
+    if (declineError) {
+      console.error('[sos/cases] pending offers decline on cancel error:', declineError)
     }
   }
 

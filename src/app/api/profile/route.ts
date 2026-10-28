@@ -2,13 +2,10 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
 import { requireActiveAppUser } from '@/lib/api/auth'
+import { normalizeHttpUrl } from '@/lib/api/validation'
 import { isAppLocale } from '@/i18n/routing'
+import { replaceOrganizationServiceAreas } from '@/lib/serviceAreas'
 import { NextResponse } from 'next/server'
-
-type ServiceAreaInput = {
-    region_code: string
-    country?: string | null
-}
 
 const PERSONAL_PROFILE_FIELDS = new Set([
     'real_name', 'display_name', 'phone', 'locale', 'updated_at',
@@ -22,7 +19,6 @@ const ORGANIZATION_PROFILE_FIELDS = new Set([
 ])
 const SUPPORTER_TYPES = new Set(['NPO', 'CORPORATE', 'GOVERNMENT', 'OTHER'])
 const SOCIAL_LINK_KEYS = new Set(['website', 'twitter', 'instagram', 'facebook', 'line'])
-const COUNTRIES = new Set(['JP', 'ID'])
 
 function sanitizeText(value: unknown, maxLength: number) {
     return typeof value === 'string' && value.trim() ? value.trim().slice(0, maxLength) : null
@@ -58,32 +54,20 @@ function sanitizeSocialLinks(value: unknown) {
         if (!SOCIAL_LINK_KEYS.has(key)) return
         const maxLength = key === 'website' || key === 'facebook' ? 200 : 80
         const text = sanitizeText(rawValue, maxLength)
-        if (text) sanitized[key] = text
+        if (!text) return
+        if (key === 'website' || key === 'facebook') {
+            // 公開プロフィールで href になるため http(s) の URL だけ通す(javascript: 等を弾く)
+            const url = normalizeHttpUrl(text)
+            if (url) sanitized[key] = url
+        } else if (/^https?:\/\//i.test(text)) {
+            // twitter / instagram は URL 形式なら検証。ハンドル(@name)はそのまま残す
+            const url = normalizeHttpUrl(text)
+            if (url) sanitized[key] = url
+        } else {
+            sanitized[key] = text
+        }
     })
     return Object.keys(sanitized).length > 0 ? sanitized : null
-}
-
-function sanitizeServiceAreas(value: unknown): ServiceAreaInput[] | null {
-    if (value === undefined) return []
-    if (!Array.isArray(value)) return null
-    if (value.length > 50) return null
-
-    const normalized = value.map((area) => {
-        if (!area || typeof area !== 'object') return null
-        const source = area as Record<string, unknown>
-        const regionCode = sanitizeText(source.region_code, 32)
-        const country = typeof source.country === 'string' && COUNTRIES.has(source.country) ? source.country : 'JP'
-        if (!regionCode) return null
-        return { region_code: regionCode, country }
-    })
-
-    if (normalized.some((area) => area === null)) return null
-
-    const unique = new Map<string, ServiceAreaInput>()
-    ;(normalized as ServiceAreaInput[]).forEach((area) => {
-        unique.set(`${area.country}:${area.region_code}`, area)
-    })
-    return [...unique.values()]
 }
 
 function serverError() {
@@ -256,52 +240,13 @@ export async function POST(request: Request) {
 
     // サポーターの活動地域を更新
     if (userData?.role === 'SUPPORTER' && isOrganizationOwner && organizationContext && service_areas !== undefined) {
-        if (service_area_nationwide !== undefined && typeof service_area_nationwide !== 'boolean') {
-            return NextResponse.json({ error: '全国対応フラグが不正です' }, { status: 400 })
-        }
-
-        // 既存データを全削除して入れ直す
-        const { error: deleteError } = await supabaseAdmin
-            .from('supporter_service_areas')
-            .delete()
-            .eq('organization_id', organizationContext.organizationId)
-        if (deleteError) {
-            console.error('[profile] supporter_service_areas delete error:', deleteError)
-            return serverError()
-        }
-
-        if (service_area_nationwide === true) {
-            // 全国対応：1レコードのみ
-            const { error: insertError } = await supabaseAdmin.from('supporter_service_areas').insert([{
-                supporter_user_id: userData.id,
-                organization_id: organizationContext.organizationId,
-                region_code: null,
-                is_nationwide: true,
-            }])
-            if (insertError) {
-                console.error('[profile] supporter_service_areas nationwide insert error:', insertError)
-                return serverError()
-            }
-        } else {
-            const sanitizedServiceAreas = sanitizeServiceAreas(service_areas)
-            if (sanitizedServiceAreas === null) {
-                return NextResponse.json({ error: '活動地域の指定が不正です' }, { status: 400 })
-            }
-            if (sanitizedServiceAreas.length === 0) return NextResponse.json({ ok: true })
-            const { error: insertError } = await supabaseAdmin.from('supporter_service_areas').insert(
-                sanitizedServiceAreas.map((a) => ({
-                    supporter_user_id: userData.id,
-                    organization_id: organizationContext.organizationId,
-                    region_code: a.region_code,
-                    country: a.country || 'JP',
-                    is_nationwide: false,
-                }))
-            )
-            if (insertError) {
-                console.error('[profile] supporter_service_areas insert error:', insertError)
-                return serverError()
-            }
-        }
+        const result = await replaceOrganizationServiceAreas({
+            organizationId: organizationContext.organizationId,
+            userId: userData.id,
+            nationwide: service_area_nationwide,
+            areas: service_areas,
+        })
+        if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     return NextResponse.json({ ok: true })

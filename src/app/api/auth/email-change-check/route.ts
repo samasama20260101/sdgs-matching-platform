@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const { data: taken, error: takenError } = await supabaseAdmin
         .from('users')
         .select('id')
-        .ilike('email', newEmail)
+        .eq('email', newEmail)
         .maybeSingle()
     if (takenError) {
         console.error('[auth/email-change-check] duplicate check error:', takenError)

@@ -2,6 +2,8 @@
 // サポーターの活動地域を直接取得・更新するAPI
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getActiveOrganizationForUser } from '@/lib/organizations'
+import { requireActiveAppUser } from '@/lib/api/auth'
+import { replaceOrganizationServiceAreas } from '@/lib/serviceAreas'
 import { NextResponse } from 'next/server'
 
 type RegionRow = { code: string; name_local: string; name_en: string }
@@ -10,31 +12,12 @@ type ServiceAreaRow = {
     is_nationwide: boolean
     country: string | null
 }
-type ServiceAreaInput = {
-    region_code: string
-    country?: string | null
-}
-
-async function getUser(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !user) return null
-    const { data: userData } = await supabaseAdmin
-        .from('users')
-        .select('id, role')
-        .eq('auth_user_id', user.id)
-        .single()
-    return userData
-}
 
 // GET: 現在の活動地域を取得
 export async function GET(request: Request) {
-    const userData = await getUser(request)
-    if (!userData || userData.role !== 'SUPPORTER') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireActiveAppUser(request, { roles: ['SUPPORTER'] })
+    if ('response' in auth) return auth.response
+    const userData = auth.appUser
     const organizationContext = await getActiveOrganizationForUser(userData.id)
     if (!organizationContext) {
         return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
@@ -95,12 +78,11 @@ export async function GET(request: Request) {
     })
 }
 
-// PUT: 活動地域を更新（全削除→再挿入）
+// PUT: 活動地域を更新(消す前に確かめ、失敗したら元に戻す。src/lib/serviceAreas.ts)
 export async function PUT(request: Request) {
-    const userData = await getUser(request)
-    if (!userData || userData.role !== 'SUPPORTER') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireActiveAppUser(request, { roles: ['SUPPORTER'] })
+    if ('response' in auth) return auth.response
+    const userData = auth.appUser
     const organizationContext = await getActiveOrganizationForUser(userData.id)
     if (!organizationContext) {
         return NextResponse.json({ error: '有効な団体所属がありません', code: 'NO_ACTIVE_ORGANIZATION' }, { status: 403 })
@@ -111,48 +93,13 @@ export async function PUT(request: Request) {
 
     const { service_areas, service_area_nationwide } = await request.json()
 
-    // 既存データを全削除
-    const deleteQuery = supabaseAdmin
-        .from('supporter_service_areas')
-        .delete()
-        .eq('organization_id', organizationContext.organizationId)
-    const { error: deleteError } = await deleteQuery
-
-    if (deleteError) {
-        console.error('[service-areas PUT] delete error:', deleteError)
-        return NextResponse.json({ error: deleteError.message }, { status: 500 })
-    }
-
-    if (service_area_nationwide) {
-        const { error: insertError } = await supabaseAdmin
-            .from('supporter_service_areas')
-            .insert([{
-                supporter_user_id: userData.id,
-                organization_id: organizationContext.organizationId,
-                region_code: null,
-                country: 'JP',
-                is_nationwide: true,
-            }])
-        if (insertError) {
-            console.error('[service-areas PUT] insert nationwide error:', insertError)
-            return NextResponse.json({ error: insertError.message }, { status: 500 })
-        }
-    } else if (Array.isArray(service_areas) && service_areas.length > 0) {
-        const rows = (service_areas as ServiceAreaInput[]).map((a) => ({
-            supporter_user_id: userData.id,
-            organization_id: organizationContext.organizationId,
-            region_code: a.region_code,
-            country: a.country || 'JP',
-            is_nationwide: false,
-        }))
-        const { error: insertError } = await supabaseAdmin
-            .from('supporter_service_areas')
-            .insert(rows)
-        if (insertError) {
-            console.error('[service-areas PUT] insert error:', insertError)
-            return NextResponse.json({ error: insertError.message }, { status: 500 })
-        }
-    }
+    const result = await replaceOrganizationServiceAreas({
+        organizationId: organizationContext.organizationId,
+        userId: userData.id,
+        nationwide: service_area_nationwide,
+        areas: service_areas,
+    })
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
 
     return NextResponse.json({ ok: true })
 }

@@ -2,17 +2,12 @@
 // SOS側：サポーターへのバッジ付与（RLSバイパス）
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { normalizeUuidList } from '@/lib/api/validation'
+import { SELECTABLE_BADGES } from '@/lib/constants/sdgs'
 import { NextResponse } from 'next/server'
 
-const BADGE_KEYS = new Set([
-    'gold_medal',
-    'silver_medal',
-    'very_satisfied',
-    'quick_response',
-    'sincere_support',
-    'problem_solved',
-    'grateful_partner',
-])
+// 相談者が選べるバッジのみ受け付ける。gold/silver は解決時に自動付与される
+// (auto)もので、ここから付けさせない。
+const BADGE_KEYS = new Set<string>(SELECTABLE_BADGES)
 
 // POST: バッジを付与（upsert）
 export async function POST(request: Request) {
@@ -25,9 +20,12 @@ export async function POST(request: Request) {
     if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: userData } = await supabaseAdmin
-        .from('users').select('id, role').eq('auth_user_id', user.id).single()
+        .from('users').select('id, role, is_suspended').eq('auth_user_id', user.id).single()
     if (!userData || userData.role !== 'SOS') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (userData.is_suspended) {
+        return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
     }
 
     const { badges }: { badges: Array<{ case_id: string; supporter_organization_id: string; badge_key: string }> } = await request.json()
@@ -43,10 +41,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'invalid badge target ids' }, { status: 400 })
     }
     const { data: cases } = await supabaseAdmin
-        .from('cases').select('id, owner_user_id').in('id', caseIds)
+        .from('cases').select('id, owner_user_id, status').in('id', caseIds)
 
+    // 自分の案件で、かつ解決済み(RESOLVED)の案件にだけバッジを付けられる
     const ownedCaseIds = new Set(
-        (cases || []).filter(c => c.owner_user_id === userData.id).map(c => c.id)
+        (cases || [])
+            .filter(c => c.owner_user_id === userData.id && c.status === 'RESOLVED')
+            .map(c => c.id)
     )
 
     const { data: acceptedOffers } = await supabaseAdmin

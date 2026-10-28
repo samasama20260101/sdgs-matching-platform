@@ -54,8 +54,9 @@ CREATE TRIGGER set_inquiries_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_inquiries_updated_at();
 
--- RLS無効（service_roleのみアクセス）
-ALTER TABLE inquiries DISABLE ROW LEVEL SECURITY;
+-- RLS 有効・ポリシーなし = anon / authenticated は読めない。service_role(API)だけが触る
+-- (2026-10-26 修正: 以前は DISABLE と書いていたが、Staging・本番とも ENABLE 済みで、このファイルだけ古かった)
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 
 -- インデックス
 CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);

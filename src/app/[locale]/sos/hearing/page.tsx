@@ -36,7 +36,7 @@ export default function SOSHearingPage() {
   const AI_STEPS = [
     { icon: '📝', label: t('aiStep1') },
     { icon: '🤖', label: t('aiStep2') },
-    { icon: '🌍', label: t('aiStep3') },
+    { icon: '🧩', label: t('aiStep3') },
     { icon: '✨', label: t('aiStep4') },
   ];
 
@@ -137,7 +137,7 @@ export default function SOSHearingPage() {
           urgency: isUrgent ? 'High' : 'Medium',
           locale,
           status: 'OPEN',
-          region_country: 'ID',
+          region_country: 'JP',
         }),
       });
       const caseResult = await caseRes.json();
