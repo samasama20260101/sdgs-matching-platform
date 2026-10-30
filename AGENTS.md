@@ -1,6 +1,7 @@
 # AGENTS.md — 明日もsamasama | SDGs Match
 
 Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読む文書。作業ルールと、知らないと事故になることだけを書く。
+2026-11 から少人数で運営する。開発を続けるかは未定。今の状況は `HANDOFF.md` にある。
 
 | 知りたいこと | 見る文書 |
 |---|---|
@@ -8,7 +9,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 | 環境・リリース・DB・API の作り方 | `docs/operations.md` |
 | 相談フォームの選択肢(正本) | `docs/intake_indicators.md` |
 | お知らせ欄の設計・決定ログ | `docs/news_section_design.md` |
-| 今どこまで進んでいるか | `HANDOFF.md` |
+| 今の状況・次の担当者への申し送り | `HANDOFF.md` |
 
 ---
 
@@ -40,7 +41,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
 - 公開している言語は ja・en・zh だけ。資料で「6 言語対応」と書かない。サポーター・運営の画面は翻訳しない。
 - 災害SOSは受付終了中。再開するときは `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` と `DISASTER_CASES_SHOWN_TO_SUPPORTERS` を両方戻す。
-- 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。2 団体目以降は「承認済みの団体が招待する」形を検討中なので、並列マッチングに戻さない。
+- 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。並列マッチングには戻さない。2 団体目以降を足すなら「承認済みの団体が招待する」形(未着手)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
 - 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す(CI はない)。
 

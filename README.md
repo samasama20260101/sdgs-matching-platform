@@ -11,7 +11,7 @@
 | `docs/operations.md` | 開発・運用の手引き(環境・リリース・DB・API の作り方・メンテナンスモード) |
 | `docs/intake_indicators.md` | 相談フォームの選択肢と大項目の正本 |
 | `docs/news_section_design.md` | お知らせ欄の設計と決定ログ |
-| `HANDOFF.md` | 今の作業の現在地 |
+| `HANDOFF.md` | 今の状況と、次の担当者への申し送り |
 
 ## ローカル起動
 

@@ -1,65 +1,80 @@
-# HANDOFF: 休止前整理 — 残りはお知らせ機能の本番反映
-更新: 2026-10-26(古い作業記録を削って現在地だけにした。それまでの経緯は `git log -p HANDOFF.md` で見られる)
+# HANDOFF: 開発休止前の整理 — docs 点検済み、次は引き継ぎ資料
+更新: 2026-10-30(それまでの経緯は `git log -p HANDOFF.md` で見られる)
 
 ## ゴール(完成条件)
-11月からの少人数運営(開発休止)の前に、dev の改善を本番へ出し、運営が迷わず使える状態にする。
-- 2026-10-26 dev → main を **PR #57** で本番反映済み(`53a4abc`、PR #35〜#56: 新しい相談フォーム・AI の安全対策・回数制限・体験ページ `/trial`・セキュリティヘッダー・cron 認証修正など)。ユーザーが GitHub 上で PR を作りマージ。本番デプロイ success、`/` `/trial` `/api/health` 200、ヘッダー 4 つを curl で確認
-- **残り: お知らせ機能を本番へ**(下の「現在地」)
+11月からの少人数運営(開発休止)の前に、dev の改善を本番へ出し、運営と次の担当者が迷わず使える状態にする。
+- 本番反映は完了: 2026-10-26 PR #57、2026-10-28 PR #70(本番 `fee9cf0`)。本番 DB に流す SQL は残っていない
+- 2026-10-30 に docs を点検し、古い記述・済んだ作業の記録を削った
+- **次: 次の担当者向けの引き継ぎ資料。** 何を入れるか(アカウントと権限の一覧、秘密の値の置き場所、日々の運営手順など)はユーザーと決める
+- **2026-10-30 以降、今の担当者はコードを触らない。** コードの変更が要るものは、すべて次の担当者への申し送り。開発の休止は確定ではなく、別の担当者で開発が続く可能性もある(2026-10-30 ユーザー)
 
-## 現在地
-### お知らせ機能(PR #34 で dev にマージ済み、本番未反映)
-- 本番 DB の `news_posts` は **2026-10-26 作成済み**(ユーザーが SQL Editor で実行。確認 SQL で RLS・CHECK 5 種・trigger・index・search_path を確認)。Staging と同じ状態
-- 残りは dev → main のマージだけ(ユーザーが GitHub 上で、PR #57 と同じ手順: https://github.com/samasama20260101/sdgs-matching-platform/compare/main...dev )。仕様は dev のまま(「お知らせ」の名前も変えない、ユーザー判断 2026-10-26)
-- 反映後に確認: 本番デプロイの状態、トップ・`/news` が開くこと、管理画面 `/admin/news` で下書き → 公開、記事 URL を LINE / X に貼ったときの画像
-- 内容: 管理画面 `/admin/news` で投稿、公開中の新しい 3 件をトップ(サーバーで読む)、全件を `/news`、記事ページ `/news/[id]`(タイトル入り共有画像 `/api/public/news/[id]/og`)。種別は お知らせ / メンテナンス / 参加団体 / インタビュー / 話題(TOPIC、外の人が書いた記事の URL 要約紹介)。AI 下書き(Gemini)は材料 1 欄+「URL から下書きを作る」。正本は `docs/news_section_design.md` の決定ログ
-- note 記事ワークフローは削除済み(タグ `archive/news-note-article-2026-10`)。最初の投稿は 11 月の少人数運営の宣言の予定
+## 次の担当者への申し送り(2026-10-30)
+コードの変更が要るので、次の担当者が判断して進める。上から優先。
 
-### 本番反映(PR #57)のあとにユーザーが見ること
-- ブラウザ確認: 相談登録(スマホ・写真)、サポーターのフィルター、体験ページ、流出パスワード(`password123` で日本語の案内が出るか)
-- 翌朝 JST 2:00 の cron(`/api/cron/auto-close-cases`)が 200 で終わっているか(Vercel のログ)
+### 1. 管理者まわりのセキュリティ(最優先)
+- **管理者アカウントに二段階認証(MFA)がない。** アプリの管理者(ADMIN)はメールアドレスとパスワードだけで入れる。管理者は全相談者の氏名・メールアドレスを見られ、アカウントの停止・メールアドレスの変更・お知らせの公開ができるので、パスワードが漏れたときの被害が大きい。Supabase Auth の MFA(認証アプリのワンタイムコード)を使い、管理画面と管理者 API で「二段階目まで済んだログイン」だけを通す形にする。今のコードに MFA の処理はまったくない
+- 同じ理由で一緒に直したいもの(詳細は `docs/service_specification.md` §15):
+  - `/admin/login` が初回のパスワード変更を強制しない(運営が作った管理者が初期パスワードのまま使える)
+  - 管理者が、別の管理者や自分のメールアドレスを変えられる(乗っ取りの経路になる)。停止・停止解除が監査ログに残らない
+- **運営で使う外部サービスのアカウントも二段階認証を必須にする**: GitHub、Vercel、Supabase、Google(Analytics など)、Discord、Resend。組織・チームの設定で全員に必須にできるサービスは必須にする。特に Supabase と Vercel は、本番の DB と環境変数に直接触れる
+- 管理者アカウントは複数人で共有しない(監査ログで誰の操作か分からなくなる)。一人一アカウントにして、離任したらすぐ停止する
+- その前に、離任者をメンバーから外すことと、秘密の値の作り直しを済ませる(下の「離任メンバーの後始末」)
 
-### 残っている小さな課題
-- サポーター用ダッシュボードの困りごとチップが、スマホで 7 段に折り返す(横スクロール化は右端が切れるとユーザーに却下された。直すなら別の方法で)
-- 結果ページの見出し「AIが分析しました」は、AI が分類しなくなったので文言を見直す余地
-- 体験ページの「自動では伏せられないものがあります」に残る「サポーターには書いたとおりに表示されます」を残すか(ユーザー未回答)
-- AI が書く説明文は日本語固定(日本語以外の画面でも日本語で出る)
-- 登録総数の上限(MAX_SOS_USERS = 1000)はロボットに埋められると弱点。CAPTCHA はオフのまま(設定だけでオンにすると全員ログイン不可。入れるなら Cloudflare Turnstile)
-- 依頼者の確認待ち: 緊急フラグ 14 個 / 日本向きでない選択肢 / 内容が近い組(`docs/intake_indicators.md` の「内容面の気づき」)/ 日本語以外の訳。既存案件は新しい選択肢にマッピングしていない(大項目フィルターには掛かる、選択肢フィルターには掛からない)
-- 利用規約 第7条「承認するまでサポーターに開示されません」はユーザー判断でそのまま
+### 2. トップページ「ご利用の流れ」の文言
+- STEP 2 が「AIが分析 / AIが相談内容を解析し、最適なSDGsカテゴリを判定」のまま(`messages/<言語>/landing.json` の `steps`、6 言語)。今は AI が分類せず、選んだ困りごとからサーバーが決めている。「相談者に SDGs を意識させない」方針(`AGENTS.md`)とも合わない。相談者が最初に読むページなので、今の流れに合わせて書き直す。結果ページは PR #69 で「書いてくださった内容を、AIが読みやすく整理しました。運営が確認したサポーターがこの内容を読み、力になれる方法を考えます。」に直したので、それに揃えるとよい
+
+### 3. 相談者の画面の文言と実際の動きのずれ(2026-10-30 の画面確認で発見)
+- 登録画面の「お名前」の注記「マッチ後にサポーターへ共有されます」は実際と違う。お名前はサポーターに渡らない(プロフィール画面は「サポーターには自動表示されません」で、こちらが正しい)
+- プロフィール画面は住所を「サポーターには自動表示されません」と案内しているが、住所欄の都道府県はサポーターの都道府県の絞り込みに使われる(`docs/service_specification.md` §6.1・§15)
+- 解決を確認した直後のバッジ画面を閉じると、あとからバッジを贈る方法がない
+- 相談者に SDGs が見える箇所: 相談履歴の「SDGs:」ラベル、結果ページの「SDG 2 飢餓をゼロに」と AI の説明文(`src/lib/gemini.ts` の指示文、上の「残っている課題」)、相談フォームの「SDGsの隣のお困りごと」、パスワード変更画面の見出し「SDGsマッチング」
+- 団体の公開ページ(`/supporters/[id]`)で、種別が未設定の団体は種別の欄に翻訳キー `common.supporterType` がそのまま出る
+- 管理画面に管理者の一覧・停止がない(管理者が辞めたら DB で止めるしかない)
+
+## 現在地(2026-10-30)
+### 本番
+- メンテナンスモードは解除済み(10/30 に `/api/health` が `maintenance: false`、`/`・`/news`・`/trial`・`/supporters` が 200)
+- ユーザーに見てもらうこと: 管理画面 `/admin/news` で下書き → 公開、記事の URL を LINE / X に貼ったときの画像
+- お知らせの公開は 0 件。最初の投稿は 11 月の少人数運営の宣言(たたき台は `docs/news_section_design.md` §5.2)
+- メンテナンスのバイパス用トークンはユーザーが 10/28 に変更(Vercel の環境変数で見る。チャット・Git に書かない)
+
+### 離任メンバーの後始末(残り)
+- 本番アカウントの削除は 10/28 に完了(ADM-00001・ADM-00002・SUP-00002)。本番の管理者は ADM-00003 だけ。利用者はサポーター 8・相談者 8・管理者 1
+- **未実施**: GitHub・Vercel・Supabase・Discord・Google Analytics のメンバーから外す
+- **未実施**: 離任者が知りうる値の作り直し — Supabase の秘密キー、本番読み取り専用 DB ユーザーのパスワード、`CRON_SECRET`(手順は `docs/operations.md` §9)、Gemini API キー、Discord Webhook(Discord で作り直し、GitHub Secrets の `DISCORD_DEPLOY_WEBHOOK_URL` を Update)、Resend API キー(チャットに貼られたもの。再発行して Supabase の SMTP を設定し直す)
+- GitHub リポジトリの admin は 3 人: toratora44-ai、Kojok120(岡本さん)、samasama20200101(**誰が使っているか要確認**)。組織に入っている GitHub App は Vercel だけ
+
+### Discord デプロイ通知
+- `.github/workflows/deploy-notify.yml`(岡本さん作、PR #39・#40)。Vercel のデプロイ完了を拾い、本番と Staging の成否を Discord の「デプロイ」チャンネルへ送る。Webhook の URL は Discord のサーバー設定 → 連携サービス → ウェブフックで見る(ユーザーの権限では見られなかった)
+- 2026-10-28 にレビューして安全面の問題なし。小さな改善点: 短い間に 2 回マージすると 1 回目の Staging 通知が抜ける / `timeout-minutes` と curl の `--max-time` がない
+- このリポジトリの PR はすべてレビューなしで作成者本人がマージしている。外部送信・Secrets・Actions の変更は事前に共有するルールを `AGENTS.md` に足すか(ユーザー判断待ち)
+
+### 残っている課題
+コードの既知の課題は `docs/service_specification.md` §15。それ以外(コードの変更が要るものは次の担当者が判断する):
+- サポーター用ダッシュボードの困りごとチップが、スマホで 7 段に折り返す(横スクロールは右端が切れるので却下済み。直すなら別の方法で)
+- AI への指示文(`src/lib/gemini.ts`、分類 18 の説明など)に SDGs の言葉が残る。急がない- 体験ページの「自動では伏せられないものがあります」に残る「サポーターには書いたとおりに表示されます」を残すか(ユーザー未回答)
+- 相談者の登録総数の上限(`MAX_SOS_USERS = 1000`)はロボットに埋められると弱い。CAPTCHA はオフ(設定だけでオンにすると全員ログインできなくなる。入れるなら Cloudflare Turnstile)
+- 依頼者の確認待ち: 緊急の選択肢 14 個 / 日本向きでない選択肢 / 内容が近い組 / 日本語以外の訳(`docs/intake_indicators.md`)。古い相談は新しい選択肢に読み替えていない(大項目の絞り込みには掛かるが、選択肢の絞り込みには掛からない)
 - Supabase: Leaked Password Protection を Staging → 本番の順に ON(未実施なら)。旧 API キー(JWT 形式)の Disable は様子を見てから(まだ押していない)
-- 技術負債: `users.supporter_type` / `users.organization_name` 列は未 DROP(害はない)。本番の `display_id_backup_20260816` テーブル DROP(ユーザー実行)。Staging の SMTP(Resend)設定は任意
+- 本番の `display_id_backup_20260816` テーブルの DROP(ユーザーが実行)。Staging の SMTP(Resend)設定は任意
+- Vercel のビルドログに npm の `install-scripts … not yet covered by allowScripts`(esbuild・@swc/core・@parcel/watcher・msw・unrs-resolver)。今は警告だけ。npm が既定で止めるようになったら許可リストに入れる
 
-### 2026-10-26 の整理
-- 削除: 開発用ページ `/test-ai` と `/api/classify-sdgs`、`scripts/list-models.js`・`test-gemini-connection.js`・`create-test-users.ts`、ルートの残骸(`er.email`・`fix_routing.sh`・`restructure_sdgs.sh`・空ファイル `next`・`sdgs-matching-platform@0.1.0`)、マージ済みブランチ、リポジトリ外の `~/samasama/メール変更調査SQL/`・`本番アカウント削除SQL/`・`staging_cases_cancelled_2026-10-16.json`
-- `docs/sdgs_impact_dashboard_design.md` はタグ `archive/sdgs-impact-dashboard-2026-10` へ(教師データ待ちで休止)
-- **docs を 9 本 → 4 本に作り直し**: `docs/service_specification.md`(コードを読み直して全面書き直し、§15 に見つけた既知の課題)、`docs/operations.md`(環境構築 2 本・技術構成・API 設計・DB アクセス・メンテナンスモードを統合)、`intake_indicators.md`・`news_section_design.md` はそのまま。テスト観点の文書は仕様書 §16 へ。`AGENTS.md` は作業ルールと地雷だけに短縮(7 月末エンハンス計画は削除)。多言語設計書はタグ `archive/i18n-design-doc-2026-10` へ
-- タグ保管の一覧: `archive/i18n-phase2-2026-07`(多言語 Phase 2)、`archive/case-concerns-2026-09`(お困りごとラベル)、`archive/news-note-article-2026-10`(note 記事)、`archive/sdgs-impact-dashboard-2026-10`(ダッシュボード設計)、`archive/i18n-design-doc-2026-10`(多言語設計書)。再開時はマージせず取り出して作り直す
+## 試して失敗したこと(AI で作業するとき)
+- **auto mode の分類器は「一括削除っぽい」コマンドを止める**(xargs や for ループでのブランチ削除)。名前を並べた単一のコマンドなら通る。本番の psql も止まるので、ユーザーが `!` で実行する
+- **本番 DB の確認は、読み取りだけの確認 SQL をユーザーに渡して SQL Editor で流してもらう**(2026-10-26 は 1 回目に古い版の SQL が流れ、確認 SQL で search_path の抜けに気づいた)
+- **SVG の `url(#id)` 参照は id の重複に弱い**: 同じ部品を表示用と非表示用の 2 つ置くと Chrome で描画されない。defs を持つ部品は `useId` で固有の id にする(`Logo.tsx` で対応済み)
+- **`opengraph-image.tsx` を `[locale]` の下に置くと画像の URL が `/ja/...` になって 307** → 共有画像は `/api/public/...` に置く
+- 作業ブランチの未取り込みの判定は `git cherry -v dev <branch>`(`git merge-tree --write-tree` は git 2.34 では使えない)
+- `/sos/hearing` や `/profile` などはログインが必要なクライアント描画なので、curl では中身を確かめられない
 
-## 試して失敗したこと ★最重要
-- **auto mode の分類器は「一括削除っぽい」コマンドをブロックする**(xargs や for ループでのブランチ削除)。名前を明示列挙した単一コマンドなら通る。本番 psql も止まるのでユーザーが `!` で実行
-- **Staging の DDL/SQL は Management API**(`POST https://api.supabase.com/v1/projects/fzawgdmqewmwdqjsqjwt/database/query`、トークンは `~/.supabase/access-token`)。jq は未インストールなので python3 で整形
-- **本番 DB の確認は、ユーザーに読み取りだけの確認 SQL を渡して SQL Editor で流してもらう**(2026-10-26 は 1 回目に古い版の SQL が流れ、確認 SQL で search_path の抜けに気づいた)
-- **SVG の url(#id) 参照は id 重複に弱い**: 同じ部品を表示/非表示ペアで 2 つ置くと Chrome で描画されない。defs を持つ部品は `useId` で固有 id に(Logo.tsx で対応済み)
-- **`opengraph-image.tsx` を `[locale]` の下に置くと画像 URL が `/ja/...` になり 307** → 共有画像は `/api/public/...` に置く
-- feature ブランチの未取り込み判定は `git cherry -v dev <branch>`。`git merge-tree --write-tree` は git 2.34 では未対応
-- Staging の `/ja` を curl すると 307(next-intl の既定ロケール。本番も同じ)。Staging は全パスに dev-login ゲート(cookie `dev-auth=<DEV_PASSWORD>`、API も cookie が必要)
-- `/sos/hearing` `/profile` などはログイン必須のクライアント描画で curl では中身を確認できない
-
-## 地雷・注意
-- **本番 Supabase への変更操作はユーザーの明示許可なしに実行しない**(こちらは read-only のみ)
-- **dev → main はユーザーが GitHub 上で手動で行う**(2026-10-26 ユーザー指示)
-- **公開している言語は ja・en・zh のみ**(`src/i18n/routing.ts`)。言語切替は `LANGUAGE_SWITCHER_ENABLED = false` で非表示。資料で「6 言語対応」と書かない。多言語再公開は `LANGUAGE_SWITCHER_ENABLED` + `localeDetection` の 2 点(ko/vi/id は緊急語彙のネイティブ確認が前提)
-- **体験ページ `/trial` に fetch を足さない**(API・DB・AI を呼ばない作り)
+## 地雷・注意(`AGENTS.md`・`docs/operations.md` にないもの)
 - **画面の確認方法**: Playwright はプロジェクトに入れていない。`~/samasama/.qa-tools/` に `playwright-core` と撮影スクリプト。ブラウザ本体は `~/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell`
-- **画面の横スクロール化は慎重に**(右端が切れて見えるとユーザーに却下された)
-- **パスワード更新は必ず本人トークンで GoTrue PUT /user**(admin API だと本人セッションごと失効=即ログアウト。2026-09-17 の回帰)
-- **メール変更は新アドレスのみの 1 段階確認**(Secure email change OFF)。確認メールは新旧両方の宛先に届くが仕様(二重送信バグではない)。リンクの有効期限 1 時間。Staging は SMTP 未設定で届かない
-- **管理者は `/profile` に入れない**ので、管理者自身のパスワード変更は forgot-password 頼み
-- 災害SOSは受付終了(`ACTIVE_DISASTER_EVENT = null`)、災害案件はサポーター一覧から外す(`DISASTER_CASES_SHOWN_TO_SUPPORTERS = false`)。再開時は両方戻す。災害データは `cases.intake_qna.disaster` 配下(正本 `src/lib/constants/disaster.ts`)
-- Staging テストユーザー(2026-10-26 確認): SOS `sos01@gmail.com` / サポーター `npo01_1@gmail.com`(団体 tanabe の OWNER)、どちらも `testpass123`。管理者 `admin0001@example.com`(`SamaAdmin#2026kq`、ADM-00004、ダミー)と `newsadmin01@example.com`(`NewsAdmin#2026`、ADM-00003)。旧管理者 `x25660@yahoo.co.jp`(ADM-00001)は 2026-10-26 にユーザー指示で Staging から削除(本番は触っていない)
-- Staging と本番のスキーマは一致(i18n 列は `users.locale` / `cases.locale` のみ、`news_posts` は両方にある)
-- 環境差: Staging はメール確認 OFF・dev-login ゲートあり / 本番はメール確認 ON
-- ローカルの Vercel CLI は古い個人プロジェクトにリンクされたまま。デプロイ状況は `gh api repos/samasama20260101/sdgs-matching-platform/commits/<sha>/status` で見る
-- `docs/staging_users_*.csv` はコミット禁止。配布物は `~/samasama/docs_退避_20260925/配布物/`。相談フォーム改善提案・NPO インタビュー作戦の正本は `~/samasama/docs_退避_20260925/proposals/`
-- 営業用 PowerPoint テンプレート: `~/samasama/営業資料/`。説明ドキュメント「案件登録QA 作り直し(指標ベース)」: https://claude.ai/code/artifact/69f7caf3-563d-4cff-b359-e5e2d30176a7
-- チャットに貼られた Resend API キーは落ち着いたら再発行 → Supabase SMTP 再設定
+- **メール変更は新しいアドレスだけの 1 段階確認**(Secure email change は OFF)。確認メールは新旧両方に届くが仕様。リンクの有効期限は 1 時間。Staging は SMTP がないので届かない
+- **Staging のテスト用アカウント**(2026-10-26 確認): 相談者 `sos01@gmail.com` / サポーター `npo01_1@gmail.com`(団体 tanabe の OWNER)、どちらも `testpass123`。管理者 `admin0001@example.com`(`SamaAdmin#2026kq`、ADM-00004、ダミー)と `newsadmin01@example.com`(`NewsAdmin#2026`、ADM-00003)。画面確認用に相談者 `manual.sos01@example.com`(`ManualTest#2026`、表示名「はなこ」、2026-10-30 作成。相談 4 件は解決済み 1・取り消し 3、お問い合わせ INQ-00005 も確認用)と、tanabe の MEMBER `manual.sup01@example.com`(`ManualSup#2026`、担当者名「佐藤 一郎」)
+- Staging と本番のスキーマは一致している(多言語の列は `users.locale` / `cases.locale` だけ、`news_posts` は両方にある)
+- ローカルの Vercel CLI は古い個人プロジェクトにリンクされたまま。デプロイの状態は `gh api repos/samasama20260101/sdgs-matching-platform/commits/<sha>/status` で見る
+- **リポジトリの外にある資料**(今の担当者の PC の `~/samasama/` にあり、次の担当者の手元にはない。引き継ぐなら別に渡す):
+  - 配布物: `~/samasama/docs_退避_20260925/配布物/`
+  - 相談フォーム改善提案・NPO インタビュー作戦など: `~/samasama/docs_退避_20260925/proposals/`
+  - 営業用 PowerPoint テンプレート: `~/samasama/営業資料/`
+  - 説明ドキュメント「案件登録QA 作り直し(指標ベース)」: https://claude.ai/code/artifact/69f7caf3-563d-4cff-b359-e5e2d30176a7

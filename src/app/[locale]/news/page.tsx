@@ -1,4 +1,4 @@
-// お知らせ一覧(公開中のみ)。サーバーで DB を直接読む(設計: docs/news_section_design.md §3.4)。
+// お知らせ一覧(公開中のみ)。サーバーで DB を直接読む(設計: docs/news_section_design.md §2.4)。
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
