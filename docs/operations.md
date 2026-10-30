@@ -1,6 +1,6 @@
 # 開発・運用の手引き
 
-更新: 2026-10-26(環境構築・技術構成・API 設計・DB アクセス・メンテナンスモードの 5 本をまとめた。以前の版は git 履歴にある)
+更新: 2026-10-30(10/26 に環境構築・技術構成・API 設計・DB アクセス・メンテナンスモードの 5 本をまとめ、10/30 に点検した。以前の版は git 履歴にある)
 
 サービスの中身は `docs/service_specification.md`、作業ルールの要点は `AGENTS.md` を見てください。
 
@@ -107,6 +107,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 - Supabase CLI は Staging にリンクする(`npx supabase link --project-ref fzawgdmqewmwdqjsqjwt`)。`supabase/.temp/` は Git に入れない。
 - CI(自動テスト)はない。PR の前に上の 4 つを手元で通す。
 - Playwright はプロジェクトに入れていない。画面の撮影は `~/samasama/.qa-tools/` の道具を使う。
+- `docs/assets/` はファビコンと共有画像(`public/og-image.png` など)の元の SVG。`docs/email_templates/change_email.html` は Supabase の Authentication → Emails → Change Email Address に貼るメール本文(件名と注意点はファイル先頭のコメント)。
 
 ## 4. ブランチとリリース
 
@@ -118,7 +119,13 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 - `main` は PR 必須。**dev → main はユーザー(代表者)が GitHub の画面で行う。** https://github.com/samasama20260101/sdgs-matching-platform/compare/main...dev から作り、「Create a merge commit」でマージする。
 - 本番 DB の変更があるときは、**先に本番 DB に SQL を流してから** dev → main をマージする(新しいテーブルは、古いコードには影響しないため)。
 - デプロイの結果は Discord に通知される(本番と、dev の Staging)。状態は `gh api repos/samasama20260101/sdgs-matching-platform/commits/<sha>/status` でも見られる。
-- 使わなくなった機能は本番に入れず、`archive/<名前>-<年月>` のタグに残して消す。再開するときはタグから取り出して作り直す。
+- 使わなくなった機能は本番に入れず、`archive/<名前>-<年月>` のタグに残して消す。再開するときはマージせず、タグから取り出して作り直す。今あるタグ:
+  - `archive/i18n-phase2-2026-07`(チャットなどの動的翻訳)
+  - `archive/case-concerns-2026-09`(お困りごとラベル)
+  - `archive/news-note-article-2026-10`(お知らせの note 記事ワークフロー)
+  - `archive/sdgs-impact-dashboard-2026-10`(SDGs インパクトダッシュボードの設計書)
+  - `archive/i18n-design-doc-2026-10`(多言語の設計書)
+  - 中身を見るとき: `git show <タグ>:<ファイル>` または `git switch --detach <タグ>`
 - 本番に反映したら確かめること: `/`・`/trial`・`/api/health` が 200、セキュリティヘッダー 4 つ、変えた画面のブラウザ確認、翌朝の cron。
 
 ## 5. DB の扱い
@@ -153,6 +160,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 | `news_posts` | お知らせ |
 | `regions` | 地域の一覧 |
 | `audit_logs` | 監査ログ |
+| `organization_invitations` | 団体への招待(テーブルだけあり、コードは使っていない) |
 
 - 保存場所: 非公開の `case-photos`(相談の写真)。
 - RLS は有効。アプリはサーバーから `service_role` で読み書きするので、**認可は API のコードで行う**(§7)。
@@ -180,7 +188,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 
 - **ブラウザから DB を直接読み書きしない。** ブラウザの Supabase は認証(ログイン・セッション)だけに使い、DB は API ルート経由。
 - API ルートは `supabaseAdmin`(`src/lib/supabase/server.ts`、RLS を通らない)を使う。**DB に触る前に認証・認可をする。**
-- サーバー専用のファイルには `import 'server-only'` を入れる(`supabase/server.ts`・`gemini.ts`・`lib/api/*` など)。
+- サーバー専用のファイルには `import 'server-only'` を入れる(`src/lib/supabase/server.ts`・`src/lib/gemini.ts`・`src/lib/api/*` など)。
 
 チェックリスト:
 - [ ] ログインが必要なら `requireActiveAppUser(request, { roles })`(`src/lib/api/auth.ts`)を使う。停止中のアカウントも断られる

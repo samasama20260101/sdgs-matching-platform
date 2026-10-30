@@ -1,7 +1,7 @@
 'use client'
 
 // 管理者: お知らせ管理(一覧・作成・編集・公開/取り下げ・削除・AI下書き・見え方の確認)。
-// 設計: docs/news_section_design.md §3.2 / §4。管理ダッシュボードには足さず独立ページにする。
+// 設計: docs/news_section_design.md §2.2 / §3。管理ダッシュボードには足さず独立ページにする。
 // 2026-10-21 レビュー(運営者・操作設計・安全の 3 観点)を反映: 状態ごとの操作ボタン、毎回の確認、
 // 未保存の変更の保護、保存中・AI 作成中の切り替え禁止、本物と同じ見え方の確認。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'

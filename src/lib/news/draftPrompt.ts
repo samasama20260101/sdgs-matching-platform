@@ -1,5 +1,5 @@
 // お知らせ AI 下書きのプロンプト(純粋関数・server-only にしない: 単体で検証できるように)。
-// 設計: docs/news_section_design.md §4。声(共通)+構造(種別別)の2層と鉄則。
+// 設計: docs/news_section_design.md §3。声(共通)+構造(種別別)の2層と鉄則。
 import { type NewsCategory, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX } from '../constants/news'
 
 export type NewsDraftMaterials = {
