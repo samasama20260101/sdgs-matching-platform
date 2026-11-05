@@ -15,14 +15,11 @@ import { Button, Card, ErrorNote, Heading, Screen, Spinner, TextField, Tip } fro
 import { ConsentCheckbox, ConsentSummary } from '@/components/app/ConsentPanel'
 import { draftToPayload, emptyProfileDraft, profileDraftErrors, ProfileFields, type ProfileDraft } from '@/components/app/ProfileFields'
 
+import { safeNext } from '@/lib/domain/safeNext'
+
 const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED === 'true'
 const RESEND_SECONDS = 60
 
-function safeNext(value: string | null): string {
-  // 外のサイトへは戻さない(オープンリダイレクト対策)
-  if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/start')) return '/home'
-  return value
-}
 
 function StepBar({ step }: { step: 1 | 2 }) {
   return (

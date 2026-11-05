@@ -26,7 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return fail(400, '入力を確かめてください', 'INVALID')
 
-  const access = await resolveCaseAccess(auth.appUser.id, id).catch(() => null)
+  const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal).catch(() => null)
   if (!access || access.role !== 'CONSULTEE') return fail(404, 'Not found')
   if (!access.canDecide) return fail(403, '担当の人だけが決められます', 'NOT_ASSIGNEE')
   const c = access.caseRow

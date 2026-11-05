@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const lang = new URL(request.url).searchParams.get('lang')
   try {
-    const access = await resolveCaseAccess(auth.appUser.id, id)
+    const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal)
     if (!access) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     const messages = await listThread(access, auth.appUser.id, lang && (locales as readonly string[]).includes(lang) ? lang : null)
     return NextResponse.json({ messages, open: isThreadOpen(access.caseRow.status), role: access.role })
@@ -35,7 +35,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: `1〜${MESSAGE_MAX}文字で書いてください`, code: 'INVALID' }, { status: 400 })
   try {
-    const access = await resolveCaseAccess(auth.appUser.id, id)
+    const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal)
     if (!access) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     // やりとりは、支え手を選んで「一緒に進める」ようになってから(受付中は申し出のメッセージだけ)
     if (access.caseRow.status !== 'MATCHED') return NextResponse.json({ error: 'いまはメッセージを送れません', code: 'NOT_MATCHED' }, { status: 409 })

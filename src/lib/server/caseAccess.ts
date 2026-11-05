@@ -5,6 +5,9 @@ import 'server-only'
 //   相談する側: 本人の相談の持ち主 / 会社・地域の相談の団体に今いるメンバー / 代理登録の団体(本人が引き継ぐまで)
 //   選ばれた支え手: 選ばれた(ACCEPTED)個人の支え手 / 選ばれた団体に今いるメンバー(抜けた日から読めない、盤 65)
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { loadFaces } from '@/lib/faces'
+import { supporterCaseAccess, type SupporterFace } from '@/lib/domain/visibility'
+import { requireMfaForSensitive } from './mfaPolicy'
 
 export const CASE_COLUMNS =
   'id, display_id, owner_user_id, assignee_user_id, subject_type, subject_organization_id, proxy_organization_id, title, description_free, status, visibility, urgency, intake_qna, ai_sdg_suggestion, is_sensitive, is_minor, affected_population, region_country, region_code, city, locale, created_at, started_at, resolved_at, supporter_resolved_at, entry_code'
@@ -71,7 +74,10 @@ export async function loadCase(caseId: string): Promise<CaseRow | null> {
   return data
 }
 
-export async function resolveCaseAccess(userId: string, caseId: string): Promise<CaseAccess | null> {
+// 相談に入れるか(相談した側 / 選ばれた支え手)。支え手の側は、選ばれていることに加えて、
+// 見える範囲の決まり(visibility.ts)を通す: 団体の承認と状態、個人の支え手の登録の状態、機微な相談の2つ目の確認(aal)。
+// これを通さないと、止めた団体や 2つ目の確認をしていない人が、選ばれた相談のやりとりを読めてしまう
+export async function resolveCaseAccess(userId: string, caseId: string, aal: 'aal1' | 'aal2'): Promise<CaseAccess | null> {
   const caseRow = await loadCase(caseId)
   if (!caseRow) return null
   const orgIds = await activeOrgIds(userId)
@@ -99,5 +105,15 @@ export async function resolveCaseAccess(userId: string, caseId: string): Promise
     (o.supporter_kind === 'INDIVIDUAL' && o.supporter_user_id === userId)
     || (o.supporter_kind === 'ORGANIZATION' && o.supporter_organization_id !== null && orgIds.has(o.supporter_organization_id)))
   if (!mine) return null
+  const faces = await loadFaces(userId)
+  const face: SupporterFace | null = mine.supporter_kind === 'INDIVIDUAL'
+    ? (faces.individual ? { kind: 'INDIVIDUAL', userId, profileActive: faces.individual.status === 'ACTIVE' } : null)
+    : (() => {
+        const org = faces.organizations.find((o) => o.organizationId === mine.supporter_organization_id)
+        return org
+          ? { kind: 'ORGANIZATION' as const, userId, organizationId: org.organizationId, organizationApproved: org.vettingStatus === 'APPROVED', membershipActive: true, mfaVerified: aal === 'aal2' }
+          : null
+      })()
+  if (!face || supporterCaseAccess(caseRow, face, { involved: true, requireMfaForSensitive: requireMfaForSensitive() }) !== 'FULL') return null
   return { role: 'SUPPORTER', caseRow, offer: mine, organizationId: mine.supporter_organization_id, isLead: mine.accepted_order === 1 }
 }
