@@ -52,9 +52,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const loadingRef = useRef(0)
+  // 最後に読んだ人。タブに戻るたびに Supabase が SIGNED_IN を出し直すので、同じ人なら /api/me を読み直さない
+  const loadedUserRef = useRef<string | null | undefined>(undefined)
 
   const load = useCallback(async (current: Session | null) => {
     const ticket = ++loadingRef.current
+    loadedUserRef.current = current?.user.id ?? null
     if (!current) {
       setState({ status: 'anonymous' })
       return
@@ -87,6 +90,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     })
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next)
+      if (event === 'SIGNED_IN' && (next?.user.id ?? null) === loadedUserRef.current) return
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'MFA_CHALLENGE_VERIFIED') {
         void load(next)
       }

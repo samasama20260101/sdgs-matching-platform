@@ -65,7 +65,11 @@ export async function GET(request: Request) {
   try {
     const role = row.role === 'ADMIN' ? 'ADMIN' : 'PERSON'
     const age = currentAge(row.age_years, row.age_base_date, todayInTokyo())
-    const faces = role === 'ADMIN' ? { organizations: [], individual: null } : await loadFaces(row.id)
+    // 顔と同意の版は互いに関係しないので並べて読む(開くたびに呼ばれる API)
+    const [faces, consentsOk] = await Promise.all([
+      role === 'ADMIN' ? Promise.resolve({ organizations: [], individual: null }) : loadFaces(row.id),
+      consentsUpToDate(row.id),
+    ])
     const factors = auth.authUser.factors ?? []
     const body: MeResponse = {
       onboarded: true,
@@ -82,7 +86,7 @@ export async function GET(request: Request) {
         city: row.city,
         locale: row.locale,
       },
-      consentsUpToDate: await consentsUpToDate(row.id),
+      consentsUpToDate: consentsOk,
       faces: {
         organizations: faces.organizations.map(({ organizationId, organizationName, orgType, vettingStatus, role: r, isCoordinator }) => ({
           organizationId, organizationName, orgType, vettingStatus, role: r, isCoordinator,

@@ -21,14 +21,18 @@ function Home() {
   const [involved, setInvolved] = useState<SupportCaseItem[] | null>(null)
   const [fresh, setFresh] = useState<SupportCaseItem[] | null>(null)
   const [unmatched, setUnmatched] = useState<SupportCaseItem[] | null>(null)
+  // 顔の key(文字列)で読み直す。/api/me を読み直すたびに顔の中身が作り直されても、同じ顔なら読み直さない
+  const faceKey = current?.key ?? null
+  const coordinator = current?.coordinator === true
   useEffect(() => {
-    if (!current) return
-    const face = encodeURIComponent(current.key)
+    if (!faceKey) return
+    const face = encodeURIComponent(faceKey)
     apiFetch<{ cases: SupportCaseItem[] }>(`/api/support/involved?face=${face}`).then((d) => setInvolved(d.cases)).catch(() => setInvolved([]))
     apiFetch<{ cases: SupportCaseItem[] }>(`/api/support/cases?face=${face}&involvement=notOffered`).then((d) => setFresh(d.cases.slice(0, 3))).catch(() => setFresh([]))
-    // コーディネーターの団体なら、その地域で 24 時間申し出のない相談
+    // コーディネーターの団体だけ、その地域で 24 時間申し出のない相談を読む(ほかの顔では読まない)
+    if (!coordinator) return
     apiFetch<{ cases: SupportCaseItem[]; face: { coordinator?: boolean } }>(`/api/support/cases?face=${face}&escalated=1&involvement=all`).then((d) => setUnmatched(d.face.coordinator ? d.cases : null)).catch(() => setUnmatched(null))
-  }, [current])
+  }, [faceKey, coordinator])
 
   const visible = sortTalks((involved ?? []).filter((c) => !c.locked), 'SUPPORTER')
   const isTurn = (c: SupportCaseItem) => c.myOfferStatus === 'INVITED' || (c.status === 'MATCHED' && talkTurn(c.lastMessage, 'SUPPORTER') === 'mine')
@@ -75,7 +79,7 @@ function Home() {
           ))}
         </section>
       )}
-      {unmatched && (
+      {coordinator && unmatched && (
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <SectionLabel>{t('unmatched', { count: unmatched.length })}</SectionLabel>

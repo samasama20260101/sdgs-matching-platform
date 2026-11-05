@@ -2,9 +2,7 @@
 // 記事ページ(/news/[id])の generateMetadata がこのアドレスを og:image に入れる。
 // 置き場所を /api にしているのは、言語つきのアドレス(/ja/news/…)からのリダイレクトを挟まないため。
 // 日本語フォントは Google Fonts から「画像に出す文字だけ」を取り寄せる(フォント全体を同梱すると数 MB になるため)。
-// 記事が見つからない・フォントが取れないときは、サイト共通の画像(public/og-image.png)を返す。
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+// 記事が見つからない・フォントが取れないときは、サイト共通の画像(public/og-image.png)へ 302 で移す。
 import { ImageResponse } from 'next/og'
 import { isUuid } from '@/lib/api/validation'
 import { NEWS_CATEGORY_META, type NewsCategory } from '@/lib/constants/news'
@@ -15,6 +13,8 @@ const SITE_NAME = '明日もsamasama'
 const SITE_HOST = 'app.samasama.site'
 const TITLE_MAX = 60
 const SIZE = { width: 1200, height: 630 }
+// 字の取り寄せを待つ上限。超えたら共通の画像にする(SNS の取りに行きが待ちきれずに失敗しないように)
+const FONT_TIMEOUT_MS = 5_000
 
 // 種別チップの色(公開側の chipClass と同じ系統の色)
 const CHIP_COLORS: Record<NewsCategory, { bg: string; fg: string }> = {
@@ -32,26 +32,31 @@ const DROP_SRC = `data:image/svg+xml;base64,${Buffer.from(DROP_SVG).toString('ba
 // text に含まれる文字だけのフォントを取り寄せる。Google Fonts は User-Agent を付けないと TrueType を返す(画像描画は woff2 を読めない)
 async function loadFont(text: string, weight: 500 | 900): Promise<ArrayBuffer> {
   const css = await fetch(
-    `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@${weight}&text=${encodeURIComponent(text)}`
+    `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@${weight}&text=${encodeURIComponent(text)}`,
+    { signal: AbortSignal.timeout(FONT_TIMEOUT_MS) },
   ).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`font css ${r.status}`))))
   const url = css.match(/src: url\((.+?)\) format\('(?:opentype|truetype)'\)/)?.[1]
   if (!url) throw new Error('font url not found')
-  const res = await fetch(url)
+  const res = await fetch(url, { signal: AbortSignal.timeout(FONT_TIMEOUT_MS) })
   if (!res.ok) throw new Error(`font ${res.status}`)
   return res.arrayBuffer()
 }
 
-async function fallbackImage() {
-  const png = await readFile(join(process.cwd(), 'public', 'og-image.png'))
-  return new Response(new Uint8Array(png), { headers: { 'Content-Type': 'image/png' } })
+// 記事がない・字を取れないときは、サイト共通の画像へ移す(静的な配信に任せる。Workers ではファイルを読めない)。
+// 記事があとで公開されたり、字の取り寄せが直ったりするので、短くだけ覚えさせる
+function fallbackImage(request: Request) {
+  return new Response(null, {
+    status: 302,
+    headers: { Location: new URL('/og-image.png', request.url).toString(), 'Cache-Control': 'public, max-age=300' },
+  })
 }
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: Params) {
   const { id } = await params
   const post = isUuid(id) ? await getPublishedNewsById(id) : null
-  if (!post) return fallbackImage()
+  if (!post) return fallbackImage(request)
 
   const title = post.title.length > TITLE_MAX ? `${post.title.slice(0, TITLE_MAX)}…` : post.title
   const label = NEWS_CATEGORY_META[post.category].labelJa
@@ -70,7 +75,7 @@ export async function GET(_request: Request, { params }: Params) {
     ]
   } catch (error) {
     console.error('[news] og font error:', error)
-    return fallbackImage()
+    return fallbackImage(request)
   }
 
   return new ImageResponse(
@@ -109,6 +114,7 @@ export async function GET(_request: Request, { params }: Params) {
         </div>
       </div>
     ),
-    { ...SIZE, fonts }
+    // URL に記事の更新時刻(?v=)が入るので、同じ URL の画像は変わらない。描き直しを減らすため長く覚えさせる
+    { ...SIZE, fonts, headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=2592000' } }
   )
 }

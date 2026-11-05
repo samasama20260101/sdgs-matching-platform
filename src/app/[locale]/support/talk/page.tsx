@@ -16,10 +16,11 @@ function Talk() {
   const t = useTranslations('support.talk')
   const { options, current, choose } = useFace()
   const [items, setItems] = useState<SupportCaseItem[] | null>(null)
+  const faceKey = current?.key ?? null
   useEffect(() => {
-    if (!current) return
-    apiFetch<{ cases: SupportCaseItem[] }>(`/api/support/involved?face=${encodeURIComponent(current.key)}`).then((d) => setItems(sortTalks(d.cases.filter((c) => !c.locked), 'SUPPORTER'))).catch(() => setItems([]))
-  }, [current])
+    if (!faceKey) return
+    apiFetch<{ cases: SupportCaseItem[] }>(`/api/support/involved?face=${encodeURIComponent(faceKey)}`).then((d) => setItems(sortTalks(d.cases.filter((c) => !c.locked), 'SUPPORTER'))).catch(() => setItems([]))
+  }, [faceKey])
   return (
     <>
       <FacePicker options={options} current={current} onChoose={choose} />

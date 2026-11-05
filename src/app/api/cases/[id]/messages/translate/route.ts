@@ -11,6 +11,7 @@ import { buildTranslatePrompt, parseTranslations } from '@/lib/ai/prompts/transl
 import { fenceConsultation } from '@/lib/aiSafety'
 import { maskPii } from '@/lib/pii'
 import { locales } from '@/i18n/routing'
+import { mapInBatches } from '@/lib/concurrency'
 
 const MAX_PER_REQUEST = 20
 const CONCURRENCY = 4
@@ -49,20 +50,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // 1 つの文ごとに頼む(ほかの人の文の訳に指示が混ざらないように)。同時に頼むのは数件ずつ
   const rowsOut: { message_id: string; language: string; content: string; provider: string; model: string }[] = []
   let failed: string | null = null
-  for (let i = 0; i < todo.length; i += CONCURRENCY) {
-    const batch = todo.slice(i, i + CONCURRENCY)
-    const results = await Promise.all(batch.map(async (row) => {
-      const messageId = row.id as string
-      const prompt = buildTranslatePrompt(lang, [{ id: messageId, fenced: fenceConsultation(maskPii(row.content as string)) }])
-      const result = await generateJson('translation', prompt, { temperature: 0.2 })
-      if (!result.ok) return { messageId, error: result.code as string }
-      const text = parseTranslations(result.json, new Set([messageId])).get(messageId)
-      return text ? { messageId, text, provider: result.provider, model: result.model } : { messageId, error: 'INVALID_JSON' }
-    }))
-    for (const r of results) {
-      if ('text' in r && r.text) rowsOut.push({ message_id: r.messageId, language: lang, content: r.text, provider: r.provider, model: r.model })
-      else if ('error' in r) failed = r.error ?? 'REQUEST_FAILED'
-    }
+  const results = await mapInBatches(todo, CONCURRENCY, async (row) => {
+    const messageId = row.id as string
+    const prompt = buildTranslatePrompt(lang, [{ id: messageId, fenced: fenceConsultation(maskPii(row.content as string)) }])
+    const result = await generateJson('translation', prompt, { temperature: 0.2 })
+    if (!result.ok) return { messageId, error: result.code as string }
+    const text = parseTranslations(result.json, new Set([messageId])).get(messageId)
+    return text ? { messageId, text, provider: result.provider, model: result.model } : { messageId, error: 'INVALID_JSON' }
+  })
+  for (const r of results) {
+    if ('text' in r && r.text) rowsOut.push({ message_id: r.messageId, language: lang, content: r.text, provider: r.provider, model: r.model })
+    else if ('error' in r) failed = r.error ?? 'REQUEST_FAILED'
   }
   if (rowsOut.length > 0) {
     await supabaseAdmin.from('message_translations').upsert(rowsOut, { onConflict: 'message_id,language', ignoreDuplicates: true })

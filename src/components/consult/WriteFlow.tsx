@@ -1,7 +1,7 @@
 'use client'
 
 // 相談を書く(盤 12・12b・16)。1 ／ 2 困りごとを選ぶ → 2 ／ 2 自分の言葉で書く → 届ける
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
@@ -52,6 +52,8 @@ export function WriteFlow({
   const [browseAll, setBrowseAll] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 候補を頼んだ回の番号。戻って書き直して頼み直したとき、前の回の遅い返事で上書きしない
+  const suggestTicket = useRef(0)
 
   const byId = useMemo(() => new Map(options.map((o) => [o.id, o])), [options])
   const textOf = (id: string) => {
@@ -72,12 +74,15 @@ export function WriteFlow({
     if (!ready) return
     setStep(2)
     setSuggested(null)
+    const ticket = ++suggestTicket.current
     try {
       const text = [words, since && `${t('since')}: ${since}`, wish && `${t('wish')}: ${wish}`].filter(Boolean).join('\n')
       const res = await apiFetch<{ ids: string[] }>('/api/cases/suggest', { method: 'POST', json: { subjectType: subject, text } })
+      if (ticket !== suggestTicket.current) return
       setSuggested(res.ids)
       if (res.ids.length === 0) setBrowseAll(true)
     } catch {
+      if (ticket !== suggestTicket.current) return
       setSuggested([])
       setBrowseAll(true)
     }
