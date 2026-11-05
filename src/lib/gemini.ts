@@ -1,14 +1,12 @@
 // lib/gemini.ts
-// Google Gemini API統合ライブラリ
+// 相談の整理(タイトル・要約・大項目ごとの説明文)。AI の提供元は src/lib/ai/config.ts が決める(名前は歴史的なもの)。
 
 import 'server-only'
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateJson, isAiConfigured } from '@/lib/ai/client';
 import { maskPii } from '@/lib/pii';
 import { fenceConsultation } from '@/lib/aiSafety';
 import { NEIGHBOR_CATEGORY, intakeCategoryLabel } from '@/lib/constants/intakeIndicators';
-
-const GEMINI_MODEL = 'gemini-2.5-flash';
 
 /**
  * 相談内容からSDGsゴールを分類する
@@ -18,11 +16,8 @@ const GEMINI_MODEL = 'gemini-2.5-flash';
  * @returns SDGsゴール番号の配列と理由
  */
 export async function classifySDGs(consultationText: string, fixedGoals?: number[]) {
-  // APIキーの取得（実行時に取得）
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-
-  // デモモードの場合
-  if (!apiKey) {
+  // AI が設定されていない環境(手元・鍵のない Staging)はデモの結果を返す
+  if (!isAiConfigured('consultation')) {
     return {
       success: true,
       data: {
@@ -33,25 +28,13 @@ export async function classifySDGs(consultationText: string, fixedGoals?: number
           { goal: 1, title: "経済的な困難は、あなたのせいではありません", explanation: "生活に必要な資源が不足している状況は、社会の仕組みに原因があることが多いです。支援制度や相談窓口を通じて、状況を改善できる可能性があります。" },
           { goal: 10, title: "誰もが公平に扱われる社会をめざして", explanation: "差別や不平等な扱いを受けることは、あってはならないことです。あなたの声を届けることが、より公正な社会への第一歩になります。" }
         ],
-        reasoning: "【デモモード】実際のAI分析にはGoogle Gemini APIキーの設定が必要です。",
+        reasoning: "【デモモード】実際のAI分析にはAIのAPIキーの設定が必要です。",
         keywords: ["デモモード", "APIキー未設定", "テスト"]
       }
     };
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: GEMINI_MODEL,
-      generationConfig: {
-        temperature: 0.1,
-        // gemini-2.5-flash は思考トークンが maxOutputTokens を内側から消費する(実測1,400〜1,700)。
-        // 2048 だと本文が途中で切れて JSON パースに失敗するため余裕を持たせる(disasterNeeds.ts と同じ教訓)
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-      },
-    });
-
     const prompt = fixedGoals ? buildFixedGoalsPrompt(consultationText, fixedGoals) : `
 あなたはSDGs（持続可能な開発目標）の専門家であり、困っている人に寄り添うカウンセラーでもあります。
 以下の相談内容を分析し、関連するSDGsゴール（1-17）を最大3つまで選択してください。
@@ -105,22 +88,17 @@ SDGsゴール一覧：
 16. 平和と公正をすべての人に  17. パートナーシップで目標を達成しよう
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+    const result = await generateJson('consultation', prompt, { temperature: 0.1, maxOutputTokens: 8192 });
+    if (result.ok) {
       return {
         success: true,
-        data: parsed,
+        data: result.json,
       };
     }
 
-    throw new Error('Invalid response format from Gemini API');
+    throw new Error(`AI response unavailable: ${result.code}`);
   } catch (error) {
-    console.error('Gemini API Error:', error);
+    console.error('[consultation] AI error:', error instanceof Error ? error.message : error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

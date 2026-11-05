@@ -36,6 +36,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - **テスト用ユーザーは `supabaseAdmin.auth.admin.createUser()` で作る。** SQL で直接入れると Auth の identities ができずログインできない。消す順番: messages → offers → cases → public.users → auth.users。
 - **パスワード更新は本人のトークンで GoTrue の `PUT /user` を呼ぶ。** admin API で変えると本人のセッションごと失効して即ログアウトする。
 - **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。** 大項目と緊急度は AI に決めさせない。
+- **AI は `src/lib/ai/client.ts` の `generateJson` だけから呼ぶ。** 提供元の SDK を直接 import しない(提供元とモデルは `src/lib/ai/config.ts` が環境変数から決める)。
 - **体験ページ `/trial` に fetch を足さない。** API・DB・AI を呼ばない作り。
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
