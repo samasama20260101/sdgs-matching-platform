@@ -22,7 +22,7 @@ function Row({ q, onSaved }: { q: Inquiry; onSaved: () => Promise<void> }) {
       <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.7]">{q.message}</p>
       <TextArea label="運営のメモ" value={memo} rows={2} onChange={(e) => setMemo(e.target.value)} />
       <div className="flex flex-wrap gap-2">
-        {STATUS.map(([k, label]) => <Button key={k} tone="support" variant={q.status === k ? 'night' : 'outline'} className="min-h-[36px] text-[12.5px]" onClick={() => void save(k)}>{label}</Button>)}
+        {STATUS.map(([k, label]) => <Button key={k} tone="support" variant={q.status === k ? 'night' : 'outline'} className="min-h-[44px] text-[12.5px]" onClick={() => void save(k)}>{label}</Button>)}
       </div>
     </Card>
   )
@@ -37,7 +37,7 @@ export default function InquiriesPage() {
     <AdminShell title="お問い合わせ">
       <Lead>ログインの方法の付け替えは、本人だと確かめてから Supabase の画面で行い、メモに確かめた内容を残してください。</Lead>
       <div className="flex gap-1.5">
-        {STATUS.map(([k, label]) => <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label}</button>)}
+        {STATUS.map(([k, label]) => <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-[12.5px] font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label}</button>)}
       </div>
       {items?.length === 0 && <Lead>ありません。</Lead>}
       {items?.map((q) => <Row key={q.id} q={q} onSaved={load} />)}

@@ -65,7 +65,7 @@ export default function VettingPage() {
       <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。</Lead>
       <div className="flex flex-wrap gap-1.5">
         {STATUSES.map(([k, label]) => (
-          <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>
+          <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-[12.5px] font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>
             {label} {data?.counts?.[k] ?? ''}
           </button>
         ))}

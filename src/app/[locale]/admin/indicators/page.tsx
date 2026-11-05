@@ -9,6 +9,10 @@ import { Button, Card, Chip, Lead, TextField } from '@/components/app/ui'
 type Item = { code: string; text: string; source?: string; confidence?: number | null; reason?: string | null }
 type CaseQ = { id: string; displayId: string; title: string; status: string; subjectType: string; summary: string; proposed: Item[]; confirmed: Item[] }
 
+// 運営の画面は日本語だけ。状態と相談の主体を英字のまま出さない(画面の見直し 所見 14)
+const SUBJECT_LABEL: Record<string, string> = { PERSON: '個人', COMPANY: '会社', COMMUNITY: '地域', NATION: '国' }
+const STATUS_LABEL: Record<string, string> = { OPEN: '受付中', MATCHED: '一緒に進めている', RESOLVED: '解決', CLOSED: '終了', CANCELLED: '取り消し' }
+
 export default function IndicatorsPage() {
   const [cases, setCases] = useState<CaseQ[] | null>(null)
   const [add, setAdd] = useState<Record<string, string>>({})
@@ -27,7 +31,7 @@ export default function IndicatorsPage() {
       {cases?.length === 0 && <Lead>確かめ待ちはありません。</Lead>}
       {cases?.map((c) => (
         <Card key={c.id} tone="support" className="flex flex-col gap-2 p-4">
-          <div className="flex flex-wrap items-center gap-2"><span className="text-[12px] text-mist">{c.displayId}</span><Chip>{c.subjectType}</Chip><Chip color={c.status === 'RESOLVED' ? 'leaf' : 'steel'}>{c.status}</Chip></div>
+          <div className="flex flex-wrap items-center gap-2"><span className="text-[12px] text-mist">{c.displayId}</span><Chip>{SUBJECT_LABEL[c.subjectType] ?? c.subjectType}</Chip><Chip color={c.status === 'RESOLVED' ? 'leaf' : 'steel'}>{STATUS_LABEL[c.status] ?? c.status}</Chip></div>
           <span className="text-[14.5px] font-bold">{c.title}</span>
           <Lead>{c.summary}</Lead>
           {c.confirmed.length > 0 && <div className="flex flex-wrap gap-1">{c.confirmed.map((i) => <Chip key={i.code} color="leaf">確定 {i.code}</Chip>)}</div>}
@@ -35,8 +39,8 @@ export default function IndicatorsPage() {
             <div key={`${p.source}${p.code}`} className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2">
               <span className="text-[13px]"><Chip color={p.source === 'SELF' ? 'night' : 'outline'}>{p.source === 'SELF' ? '本人' : 'AI'} {p.code}</Chip> {p.text}{p.reason ? `(${p.reason})` : ''}</span>
               <span className="flex gap-1.5">
-                <Button tone="support" variant="night" className="min-h-[36px] px-3 text-[12.5px]" onClick={() => void decide(c.id, p.code, 'CONFIRM')}>確定</Button>
-                <Button tone="support" variant="outline" className="min-h-[36px] px-3 text-[12.5px]" onClick={() => void decide(c.id, p.code, 'REJECT')}>外す</Button>
+                <Button tone="support" variant="night" className="min-h-[44px] px-3 text-[12.5px]" onClick={() => void decide(c.id, p.code, 'CONFIRM')}>確定</Button>
+                <Button tone="support" variant="outline" className="min-h-[44px] px-3 text-[12.5px]" onClick={() => void decide(c.id, p.code, 'REJECT')}>外す</Button>
               </span>
             </div>
           ))}

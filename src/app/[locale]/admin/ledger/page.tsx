@@ -17,7 +17,7 @@ export default function LedgerPage() {
     <AdminShell title="指標の台帳">
       <Lead>相談フォームの選択肢と、緊急・機微の印です。機微の印は運営に確かめてもらう前の案です(src/lib/domain/sensitivity.ts)。</Lead>
       <div className="flex gap-1.5">
-        {SETS.map(([k, label, list]) => <button key={k} type="button" onClick={() => setTab(k)} className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', tab === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label} {list.length}</button>)}
+        {SETS.map(([k, label, list]) => <button key={k} type="button" onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-full px-3 text-[12.5px] font-bold', tab === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label} {list.length}</button>)}
       </div>
       <Card tone="support" className="flex flex-col p-2">
         {set[2].map((o) => {

@@ -187,7 +187,8 @@
       "COMPANY": "En solicitudes de empresas",
       "COMMUNITY": "En solicitudes de comunidades"
     },
-    "skillsNote": "Los nombres de las áreas cambian según quién pide ayuda"
+    "skillsNote": "Los nombres de las áreas cambian según quién pide ayuda",
+    "skillsPicked": "{count} elegidos"
   },
   "orgType": {
     "NPO": "Entidad sin ánimo de lucro",
@@ -278,6 +279,16 @@
     "pendingInvites": "{count} invitaciones esperando respuesta",
     "lastOwner": "No puedes quitar a la última persona responsable. Nombra antes a otra",
     "changeFailed": "No se pudo cambiar",
-    "notFound": "No encontramos la organización."
+    "notFound": "No encontramos la organización.",
+    "profile": "Presentación y contacto",
+    "bio": "Presentación",
+    "contactEmail": "Correo de contacto de la organización",
+    "contactEmailHint": "Adonde el equipo envía avisos. No se usa para entrar",
+    "population": "Personas atendidas",
+    "populationHint": "Se usa al consultar como empresa o comunidad (para contar el aporte)",
+    "save": "Guardar",
+    "saved": "Guardado",
+    "saveFailed": "No se pudo guardar",
+    "displayId": "Número de la organización (para contactar al equipo): {id}"
   }
 }
