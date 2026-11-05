@@ -1,6 +1,6 @@
 // src/app/api/sos/cases/[id]/photos/route.ts
 // 案件写真の追加(POST)・削除(DELETE)。案件のSOS本人のみ・OPEN/MATCHED中のみ・3枚まで。
-// アップロード画像は sharp で再エンコード(リサイズ+WebP化)するため、EXIF(GPS位置情報等)は自動的に除去される。
+// アップロード画像は再エンコード(リサイズ+WebP化、src/lib/images/reencode.ts)するため、EXIF(GPS位置情報等)は残らない。
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -15,7 +15,7 @@ import {
 } from '@/lib/constants/photos'
 import { NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import sharp from 'sharp'
+import { reencodeToWebp } from '@/lib/images/reencode'
 
 const MUTABLE_CASE_STATUSES = new Set(['OPEN', 'MATCHED'])
 
@@ -87,15 +87,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: '画像サイズは10MBまでです', code: 'SIZE' }, { status: 400 })
     }
 
-    let processed: Buffer
+    let processed: Uint8Array
     try {
-        const buffer = Buffer.from(await file.arrayBuffer())
-        // rotate()でEXIFの向きを反映してから再エンコード。メタデータ(GPS等)は引き継がない
-        processed = await sharp(buffer)
-            .rotate()
-            .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
-            .webp({ quality: 80 })
-            .toBuffer()
+        processed = await reencodeToWebp(await file.arrayBuffer())
     } catch (error) {
         console.error('[sos/cases/photos] image process error:', error)
         return NextResponse.json({ error: '画像を処理できませんでした', code: 'TYPE' }, { status: 400 })

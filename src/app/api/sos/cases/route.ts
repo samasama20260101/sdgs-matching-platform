@@ -6,6 +6,7 @@ import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
 import { detectUrgency } from '@/lib/urgency'
 import { MAX_INDICATOR_SELECTIONS, findIndicator, hasUrgentIndicator } from '@/lib/constants/intakeIndicators'
 import { NextResponse, after } from 'next/server'
+import { isProductionDeployment } from '@/lib/deployEnv'
 
 const DESCRIPTION_FREE_MAX_LENGTH = 2000
 const TITLE_MAX_LENGTH = 80
@@ -16,7 +17,7 @@ const ALLOWED_LOCALES = new Set(['ja', 'en', 'zh', 'ko', 'vi', 'id'])
 const MAX_ACTIVE_CASES = 3
 // 1 人が 24 時間に登録できる件数(取り消したものも数える)。登録→取り消しを繰り返して AI を動かし続けるのを防ぐ。
 // 本番だけ 10 件。Staging(Vercel の preview)とローカルはテストしやすいよう上限なし
-const DAILY_CASE_LIMIT = process.env.VERCEL_ENV === 'production' ? 10 : null
+const DAILY_CASE_LIMIT = isProductionDeployment() ? 10 : null
 
 type CaseRow = {
     id: string

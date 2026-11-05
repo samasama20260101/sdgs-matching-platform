@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // 明日もsamasama のアプリ(Next.js)を Cloudflare Workers で動かす設定。
+  // OpenNext が `.open-next/worker.js` を作り、worker/index.ts がそれを包んで毎日の自動処理(Cron Triggers)を足す。
+  //
+  // 環境は staging(dev ブランチ)と production(main ブランチ)。named environment は vars と binding を
+  // 引き継がないので、それぞれに書く。秘密の値は `wrangler secret put <名前> --env <環境>` で入れる
+  // (一覧は docs/operations.md の「環境変数」)。ここには秘密でない値だけを書く。
+  "account_id": "cfafb5269cd2d82e97713fdbdd3676bf",
+  "main": "worker/index.ts",
+  "name": "samasama-app",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true },
+  "env": {
+    "staging": {
+      "name": "samasama-app-staging",
+      "vars": {
+        "APP_ENV": "staging"
+      },
+      "images": { "binding": "IMAGES" },
+      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-staging" }],
+      // 毎日 JST 2:00(UTC 17:00)。式を変えるときは worker/index.ts の CRON_ROUTES も直す
+      "triggers": { "crons": ["0 17 * * *"] }
+    },
+    "production": {
+      "name": "samasama-app-production",
+      "vars": {
+        "APP_ENV": "production"
+      },
+      "images": { "binding": "IMAGES" },
+      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-production" }],
+      "triggers": { "crons": ["0 17 * * *"] }
+    }
+  }
+}

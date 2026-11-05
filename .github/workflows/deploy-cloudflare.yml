@@ -1,0 +1,116 @@
+# Cloudflare Workers へのデプロイ。dev への push → Staging、main への push → 本番。
+# 結果は Discord の「デプロイ」チャンネルへ流す(Vercel 時代の deploy-notify.yml の置き換え)。
+#
+# リポジトリの変数で止めておける: Staging は CF_STAGING_DEPLOY、本番は CF_PRODUCTION_DEPLOY が "true" のときだけ動く。
+# 本番は、切り替えの日まで CF_PRODUCTION_DEPLOY を "true" にしない(それまで本番は Vercel)。
+# 要るもの:
+#   - リポジトリの Secret: CLOUDFLARE_API_TOKEN(samasama のアカウントの Workers を編集できるトークン)、DISCORD_DEPLOY_WEBHOOK_URL
+#   - Environment「staging」「production」の変数: NEXT_PUBLIC_SUPABASE_URL、NEXT_PUBLIC_SUPABASE_ANON_KEY、NEXT_PUBLIC_TURNSTILE_SITE_KEY
+#     (どれも公開してよい値。ビルド時に画面へ焼き込まれるので、Worker の vars では変えられない)
+#   - アプリの秘密の値は Worker の Secret に入れる(wrangler secret put。このワークフローは触らない)
+name: Cloudflare デプロイ
+
+on:
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: デプロイ先
+        type: choice
+        options: [staging, production]
+        default: staging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.target) || (github.ref_name == 'main' && 'production') || 'staging' }}
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'staging' && vars.CF_STAGING_DEPLOY == 'true') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'production' && vars.CF_PRODUCTION_DEPLOY == 'true') ||
+      (github.event_name == 'push' && github.ref_name == 'dev' && vars.CF_STAGING_DEPLOY == 'true') ||
+      (github.event_name == 'push' && github.ref_name == 'main' && vars.CF_PRODUCTION_DEPLOY == 'true')
+    env:
+      TARGET: ${{ (github.event_name == 'workflow_dispatch' && inputs.target) || (github.ref_name == 'main' && 'production') || 'staging' }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+      # ビルド時にモジュールの読み込みで参照されるだけ。実行時は Worker の Secret が使われる
+      SUPABASE_SERVICE_ROLE_KEY: build-time-placeholder
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          check-latest: true
+          cache: npm
+      - run: npm ci
+      - name: ビルドとデプロイ
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "Environment「$TARGET」の NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY が未設定です" >&2
+            exit 1
+          fi
+          npx opennextjs-cloudflare build
+          npx opennextjs-cloudflare deploy --env "$TARGET" | tee deploy.log
+          url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | head -1 || true)
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+      - name: Discord に投稿
+        if: always()
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL }}
+          OUTCOME: ${{ steps.deploy.outcome }}
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+          SUBJECT: ${{ github.event.head_commit.message }}
+          AUTHOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_DEPLOY_WEBHOOK_URL が未設定なので何もしない"
+            exit 0
+          fi
+          if [ "$TARGET" = "production" ]; then label="本番"; else label="Staging"; fi
+          if [ "$OUTCOME" = "success" ]; then
+            result="成功"; color=3066993; link="${DEPLOY_URL:-$RUN_URL}"
+          else
+            result="失敗"; color=15158332; link="$RUN_URL"
+          fi
+          subject="${SUBJECT%%$'\n'*}"
+          jq -n \
+            --arg title "${label}デプロイ(Cloudflare) ${result}" \
+            --arg desc "${subject:-手動実行}" \
+            --arg sha "${SHA:0:7}" \
+            --arg commit_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${SHA}" \
+            --arg author "$AUTHOR" \
+            --arg link "$link" \
+            --argjson color "$color" \
+            '{
+              allowed_mentions: {parse: []},
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: $color,
+                fields: [
+                  {name: "コミット", value: "[\($sha)](\($commit_url))", inline: true},
+                  {name: "作成者", value: $author, inline: true},
+                  {name: (if $color == 3066993 then "URL" else "ログ" end), value: $link}
+                ],
+                timestamp: (now | todate)
+              }]
+            }' > payload.json
+          curl -sS --max-time 20 --fail-with-body -H "Content-Type: application/json" -d @payload.json "$WEBHOOK_URL"
