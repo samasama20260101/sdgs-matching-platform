@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { isSupporterPurpose } from '@/lib/domain/publicSupporter'
 
 const schema = z.object({
   vettingStatus: z.enum(['APPLIED', 'INTERVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED']).optional(),
@@ -41,7 +42,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (p.vettingStatus === 'APPROVED') {
       update.approved_at = new Date().toISOString()
       update.approved_by_user_id = auth.appUser.id
-      update.reception_status = 'ACCEPTING'
+      // 相談を受け付けるのは、支え手として登録した団体だけ(会社・地域として相談するための団体は受け付けにしない)
+      const { data: current } = await supabaseAdmin.from('organizations').select('application').eq('id', id).maybeSingle()
+      if (isSupporterPurpose(current?.application)) update.reception_status = 'ACCEPTING'
     }
   }
   if (p.note !== undefined) update.vetting_note = p.note
