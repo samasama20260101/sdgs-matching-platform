@@ -72,7 +72,7 @@
 |---|---|
 | URL | https://samasama-app-staging.samasama.workers.dev(入口パスワードあり) |
 | 入口パスワード | Vercel の Staging とは別の値。作った人の手元の `.env.workers-staging.local`(コミットしない)にある |
-| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`(2026-11-05)。AI の鍵は未設定(相談の整理はデモの結果を返す) |
+| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`・`DISCORD_OPS_WEBHOOK_URL`・`DISCORD_OPS_APPLICATION_WEBHOOK_URL`(2026-11-05)。AI の鍵は未設定(相談の整理はデモの結果を返す) |
 
 ### 2.2 環境変数
 
@@ -84,7 +84,8 @@
 | `AI_PROVIDER`・`AI_<用途>_PROVIDER` | 使う提供元(`gemini` / `openai` / `xai`)。用途は `CONSULTATION`(相談の整理・解決の要約)・`NEWS`・`TRANSLATION`。書かなければ鍵のある提供元を選ぶ(翻訳は xAI が先、ほかは Gemini が先) |
 | `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`) |
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
-| `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせ(新しい相談・つなぎ先の同意・団体の申し込み・申し出のない相談の件数)。中身は載せない。未設定なら送らない |
+| `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせのうち相談のこと(新しい相談・つなぎ先の同意・申し出のない相談の件数)。Discord の「新着sos」の Webhook。中身は載せず、本番以外は先頭に `[Staging]` が付く。未設定なら送らない |
+| `DISCORD_OPS_APPLICATION_WEBHOOK_URL` | 団体の申し込みの知らせ。Discord の「サポーター申請」の Webhook。未設定なら `DISCORD_OPS_WEBHOOK_URL` に流す |
 | `RESEND_API_KEY` / `NOTIFY_FROM_EMAIL` | 利用者への知らせのメール(本人がオンにしたときだけ。件名と本文に中身を書かない)。未設定なら送らない |
 | `APP_ORIGIN` | 知らせのメールに書くアプリの URL(既定 https://app.samasama.site) |
 | `REQUIRE_MFA_FOR_SENSITIVE` | `false` にすると、団体のメンバーが機微な相談を見るときの2つ目の確認を外す(既定は要る) |
