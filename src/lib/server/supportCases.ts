@@ -3,7 +3,6 @@ import 'server-only'
 // 支える側から見える相談(盤 20・22)。見える範囲は src/lib/domain/visibility.ts だけで決める。
 // 顔(立場)は「団体の一員として(どの団体か)」か「個人として」。URL の face=org:<id> / face=individual
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { loadFaces, type Faces } from '@/lib/faces'
 import { canOffer, supporterCaseAccess, type CaseAccess as Access, type SupporterFace } from '@/lib/domain/visibility'
 import { optionsFor } from '@/lib/domain/intake'
 import { caseAreaGoals, isAreaSubject, type AreaSubject } from '@/lib/domain/supportAreas'
@@ -26,48 +25,66 @@ import { requireMfaForSensitive } from './mfaPolicy'
 
 export type ResolvedFace = { face: SupporterFace; key: FaceKey; label: string; phoneVerified: boolean; regionCodes: string[]; country: string; nationwide: boolean; coordinatorRegions: string[] }
 
-// 顔を確かめる(その団体に今いるか・個人の支え手として登録しているか)。活動地域も一緒に読む
-export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'aal2', faces?: Faces): Promise<ResolvedFace | null> {
-  const f = faces ?? (await loadFaces(userId))
+// 顔を確かめる(その団体に今いるか・個人の支え手として登録しているか)。活動地域も一緒に読む。
+// 支える側の API は毎回ここを通るので、その顔の分だけを 1 回の往復(並べた問い合わせ)で読む(性能のレビュー 11/5)。
+// 決まりは loadFaces と同じ: 所属は ACTIVE、団体は ARCHIVED でない、コーディネーターは承認済みの団体だけ
+type FaceMembershipRow = { organizations: { name: string; vetting_status: string; status: string; region_country: string | null; prefecture: string | null } | null }
+
+export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'aal2'): Promise<ResolvedFace | null> {
   if (key.kind === 'INDIVIDUAL') {
-    if (!f.individual) return null
-    const { data: p } = await supabaseAdmin.from('supporter_profiles').select('region_country, region_code').eq('user_id', userId).single()
+    const { data: p, error } = await supabaseAdmin
+      .from('supporter_profiles')
+      .select('real_name, phone_verified_at, status, region_country, region_code')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    if (!p) return null
     return {
-      face: { kind: 'INDIVIDUAL', userId, profileActive: f.individual.status === 'ACTIVE' },
+      face: { kind: 'INDIVIDUAL', userId, profileActive: p.status !== 'SUSPENDED' },
       key,
-      label: f.individual.realName,
-      phoneVerified: f.individual.phoneVerified,
-      regionCodes: p?.region_code ? [p.region_code as string] : [],
-      country: (p?.region_country as string | undefined) ?? 'JP',
+      label: p.real_name as string,
+      phoneVerified: Boolean(p.phone_verified_at),
+      regionCodes: p.region_code ? [p.region_code as string] : [],
+      country: (p.region_country as string | null) ?? 'JP',
       nationwide: false,
       coordinatorRegions: [],
     }
   }
-  const org = f.organizations.find((o) => o.organizationId === key.organizationId)
-  if (!org) return null
-  const [{ data: areas }, { data: orgRow }, { data: scopes }] = await Promise.all([
-    supabaseAdmin.from('supporter_service_areas').select('region_code, is_nationwide').eq('organization_id', org.organizationId),
-    supabaseAdmin.from('organizations').select('region_country, prefecture').eq('id', org.organizationId).single(),
-    supabaseAdmin.from('coordinator_scopes').select('region_code').eq('organization_id', org.organizationId),
+  const [membership, areas, scopes] = await Promise.all([
+    supabaseAdmin
+      .from('organization_memberships')
+      .select('organizations(name, vetting_status, status, region_country, prefecture)')
+      .eq('user_id', userId)
+      .eq('organization_id', key.organizationId)
+      .eq('status', 'ACTIVE')
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin.from('supporter_service_areas').select('region_code, is_nationwide').eq('organization_id', key.organizationId),
+    supabaseAdmin.from('coordinator_scopes').select('region_code').eq('organization_id', key.organizationId),
   ])
-  const codes = (areas ?? []).filter((a) => a.region_code).map((a) => a.region_code as string)
-  if (orgRow?.prefecture && /^[A-Z]{2}-/.test(orgRow.prefecture as string)) codes.push(orgRow.prefecture as string)
+  const failed = membership.error ?? areas.error ?? scopes.error
+  if (failed) throw failed
+  const org = (membership.data as FaceMembershipRow | null)?.organizations
+  if (!org || org.status === 'ARCHIVED') return null
+  const approved = org.vetting_status === 'APPROVED'
+  const codes = (areas.data ?? []).filter((a) => a.region_code).map((a) => a.region_code as string)
+  if (org.prefecture && /^[A-Z]{2}-/.test(org.prefecture)) codes.push(org.prefecture)
   return {
     face: {
       kind: 'ORGANIZATION',
       userId,
-      organizationId: org.organizationId,
-      organizationApproved: org.vettingStatus === 'APPROVED',
+      organizationId: key.organizationId,
+      organizationApproved: approved,
       membershipActive: true,
       mfaVerified: aal === 'aal2',
     },
     key,
-    label: org.organizationName,
+    label: org.name,
     phoneVerified: true,
     regionCodes: [...new Set(codes)],
-    country: (orgRow?.region_country as string | undefined) ?? 'JP',
-    nationwide: (areas ?? []).some((a) => a.is_nationwide),
-    coordinatorRegions: org.vettingStatus === 'APPROVED' ? (scopes ?? []).map((x) => x.region_code as string).filter(Boolean) : [],
+    country: org.region_country ?? 'JP',
+    nationwide: (areas.data ?? []).some((a) => a.is_nationwide),
+    coordinatorRegions: approved ? (scopes.data ?? []).map((x) => x.region_code as string).filter(Boolean) : [],
   }
 }
 

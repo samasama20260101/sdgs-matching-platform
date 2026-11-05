@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useReadyMe } from '@/components/app/SessionProvider'
 import { cx } from '@/components/app/ui'
 
-export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'ADMIN' | 'MEMBER'; organizationId?: string }
+export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'ADMIN' | 'MEMBER'; organizationId?: string; coordinator?: boolean }
 
 const STORAGE_KEY = 'samasama.face'
 
@@ -16,7 +16,7 @@ export function useFace() {
     if (!me) return []
     const orgs = me.faces.organizations
       .filter((o) => !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus))
-      .map((o) => ({ key: `org:${o.organizationId}`, label: o.organizationName, kind: 'ORGANIZATION' as const, approved: o.vettingStatus === 'APPROVED', role: o.role, organizationId: o.organizationId }))
+      .map((o) => ({ key: `org:${o.organizationId}`, label: o.organizationName, kind: 'ORGANIZATION' as const, approved: o.vettingStatus === 'APPROVED', role: o.role, organizationId: o.organizationId, coordinator: o.isCoordinator }))
     const ind = me.faces.individual ? [{ key: 'individual', label: me.faces.individual.realName, kind: 'INDIVIDUAL' as const, approved: me.faces.individual.status === 'ACTIVE' }] : []
     return [...orgs, ...ind]
   }, [me])
