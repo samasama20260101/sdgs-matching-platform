@@ -2,8 +2,8 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { Logo } from '@/components/icons/Logo'
-import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice'
+import { DocShell, DocTitle } from '@/components/app/DocShell'
+import { Card, SectionLabel } from '@/components/app/ui'
 import { NewsCategoryChip } from '@/components/news/NewsCategoryChip'
 import { NEWS_LIST_MAX, NEWS_LIST_PAGE_CAP, type NewsPostPublic } from '@/lib/constants/news'
 import { formatNewsDate, formatNewsYear } from '@/lib/news/format'
@@ -44,63 +44,41 @@ export default async function NewsListPage({ params, searchParams }: PageProps) 
   const posts = fetched.slice(0, show)
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/"><Logo variant="default" size="sm" showText={true} /></Link>
-          <Link href="/" className="text-sm text-gray-400 hover:text-teal-600 transition-colors">{t('backToTop')}</Link>
-        </div>
-      </header>
+    <DocShell jaOnly>
+      <DocTitle title={t('listTitle')} note={t('listLead')} />
 
-      <JaOnlyNotice />
-
-      <main className="max-w-3xl mx-auto px-6 py-14">
-        <div className="mb-10">
-          <p className="text-xs text-teal-600 font-mono tracking-[4px] uppercase mb-3">{t('listKicker')}</p>
-          <h1 className="text-3xl font-black text-gray-900 mb-3">{t('listTitle')}</h1>
-          <p className="text-sm text-gray-500 leading-relaxed">{t('listLead')}</p>
-        </div>
-
-        {posts.length === 0 ? (
-          <p className="rounded-xl border border-gray-100 bg-gray-50 px-5 py-8 text-center text-sm text-gray-500">{t('empty')}</p>
-        ) : (
-          <div className="space-y-12">
-            {groupByYear(posts, locale).map((group) => (
-              <section key={group.year}>
-                <h2 className="mb-2 text-xs font-mono tracking-[3px] text-teal-600">{group.year}</h2>
-                <ul className="divide-y divide-gray-100 border-y border-gray-100">
-                  {group.posts.map((post) => {
-                    const inner = (
-                      <>
-                        <div className="flex items-center gap-3 text-xs text-gray-400">
+      {posts.length === 0 ? (
+        <Card className="px-4 py-8 text-center text-[13.5px] text-mist">{t('empty')}</Card>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {groupByYear(posts, locale).map((group) => (
+            <section key={group.year} className="flex flex-col gap-2">
+              <SectionLabel>{group.year}</SectionLabel>
+              <Card>
+                <ul className="m-0 list-none p-0">
+                  {group.posts.map((post) => (
+                    <li key={post.id} className="border-t border-line first:border-t-0">
+                      <Link href={`/news/${post.id}`} className="flex flex-col gap-1.5 px-4 py-3.5 text-ink no-underline hover:bg-kinari-deep">
+                        <span className="flex flex-wrap items-center gap-2 text-[12px] text-mist">
                           <time dateTime={post.published_at}>{formatNewsDate(post.published_at, locale)}</time>
                           <NewsCategoryChip category={post.category} label={t(`category.${post.category}`)} />
-                        </div>
-                        <p className="mt-1.5 text-base font-bold text-gray-900 group-hover:text-teal-700 transition-colors">{post.title}</p>
-                      </>
-                    )
-                    return (
-                      <li key={post.id}>
-                        <Link href={`/news/${post.id}`} className="group block py-5">
-                          {inner}
-                        </Link>
-                      </li>
-                    )
-                  })}
+                        </span>
+                        <span className="text-[15px] font-bold leading-[1.6]">{post.title}</span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
-              </section>
-            ))}
-            {hasMore && (
-              <div className="text-center">
-                <Link href={`/news?show=${show + NEWS_LIST_MAX}`} scroll={false}
-                  className="inline-flex items-center gap-2 rounded-full border border-teal-300 px-6 py-3 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50">
-                  {t('more', { count: NEWS_LIST_MAX })}
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+              </Card>
+            </section>
+          ))}
+          {hasMore && (
+            <Link href={`/news?show=${show + NEWS_LIST_MAX}`} scroll={false}
+              className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-[14px] font-bold text-ink no-underline">
+              {t('more', { count: NEWS_LIST_MAX })}
+            </Link>
+          )}
+        </div>
+      )}
+    </DocShell>
   )
 }

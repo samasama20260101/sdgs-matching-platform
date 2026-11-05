@@ -11,15 +11,15 @@ export type NewsStatus = (typeof NEWS_STATUSES)[number]
 export type NewsCategoryMeta = {
   labelJa: string   // 管理画面用(日本語固定)
   hintJa: string    // 管理画面で種別を選ぶときの説明
-  chipClass: string // 公開側の種別チップ(Tailwind)
+  chip: 'steel' | 'lamp' | 'dawn' | 'leaf' | 'outline' // 種別チップの色(v2 の Chip の色の名前)
 }
 
 export const NEWS_CATEGORY_META: Record<NewsCategory, NewsCategoryMeta> = {
-  NOTICE:           { labelJa: 'お知らせ',     hintJa: '運営からの連絡(受付の時間・体制の変更など)',                       chipClass: 'bg-teal-50 text-teal-700 border-teal-100' },
-  MAINTENANCE:      { labelJa: 'メンテナンス', hintJa: 'サイトを止める予定・止まったときの連絡',                           chipClass: 'bg-amber-50 text-amber-700 border-amber-100' },
-  SUPPORTER_JOINED: { labelJa: '参加団体',     hintJa: 'このサイトに参加した団体の紹介',                                   chipClass: 'bg-blue-50 text-blue-700 border-blue-100' },
-  INTERVIEW:        { labelJa: 'インタビュー', hintJa: '運営が話を聞いて書いた記事の紹介',                                 chipClass: 'bg-rose-50 text-rose-700 border-rose-100' },
-  TOPIC:            { labelJa: '話題',         hintJa: '外の人が書いた記事・ページの紹介(行政の動き・他の団体の活動・報道など)', chipClass: 'bg-violet-50 text-violet-700 border-violet-100' },
+  NOTICE:           { labelJa: 'お知らせ',     hintJa: '運営からの連絡(受付の時間・体制の変更など)',                       chip: 'steel' },
+  MAINTENANCE:      { labelJa: 'メンテナンス', hintJa: 'サイトを止める予定・止まったときの連絡',                           chip: 'lamp' },
+  SUPPORTER_JOINED: { labelJa: '参加団体',     hintJa: 'このサイトに参加した団体の紹介',                                   chip: 'leaf' },
+  INTERVIEW:        { labelJa: 'インタビュー', hintJa: '運営が話を聞いて書いた記事の紹介',                                 chip: 'dawn' },
+  TOPIC:            { labelJa: '話題',         hintJa: '外の人が書いた記事・ページの紹介(行政の動き・他の団体の活動・報道など)', chip: 'outline' },
 }
 
 export function isNewsCategory(value: unknown): value is NewsCategory {

@@ -11,10 +11,11 @@ export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(' ')
 }
 
-export function Screen({ tone = 'consult', children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
+// wide: 2 列で使う運営の編集画面(お知らせ)だけ。ほかの画面はスマホの幅に合わせた 560px
+export function Screen({ tone = 'consult', wide = false, children, className }: { tone?: Tone; wide?: boolean; children: ReactNode; className?: string }) {
   return (
     <div className={cx('min-h-dvh text-ink', tone === 'consult' ? 'bg-kinari' : 'bg-steel-faint')}>
-      <div className={cx('mx-auto w-full max-w-[560px] px-4 pb-28', className)}>{children}</div>
+      <div className={cx('mx-auto w-full px-4 pb-28', wide ? 'max-w-6xl' : 'max-w-[560px]', className)}>{children}</div>
     </div>
   )
 }

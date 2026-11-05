@@ -1,6 +1,5 @@
-import Link from 'next/link'
-import { Logo } from '@/components/icons/Logo'
-import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice'
+import { Link } from '@/i18n/navigation'
+import { DocProse, DocSection, DocShell, DocTitle } from '@/components/app/DocShell'
 
 export const metadata = { title: '利用規約 | 明日もsamasama' }
 
@@ -8,32 +7,15 @@ const UPDATED = '2026年4月1日'
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/"><Logo variant="default" size="sm" showText={true} /></Link>
-          <Link href="/" className="text-sm text-gray-400 hover:text-teal-600 transition-colors">← トップへ</Link>
-        </div>
-      </header>
+    <DocShell jaOnly>
+      <DocTitle title="利用規約" note={`最終更新日：${UPDATED}`} />
+        <div className="flex flex-col gap-6">
 
-      <JaOnlyNotice />
+          <DocProse>
+            <p>本利用規約（以下「本規約」）は、合同会社ｓａｍａｓａｍａ（以下「当社」）が提供するプラットフォームサービス「明日もsamasama」（以下「本サービス」）の利用条件を定めるものです。本サービスを利用するすべての利用者（以下「利用者」）は、本規約に同意のうえ本サービスを利用するものとしますので、本サービスをご利用になる前に、必ずお読みください。登録または利用をもって、本規約に同意したものとみなします。</p>
+          </DocProse>
 
-      <main className="max-w-3xl mx-auto px-6 py-14">
-        <div className="mb-12">
-          <p className="text-xs text-teal-600 font-mono tracking-[4px] uppercase mb-3">Terms of Service</p>
-          <h1 className="text-3xl font-black text-gray-900 mb-2">利用規約</h1>
-          <p className="text-sm text-gray-400">最終更新日：{UPDATED}</p>
-        </div>
-
-        <div className="space-y-10 text-gray-700">
-
-          <section>
-            <p className="text-sm leading-8">
-              本利用規約（以下「本規約」）は、合同会社ｓａｍａｓａｍａ（以下「当社」）が提供するプラットフォームサービス「明日もsamasama」（以下「本サービス」）の利用条件を定めるものです。本サービスを利用するすべての利用者（以下「利用者」）は、本規約に同意のうえ本サービスを利用するものとしますので、本サービスをご利用になる前に、必ずお読みください。登録または利用をもって、本規約に同意したものとみなします。
-            </p>
-          </section>
-
-          <Section title="第1条（定義）">
+          <DocSection title="第1条（定義）">
             <p>本規約において使用する用語の定義は、以下のとおりとします。</p>
             <ul>
               <li><strong>本サービス：</strong>当社が提供するSOS掲載、支援マッチング、分析機能その他関連機能を含むオンラインプラットフォーム「明日もsamasama」。</li>
@@ -47,14 +29,14 @@ export default function TermsPage() {
               <li><strong>サポーター向けサービス：</strong>当社がサポーターに対して提供する掲載、分析、マッチング、その他のサービス。</li>
               <li><strong>利用契約：</strong>本規約に基づき利用者と当社との間で成立する本サービス利用に関する契約。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第2条（会員登録）">
+          <DocSection title="第2条（会員登録）">
             <ul>
               <li>本サービスへの登録は、本規約への同意を条件とします。</li>
               <li>利用者は登録情報について正確かつ最新の状態を保つよう努めてください。</li>
               <li>当社は以下の場合、登録を拒否または取消すことがあります。
-                <ul className="mt-2 ml-4 space-y-1">
+                <ul>
                   <li>登録情報に虚偽がある場合</li>
                   <li>本規約に違反するおそれがある場合</li>
                   <li>過去に本規約違反により登録を抹消された方が再登録/再登録申請をした場合</li>
@@ -64,13 +46,13 @@ export default function TermsPage() {
               <li>未成年の者が利用する場合、保護者の同意を得るものとします。</li>
               <li>保護者が虐待その他の加害行為の当事者と合理的に疑われる場合には、SOSユーザー本人の最善の利益を優先し、匿名化投稿や通報ルート整備等の保護措置を講じる場合があります。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第3条（SOS掲載）">
+          <DocSection title="第3条（SOS掲載）">
             <ul>
               <li>SOSユーザーは当社所定の方法によりSOS内容を本サービスに掲載申請することができます。</li>
               <li>以下の内容を含むSOSは掲載してはなりません。
-                <ul className="mt-2 ml-4 space-y-1">
+                <ul>
                   <li>法令違反または犯罪行為に関連する内容</li>
                   <li>他者の権利を侵害する内容</li>
                   <li>差別的、暴力的または誹謗中傷を含む内容</li>
@@ -80,9 +62,9 @@ export default function TermsPage() {
               </li>
               <li>当社は掲載内容が不適切と判断した場合、掲載拒否または削除することがあります。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第4条（サポーターによる支援）">
+          <DocSection title="第4条（サポーターによる支援）">
             <ul>
               <li>サポーターは、本サービスを通じてSOSユーザーに対して支援を提案・提供することができます。</li>
               <li>有償支援に関する契約は、SOSユーザーとサポーターとの間で直接成立するものとし、当社は当該契約の当事者とはなりません。</li>
@@ -90,31 +72,31 @@ export default function TermsPage() {
               <li>当社は、支援内容の適法性、品質、安全性、実現可能性について一切の保証を行わず、また当該支援に関する契約の締結、履行、解釈について関与しません。</li>
               <li>当社は、利用者間の交渉、契約締結、支払い、紛争解決のいずれにも関与せず、仲介者、代理人または雇用関係に立つものではありません。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第5条（サポーター向けサービス）">
+          <DocSection title="第5条（サポーター向けサービス）">
             <ul>
               <li>サポーターは当社が提供するサポーター向けサービスを利用することができます。</li>
               <li>サポーター向けサービスの利用条件および利用料金は、当社が別途定めるものとします。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第6条（投稿コンテンツの利用）">
+          <DocSection title="第6条（投稿コンテンツの利用）">
             <ul>
               <li>利用者が本サービス上に投稿、送信または登録したコンテンツの著作権は、当該利用者に帰属します。</li>
               <li>利用者は、当社に対し、本サービスの運営、改善、分析、広報および新サービスの開発の目的の範囲において、当該コンテンツを無償かつ非独占的に利用（複製、翻訳、編集、匿名加工等を含みます）することを許諾します。</li>
               <li>本サービスのロゴ・デザイン・システムに関する知的財産権は当社に帰属します。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第7条（個人情報の取扱い）">
+          <DocSection title="第7条（個人情報の取扱い）">
             <ul>
               <li>SOSユーザーの個人情報は、当該ユーザーが明示的に承認するまでサポーターに開示されません。</li>
-              <li>個人情報の取り扱いについては、別途定める<Link href="/privacy" className="text-teal-600 underline underline-offset-2">プライバシーポリシー</Link>に従います。</li>
+              <li>個人情報の取り扱いについては、別途定める<Link href="/privacy">プライバシーポリシー</Link>に従います。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第8条（禁止事項）">
+          <DocSection title="第8条（禁止事項）">
             <p>利用者は本サービス利用に際し、以下の行為を行ってはなりません。</p>
             <ul>
               <li>虚偽情報の登録または掲載</li>
@@ -128,33 +110,33 @@ export default function TermsPage() {
               <li>法令または公序良俗に反する行為</li>
               <li>その他、運営が不適切と判断する行為</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第9条（利用停止および退会）">
+          <DocSection title="第9条（利用停止および退会）">
             <ul>
               <li>当社は利用者が本規約に違反した場合、事前通知なく利用停止または退会処理を行うことがあります。</li>
               <li>利用者は当社所定の方法によりいつでも退会（登録抹消）を申請できます。</li>
               <li>利用者は本サービスを通じて知り得た情報を用いて不適切な勧誘または営業行為を行ってはなりません。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第10条（プラットフォームの中立性）">
+          <DocSection title="第10条（プラットフォームの中立性）">
             <ul>
               <li>本サービスは、SOSユーザーとサポーターとの間の支援機会を提供するプラットフォームです。</li>
               <li>支援内容や効果、マッチングの成立等を当社が保証するものではありません。</li>
               <li>SOSユーザーは、いつでも相談を取り下げ・終了することができます。</li>
               <li>サポーターは、正当な理由なく相談を放棄しないよう努めてください。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第11条（利用者間の問題）">
+          <DocSection title="第11条（利用者間の問題）">
             <ul>
               <li>利用者間で発生した紛争、トラブルまたは損害については、当該利用者間で自己の責任と費用において解決するものとします。</li>
               <li>当社は、これらに関して一切の責任を負わず、また関与する義務を負いません。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第12条（免責事項）">
+          <DocSection title="第12条（免責事項）">
             <ul>
               <li>当社は、本サービスの内容、機能、正確性、完全性、有用性または特定目的への適合性について保証するものではありません。</li>
               <li>本サービスの提供の中断、停止、変更または終了により生じた損害について、当社は当社の故意または重大な過失がない限り責任を負いません。</li>
@@ -163,62 +145,43 @@ export default function TermsPage() {
               <li>AIによる分析・推薦結果は、特定の結果や成果を保証するものではなく、利用者の判断を代替するものではありません。</li>
               <li>最終的な意思決定は利用者自身の責任で行うものとします。</li>
               <li>
-                <strong className="text-red-600">本サービスは緊急時の相談窓口ではありません。</strong>生命・身体に危険が及ぶ緊急事態は、警察（110）・救急（119）・よりそいホットライン（0120-279-338）などにご連絡ください。
+                <strong className="text-coral-ink">本サービスは緊急時の相談窓口ではありません。</strong>生命・身体に危険が及ぶ緊急事態は、警察（110）・救急（119）・よりそいホットライン（0120-279-338）などにご連絡ください。
               </li>
               <li>当社は、緊急対応義務を負うものではなく、通報・救助・介入等を行う責任を負いません。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第13条（反社会的勢力の排除）">
+          <DocSection title="第13条（反社会的勢力の排除）">
             <p>
               利用者は、自ら（及び団体登録者の場合はその役員・従業員等含む）が反社会的勢力に該当せず、また反社会的勢力に対して資金提供、便宜供与等を行わないことを表明し保証します。万一、当該事実が判明した場合、当社は直ちに利用停止または契約解除できるものとし、これに伴う一切の損害賠償を当該者が負担します。
             </p>
-          </Section>
+          </DocSection>
 
-          <Section title="第14条（サービス内容の変更および終了）">
+          <DocSection title="第14条（サービス内容の変更および終了）">
             <ul>
               <li>当社は、事前の通知なくサービス内容の変更・追加・停止・終了を行う場合があります。</li>
               <li>システムメンテナンス・不可抗力によるサービス停止について、運営は責任を負いません。</li>
               <li>重要な変更がある場合は、登録メールアドレスへの通知またはサービス内告知を行います。</li>
             </ul>
-          </Section>
+          </DocSection>
 
-          <Section title="第15条（規約の変更）">
+          <DocSection title="第15条（規約の変更）">
             <p>
               当社は必要に応じて本規約を変更することがあります。変更後の規約は本サービス上に掲載された時点から効力を生じます。改定後も本サービスをご利用になった場合、改定後の規約に同意したものとみなします。
             </p>
-          </Section>
+          </DocSection>
 
-          <Section title="第16条（準拠法および管轄）">
+          <DocSection title="第16条（準拠法および管轄）">
             <p>
               本規約の解釈・適用は日本法に準拠します。本サービスに関する紛争については熊本地方裁判所を第一審の専属管轄裁判所とします。
             </p>
-          </Section>
+          </DocSection>
 
-          <div className="pt-8 border-t border-gray-100 text-sm text-gray-400">
-            <p>制定日：2026年4月1日　／　最終更新日：{UPDATED}</p>
-            <p className="mt-1">明日もsamasama 運営チーム</p>
+          <div className="flex flex-col gap-0.5 border-t border-line pt-4 text-[12.5px] text-mist">
+            <span>制定日：2026年4月1日　／　最終更新日：{UPDATED}</span>
+            <span>明日もsamasama 運営チーム</span>
           </div>
         </div>
-      </main>
-
-      <footer className="border-t border-gray-100 py-8 text-center text-xs text-gray-400">
-        <div className="flex justify-center gap-6 mb-3">
-          <Link href="/terms" className="text-teal-600 font-medium">利用規約</Link>
-          <Link href="/privacy" className="hover:text-teal-600 transition-colors">プライバシーポリシー</Link>
-          <Link href="/contact" className="hover:text-teal-600 transition-colors">お問い合わせ</Link>
-        </div>
-        <p>© 2026 samasama, LLC. All rights reserved.</p>
-      </footer>
-    </div>
-  )
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">{title}</h2>
-      <div className="space-y-4 text-sm text-gray-600 leading-8">{children}</div>
-    </section>
+    </DocShell>
   )
 }

@@ -4,11 +4,9 @@
     "description": "An AI-powered matching platform that analyzes your troubles and connects you with specialized NPOs, support organizations, companies, and government agencies."
   },
   "news": {
-    "listKicker": "News",
     "listTitle": "News",
     "listLead": "Announcements from the team, introductions of participating organizations, and interviews.",
     "empty": "There are no news posts at the moment.",
-    "backToTop": "← Home",
     "backToList": "← Back to news",
     "external": "Read more (opens an external site)",
     "externalHost": "Destination: {host}",
