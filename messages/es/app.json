@@ -236,5 +236,22 @@
     "doneBody": "El equipo de samasama lo leerá y, si hace falta, te responderá por correo.",
     "receipt": "Número de referencia",
     "back": "Volver"
+  },
+  "mfa": {
+    "title": "Segunda verificación",
+    "enrollLeadAdmin": "Las páginas del equipo necesitan un código de una app de autenticación (como Google Authenticator). Escanea este código QR con la app.",
+    "enrollLeadMember": "Para leer consultas sobre la vida o la violencia y de menores de 18 años, necesitas un código de una app de autenticación (como Google Authenticator). Escanea este código QR con la app.",
+    "qrAlt": "Código QR para registrar en tu app de autenticación",
+    "secret": "Si no puedes escanearlo, introduce esto",
+    "verifyLead": "Introduce el código de 6 dígitos que muestra tu app de autenticación.",
+    "code": "Código de la app",
+    "verify": "Verificar",
+    "loadFailed": "No se pudo leer el estado de la autenticación",
+    "enrollFailed": "No se pudo empezar a registrar la app",
+    "codeInvalid": "Introduce el código de 6 dígitos",
+    "codeWrong": "Código incorrecto. Introduce el código actual de tu app",
+    "done": "Segunda verificación completada",
+    "card": "Segunda verificación (miembros de organizaciones)",
+    "cardNote": "Necesaria para leer consultas delicadas"
   }
 }

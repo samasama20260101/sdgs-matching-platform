@@ -76,6 +76,11 @@
 | `AI_PROVIDER`・`AI_<用途>_PROVIDER` | 使う提供元(`gemini` / `openai` / `xai`)。用途は `CONSULTATION`(相談の整理・解決の要約)・`NEWS`・`TRANSLATION`。書かなければ鍵のある提供元を選ぶ(翻訳は xAI が先、ほかは Gemini が先) |
 | `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`) |
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
+| `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせ(新しい相談・つなぎ先の同意・団体の申し込み・申し出のない相談の件数)。中身は載せない。未設定なら送らない |
+| `RESEND_API_KEY` / `NOTIFY_FROM_EMAIL` | 利用者への知らせのメール(本人がオンにしたときだけ。件名と本文に中身を書かない)。未設定なら送らない |
+| `APP_ORIGIN` | 知らせのメールに書くアプリの URL(既定 https://app.samasama.site) |
+| `REQUIRE_MFA_FOR_SENSITIVE` | `false` にすると、団体のメンバーが機微な相談を見るときの2つ目の確認を外す(既定は要る) |
+| `NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED` | `true` で「Google で続ける」を出す(Supabase に Google の設定が要る) |
 | `DEV_PASSWORD` | Staging の入口パスワード。**本番には設定しない** |
 | `MAINTENANCE_MODE` / `MAINTENANCE_BYPASS_TOKEN` | メンテナンスモード(§6) |
 | `APP_ENV` / `VERCEL_ENV` | 動いている環境。Workers は `wrangler.jsonc` の vars `APP_ENV`、Vercel は自動の `VERCEL_ENV`。本番のときだけ 1 日の相談登録上限が効く(`src/lib/deployEnv.ts`) |

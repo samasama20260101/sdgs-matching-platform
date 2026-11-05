@@ -1,11 +1,12 @@
 // やりとり(相談する側と、選ばれた支え手)。GET ?lang=xx で、その言語の訳があれば一緒に返す
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { isThreadOpen, listThread, MESSAGE_MAX, postUserMessage } from '@/lib/server/messages'
 import { locales } from '@/i18n/routing'
+import { chosenSupporterUserIds, consulteeUserIds, notifyUsers } from '@/lib/server/notifyUser'
 
 const schema = z.object({ content: z.string().transform((v) => v.trim()).pipe(z.string().min(1).max(MESSAGE_MAX)) })
 
@@ -39,6 +40,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // やりとりは、支え手を選んで「一緒に進める」ようになってから(受付中は申し出のメッセージだけ)
     if (access.caseRow.status !== 'MATCHED') return NextResponse.json({ error: 'いまはメッセージを送れません', code: 'NOT_MATCHED' }, { status: 409 })
     const messageId = await postUserMessage(access, auth.appUser.id, parsed.data.content)
+    const sender = auth.appUser.id
+    after(async () => {
+      const to = access.role === 'CONSULTEE' ? await chosenSupporterUserIds(id) : await consulteeUserIds(id)
+      await notifyUsers(to.filter((u) => u !== sender), 'NEW_MESSAGE').catch(() => undefined)
+    })
     return NextResponse.json({ id: messageId })
   } catch (e) {
     console.error('[api/cases/messages] post', e)

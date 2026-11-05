@@ -18,11 +18,14 @@ function Home() {
   const { options, current, choose } = useFace()
   const [involved, setInvolved] = useState<SupportCaseItem[] | null>(null)
   const [fresh, setFresh] = useState<SupportCaseItem[] | null>(null)
+  const [unmatched, setUnmatched] = useState<SupportCaseItem[] | null>(null)
   useEffect(() => {
     if (!current) return
     const face = encodeURIComponent(current.key)
     apiFetch<{ cases: SupportCaseItem[] }>(`/api/support/involved?face=${face}`).then((d) => setInvolved(d.cases)).catch(() => setInvolved([]))
     apiFetch<{ cases: SupportCaseItem[] }>(`/api/support/cases?face=${face}&involvement=notOffered`).then((d) => setFresh(d.cases.slice(0, 3))).catch(() => setFresh([]))
+    // コーディネーターの団体なら、その地域で 24 時間申し出のない相談
+    apiFetch<{ cases: SupportCaseItem[]; face: { coordinator?: boolean } }>(`/api/support/cases?face=${face}&escalated=1&involvement=all`).then((d) => setUnmatched(d.face.coordinator ? d.cases : null)).catch(() => setUnmatched(null))
   }, [current])
 
   if (options.length === 0) {
@@ -50,6 +53,15 @@ function Home() {
         </div>
       )}
       {current?.kind === 'ORGANIZATION' && !current.approved && <Card tone="support" className="p-4"><Lead>{t('appliedNote')}</Lead></Card>}
+      {unmatched && (
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <SectionLabel>{t('unmatched', { count: unmatched.length })}</SectionLabel>
+            <Tip label={t('unmatchedTipLabel')}>{t('unmatchedTip')}</Tip>
+          </div>
+          {unmatched.map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ''} />)}
+        </section>
+      )}
       {involved && involved.length > 0 && (
         <section className="flex flex-col gap-2">
           <SectionLabel>{t('involved')}</SectionLabel>

@@ -22,3 +22,17 @@ assert.equal(formatOpsEvent({ kind: 'NEW_CASE', displayId: 'CASE-00012', subject
 assert.equal(formatOpsEvent({ kind: 'NEW_CASE', displayId: 'CASE-00013', subjectType: 'COMPANY', urgent: false, sensitive: false }), '新しい相談 CASE-00013(会社)')
 
 console.log('caseSummary: ok')
+
+// 知らせのメールに中身を書かない
+import('../../src/lib/server/noticeEmail').then(({ buildNoticeEmail }) => {
+  const ja = buildNoticeEmail('ja', 'NEW_OFFER', 'https://app.samasama.site')
+  assert.equal(ja.subject, '明日もsamasama からのお知らせ')
+  assert.ok(ja.text.includes('https://app.samasama.site/home'))
+  const es = buildNoticeEmail('es', 'NEW_MESSAGE', 'https://app.samasama.site')
+  assert.equal(es.subject, 'Un aviso de samasama')
+  assert.ok(es.text.includes('/es/talk'))
+  assert.equal(buildNoticeEmail('zh', 'CHOSEN', 'https://x').subject, '明日もsamasama からのお知らせ') // 知らない言語は日本語
+  // どの種類でも件名は同じ(種類から中身を推し量られない)
+  assert.equal(new Set(['NEW_OFFER', 'NEW_MESSAGE', 'RESOLVE_REPORTED', 'CHOSEN', 'INVITED'].map((k) => buildNoticeEmail('en', k as never, 'x').subject)).size, 1)
+  console.log('noticeEmail: ok')
+})

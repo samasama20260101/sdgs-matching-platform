@@ -1,18 +1,36 @@
 {
-  "face": { "label": "Who are you supporting as?", "asIndividual": "As an individual ({name})", "pending": "under review" },
+  "face": {
+    "label": "Who are you supporting as?",
+    "asIndividual": "As an individual ({name})",
+    "pending": "under review"
+  },
   "card": {
     "locked": "Requests visible after the second check",
     "lockedNote": "Requests about life, violence and from people under 18 can only be read by people who entered an authenticator app code.",
-    "urgent": "Urgent", "minor": "Under 18", "sensitive": "Sensitive", "company": "Company request", "community": "Community request",
-    "language": "Original: {lang}", "waiting": "Waiting {hours} h", "offers": "{count} offers",
-    "mine": { "PENDING": "Offered", "INVITED": "You've been invited", "ACCEPTED": "Chosen", "DECLINED": "Not chosen", "WITHDRAWN": "Withdrawn" }
+    "urgent": "Urgent",
+    "minor": "Under 18",
+    "sensitive": "Sensitive",
+    "company": "Company request",
+    "community": "Community request",
+    "language": "Original: {lang}",
+    "waiting": "Waiting {hours} h",
+    "offers": "{count} offers",
+    "mine": {
+      "PENDING": "Offered",
+      "INVITED": "You've been invited",
+      "ACCEPTED": "Chosen",
+      "DECLINED": "Not chosen",
+      "WITHDRAWN": "Withdrawn"
+    }
   },
   "home": {
     "noFace": "Once you become a supporter, matching requests appear here. You can register as an individual or an organization.",
     "join": "Become a supporter",
     "helloIndividual": "Hi, {name}",
-    "individual": "Individual supporter", "organization": "Organization",
-    "approved": "Interviewed by samasama", "applied": "Application received",
+    "individual": "Individual supporter",
+    "organization": "Organization",
+    "approved": "Interviewed by samasama",
+    "applied": "Application received",
     "appliedNote": "We've received your application. The samasama team will contact you to set up an interview. After the interview you can make offers.",
     "involved": "Requests you're involved in",
     "forYou": "Requests for you",
@@ -22,16 +40,24 @@
     "findMore": "Find requests",
     "contributions": "My contributions",
     "proxy": "Register a request on behalf",
-    "orgPage": "Organization page"
+    "orgPage": "Organization page",
+    "unmatched": "Unmatched requests in your area: {count}",
+    "unmatchedTipLabel": "Coordinator list",
+    "unmatchedTip": "Requests in your area with no offer after 24 hours. Please reach out to nearby services and organizations. You can tell unregistered organizations how to claim their page."
   },
   "find": {
     "title": "Find requests",
     "tipLabel": "How to read the tags",
     "tip": "Solid indicator tags were chosen by the person asking; dotted ones are AI suggestions (before the samasama team checks them). For requests written in other languages, you can see a translation in the messages.",
     "individualNote": "Individual supporters see only company and community requests (requests from individuals are supported through organizations).",
-    "category": "Category", "all": "All",
-    "remote": "Include requests I can support remotely", "remoteNote": "Also shows requests outside your area",
-    "involvement": "Involvement", "notOffered": "Not offered yet", "mine": "Offered / supporting", "everything": "All",
+    "category": "Category",
+    "all": "All",
+    "remote": "Include requests I can support remotely",
+    "remoteNote": "Also shows requests outside your area",
+    "involvement": "Involvement",
+    "notOffered": "Not offered yet",
+    "mine": "Offered / supporting",
+    "everything": "All",
     "locked": "There are {count} requests you can see after the second check. Set up an authenticator app from Me.",
     "loadFailed": "Couldn't load",
     "count": "{count} matching requests · longest-waiting first"
@@ -40,7 +66,8 @@
     "person": "Request from an individual",
     "summary": "Summary",
     "words": "In their words",
-    "since": "Since when", "wish": "What they'd like",
+    "since": "Since when",
+    "wish": "What they'd like",
     "offerMessage": "Message with your offer (the person asking will read it)",
     "offer": "Make an offer",
     "offerFailed": "Couldn't make the offer",
@@ -58,26 +85,37 @@
     "reported": "Reported. Waiting for the person's reply (it will be marked solved automatically after 14 days)",
     "invite": "Invite another organization to help",
     "inviteLead": "Please get the person's consent first. When the invited organization accepts, the person receives it as a suggestion.",
-    "inviteOrg": "Organization to invite", "inviteOrgHint": "Choose",
+    "inviteOrg": "Organization to invite",
+    "inviteOrgHint": "Choose",
     "inviteMessage": "Why you're inviting them (the organization and the person will read it)",
-    "sendInvite": "Invite", "invited": "Invited", "inviteFailed": "Couldn't invite",
+    "sendInvite": "Invite",
+    "invited": "Invited",
+    "inviteFailed": "Couldn't invite",
     "invitation": "You've been invited to support together",
-    "acceptInvitation": "Accept", "declineInvitation": "Decline",
+    "acceptInvitation": "Accept",
+    "declineInvitation": "Decline",
     "failed": "Something went wrong",
     "notFound": "Request not found.",
     "lockedBody": "You can read this request after the second check (authenticator app code)."
   },
-  "talk": { "title": "Messages", "empty": "You're not involved in any requests yet." },
+  "talk": {
+    "title": "Messages",
+    "empty": "You're not involved in any requests yet."
+  },
   "join": {
     "title": "Become a supporter",
     "tipLabel": "Same account",
     "tip": "You become a supporter with the same account. Your own requests are never visible from the supporter side.",
-    "tab": { "individual": "As an individual", "organization": "As an organization" },
+    "tab": {
+      "individual": "As an individual",
+      "organization": "As an organization"
+    },
     "realName": "Your name (real name)",
     "realNameTipLabel": "Where your real name is used",
     "realNameTip": "It is shared with people whose requests you offer to help with and with organizations you raise your hand for. On the asking side, only your nickname is shown, as before.",
     "skills": "What you're good at (choose any)",
-    "remote": "I can support remotely", "remoteNote": "When on, requests outside your area also appear",
+    "remote": "I can support remotely",
+    "remoteNote": "When on, requests outside your area also appear",
     "languages": "Languages you speak",
     "intro": "A few words (optional)",
     "individualLimit": "Individual supporters see only company and community requests. Requests from individuals, about life or violence, and from people under 18 are handled by organizations we have interviewed.",
@@ -108,7 +146,8 @@
     "smsUnavailable": "SMS verification isn't available yet. Please wait a little.",
     "codeWrong": "The code is wrong or has expired",
     "phoneDone": "Phone number verified",
-    "orgName": "Organization name", "orgNameHint": "(a department or branch is fine)",
+    "orgName": "Organization name",
+    "orgNameHint": "(a department or branch is fine)",
     "orgNameRequired": "Please enter the organization name",
     "orgType": "Type of organization",
     "contactEmail": "Organization contact email",
@@ -135,17 +174,34 @@
     "toSupportHome": "Go to the supporter home"
   },
   "orgType": {
-    "NPO": "Nonprofit", "NGO": "NGO", "COMPANY": "Company", "MUNICIPALITY": "Local government", "COMMUNITY": "Community group",
-    "SCHOOL": "School", "INTERMEDIARY": "Intermediary support organization", "PRO_BONO_LAWYER": "Pro bono lawyer", "OTHER_PUBLIC": "Other public body",
-    "NATIONAL_AGENCY": "National agency", "OTHER": "Other"
+    "NPO": "Nonprofit",
+    "NGO": "NGO",
+    "COMPANY": "Company",
+    "MUNICIPALITY": "Local government",
+    "COMMUNITY": "Community group",
+    "SCHOOL": "School",
+    "INTERMEDIARY": "Intermediary support organization",
+    "PRO_BONO_LAWYER": "Pro bono lawyer",
+    "OTHER_PUBLIC": "Other public body",
+    "NATIONAL_AGENCY": "National agency",
+    "OTHER": "Other"
   },
-  "vetting": { "APPLIED": "Applied", "INTERVIEW": "Scheduling interview", "APPROVED": "Interviewed by samasama", "REJECTED": "Not accepted", "SUSPENDED": "Suspended" },
+  "vetting": {
+    "APPLIED": "Applied",
+    "INTERVIEW": "Scheduling interview",
+    "APPROVED": "Interviewed by samasama",
+    "REJECTED": "Not accepted",
+    "SUSPENDED": "Suspended"
+  },
   "proxy": {
     "title": "Register a request on behalf",
     "tipLabel": "Before you register",
     "tip": "Get the person's consent before registering. Your name is kept in your organization's records.",
-    "name": "The person's nickname", "nameHint": "(temporary is fine)",
-    "minor": "Are they under 18?", "yes": "Yes", "no": "No",
+    "name": "The person's nickname",
+    "nameHint": "(temporary is fine)",
+    "minor": "Are they under 18?",
+    "yes": "Yes",
+    "no": "No",
     "words": "In their words (as you heard them)",
     "consent": "The person agreed to registering this request here",
     "submit": "Register and show the handover code",
@@ -162,7 +218,8 @@
   "contrib": {
     "title": "My contributions",
     "resolvedCount": "You've helped solve {count} requests",
-    "score": "Score", "thanks": "Thanks",
+    "score": "Score",
+    "thanks": "Thanks",
     "howCalculated": "How it's calculated",
     "formulaLabel": "How the score is calculated",
     "formula": "Score = number of indicators on solved requests × number of people affected. Requests from individuals count as 1 person; company and community requests use the registered number of people. Only indicators confirmed by the samasama team count, and thanks are counted separately. Only support confirmed as solved by the person asking counts — not the number of offers or reply speed. The indicators are based on the SDG global indicators, but this way of counting was set by samasama on its own and is not defined or endorsed by the United Nations or others.",
@@ -180,14 +237,19 @@
   "invitations": {
     "title": "{name} has invited you",
     "lead": "If you accept, you can support requests as a member of this organization. You also agree to the rules for supporters and organizations.",
-    "accept": "Accept", "decline": "Decline"
+    "accept": "Accept",
+    "decline": "Decline"
   },
   "org": {
     "members": "Members",
     "membersTipLabel": "Members and requests",
     "membersTip": "Requests and messages belong to the organization. Only current members can read them; removed members lose access from that day. Contribution records stay with each person.",
     "me": "(you)",
-    "role": { "OWNER": "Manager", "ADMIN": "Can add members", "MEMBER": "Staff" },
+    "role": {
+      "OWNER": "Manager",
+      "ADMIN": "Can add members",
+      "MEMBER": "Staff"
+    },
     "remove": "Remove",
     "invite": "Invite a member",
     "inviteTipLabel": "How to invite",

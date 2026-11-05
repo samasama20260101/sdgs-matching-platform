@@ -14,6 +14,7 @@ import { Button, Card, ErrorNote, Heading, SectionLabel, Tip, Toggle } from '@/c
 import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } from '@/components/app/ProfileFields'
 import type { MePerson } from '@/lib/client/meTypes'
 import { Invitations } from '@/components/support/Invitations'
+import { MfaGate } from '@/components/app/MfaGate'
 
 function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Promise<void> }) {
   const t = useTranslations('app.me')
@@ -168,6 +169,8 @@ function WithdrawCard() {
 
 export default function MePage() {
   const t = useTranslations('app.me')
+  const tMfa = useTranslations('app.mfa')
+  const [mfaOpen, setMfaOpen] = useState(false)
   const { refresh, signOut, canSupport } = useSession()
   const router = useRouter()
   return (
@@ -193,6 +196,21 @@ export default function MePage() {
               <span className="text-[12.5px] text-mist">{me.loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
             </div>
           </Card>
+
+          {me.faces.organizations.length > 0 && (
+            me.mfa.verified
+              ? <Card className="p-4"><span className="text-[14px] font-bold text-leaf">{tMfa('done')}</span></Card>
+              : me.mfa.enrolled || mfaOpen
+                ? <MfaGate purpose="member" onVerified={refresh} />
+                : (
+                  <Card className="flex flex-col gap-2 p-4">
+                    <span className="text-[15px] font-bold">{tMfa('card')}</span>
+                    <span className="text-[12.5px] text-mist">{tMfa('cardNote')}</span>
+                    {/* 押したときだけ登録を始める(開いただけで因子を作らない) */}
+                    <Button variant="outline" onClick={() => setMfaOpen(true)}>{tMfa('title')}</Button>
+                  </Card>
+                )
+          )}
 
           <Card className="p-4">
             {canSupport ? (

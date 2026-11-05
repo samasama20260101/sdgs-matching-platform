@@ -14,11 +14,12 @@ export async function GET(request: Request) {
       category: Number.isInteger(cat) && cat >= 1 && cat <= 17 ? cat : null,
       includeRemote: url.searchParams.get('remote') === '1',
       involvement: involvement === 'notOffered' || involvement === 'mine' ? involvement : 'all',
+      escalated: url.searchParams.get('escalated') === '1',
     })
     return NextResponse.json({
       cases: items,
       lockedCount: items.filter((i) => i.locked).length,
-      face: { label: auth.rf.label, kind: auth.rf.face.kind, phoneVerified: auth.rf.phoneVerified, approved: auth.rf.face.kind === 'ORGANIZATION' ? auth.rf.face.organizationApproved : true },
+      face: { label: auth.rf.label, kind: auth.rf.face.kind, phoneVerified: auth.rf.phoneVerified, approved: auth.rf.face.kind === 'ORGANIZATION' ? auth.rf.face.organizationApproved : true, coordinator: auth.rf.coordinatorRegions.length > 0 },
     })
   } catch (e) {
     console.error('[api/support/cases]', e)

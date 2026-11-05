@@ -1,5 +1,5 @@
 // 支える｜申し出る(POST)・取り下げる(DELETE)。申し出は1件の相談に1つの顔で1件。メッセージ必須(盤 05「メッセージを添えて申し出る」)
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -7,6 +7,7 @@ import { requireFace } from '@/lib/server/supportAuth'
 import { loadSupportCase } from '@/lib/server/supportCases'
 import { OFFER_MESSAGE_MAX } from '@/lib/domain/offers'
 import { postSystemMessage } from '@/lib/server/systemMessages'
+import { consulteeUserIds, notifyUsers } from '@/lib/server/notifyUser'
 
 const postSchema = z.object({
   face: z.string(),
@@ -46,6 +47,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (loaded.mine && ['WITHDRAWN', 'DECLINED'].includes(loaded.mine.status)) {
     const { error } = await supabaseAdmin.from('offers').update(row).eq('id', loaded.mine.id)
     if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    after(async () => notifyUsers(await consulteeUserIds(id), 'NEW_OFFER').catch(() => undefined))
     return NextResponse.json({ id: loaded.mine.id })
   }
   const { data, error } = await supabaseAdmin.from('offers').insert(row).select('id').single()
@@ -54,6 +56,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.error('[api/support/offer]', error)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
+  after(async () => notifyUsers(await consulteeUserIds(id), 'NEW_OFFER').catch(() => undefined))
   return NextResponse.json({ id: data.id })
 }
 

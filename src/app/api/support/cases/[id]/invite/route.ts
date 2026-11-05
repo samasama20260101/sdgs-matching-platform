@@ -1,12 +1,13 @@
 // 支える｜共同支援に招く(中心の支え手だけ、盤 15・22)。招かれた団体が受けると、相談した人に「提案」として届き、
 // 相談した人が同意すると加わる。招けるのは運営が承認した団体だけ(個人の相談に個人の支え手は招けない)
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireFace } from '@/lib/server/supportAuth'
 import { loadSupportCase } from '@/lib/server/supportCases'
 import { MAX_SUPPORTERS_PER_CASE, OFFER_MESSAGE_MAX } from '@/lib/domain/offers'
+import { notifyUsers } from '@/lib/server/notifyUser'
 
 const schema = z.object({
   face: z.string(),
@@ -47,5 +48,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (error.code === '23505') return NextResponse.json({ error: 'その団体はもう関わっています', code: 'ALREADY' }, { status: 409 })
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
+  after(async () => {
+    const { data: owners } = await supabaseAdmin.from('organization_memberships').select('user_id').eq('organization_id', target.id).eq('status', 'ACTIVE').in('role', ['OWNER', 'ADMIN'])
+    await notifyUsers((owners ?? []).map((m) => m.user_id as string), 'INVITED').catch(() => undefined)
+  })
   return NextResponse.json({ id: data.id })
 }

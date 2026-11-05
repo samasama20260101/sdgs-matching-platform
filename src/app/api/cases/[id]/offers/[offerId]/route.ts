@@ -1,5 +1,5 @@
 // 申し出を選ぶ / 今回は見送る(盤 14)。中心からの招待は、招かれた団体が受けたあと(PENDING + invited_by_offer_id)に相談する側が同意する(盤 15)
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/domain/offers'
 import { postSystemMessage } from '@/lib/server/systemMessages'
+import { notifyUsers } from '@/lib/server/notifyUser'
 
 const schema = z.object({ action: z.enum(['accept', 'decline']) })
 
@@ -57,5 +58,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const { data: accepted } = await supabaseAdmin.from('offers').select('invited_by_offer_id').eq('id', offerId).single()
   if (accepted?.invited_by_offer_id) await postSystemMessage(id, auth.appUser.id, 'joined')
+  after(async () => {
+    const { data: o } = await supabaseAdmin.from('offers').select('created_by_user_id, supporter_user_id').eq('id', offerId).single()
+    await notifyUsers([(o?.created_by_user_id as string | null) ?? (o?.supporter_user_id as string)], 'CHOSEN').catch(() => undefined)
+  })
   return NextResponse.json({ ok: true, acceptedOrder: r.accepted_order })
 }

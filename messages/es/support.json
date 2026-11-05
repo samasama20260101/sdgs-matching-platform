@@ -1,18 +1,36 @@
 {
-  "face": { "label": "¿En nombre de quién apoyas?", "asIndividual": "Como persona ({name})", "pending": "en revisión" },
+  "face": {
+    "label": "¿En nombre de quién apoyas?",
+    "asIndividual": "Como persona ({name})",
+    "pending": "en revisión"
+  },
   "card": {
     "locked": "Consultas visibles tras la segunda verificación",
     "lockedNote": "Las consultas sobre la vida, la violencia y las de menores de 18 años solo las pueden leer quienes introdujeron un código de una app de autenticación.",
-    "urgent": "Urgente", "minor": "Menor de 18", "sensitive": "Delicada", "company": "Consulta de empresa", "community": "Consulta de comunidad",
-    "language": "Original: {lang}", "waiting": "Esperando {hours} h", "offers": "{count} ofrecimientos",
-    "mine": { "PENDING": "Ofrecido", "INVITED": "Te han invitado", "ACCEPTED": "Elegido", "DECLINED": "No elegido", "WITHDRAWN": "Retirado" }
+    "urgent": "Urgente",
+    "minor": "Menor de 18",
+    "sensitive": "Delicada",
+    "company": "Consulta de empresa",
+    "community": "Consulta de comunidad",
+    "language": "Original: {lang}",
+    "waiting": "Esperando {hours} h",
+    "offers": "{count} ofrecimientos",
+    "mine": {
+      "PENDING": "Ofrecido",
+      "INVITED": "Te han invitado",
+      "ACCEPTED": "Elegido",
+      "DECLINED": "No elegido",
+      "WITHDRAWN": "Retirado"
+    }
   },
   "home": {
     "noFace": "Cuando empieces a apoyar, aquí aparecerán consultas para ti. Puedes registrarte como persona o como organización.",
     "join": "Apoyar",
     "helloIndividual": "Hola, {name}",
-    "individual": "Apoyo individual", "organization": "Organización",
-    "approved": "Entrevistada por samasama", "applied": "Solicitud recibida",
+    "individual": "Apoyo individual",
+    "organization": "Organización",
+    "approved": "Entrevistada por samasama",
+    "applied": "Solicitud recibida",
     "appliedNote": "Recibimos tu solicitud. El equipo de samasama te contactará para fijar una entrevista. Después podrás hacer ofrecimientos.",
     "involved": "Consultas en las que participas",
     "forYou": "Consultas para ti",
@@ -22,16 +40,24 @@
     "findMore": "Buscar consultas",
     "contributions": "Mis contribuciones",
     "proxy": "Registrar una consulta en nombre de otra persona",
-    "orgPage": "Página de la organización"
+    "orgPage": "Página de la organización",
+    "unmatched": "Consultas sin apoyo en tu zona: {count}",
+    "unmatchedTipLabel": "Lista de coordinación",
+    "unmatchedTip": "Consultas de tu zona que llevan 24 horas sin ofrecimientos. Contacta con servicios y organizaciones cercanas. Puedes explicar a las organizaciones no registradas cómo reclamar su página."
   },
   "find": {
     "title": "Buscar consultas",
     "tipLabel": "Cómo leer las etiquetas",
     "tip": "Las etiquetas llenas las eligió la persona que consulta; las punteadas son sugerencias de la IA (antes de que el equipo de samasama las revise). En las consultas escritas en otros idiomas puedes ver una traducción en los mensajes.",
     "individualNote": "A título individual solo ves consultas de empresas y comunidades (las de personas se apoyan a través de organizaciones).",
-    "category": "Categoría", "all": "Todas",
-    "remote": "Incluir consultas que puedo apoyar a distancia", "remoteNote": "Muestra también consultas fuera de tu zona",
-    "involvement": "Participación", "notOffered": "Sin ofrecimiento", "mine": "Ofrecido / apoyando", "everything": "Todas",
+    "category": "Categoría",
+    "all": "Todas",
+    "remote": "Incluir consultas que puedo apoyar a distancia",
+    "remoteNote": "Muestra también consultas fuera de tu zona",
+    "involvement": "Participación",
+    "notOffered": "Sin ofrecimiento",
+    "mine": "Ofrecido / apoyando",
+    "everything": "Todas",
     "locked": "Hay {count} consultas que puedes ver tras la segunda verificación. Configura una app de autenticación desde Yo.",
     "loadFailed": "No se pudo cargar",
     "count": "{count} consultas · primero las que llevan más tiempo esperando"
@@ -40,7 +66,8 @@
     "person": "Consulta de una persona",
     "summary": "Resumen",
     "words": "Con sus palabras",
-    "since": "Desde cuándo", "wish": "Qué le gustaría",
+    "since": "Desde cuándo",
+    "wish": "Qué le gustaría",
     "offerMessage": "Mensaje con tu ofrecimiento (lo leerá la persona que consulta)",
     "offer": "Ofrecer apoyo",
     "offerFailed": "No se pudo enviar el ofrecimiento",
@@ -58,26 +85,37 @@
     "reported": "Informado. Esperando la respuesta de la persona (se marcará como resuelta automáticamente a los 14 días)",
     "invite": "Invitar a otra organización a apoyar",
     "inviteLead": "Consigue primero el consentimiento de la persona. Cuando la organización invitada acepte, la persona lo recibirá como propuesta.",
-    "inviteOrg": "Organización a invitar", "inviteOrgHint": "Elige",
+    "inviteOrg": "Organización a invitar",
+    "inviteOrgHint": "Elige",
     "inviteMessage": "Por qué la invitas (la leerán la organización y la persona)",
-    "sendInvite": "Invitar", "invited": "Invitada", "inviteFailed": "No se pudo invitar",
+    "sendInvite": "Invitar",
+    "invited": "Invitada",
+    "inviteFailed": "No se pudo invitar",
     "invitation": "Te han invitado a apoyar juntos",
-    "acceptInvitation": "Aceptar", "declineInvitation": "Rechazar",
+    "acceptInvitation": "Aceptar",
+    "declineInvitation": "Rechazar",
     "failed": "Algo salió mal",
     "notFound": "No encontramos la consulta.",
     "lockedBody": "Puedes leer esta consulta tras la segunda verificación (código de una app de autenticación)."
   },
-  "talk": { "title": "Mensajes", "empty": "Todavía no participas en ninguna consulta." },
+  "talk": {
+    "title": "Mensajes",
+    "empty": "Todavía no participas en ninguna consulta."
+  },
   "join": {
     "title": "Apoyar",
     "tipLabel": "La misma cuenta",
     "tip": "Pasas a apoyar con la misma cuenta. Tus propias consultas nunca se ven desde la parte de apoyar.",
-    "tab": { "individual": "Como persona", "organization": "Como organización" },
+    "tab": {
+      "individual": "Como persona",
+      "organization": "Como organización"
+    },
     "realName": "Tu nombre (real)",
     "realNameTipLabel": "Dónde se usa tu nombre real",
     "realNameTip": "Se comparte con las personas a las que ofreces apoyo y con las organizaciones a las que te ofreces. Al pedir ayuda solo se muestra tu apodo, como antes.",
     "skills": "En qué puedes ayudar (elige las que quieras)",
-    "remote": "Puedo apoyar a distancia", "remoteNote": "Si lo activas, también aparecen consultas fuera de tu zona",
+    "remote": "Puedo apoyar a distancia",
+    "remoteNote": "Si lo activas, también aparecen consultas fuera de tu zona",
     "languages": "Idiomas que hablas",
     "intro": "Unas palabras (opcional)",
     "individualLimit": "A título individual solo ves consultas de empresas y comunidades. Las consultas de personas, sobre la vida o la violencia y las de menores de 18 años las atienden organizaciones que hemos entrevistado.",
@@ -108,7 +146,8 @@
     "smsUnavailable": "La verificación por SMS aún no está disponible. Espera un poco.",
     "codeWrong": "El código no es correcto o ha caducado",
     "phoneDone": "Teléfono verificado",
-    "orgName": "Nombre de la organización", "orgNameHint": "(puede ser un departamento o una sede)",
+    "orgName": "Nombre de la organización",
+    "orgNameHint": "(puede ser un departamento o una sede)",
     "orgNameRequired": "Escribe el nombre de la organización",
     "orgType": "Tipo de organización",
     "contactEmail": "Correo de contacto de la organización",
@@ -135,17 +174,34 @@
     "toSupportHome": "Ir al inicio de apoyar"
   },
   "orgType": {
-    "NPO": "Entidad sin ánimo de lucro", "NGO": "ONG", "COMPANY": "Empresa", "MUNICIPALITY": "Gobierno local", "COMMUNITY": "Grupo comunitario",
-    "SCHOOL": "Escuela", "INTERMEDIARY": "Organización de apoyo intermedio", "PRO_BONO_LAWYER": "Abogado/a pro bono", "OTHER_PUBLIC": "Otro organismo público",
-    "NATIONAL_AGENCY": "Organismo nacional", "OTHER": "Otro"
+    "NPO": "Entidad sin ánimo de lucro",
+    "NGO": "ONG",
+    "COMPANY": "Empresa",
+    "MUNICIPALITY": "Gobierno local",
+    "COMMUNITY": "Grupo comunitario",
+    "SCHOOL": "Escuela",
+    "INTERMEDIARY": "Organización de apoyo intermedio",
+    "PRO_BONO_LAWYER": "Abogado/a pro bono",
+    "OTHER_PUBLIC": "Otro organismo público",
+    "NATIONAL_AGENCY": "Organismo nacional",
+    "OTHER": "Otro"
   },
-  "vetting": { "APPLIED": "Solicitada", "INTERVIEW": "Fijando entrevista", "APPROVED": "Entrevistada por samasama", "REJECTED": "No aceptada", "SUSPENDED": "Suspendida" },
+  "vetting": {
+    "APPLIED": "Solicitada",
+    "INTERVIEW": "Fijando entrevista",
+    "APPROVED": "Entrevistada por samasama",
+    "REJECTED": "No aceptada",
+    "SUSPENDED": "Suspendida"
+  },
   "proxy": {
     "title": "Registrar una consulta en nombre de otra persona",
     "tipLabel": "Antes de registrar",
     "tip": "Consigue el consentimiento de la persona antes de registrar. Tu nombre queda en los registros de la organización.",
-    "name": "Apodo de la persona", "nameHint": "(puede ser provisional)",
-    "minor": "¿Tiene menos de 18 años?", "yes": "Sí", "no": "No",
+    "name": "Apodo de la persona",
+    "nameHint": "(puede ser provisional)",
+    "minor": "¿Tiene menos de 18 años?",
+    "yes": "Sí",
+    "no": "No",
     "words": "Con sus palabras (tal como las escuchaste)",
     "consent": "La persona aceptó que registremos esta consulta aquí",
     "submit": "Registrar y mostrar el código de traspaso",
@@ -162,7 +218,8 @@
   "contrib": {
     "title": "Mis contribuciones",
     "resolvedCount": "Has ayudado a resolver {count} consultas",
-    "score": "Puntuación", "thanks": "Agradecimientos",
+    "score": "Puntuación",
+    "thanks": "Agradecimientos",
     "howCalculated": "Cómo se calcula",
     "formulaLabel": "Cómo se calcula la puntuación",
     "formula": "Puntuación = número de indicadores de las consultas resueltas × número de personas afectadas. Las consultas de personas cuentan como 1; las de empresas y comunidades usan el número de personas registrado. Solo cuentan los indicadores confirmados por el equipo de samasama, y los agradecimientos se cuentan aparte. Solo cuenta el apoyo que la persona que consultó confirmó como resuelto, no el número de ofrecimientos ni la rapidez de respuesta. Los indicadores se basan en los indicadores mundiales de los ODS, pero esta forma de contar la decidió samasama por su cuenta y no la han definido ni aprobado las Naciones Unidas ni otros.",
@@ -180,14 +237,19 @@
   "invitations": {
     "title": "{name} te ha invitado",
     "lead": "Si aceptas, podrás apoyar consultas como miembro de esta organización. También aceptas las normas para personas y organizaciones que apoyan.",
-    "accept": "Aceptar", "decline": "Rechazar"
+    "accept": "Aceptar",
+    "decline": "Rechazar"
   },
   "org": {
     "members": "Miembros",
     "membersTipLabel": "Miembros y consultas",
     "membersTip": "Las consultas y los mensajes son de la organización. Solo los miembros actuales pueden leerlos; quien deja de ser miembro pierde el acceso ese mismo día. Los registros de contribución quedan con cada persona.",
     "me": "(tú)",
-    "role": { "OWNER": "Responsable", "ADMIN": "Puede añadir miembros", "MEMBER": "Personal" },
+    "role": {
+      "OWNER": "Responsable",
+      "ADMIN": "Puede añadir miembros",
+      "MEMBER": "Personal"
+    },
     "remove": "Quitar",
     "invite": "Invitar a un miembro",
     "inviteTipLabel": "Cómo invitar",

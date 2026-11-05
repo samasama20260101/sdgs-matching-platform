@@ -1,11 +1,12 @@
 // 支える｜解決を報告する(中心の支え手だけ)。相談した人が確定するか、14 日で自動の解決になる
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireFace } from '@/lib/server/supportAuth'
 import { loadSupportCase } from '@/lib/server/supportCases'
 import { postSystemMessage } from '@/lib/server/systemMessages'
+import { consulteeUserIds, notifyUsers } from '@/lib/server/notifyUser'
 
 const schema = z.object({ face: z.string() })
 
@@ -24,6 +25,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: updated, error } = await supabaseAdmin.from('cases').update({ supporter_resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id).eq('status', 'MATCHED').is('supporter_resolved_at', null).select('id').maybeSingle()
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   // すでに報告済みなら、知らせを重ねて出さない
-  if (updated) await postSystemMessage(id, auth.userId, 'resolveReported')
+  if (updated) {
+    await postSystemMessage(id, auth.userId, 'resolveReported')
+    after(async () => notifyUsers(await consulteeUserIds(id), 'RESOLVE_REPORTED').catch(() => undefined))
+  }
   return NextResponse.json({ ok: true })
 }
