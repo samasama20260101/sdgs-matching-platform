@@ -71,7 +71,9 @@
     "subjectCOMMUNITY": "地域の相談",
     "categoryNeedsSubject": "大項目の名前は相談した人の種類で変わるので、先に「だれの相談か」を選んでください",
     "filters": "絞り込み",
-    "remoteShort": "遠隔も含める"
+    "remoteShort": "遠隔も含める",
+    "loadMore": "もっと見る",
+    "loadingMore": "読み込んでいます…"
   },
   "case": {
     "person": "個人の相談",

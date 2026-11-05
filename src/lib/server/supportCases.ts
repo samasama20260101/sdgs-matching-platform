@@ -165,13 +165,17 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
 }
 
 // escalated: コーディネーターの一覧(その地域で 24 時間申し出のない相談、盤 05「地域のコーディネーターの一覧に回す」)
-// subject: だれの相談か(大項目の名前は相談した人の種類で変わるので、大項目で絞るときは種類も選ぶ)
-export type FindFilters = { subject: AreaSubject | null; category: number | null; includeRemote: boolean; involvement: 'all' | 'notOffered' | 'mine'; escalated?: boolean }
+// offset: 何件目から(待っている時間が長い順 = 届いた順)。1 回に FIND_PAGE_SIZE 件
+export type FindFilters = { subject: AreaSubject | null; category: number | null; includeRemote: boolean; involvement: 'all' | 'notOffered' | 'mine'; escalated?: boolean; offset?: number }
+export const FIND_PAGE_SIZE = 50
 
-export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise<SupportCaseItem[]> {
+// 絞り込みは DB の中で行い、件数で切る前に絞る(性能のレビュー 11/5: 古い順の 200 件で切ってから JS で絞っていたので、
+// 受付中の相談が 200 件を超えると新しい相談が出なくなり、大項目で絞ると 0 件に見えることもあった)
+export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise<{ items: SupportCaseItem[]; hasMore: boolean; nextOffset: number }> {
+  const none = { items: [], hasMore: false, nextOffset: 0 }
   let q = supabaseAdmin.from('cases').select(CASE_COLUMNS).in('status', ['OPEN', 'MATCHED']).eq('visibility', 'LISTED')
   if (filters.escalated) {
-    if (rf.coordinatorRegions.length === 0) return []
+    if (rf.coordinatorRegions.length === 0) return none
     q = q.eq('status', 'OPEN').not('escalated_at', 'is', null).in('region_code', rf.coordinatorRegions)
   } else if (!filters.includeRemote && !rf.nationwide && rf.regionCodes.length > 0) {
     // 地域: 活動地域の相談だけ。全国対応・遠隔を含めるときは地域で絞らない
@@ -179,21 +183,40 @@ export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise
   }
   if (rf.face.kind === 'INDIVIDUAL') q = q.in('subject_type', ['COMPANY', 'COMMUNITY']).eq('is_sensitive', false).eq('is_minor', false)
   if (filters.subject) {
-    if (rf.face.kind === 'INDIVIDUAL' && filters.subject === 'PERSON') return []
+    if (rf.face.kind === 'INDIVIDUAL' && filters.subject === 'PERSON') return none
     q = q.eq('subject_type', filters.subject)
   }
-  const { data, error } = await q.order('created_at', { ascending: true }).limit(200)
-  if (error) throw error
-  let rows = (data ?? []) as CaseRow[]
+  // 大項目: その種類の、その大項目の選択肢のどれかを相談した人が選んでいる(intake_qna.indicators に入っている)
   if (filters.category !== null) {
-    const cat = filters.category
-    rows = rows.filter((c) => (c.intake_qna?.indicators ?? []).some((code) => optionsFor(c.subject_type).find((o) => o.id === code)?.category === cat))
+    const subjects: AreaSubject[] = filters.subject ? [filters.subject] : ['PERSON', 'COMPANY', 'COMMUNITY']
+    const codes = [...new Set(subjects.flatMap((sub) => optionsFor(sub).filter((o) => o.category === filters.category).map((o) => o.id)))]
+    if (codes.length === 0) return none
+    q = q.or(codes.map((code) => `intake_qna->indicators.cs.["${code}"]`).join(','))
   }
-  let items = await decorate(rows, rf, Date.now())
-  if (filters.involvement === 'notOffered') items = items.filter((i) => !i.myOfferStatus || i.myOfferStatus === 'WITHDRAWN')
-  if (filters.involvement === 'mine') items = items.filter((i) => i.myOfferStatus && ['PENDING', 'INVITED', 'ACCEPTED'].includes(i.myOfferStatus))
-  // 待っている時間が長い順(盤 22)
-  return items.sort((a, b) => b.waitingHours - a.waitingHours)
+  // 関わり: 自分の顔の申し出で絞る
+  if (filters.involvement !== 'all') {
+    let oq = supabaseAdmin.from('offers').select('case_id, status')
+    oq = rf.face.kind === 'INDIVIDUAL' ? oq.eq('supporter_kind', 'INDIVIDUAL').eq('supporter_user_id', rf.face.userId) : oq.eq('supporter_organization_id', rf.face.organizationId)
+    const { data: mine, error: oErr } = await oq.limit(1000)
+    if (oErr) throw oErr
+    if (filters.involvement === 'mine') {
+      const ids = (mine ?? []).filter((o) => ['PENDING', 'INVITED', 'ACCEPTED'].includes(o.status as string)).map((o) => o.case_id as string)
+      if (ids.length === 0) return none
+      q = q.in('id', ids)
+    } else {
+      // まだ申し出ていない: 取り下げたものは、もう一度申し出られるので残す
+      const ids = (mine ?? []).filter((o) => o.status !== 'WITHDRAWN').map((o) => o.case_id as string)
+      if (ids.length > 0) q = q.not('id', 'in', `(${ids.join(',')})`)
+    }
+  }
+  const offset = Math.max(0, Math.floor(filters.offset ?? 0))
+  const { data, error } = await q.order('created_at', { ascending: true }).order('id', { ascending: true }).range(offset, offset + FIND_PAGE_SIZE - 1)
+  if (error) throw error
+  const rows = (data ?? []) as CaseRow[]
+  const items = await decorate(rows, rf, Date.now())
+  // 待っている時間が長い順(盤 22)。DB の並び(届いた順)と同じ
+  // 見えない相談は decorate で落ちるので、続きの位置は DB の行の数で返す
+  return { items: items.sort((a, b) => b.waitingHours - a.waitingHours), hasMore: rows.length === FIND_PAGE_SIZE, nextOffset: offset + rows.length }
 }
 
 // 自分の顔で関わっている相談(申し出中・選ばれた・招かれた)。受付が終わったものも含む
