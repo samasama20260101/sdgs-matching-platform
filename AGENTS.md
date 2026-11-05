@@ -10,6 +10,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 | 相談フォームの選択肢(正本) | `docs/intake_indicators.md` |
 | お知らせ欄の設計・決定ログ | `docs/news_section_design.md` |
 | 今の状況・次の担当者への申し送り | `HANDOFF.md` |
+| v2.0 で何をどう作るか(決まり・データ・未決) | `docs/v2_design.md` |
 
 ---
 
@@ -45,6 +46,9 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。並列マッチングには戻さない。2 団体目以降を足すなら「承認済みの団体が招待する」形(未着手)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
 - 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。
+- **v2.0 の作業中(#72)。Staging の DB は 2026-11-05 から v2 の形**(`migrations/v2_0*.sql`)。dev の v1 の画面は v2 の画面に置き換わるまで Staging で動かないところがある。本番(main)は v1 の DB のまま。
+- **支える側から見える相談の決まりは `src/lib/domain/visibility.ts` だけで判定する。** API ごとに条件を書き直さない(個人の支え手に個人の相談を出さない・機微は2つ目の確認・自分の相談を出さない)。
+- **`contributions` は追記だけ。** UPDATE は DB が断る。直すときは CORRECTION の行を足す。消すのは退会のときだけ。
 - Cloudflare Workers への載せ替え中(v2.0、#72)。Vercel と Workers の両方で動く書き方にする: 環境の判定は `src/lib/deployEnv.ts`(`VERCEL_ENV` を直接見ない)、Workers で読めない Node のネイティブ部品(sharp など)を静的に import しない。
 
 <!-- BEGIN:nextjs-agent-rules -->
