@@ -5,6 +5,7 @@ import { Suspense, use, useCallback, useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea } from '@/components/app/ui'
@@ -93,31 +94,25 @@ function Inner({ id }: { id: string }) {
   const tSdgs = useTranslations('sdgs')
   const locale = useLocale()
   const face = useSearchParams().get('face') ?? ''
-  const [data, setData] = useState<Detail | null>(null)
+  const fetchDetail = useCallback(() => apiFetch<Detail>(`/api/support/cases/${id}?face=${encodeURIComponent(face)}`), [id, face])
+  const { data, error: loadError, reload } = useLoad(fetchDetail)
   const [error, setError] = useState<string | null>(null)
   const [withdrawing, setWithdrawing] = useState(false)
   const [reason, setReason] = useState('')
 
-  const load = useCallback(async () => {
-    try {
-      setData(await apiFetch<Detail>(`/api/support/cases/${id}?face=${encodeURIComponent(face)}`))
-    } catch {
-      setError(t('notFound'))
-    }
-  }, [id, face, t])
-  useEffect(() => { void load() }, [load])
+  const loadMessage = loadError ? t('notFound') : null
 
   const act = async (fn: () => Promise<unknown>, failKey: string) => {
     setError(null)
     try {
       await fn()
-      await load()
+      await reload()
     } catch {
       setError(t(failKey))
     }
   }
 
-  if (error && !data) return <Card tone="support" className="p-4"><Lead>{error}</Lead></Card>
+  if (!data && loadMessage) return <Card tone="support" className="p-4"><Lead>{loadMessage}</Lead></Card>
   if (!data) return <Spinner />
   if (data.locked) return <Card tone="support" className="p-4"><Lead>{t('lockedBody')}</Lead></Card>
   const c = data.case
@@ -158,7 +153,7 @@ function Inner({ id }: { id: string }) {
       )}
 
       {!mine || ['WITHDRAWN', 'DECLINED'].includes(mine.status) ? (
-        c.canOffer ? <OfferForm caseId={c.id} face={face} onDone={load} /> : <Card tone="support" className="p-4"><Lead>{t('cannotOffer')}</Lead></Card>
+        c.canOffer ? <OfferForm caseId={c.id} face={face} onDone={reload} /> : <Card tone="support" className="p-4"><Lead>{t('cannotOffer')}</Lead></Card>
       ) : mine.status === 'PENDING' ? (
         <Card tone="support" className="flex flex-col gap-2 p-4">
           <span className="text-[14px] font-bold">{mine.invited ? t('waitingConsentInvite') : t('pending')}</span>
@@ -190,7 +185,7 @@ function Inner({ id }: { id: string }) {
           )}
         </section>
       )}
-      <ErrorNote>{error}</ErrorNote>
+      <ErrorNote>{error ?? loadMessage}</ErrorNote>
     </>
   )
 }

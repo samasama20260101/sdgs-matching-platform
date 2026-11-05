@@ -1,9 +1,10 @@
 'use client'
 
 // 団体のページ(紹介・連絡先・メンバー・招待)。管理の人だけが変えられる。見出しは団体名にし、団体の番号は下に小さく(画面の見直し 所見 12)
-import { use, useCallback, useEffect, useState } from 'react'
+import { use, useCallback, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch, ApiError } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea, TextField, Tip } from '@/components/app/ui'
@@ -55,15 +56,13 @@ function Profile({ id, o, onSaved }: { id: string; o: Payload['organization']; o
 function Org({ id }: { id: string }) {
   const t = useTranslations('support.org')
   const tStatus = useTranslations('support.vetting')
-  const [data, setData] = useState<Payload | null>(null)
+  const fetchOrg = useCallback(() => apiFetch<Payload>(`/api/support/orgs/${id}`), [id])
+  const { data, error: loadError, reload } = useLoad(fetchOrg)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'MEMBER' | 'ADMIN'>('MEMBER')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const load = useCallback(async () => {
-    try { setData(await apiFetch<Payload>(`/api/support/orgs/${id}`)) } catch { setError(t('notFound')) }
-  }, [id, t])
-  useEffect(() => { void load() }, [load])
+  const loadMessage = loadError ? t('notFound') : null
 
   const invite = async () => {
     setError(null)
@@ -72,7 +71,7 @@ function Org({ id }: { id: string }) {
       await apiFetch(`/api/support/orgs/${id}/invitations`, { method: 'POST', json: { email, role } })
       setEmail('')
       setNotice(t('invited'))
-      await load()
+      await reload()
     } catch (e) {
       setError(e instanceof ApiError && e.code === 'ALREADY' ? t('alreadyInvited') : t('inviteFailed'))
     }
@@ -81,13 +80,13 @@ function Org({ id }: { id: string }) {
     setError(null)
     try {
       await apiFetch(`/api/support/orgs/${id}/members/${membershipId}`, { method: 'PATCH', json: body })
-      await load()
+      await reload()
     } catch (e) {
       setError(e instanceof ApiError && e.code === 'LAST_OWNER' ? t('lastOwner') : t('changeFailed'))
     }
   }
 
-  if (error && !data) return <Card tone="support" className="p-4"><Lead>{error}</Lead></Card>
+  if (!data && loadMessage) return <Card tone="support" className="p-4"><Lead>{loadMessage}</Lead></Card>
   if (!data) return <Spinner />
   const o = data.organization
   const canManage = data.myRole === 'OWNER'
@@ -98,7 +97,7 @@ function Org({ id }: { id: string }) {
         <Heading level={2}>{o.name}</Heading>
         <span className="flex gap-1"><Chip color={o.vetting_status === 'APPROVED' ? 'leaf' : 'outline'}>{tStatus(o.vetting_status)}</Chip></span>
       </div>
-      {canManage && <Profile id={id} o={o} onSaved={load} />}
+      {canManage && <Profile id={id} o={o} onSaved={reload} />}
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <div className="flex items-center justify-between"><SectionLabel>{t('members')}</SectionLabel><Tip label={t('membersTipLabel')}>{t('membersTip')}</Tip></div>
         {data.members.map((m) => (
@@ -132,7 +131,7 @@ function Org({ id }: { id: string }) {
         </Card>
       )}
       {notice && <Card tone="support" className="bg-leaf-soft p-3"><span className="text-[13px] font-bold text-leaf-ink">{notice}</span></Card>}
-      <ErrorNote>{error}</ErrorNote>
+      <ErrorNote>{error ?? loadMessage}</ErrorNote>
       <span className="px-1 text-[11.5px] text-mist">{t('displayId', { id: o.display_id })}</span>
     </>
   )

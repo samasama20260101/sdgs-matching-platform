@@ -1,8 +1,9 @@
 'use client'
 
 // 運営｜審査。申し込み → 面談の調整中 → 承認(2段階に分けない、11/5)。面談のチェックリストは運営が決める項目を書き込む
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { apiFetch } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { Button, Card, Chip, cx, ErrorNote, Lead, TextArea, TextField } from '@/components/app/ui'
 
@@ -55,11 +56,8 @@ function OrgCard({ org, onChanged }: { org: Org; onChanged: () => Promise<void> 
 
 export default function VettingPage() {
   const [status, setStatus] = useState<string>('APPLIED')
-  const [data, setData] = useState<{ organizations: Org[]; counts: Record<string, number> } | null>(null)
-  const load = useCallback(async () => {
-    setData(await apiFetch<{ organizations: Org[]; counts: Record<string, number> }>(`/api/admin/orgs?status=${status}`).catch(() => null))
-  }, [status])
-  useEffect(() => { void load() }, [load])
+  const fetchOrgs = useCallback(() => apiFetch<{ organizations: Org[]; counts: Record<string, number> }>(`/api/admin/orgs?status=${status}`).catch(() => null), [status])
+  const { data, reload } = useLoad(fetchOrgs)
   return (
     <AdminShell title="審査">
       <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。</Lead>
@@ -71,7 +69,7 @@ export default function VettingPage() {
         ))}
       </div>
       {data?.organizations.length === 0 && <Lead>ありません。</Lead>}
-      {data?.organizations.map((o) => <OrgCard key={o.id} org={o} onChanged={load} />)}
+      {data?.organizations.map((o) => <OrgCard key={o.id} org={o} onChanged={reload} />)}
     </AdminShell>
   )
 }
