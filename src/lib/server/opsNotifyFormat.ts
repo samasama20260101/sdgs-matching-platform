@@ -21,3 +21,13 @@ export function formatOpsEvent(event: OpsEvent): string {
       return `24時間申し出のない相談が ${event.count} 件あります`
   }
 }
+
+// 知らせの種類ごとの行き先。相談のこと(新しい相談・つなぎ先の同意・申し出のない相談)は Discord の「新着sos」、
+// 団体の申し込みは「サポーター申請」に流す。申し込み用の Webhook がなければ相談のほうに流す
+export type OpsWebhookEnv = { DISCORD_OPS_WEBHOOK_URL?: string; DISCORD_OPS_APPLICATION_WEBHOOK_URL?: string }
+
+export function opsWebhookFor(kind: OpsEvent['kind'], env: OpsWebhookEnv): string | null {
+  const cases = env.DISCORD_OPS_WEBHOOK_URL?.trim() || null
+  if (kind === 'ORG_APPLICATION') return env.DISCORD_OPS_APPLICATION_WEBHOOK_URL?.trim() || cases
+  return cases
+}

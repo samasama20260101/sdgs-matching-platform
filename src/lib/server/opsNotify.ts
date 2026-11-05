@@ -4,12 +4,15 @@ import 'server-only'
 // Webhook がない環境(手元・未設定の Staging)では何もしない
 import { getDeployEnv } from '@/lib/deployEnv'
 
-import { formatOpsEvent, type OpsEvent } from './opsNotifyFormat'
+import { formatOpsEvent, opsWebhookFor, type OpsEvent } from './opsNotifyFormat'
 
 export type { OpsEvent }
 
 export async function notifyOps(event: OpsEvent): Promise<void> {
-  const url = process.env.DISCORD_OPS_WEBHOOK_URL
+  const url = opsWebhookFor(event.kind, {
+    DISCORD_OPS_WEBHOOK_URL: process.env.DISCORD_OPS_WEBHOOK_URL,
+    DISCORD_OPS_APPLICATION_WEBHOOK_URL: process.env.DISCORD_OPS_APPLICATION_WEBHOOK_URL,
+  })
   if (!url) return
   const prefix = getDeployEnv() === 'production' ? '' : '[Staging] '
   await fetch(url, {
