@@ -71,7 +71,9 @@
     "subjectCOMMUNITY": "De comunidades",
     "categoryNeedsSubject": "Los nombres de las áreas cambian según quién pide ayuda; elige primero \"De quién es la solicitud\"",
     "filters": "Filtros",
-    "remoteShort": "Incluye a distancia"
+    "remoteShort": "Incluye a distancia",
+    "loadMore": "Ver más",
+    "loadingMore": "Cargando…"
   },
   "case": {
     "person": "Consulta de una persona",

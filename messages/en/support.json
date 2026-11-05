@@ -71,7 +71,9 @@
     "subjectCOMMUNITY": "From communities",
     "categoryNeedsSubject": "Area names differ by who asked, so choose \"Whose request\" first",
     "filters": "Filters",
-    "remoteShort": "Including remote"
+    "remoteShort": "Including remote",
+    "loadMore": "Show more",
+    "loadingMore": "Loading…"
   },
   "case": {
     "person": "Request from an individual",

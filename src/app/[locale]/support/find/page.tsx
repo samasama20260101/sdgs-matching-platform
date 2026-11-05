@@ -5,9 +5,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
+import { Link } from '@/i18n/navigation'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
-import { Card, Heading, Lead, Tip, Toggle } from '@/components/app/ui'
+import { Button, Card, Heading, Lead, Tip, Toggle } from '@/components/app/ui'
 import { CaseCard } from '@/components/support/CaseCard'
 import { FacePicker, useFace } from '@/components/support/useFace'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
@@ -15,6 +16,7 @@ import { AREA_GOALS, areaSubjectsForFace, type AreaSubject } from '@/lib/domain/
 
 function Find() {
   const t = useTranslations('support.find')
+  const tHome = useTranslations('support.home')
   const tSdgs = useTranslations('sdgs')
   const { options, current, choose } = useFace()
   const [subject, setSubject] = useState<AreaSubject | null>(null)
@@ -26,17 +28,42 @@ function Find() {
   const [lockedCount, setLockedCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!current) return
-    const q = new URLSearchParams({ face: current.key, involvement })
+  // 1 回に 50 件ずつ。「もっと見る」で続きを足す(絞り込みは API の中で行う)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const query = (offset: number) => {
+    const q = new URLSearchParams({ face: current?.key ?? '', involvement })
     if (subject) q.set('subject', subject)
     if (subject && category) q.set('category', String(category))
     if (remote) q.set('remote', '1')
+    if (offset > 0) q.set('offset', String(offset))
+    return `/api/support/cases?${q}`
+  }
+  const [nextOffset, setNextOffset] = useState(0)
+  useEffect(() => {
+    if (!current) return
+    let alive = true
     setItems(null)
-    apiFetch<{ cases: SupportCaseItem[]; lockedCount: number }>(`/api/support/cases?${q}`)
-      .then((d) => { setItems(d.cases.filter((c) => !c.locked)); setLockedCount(d.lockedCount); setError(null) })
-      .catch(() => { setItems([]); setError(t('loadFailed')) })
-  }, [current, subject, category, remote, involvement, t])
+    apiFetch<{ cases: SupportCaseItem[]; lockedCount: number; hasMore: boolean; nextOffset: number }>(query(0))
+      .then((d) => { if (!alive) return; setItems(d.cases.filter((c) => !c.locked)); setLockedCount(d.lockedCount); setHasMore(d.hasMore); setNextOffset(d.nextOffset); setError(null) })
+      .catch(() => { if (!alive) return; setItems([]); setHasMore(false); setError(t('loadFailed')) })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.key, subject, category, remote, involvement, t])
+  const more = async () => {
+    setLoadingMore(true)
+    try {
+      const d = await apiFetch<{ cases: SupportCaseItem[]; lockedCount: number; hasMore: boolean; nextOffset: number }>(query(nextOffset))
+      setItems((prev) => [...(prev ?? []), ...d.cases.filter((c) => !c.locked)])
+      setLockedCount((n) => n + d.lockedCount)
+      setHasMore(d.hasMore)
+      setNextOffset(d.nextOffset)
+    } catch {
+      setError(t('loadFailed'))
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   const subjects = current ? areaSubjectsForFace(current.kind) : []
   const filterSummary = [
@@ -50,6 +77,15 @@ function Find() {
     if (subject && current && !areaSubjectsForFace(current.kind).includes(subject)) { setSubject(null); setCategory(null) }
   }, [current, subject])
 
+  // 支える側の顔がまだない人には、白い画面でなく登録への道を出す(支えるホームと同じ)
+  if (options.length === 0) {
+    return (
+      <Card tone="support" className="flex flex-col gap-3 p-4">
+        <Lead>{tHome('noFace')}</Lead>
+        <Link href="/support/join" className="text-[15px] font-bold text-night">{tHome('join')}</Link>
+      </Card>
+    )
+  }
   return (
     <>
       <FacePicker options={options} current={current} onChoose={choose} />
@@ -119,6 +155,9 @@ function Find() {
       {error && <Lead>{error}</Lead>}
       {items && <span className="px-1 text-[12.5px] text-mist">{t('count', { count: items.length })}</span>}
       {(items ?? []).map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ''} />)}
+      {hasMore && items && (
+        <Button tone="support" variant="outline" disabled={loadingMore} onClick={() => void more()}>{loadingMore ? t('loadingMore') : t('loadMore')}</Button>
+      )}
     </>
   )
 }
