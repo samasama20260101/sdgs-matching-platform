@@ -137,14 +137,13 @@
   "referrals": {
     "title": "Mientras esperas: servicios cercanos",
     "tipLabel": "Qué significa compartir",
-    "tip": "Si eliges «Se puede compartir», el equipo de samasama contactará con el servicio por su recepción (teléfono o formulario) y solo compartirá tu apodo y lo que escribiste. Nunca enviamos correos automáticos.",
+    "tip": "Si eliges «Pedir al equipo que lo transmita», el equipo de samasama contactará con el servicio por su recepción (teléfono o formulario) y solo compartirá tu apodo y lo que escribiste. Nunca enviamos correos automáticos.",
     "public": "Servicio público",
     "organization": "Organización",
-    "unregistered": "Aún no está en la app",
     "call": "Llamar",
     "website": "Sitio web",
-    "okToShare": "samasama puede contárselo a este servicio",
-    "agreed": "Elegiste que se puede compartir",
+    "okToShare": "Pedir al equipo que lo transmita",
+    "agreed": "El equipo lo transmitirá",
     "source": "Fuente"
   },
   "talk": {

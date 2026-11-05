@@ -137,14 +137,13 @@
   "referrals": {
     "title": "While you wait: services nearby",
     "tipLabel": "What sharing means",
-    "tip": "If you choose \"OK to share\", the samasama team will contact the service through its reception (phone or form) and share only your nickname and what you wrote. We never send emails automatically.",
+    "tip": "If you choose \"Ask the team to pass it on\", the samasama team will contact the service through its reception (phone or form) and share only your nickname and what you wrote. We never send emails automatically.",
     "public": "Public service",
     "organization": "Organization",
-    "unregistered": "Not on the app yet",
     "call": "Call",
     "website": "Website",
-    "okToShare": "OK for samasama to tell this service",
-    "agreed": "You chose OK to share",
+    "okToShare": "Ask the team to pass it on",
+    "agreed": "The team will pass it on",
     "source": "Source"
   },
   "talk": {
