@@ -1,5 +1,6 @@
 // 久保さんの指標一覧(sama2/101_グローバル指標の研究所/【01_基礎資料-1】グローバル指標一覧.xlsx)の
-// シート「AI教師データ用」から、会社・地域・国として相談するときの選択肢を取り出して TS に書く(v2.0 #72)。
+// シート「AI教師データ用」から、会社・地域・国として相談するときの選択肢(列R〜T)と、
+// 支える側に出す大項目の名前(列D〜F。相談した人の種類ごと)を取り出して TS に書く(v2.0 #72)。
 //
 //   npx tsx scripts/ledger/import-org-intake.ts <xlsx の写しのパス>
 //
@@ -25,7 +26,13 @@ const READ_COLUMNS = {
   company: { col: 18, header: '相談フォームの選択肢\n（B:団体代表者版' },
   community: { col: 19, header: '相談フォームの選択肢\n（C:地域代表者版' },
   nation: { col: 20, header: '相談フォームの選択肢\n（D:国版' },
+  areaPerson: { col: 4, header: '大項目' },
+  areaCompany: { col: 5, header: '大項目' },
+  areaCommunity: { col: 6, header: '大項目' },
 } as const
+
+// 列D〜F の見出しは「大項目 (A:個人向け版の…)」の形。どの版かを見出しの中の文字で確かめる
+const AREA_HEADER_MARK = { areaPerson: 'A:個人', areaCompany: 'B:団体代表者', areaCommunity: 'C:地域代表者' } as const
 
 type Subject = 'COMPANY' | 'COMMUNITY' | 'NATION'
 type OrgIndicator = { id: string; category: number; text: string }
@@ -55,9 +62,14 @@ async function main() {
   for (const [name, { col, header }] of Object.entries(READ_COLUMNS)) {
     const actual = cellText(headerRow.getCell(col).value)
     if (!actual.startsWith(header)) throw new Error(`列 ${name}(${col})の見出しが違います: ${JSON.stringify(actual.slice(0, 30))}`)
+    const mark = AREA_HEADER_MARK[name as keyof typeof AREA_HEADER_MARK]
+    if (mark && !actual.replace(/\s+/g, '').includes(mark)) throw new Error(`列 ${name}(${col})が ${mark} の版ではありません`)
   }
 
   const sets: Record<Subject, OrgIndicator[]> = { COMPANY: [], COMMUNITY: [], NATION: [] }
+  // 支える側の大項目の名前: 種類 → ゴール → 名前(出てきた順、重ならないように)
+  type AreaSubject = 'PERSON' | 'COMPANY' | 'COMMUNITY'
+  const areas: Record<AreaSubject, Map<number, string[]>> = { PERSON: new Map(), COMPANY: new Map(), COMMUNITY: new Map() }
   const personInSheet = new Map<string, string>()
   const urgentInSheet = new Set<string>()
   for (let r = FIRST_DATA_ROW; r <= sheet.rowCount; r++) {
@@ -65,6 +77,14 @@ async function main() {
     const code = usable(cellText(row.getCell(READ_COLUMNS.code.col).value))
     const goal = Number(cellText(row.getCell(READ_COLUMNS.goal.col).value))
     if (!code || !/^\d{1,2}\.[0-9a-z]{1,2}\.\d{1,2}$/.test(code) || !Number.isInteger(goal) || goal < 1 || goal > 17) continue
+    const areaPairs: [AreaSubject, keyof typeof READ_COLUMNS][] = [['PERSON', 'areaPerson'], ['COMPANY', 'areaCompany'], ['COMMUNITY', 'areaCommunity']]
+    for (const [subject, key] of areaPairs) {
+      const label = usable(cellText(row.getCell(READ_COLUMNS[key].col).value))
+      if (!label || label === 'N/A') continue
+      const list = areas[subject].get(goal) ?? []
+      if (!list.includes(label)) list.push(label)
+      areas[subject].set(goal, list)
+    }
     const person = usable(cellText(row.getCell(READ_COLUMNS.person.col).value))
     if (person) personInSheet.set(code, person)
     if (usable(cellText(row.getCell(READ_COLUMNS.urgent.col).value))) urgentInSheet.add(code)
@@ -92,6 +112,26 @@ export const NATION_INTAKE_INDICATORS: OrgIntakeIndicator[] = ${JSON.stringify(s
   writeFileSync(out, body)
   console.log(`書いた: ${out}`)
   console.log(`会社 ${sets.COMPANY.length} / 地域 ${sets.COMMUNITY.length} / 国 ${sets.NATION.length}`)
+
+  // 支える側の大項目の名前。1 つのゴールに名前が 2 つあるときは「／」でつなぐ(表がそうなっているところだけ)
+  const areaLabels = Object.fromEntries(
+    (Object.keys(areas) as AreaSubject[]).map((subject) => [
+      subject,
+      Object.fromEntries([...areas[subject].entries()].sort(([a], [b]) => a - b).map(([goal, labels]) => [goal, labels.join('／')])),
+    ]),
+  )
+  const areaOut = join(process.cwd(), 'src/lib/constants/supportAreas.generated.ts')
+  writeFileSync(areaOut, `// 自動生成(scripts/ledger/import-org-intake.ts)。手で直さない。
+// 元: 指標一覧のシート「${SHEET}」の列D〜F「大項目(A:個人 / B:団体代表者 / C:地域代表者 向け版のサポーター側の表示)」。${today} に取り込んだ。
+// 支える側の画面で、相談した人の種類ごとに大項目(SDGs のゴール)に付ける名前。ない組み合わせは、その種類の相談にそのゴールの指標がない。
+// 画面の文言は messages/<言語>/sdgs.json の area(ja はこの表と同じ。scripts/tests/supportAreas.test.ts が確かめる)
+export const SUPPORT_AREA_LABELS_JA = ${JSON.stringify(areaLabels, null, 2)} as const satisfies Record<'PERSON' | 'COMPANY' | 'COMMUNITY', Record<string, string>>
+`)
+  console.log(`書いた: ${areaOut}`)
+  for (const subject of Object.keys(areas) as AreaSubject[]) {
+    const multi = [...areas[subject].entries()].filter(([, l]) => l.length > 1)
+    console.log(`大項目 ${subject}: ${areas[subject].size} ゴール${multi.length ? `(名前が 2 つ: ${multi.map(([g, l]) => `${g}=${l.join('／')}`).join(', ')})` : ''}`)
+  }
 
   // 個人の選択肢(列P)とアプリのずれ。直さず一覧だけ出す
   const app = new Map(INTAKE_INDICATORS.map((i) => [i.id, i]))

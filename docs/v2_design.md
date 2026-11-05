@@ -28,6 +28,7 @@
 | 代理登録の引き継ぎコードは読み違えやすい字を使わず、DB にはハッシュだけを置く。30 日・使い切り・5 回失敗で使えなくする | `src/lib/domain/handover.ts` |
 | 知らせのメールには、件名にも本文にも相談の中身を書かない | 通知の送り口 |
 | AI に渡す文は `maskPii` と `fenceConsultation` を通す。AI は機微を上げる方向にだけ効かせる | `src/lib/ai/*` |
+| 支える側の大項目の名前は、相談した人の種類(個人・会社・地域)ごとに依頼者の指標一覧の列D〜F を使う(11/5 岡本さん)。得意なことと絞り込みは「種類 × ゴール」の単位で持ち、名前は表示だけに使う。探す画面は種類を選んでから大項目を選ぶ。個人の支え手の得意なことは会社と地域の分だけ | `src/lib/domain/supportAreas.ts`・`supportAreas.generated.ts`(`scripts/ledger/import-org-intake.ts` が作る) |
 
 ## 3. データ
 
@@ -38,6 +39,10 @@
 | `v2_01_people_and_organizations.sql` | users を PERSON / ADMIN に・年齢と地域・同意・個人の支え手・団体の種類と審査・1人で複数の団体・コーディネーターの範囲・通知・ログイン手段の付け替え・anon / authenticated の権限を外す |
 | `v2_02_cases.sql` | 相談の主体・代理登録・入口・機微・対象の人数・相談の指標・個人の申し出と招待・承認の関数(3者まで)・訳・引き継ぎコード・解決の要約・社会貢献の記録 |
 | `v2_03_directory.sql` | つなぎ先(公開データ)・管理権の申請・掲載停止の依頼・相談とつなぎ先の提案 |
+| `v2_04_withdrawal.sql` | 退会(`withdraw_person`) |
+| `v2_05_resolution_records.sql` | 解決したときの社会貢献の記録(`record_case_resolution`) |
+| `v2_06_backfill_sensitivity.sql` | v1 の相談に機微の印を付け直す |
+| `v2_07_supporter_skill_areas.sql` | 個人の支え手の得意なことを「相談した人の種類 × ゴール」に変える |
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
 
 Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を取り込んだ(`scripts/import-directory-entries.mts`、データは directory-data の出力)。

@@ -60,7 +60,13 @@
     "everything": "Todas",
     "locked": "Hay {count} consultas que puedes ver tras la segunda verificación. Configura una app de autenticación desde Yo.",
     "loadFailed": "No se pudo cargar",
-    "count": "{count} consultas · primero las que llevan más tiempo esperando"
+    "count": "{count} consultas · primero las que llevan más tiempo esperando",
+    "subject": "De quién es la solicitud",
+    "subjectAll": "Todas",
+    "subjectPERSON": "De personas",
+    "subjectCOMPANY": "De empresas",
+    "subjectCOMMUNITY": "De comunidades",
+    "categoryNeedsSubject": "Los nombres de las áreas cambian según quién pide ayuda; elige primero \"De quién es la solicitud\""
   },
   "case": {
     "person": "Consulta de una persona",
@@ -171,7 +177,12 @@
     "apply": "Enviar solicitud",
     "appliedTitle": "Solicitud recibida",
     "appliedBody": "El equipo de samasama te contactará para fijar una entrevista. Después podréis ofrecer apoyo.",
-    "toSupportHome": "Ir al inicio de apoyar"
+    "toSupportHome": "Ir al inicio de apoyar",
+    "skillsFor": {
+      "COMPANY": "En solicitudes de empresas",
+      "COMMUNITY": "En solicitudes de comunidades"
+    },
+    "skillsNote": "Los nombres de las áreas cambian según quién pide ayuda"
   },
   "orgType": {
     "NPO": "Entidad sin ánimo de lucro",

@@ -201,5 +201,59 @@
     "17_3_2": "No puedo recibir el dinero que me envía mi familia desde el extranjero y no me alcanza para vivir",
     "17_6_1": "No puedo usar internet en casa",
     "17_8_1": "No puedo usar internet"
+  },
+  "area": {
+    "PERSON": {
+      "1": "Dinero y vida diaria",
+      "2": "Alimentación",
+      "3": "Cuerpo y mente",
+      "4": "Educación",
+      "5": "Derechos de las mujeres",
+      "6": "Agua y baños",
+      "7": "Electricidad y energía",
+      "8": "Trabajo e ingresos",
+      "9": "Comunicaciones e infraestructura",
+      "10": "Discriminación y desigualdad",
+      "11": "Vivienda y comunidad",
+      "12": "Recursos y residuos",
+      "13": "Clima y desastres",
+      "14": "Mar y pesca",
+      "16": "Derechos y violencia",
+      "17": "Colaboración"
+    },
+    "COMPANY": {
+      "1": "Pobreza y apoyo a la vida diaria",
+      "2": "Agricultura y alimentación",
+      "3": "Salud y atención médica",
+      "5": "Derechos de las mujeres",
+      "6": "Agua",
+      "8": "Condiciones laborales y productividad",
+      "9": "Gestión y desarrollo",
+      "10": "Distribución salarial y finanzas",
+      "11": "Desastres y entorno de vida",
+      "12": "Recursos y divulgación de información",
+      "13": "Gases de efecto invernadero",
+      "14": "Mar y pesca",
+      "15": "Bosques y vida silvestre",
+      "16": "Prevención del fraude y derechos humanos",
+      "17": "Financiación, alianzas y estadísticas"
+    },
+    "COMMUNITY": {
+      "1": "Clima y desastres",
+      "2": "Agricultura y alimentación",
+      "3": "Salud y bienestar",
+      "4": "Educación",
+      "6": "Recursos hídricos",
+      "7": "Electricidad y energía",
+      "8": "Recursos",
+      "9": "Transporte y CO2",
+      "11": "Vivienda y comunidad / Comunidad y desastres",
+      "12": "Recursos y turismo",
+      "13": "Gases de efecto invernadero",
+      "14": "Mar y pesca",
+      "15": "Bosques y tierra",
+      "16": "Protección de los derechos humanos",
+      "17": "Finanzas, colaboración y estadísticas"
+    }
   }
 }

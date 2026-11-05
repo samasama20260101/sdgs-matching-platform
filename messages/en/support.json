@@ -60,7 +60,13 @@
     "everything": "All",
     "locked": "There are {count} requests you can see after the second check. Set up an authenticator app from Me.",
     "loadFailed": "Couldn't load",
-    "count": "{count} matching requests · longest-waiting first"
+    "count": "{count} matching requests · longest-waiting first",
+    "subject": "Whose request",
+    "subjectAll": "All",
+    "subjectPERSON": "From individuals",
+    "subjectCOMPANY": "From companies",
+    "subjectCOMMUNITY": "From communities",
+    "categoryNeedsSubject": "Area names differ by who asked, so choose \"Whose request\" first"
   },
   "case": {
     "person": "Request from an individual",
@@ -171,7 +177,12 @@
     "apply": "Apply",
     "appliedTitle": "Application received",
     "appliedBody": "The samasama team will contact you to set up an interview. After the interview you can make offers.",
-    "toSupportHome": "Go to the supporter home"
+    "toSupportHome": "Go to the supporter home",
+    "skillsFor": {
+      "COMPANY": "For requests from companies",
+      "COMMUNITY": "For requests from communities"
+    },
+    "skillsNote": "Area names differ depending on who asked"
   },
   "orgType": {
     "NPO": "Nonprofit",
