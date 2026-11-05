@@ -187,7 +187,8 @@
       "COMPANY": "For requests from companies",
       "COMMUNITY": "For requests from communities"
     },
-    "skillsNote": "Area names differ depending on who asked"
+    "skillsNote": "Area names differ depending on who asked",
+    "skillsPicked": "{count} selected"
   },
   "orgType": {
     "NPO": "Nonprofit",
@@ -278,6 +279,16 @@
     "pendingInvites": "{count} invitations waiting for a reply",
     "lastOwner": "You can't remove the last manager. Make someone else a manager first",
     "changeFailed": "Couldn't change",
-    "notFound": "Organization not found."
+    "notFound": "Organization not found.",
+    "profile": "About and contact",
+    "bio": "Description",
+    "contactEmail": "Organization contact email",
+    "contactEmailHint": "Where the team sends notices. Not used to sign in",
+    "population": "People served",
+    "populationHint": "Used when you ask as a company or community (for contribution counts)",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Could not save",
+    "displayId": "Organization number (for contacting the team): {id}"
   }
 }

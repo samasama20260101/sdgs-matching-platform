@@ -79,6 +79,11 @@
       "joined": "A supporter joined",
       "autoResolved": "It was marked solved automatically 14 days after the report",
       "autoClosed": "This request was closed after 30 days without activity"
+    },
+    "systemSelf": {
+      "resolvedConfirmed": "You confirmed it was solved",
+      "resolvedNotYet": "You replied \"not solved yet\"",
+      "cancelled": "You cancelled the request"
     }
   },
   "case": {
@@ -107,7 +112,10 @@
     "back": "Keep it",
     "notFound": "Request not found.",
     "loadFailed": "Couldn't load",
-    "cancelFailed": "Couldn't cancel"
+    "cancelFailed": "Couldn't cancel",
+    "nextOpen": "Waiting for offers from supporters. Meanwhile, you can also contact the services nearby below.",
+    "togetherDone": "Supporters who worked with you",
+    "cancelMatched": "End this request"
   },
   "offers": {
     "arrived": "{count} offers have arrived",

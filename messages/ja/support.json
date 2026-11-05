@@ -187,7 +187,8 @@
       "COMPANY": "会社の相談で",
       "COMMUNITY": "地域の相談で"
     },
-    "skillsNote": "相談した人の種類によって、大項目の名前が違います"
+    "skillsNote": "相談した人の種類によって、大項目の名前が違います",
+    "skillsPicked": "{count}つ選択"
   },
   "orgType": {
     "NPO": "NPO",
@@ -278,6 +279,16 @@
     "pendingInvites": "返事を待っている招待 {count}件",
     "lastOwner": "最後の管理の人は外せません。先に別の人を管理にしてください",
     "changeFailed": "変えられませんでした",
-    "notFound": "団体が見つかりません。"
+    "notFound": "団体が見つかりません。",
+    "profile": "団体の紹介と連絡先",
+    "bio": "紹介文",
+    "contactEmail": "団体の連絡先のメールアドレス",
+    "contactEmailHint": "運営からの知らせの宛先です。ログインには使いません",
+    "population": "対象の人数",
+    "populationHint": "会社・地域として相談するときに使います(社会貢献の数え方)",
+    "save": "保存する",
+    "saved": "保存しました",
+    "saveFailed": "保存できませんでした",
+    "displayId": "団体の番号(運営への問い合わせ用): {id}"
   }
 }

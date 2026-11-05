@@ -181,6 +181,8 @@ function CaseInner({ id }: { id: string }) {
         </Card>
       )}
 
+      {/* いまの段階で次にすること(画面の見直し 所見 6) */}
+      {c.status === 'OPEN' && waiting.length === 0 && params.get('sent') !== '1' && <Lead>{t('nextOpen')}</Lead>}
       {c.status === 'MATCHED' && c.supporterResolvedAt && data.canDecide && <ResolvePanel caseId={c.id} onDone={load} />}
       {c.status === 'RESOLVED' && <Card className="bg-leaf-soft p-4"><span className="text-[15px] font-bold text-leaf-ink">{t('resolved')}</span></Card>}
 
@@ -197,7 +199,7 @@ function CaseInner({ id }: { id: string }) {
 
       {chosen.length > 0 && (
         <section className="flex flex-col gap-2">
-          <SectionLabel>{t('together')}</SectionLabel>
+          <SectionLabel>{c.status === 'RESOLVED' ? t('togetherDone') : t('together')}</SectionLabel>
           <div className="flex flex-wrap gap-1.5">
             {chosen.map((o) => <Chip key={o.id} color={o.acceptedOrder === 1 ? 'night' : 'dawn'}>{o.name}{o.acceptedOrder === 1 ? ` ・ ${tOffers('lead')}` : ''}</Chip>)}
           </div>
@@ -216,7 +218,7 @@ function CaseInner({ id }: { id: string }) {
         <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75]">{c.description}</p>
       </Card>
 
-      <Link href="/me" className="px-1 text-[13px] text-night">{t('notifyMe')}</Link>
+      {c.status === 'OPEN' && <Link href="/me" className="px-1 text-[13px] text-night">{t('notifyMe')}</Link>}
 
       {open && data.canDecide && (
         cancelOpen ? (
@@ -228,7 +230,7 @@ function CaseInner({ id }: { id: string }) {
             </div>
           </Card>
         ) : (
-          <Button variant="quiet" onClick={() => setCancelOpen(true)} className="self-start text-[13px]">{t('cancel')}</Button>
+          <button type="button" onClick={() => setCancelOpen(true)} className="self-start min-h-[44px] px-1 text-[12.5px] text-mist underline">{c.status === 'MATCHED' ? t('cancelMatched') : t('cancel')}</button>
         )
       )}
       <ErrorNote>{error}</ErrorNote>

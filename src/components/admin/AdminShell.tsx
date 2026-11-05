@@ -6,16 +6,17 @@ import { Link, usePathname } from '@/i18n/navigation'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Card, cx, Heading, Lead, Screen } from '@/components/app/ui'
 
-export const ADMIN_TOOLS = [
-  { href: '/admin/vetting', title: '審査', note: '団体の申し込み・面談・承認・コーディネーター' },
-  { href: '/admin/indicators', title: '指標の仕分け', note: '本人が選んだ指標と AI の候補を確定する' },
+// 運営の道具。countKey のあるものは、運営のホームの札に待っている件数を出す(/api/admin/counts)。
+// 個人情報マスクの検証(/admin/mask-lab)は開発の道具なので、一覧には出さない
+export const ADMIN_TOOLS: readonly { href: string; title: string; note: string; countKey?: 'vetting' | 'indicators' | 'inquiries' }[] = [
+  { href: '/admin/vetting', title: '審査', note: '団体の申し込み・面談・承認・コーディネーター', countKey: 'vetting' },
+  { href: '/admin/indicators', title: '指標の仕分け', note: '本人が選んだ指標と AI の候補を確定する', countKey: 'indicators' },
   { href: '/admin/summaries', title: '解決の要約', note: '内容・手立て・その後のナレッジ' },
-  { href: '/admin/inquiries', title: 'お問い合わせ', note: '退会・付け替え・困りごとの連絡' },
+  { href: '/admin/inquiries', title: 'お問い合わせ', note: '退会・付け替え・困りごとの連絡', countKey: 'inquiries' },
   { href: '/admin/stats', title: '分析', note: '今月の相談・解決の割合・待っている相談' },
   { href: '/admin/ledger', title: '指標の台帳', note: '相談の選択肢と緊急・機微の印(読むだけ)' },
   { href: '/admin/news', title: 'お知らせ', note: '書く・公開する・AI の下書き' },
-  { href: '/admin/mask-lab', title: '個人情報マスクの検証', note: 'AI に渡す前に伏せる処理を試す' },
-] as const
+]
 
 export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
   const pathname = usePathname()

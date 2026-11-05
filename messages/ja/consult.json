@@ -79,6 +79,11 @@
       "joined": "支え手が一緒に加わりました",
       "autoResolved": "解決の報告から14日たったので、自動で解決になりました",
       "autoClosed": "30日動きがなかったので、この相談は終わりました"
+    },
+    "systemSelf": {
+      "resolvedConfirmed": "あなたが解決を確定しました",
+      "resolvedNotYet": "あなたが「まだ解決していない」と返しました",
+      "cancelled": "あなたが相談を取り消しました"
     }
   },
   "case": {
@@ -107,7 +112,10 @@
     "back": "やめる",
     "notFound": "相談が見つかりません。",
     "loadFailed": "読み込めませんでした",
-    "cancelFailed": "取り消せませんでした"
+    "cancelFailed": "取り消せませんでした",
+    "nextOpen": "支え手からの申し出を待っています。待つあいだに、下の近くの窓口にも相談できます。",
+    "togetherDone": "一緒に進めた支え手",
+    "cancelMatched": "相談を終える"
   },
   "offers": {
     "arrived": "{count}つの申し出が届きました",

@@ -79,6 +79,11 @@
       "joined": "Se unió alguien más a apoyar",
       "autoResolved": "Se marcó como resuelta automáticamente 14 días después del informe",
       "autoClosed": "Esta consulta se cerró tras 30 días sin actividad"
+    },
+    "systemSelf": {
+      "resolvedConfirmed": "Confirmaste que se resolvió",
+      "resolvedNotYet": "Respondiste «aún no se resolvió»",
+      "cancelled": "Cancelaste la consulta"
     }
   },
   "case": {
@@ -107,7 +112,10 @@
     "back": "Mantener",
     "notFound": "No encontramos la consulta.",
     "loadFailed": "No se pudo cargar",
-    "cancelFailed": "No se pudo cancelar"
+    "cancelFailed": "No se pudo cancelar",
+    "nextOpen": "Esperando ofertas de apoyo. Mientras tanto, también puedes contactar con los servicios cercanos de abajo.",
+    "togetherDone": "Apoyos que trabajaron contigo",
+    "cancelMatched": "Terminar esta consulta"
   },
   "offers": {
     "arrived": "Llegaron {count} ofrecimientos",

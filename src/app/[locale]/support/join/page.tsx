@@ -136,10 +136,17 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
         {/* 得意なことは相談した人の種類ごとに選ぶ(大項目の名前が種類で違う。個人の支え手は会社と地域の相談だけ) */}
         <div className="flex flex-col gap-2">
           <span className="inline-flex items-center gap-2 text-[13px] font-bold">{t('skills')} <Tip label={t('skills')}>{t('skillsNote')}</Tip></span>
+          {/* 種類ごとに折りたたむ(30 の札が縦に並ぶと長い。画面の見直し 所見 16)。選んだ数を見出しに出す */}
           {areaSubjectsForFace('INDIVIDUAL').map((subject) => (
-            <div key={subject} className="flex flex-col gap-1.5">
-              <span className="text-[12.5px] font-bold text-ink-soft">{t(`skillsFor.${subject}`)}</span>
-              <div className="flex flex-wrap gap-1.5">
+            <details key={subject} className="group rounded-tool border border-line bg-paper px-3">
+              <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-2 text-[13.5px] font-bold">
+                <span>{t(`skillsFor.${subject}`)}</span>
+                <span className="flex items-center gap-2 text-[12px] font-normal text-mist">
+                  {t('skillsPicked', { count: skills.filter((k) => k.startsWith(`${subject}:`)).length })}
+                  <span aria-hidden className="group-open:rotate-180">⌄</span>
+                </span>
+              </summary>
+              <div className="flex flex-wrap gap-1.5 pb-3">
                 {AREA_GOALS[subject].map((g) => {
                   const key = areaKey(subject, g)
                   const on = skills.includes(key)
@@ -150,7 +157,7 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
                   )
                 })}
               </div>
-            </div>
+            </details>
           ))}
         </div>
         <Toggle checked={remote} onChange={setRemote} label={t('remote')} description={t('remoteNote')} />

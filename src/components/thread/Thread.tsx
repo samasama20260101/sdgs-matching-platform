@@ -22,6 +22,12 @@ type Message = {
 
 const POLL_MS = 20_000
 
+// 相談した人が自分の画面で読むときは、「相談した人が…」でなく「あなたが…」と書く(画面の見直し 所見 6)
+const SELF_SYSTEM_KEYS = new Set(['resolvedConfirmed', 'resolvedNotYet', 'cancelled'])
+function systemKey(key: string, tone: 'consult' | 'support'): string {
+  return tone === 'consult' && SELF_SYSTEM_KEYS.has(key) ? `systemSelf.${key}` : `system.${key}`
+}
+
 export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'consult' | 'support' }) {
   const t = useTranslations('consult.thread')
   const locale = useLocale()
@@ -101,7 +107,7 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
       <ol className="m-0 flex list-none flex-col gap-2 p-0">
         {messages.map((m) => m.kind === 'SYSTEM' ? (
           <li key={m.id} className="self-center rounded-full bg-steel px-3 py-1 text-[12px] text-ink-soft">
-            {m.system ? t(`system.${m.system.key}`) : ''}
+            {m.system ? t(systemKey(m.system.key, tone)) : ''}
           </li>
         ) : (
           <li key={m.id} className={cx('flex max-w-[85%] flex-col gap-1', m.mine ? 'self-end items-end' : 'self-start')}>
