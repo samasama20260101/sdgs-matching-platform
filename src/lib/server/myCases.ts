@@ -3,6 +3,7 @@ import 'server-only'
 // わたしの相談(相談する側)。本人の相談と、今いる団体が会社・地域として相談したもの(同じ団体のメンバーにも見える、盤 05b)
 import { supabaseAdmin } from '@/lib/supabase/server'
 import type { MyCaseItem } from '@/components/consult/MyCases'
+import { lastMessagesFor } from './lastMessages'
 
 type Row = {
   id: string
@@ -44,11 +45,12 @@ export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
 
   const ids = rows.map((r) => r.id)
   const subjectOrgIds = [...new Set(rows.map((r) => r.subject_organization_id ?? (r.owner_user_id ? null : r.proxy_organization_id)).filter((v): v is string => Boolean(v)))]
-  const [{ data: offers, error: oErr }, { data: orgs, error: gErr }] = await Promise.all([
+  const [{ data: offers, error: oErr }, { data: orgs, error: gErr }, last] = await Promise.all([
     supabaseAdmin.from('offers').select('case_id, status').in('case_id', ids).in('status', ['PENDING', 'INVITED']),
     subjectOrgIds.length > 0
       ? supabaseAdmin.from('organizations').select('id, name').in('id', subjectOrgIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
+    lastMessagesFor(ids),
   ])
   if (oErr) throw oErr
   if (gErr) throw gErr
@@ -66,7 +68,7 @@ export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
       : !r.owner_user_id && r.proxy_organization_id ? orgName.get(r.proxy_organization_id) ?? null : null,
     isProxy: !r.owner_user_id && Boolean(r.proxy_organization_id),
     pendingOffers: pending.get(r.id) ?? 0,
-    unread: 0,
+    lastMessage: last.get(r.id) ?? null,
     createdAt: r.created_at,
   }))
 }

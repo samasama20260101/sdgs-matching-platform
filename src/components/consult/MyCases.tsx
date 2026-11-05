@@ -1,11 +1,10 @@
 'use client'
 
-// わたしの相談の一覧(相談ごとの「いま」)。中身は相談の PR で /api/cases を足して出す
-import { useEffect, useState } from 'react'
+// わたしの相談の一覧(相談ごとの「いま」)。読み込みはホームが行い、ここは並べるだけ
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { apiFetch } from '@/lib/client/api'
 import { Card, Chip, SectionLabel } from '@/components/app/ui'
+import { talkTurn, type LastMessage } from '@/lib/domain/talk'
 
 export type MyCaseItem = {
   id: string
@@ -15,17 +14,13 @@ export type MyCaseItem = {
   subjectName: string | null
   pendingOffers: number
   isProxy: boolean
-  unread: number
+  // 最後のメッセージ(やりとりの一覧とホームの「あなたの番」)
+  lastMessage: LastMessage | null
   createdAt: string
 }
 
-export function MyCases() {
+export function MyCases({ items }: { items: MyCaseItem[] }) {
   const t = useTranslations('app.home')
-  const [items, setItems] = useState<MyCaseItem[] | null>(null)
-  useEffect(() => {
-    apiFetch<{ cases: MyCaseItem[] }>('/api/cases').then((d) => setItems(d.cases)).catch(() => setItems([]))
-  }, [])
-  if (items === null) return null
   if (items.length === 0) return <p className="m-0 px-1 text-[13px] text-mist">{t('noCases')}</p>
   return (
     <section className="flex flex-col gap-2">
@@ -39,6 +34,7 @@ export function MyCases() {
               {c.isProxy && <Chip color="dawn">{t('proxy')}</Chip>}
               {c.subjectName && <Chip>{c.subjectName}</Chip>}
               {c.pendingOffers > 0 && <Chip color="night">{t('newOffers', { count: c.pendingOffers })}</Chip>}
+              {c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine' && <Chip color="night">{t('replyArrived')}</Chip>}
             </span>
           </Card>
         </Link>

@@ -8,6 +8,8 @@ import { canOffer, supporterCaseAccess, type CaseAccess as Access, type Supporte
 import { optionsFor } from '@/lib/domain/intake'
 import { caseAreaGoals, isAreaSubject, type AreaSubject } from '@/lib/domain/supportAreas'
 import { stripConsolation } from '@/lib/ai/prompts/caseSummary'
+import type { LastMessage } from '@/lib/domain/talk'
+import { lastMessagesFor } from './lastMessages'
 import { CASE_COLUMNS, type CaseRow, type OfferRow } from './caseAccess'
 
 export type FaceKey = { kind: 'ORGANIZATION'; organizationId: string } | { kind: 'INDIVIDUAL' }
@@ -99,6 +101,9 @@ export type SupportCaseItem = {
   waitingHours: number
   offersCount: number
   myOfferStatus: OfferRow['status'] | null
+  // 関わっている相談の一覧(やりとり・ホーム)でだけ入れる
+  lastMessage?: LastMessage | null
+  createdAt: string
   canOffer: boolean
 }
 
@@ -151,6 +156,7 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       country: c.region_country,
       language: c.locale,
       waitingHours: Math.max(0, Math.floor((nowMs - new Date(c.created_at).getTime()) / 3_600_000)),
+      createdAt: c.created_at,
       offersCount: caseOffers.filter((o) => ['PENDING', 'ACCEPTED'].includes(o.status)).length,
       myOfferStatus: mine?.status ?? null,
       canOffer: canOffer(c, rf.face, { alreadyOffered: Boolean(mine && mine.status !== 'WITHDRAWN' && mine.status !== 'DECLINED'), phoneVerified: rf.phoneVerified, requireMfaForSensitive: requireMfaForSensitive() }),
@@ -200,7 +206,9 @@ export async function involvedCases(rf: ResolvedFace): Promise<SupportCaseItem[]
   if (ids.length === 0) return []
   const { data, error: cErr } = await supabaseAdmin.from('cases').select(CASE_COLUMNS).in('id', ids).order('updated_at', { ascending: false })
   if (cErr) throw cErr
-  return decorate((data ?? []) as CaseRow[], rf, Date.now())
+  const items = await decorate((data ?? []) as CaseRow[], rf, Date.now())
+  const last = await lastMessagesFor(items.filter((i) => !i.locked).map((i) => i.id))
+  return items.map((i) => ({ ...i, lastMessage: last.get(i.id) ?? null }))
 }
 
 export async function loadSupportCase(rf: ResolvedFace, caseId: string) {

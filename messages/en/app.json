@@ -163,7 +163,11 @@
       "CANCELLED": "Cancelled"
     },
     "newOffers": "{count} offers",
-    "proxy": "Registered on behalf"
+    "proxy": "Registered on behalf",
+    "yourTurn": "Your turn ({count})",
+    "turnOffers": "{count, plural, one {# offer has arrived} other {# offers have arrived}}",
+    "turnReply": "You have a new reply",
+    "replyArrived": "New reply"
   },
   "learn": {
     "title": "Learn",
@@ -251,5 +255,13 @@
     "done": "Second check completed",
     "card": "Second check (organization members)",
     "cardNote": "Needed to read sensitive requests"
+  },
+  "talkRow": {
+    "you": "You",
+    "consultee": "Requester",
+    "supporter": "Supporter",
+    "noMessages": "No messages yet",
+    "yourTurn": "New reply",
+    "resolved": "Solved"
   }
 }

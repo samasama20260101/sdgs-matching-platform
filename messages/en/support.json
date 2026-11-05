@@ -44,7 +44,9 @@
     "orgPage": "Organization page",
     "unmatched": "Unmatched requests in your area: {count}",
     "unmatchedTipLabel": "Coordinator list",
-    "unmatchedTip": "Requests in your area with no offer after 24 hours. Please reach out to nearby services and organizations. You can tell unregistered organizations how to claim their page."
+    "unmatchedTip": "Requests in your area with no offer after 24 hours. Please reach out to nearby services and organizations. You can tell unregistered organizations how to claim their page.",
+    "yourTurn": "Your turn ({count})",
+    "invitedToCase": "The lead supporter invited you"
   },
   "find": {
     "title": "Find requests",
