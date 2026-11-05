@@ -161,7 +161,8 @@
       "CLOSED": "Closed",
       "CANCELLED": "Cancelled"
     },
-    "newOffers": "{count} offers"
+    "newOffers": "{count} offers",
+    "proxy": "Registered on behalf"
   },
   "learn": {
     "title": "Learn",

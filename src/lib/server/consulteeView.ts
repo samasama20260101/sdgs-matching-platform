@@ -52,7 +52,7 @@ export async function buildConsulteeView(c: CaseRow): Promise<ConsulteeCaseView>
       .from('offers')
       .select('id, case_id, supporter_kind, supporter_user_id, supporter_organization_id, status, accepted_order, message, invited_by_offer_id, created_at')
       .eq('case_id', c.id)
-      .in('status', ['PENDING', 'INVITED', 'ACCEPTED'])
+      .in('status', ['PENDING', 'ACCEPTED'])
       .order('created_at', { ascending: true }),
     supabaseAdmin.from('case_referrals').select('directory_entry_id').eq('case_id', c.id).neq('status', 'WITHDRAWN'),
     supabaseAdmin.from('supporter_badges').select('id', { count: 'exact', head: true }).eq('case_id', c.id),

@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { isCountryCode } from '@/lib/constants/countries'
+import { recordSupporterConsent } from '@/lib/server/consents'
+import { notifyOps } from '@/lib/server/opsNotify'
 
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'NATIONAL_AGENCY', 'OTHER_PUBLIC', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER'] as const
 
@@ -19,6 +21,8 @@ const schema = z.object({
   corporateNumber: z.string().regex(/^\d{13}$/).nullable().optional(),
   contactEmail: z.string().email().max(254).nullable().optional(),
   application: z.record(z.string(), z.string().max(2000)).optional(),
+  // 支え手の団体として申し込むときは「支える人と団体の決まり」への同意が要る
+  acceptSupporterTerms: z.boolean().optional(),
 })
 
 export async function POST(request: Request) {
@@ -27,6 +31,9 @@ export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
   const input = parsed.data
+  if (input.purpose === 'SUPPORT' && input.acceptSupporterTerms !== true) {
+    return NextResponse.json({ error: '同意が必要です', code: 'CONSENT_REQUIRED' }, { status: 400 })
+  }
 
   // 同じ人が短い間に団体を作りすぎない(機械の登録を止める)
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -67,6 +74,11 @@ export async function POST(request: Request) {
   if (mError) {
     console.error('[api/orgs] membership', mError)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  }
+  if (input.purpose === 'SUPPORT') {
+    // 申し込みは運営に知らせ、面談の日を決める(11/5 の審査の流れ: 申し込み → 運営へ → 面談 → 承認)
+    await recordSupporterConsent(auth.appUser.id).catch((e) => console.error('[api/orgs] consent', e))
+    await notifyOps({ kind: 'ORG_APPLICATION', organizationDisplayId: org.display_id }).catch(() => undefined)
   }
   return NextResponse.json({ id: org.id, displayId: org.display_id })
 }

@@ -13,6 +13,7 @@ import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, ErrorNote, Heading, SectionLabel, Tip, Toggle } from '@/components/app/ui'
 import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } from '@/components/app/ProfileFields'
 import type { MePerson } from '@/lib/client/meTypes'
+import { Invitations } from '@/components/support/Invitations'
 
 function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Promise<void> }) {
   const t = useTranslations('app.me')
@@ -174,6 +175,7 @@ export default function MePage() {
       {(me) => (
         <AppFrame>
           <Heading level={2}>{t('title')}</Heading>
+          <Invitations />
           <ProfileCard person={me.person} onSaved={refresh} />
           <NotificationsCard />
 

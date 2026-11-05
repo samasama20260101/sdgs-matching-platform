@@ -161,7 +161,8 @@
       "CLOSED": "Cerrada",
       "CANCELLED": "Cancelada"
     },
-    "newOffers": "{count} ofrecimientos"
+    "newOffers": "{count} ofrecimientos",
+    "proxy": "Registrada en nombre de otra persona"
   },
   "learn": {
     "title": "Conocer",

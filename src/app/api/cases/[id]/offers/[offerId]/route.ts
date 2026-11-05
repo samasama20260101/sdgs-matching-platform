@@ -1,4 +1,4 @@
-// 申し出を選ぶ / 今回は見送る(盤 14)。中心からの招待(INVITED)への同意も「選ぶ」で受ける(盤 15)
+// 申し出を選ぶ / 今回は見送る(盤 14)。中心からの招待は、招かれた団体が受けたあと(PENDING + invited_by_offer_id)に相談する側が同意する(盤 15)
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -25,6 +25,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: offer, error } = await supabaseAdmin.from('offers').select('id, case_id, status').eq('id', offerId).maybeSingle()
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   if (!offer || offer.case_id !== id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  // 招かれた団体がまだ受けていない招待(INVITED)は、相談する側からは選べない
+  if (offer.status === 'INVITED') return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (parsed.data.action === 'decline') {
     // 見送っても、相手に理由は伝わらない(盤 14)
@@ -53,6 +55,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const status = r.error === 'MAX_REACHED' ? 409 : r.error === 'FORBIDDEN' ? 403 : 409
     return NextResponse.json({ error: '選べませんでした', code: r.error }, { status })
   }
-  if (offer.status === 'INVITED') await postSystemMessage(id, auth.appUser.id, 'joined')
+  const { data: accepted } = await supabaseAdmin.from('offers').select('invited_by_offer_id').eq('id', offerId).single()
+  if (accepted?.invited_by_offer_id) await postSystemMessage(id, auth.appUser.id, 'joined')
   return NextResponse.json({ ok: true, acceptedOrder: r.accepted_order })
 }

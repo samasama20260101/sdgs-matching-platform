@@ -19,7 +19,7 @@ type Payload = { case: ConsulteeCaseView; canDecide: boolean }
 
 function Steps({ c }: { c: ConsulteeCaseView }) {
   const t = useTranslations('consult.case')
-  const pending = c.offers.some((o) => o.status === 'PENDING' || o.status === 'INVITED')
+  const pending = c.offers.some((o) => o.status === 'PENDING')
   const stage = c.status === 'RESOLVED' ? 4 : c.status === 'MATCHED' ? 3 : pending ? 2 : 1
   const labels = ['written', 'delivered', 'offers', 'together', 'resolved'] as const
   return (
@@ -65,7 +65,7 @@ function OfferCard({ offer, canChoose, full, onAct }: { offer: ConsulteeOffer; c
         <span className="text-[13px] font-bold text-dawn">{offer.acceptedOrder === 1 ? t('chosenLead') : t('chosenTogether')}</span>
       ) : canChoose ? (
         <div className="flex gap-2">
-          <Button variant="lamp" disabled={busy || full} onClick={() => void act('accept')} className="flex-1">{offer.status === 'INVITED' ? t('agreeInvite') : t('choose')}</Button>
+          <Button variant="lamp" disabled={busy || full} onClick={() => void act('accept')} className="flex-1">{offer.invitedByName ? t('agreeInvite') : t('choose')}</Button>
           <Button variant="outline" disabled={busy} onClick={() => void act('decline')}>{t('pass')}</Button>
         </div>
       ) : null}
@@ -153,7 +153,7 @@ function CaseInner({ id }: { id: string }) {
   if (!data) return <Spinner />
   const c = data.case
   const open = c.status === 'OPEN' || c.status === 'MATCHED'
-  const waiting = c.offers.filter((o) => o.status === 'PENDING' || o.status === 'INVITED')
+  const waiting = c.offers.filter((o) => o.status === 'PENDING')
   const chosen = c.offers.filter((o) => o.status === 'ACCEPTED')
   const full = c.acceptedCount >= c.maxSupporters
 

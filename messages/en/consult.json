@@ -150,5 +150,13 @@
   "talk": {
     "title": "Messages",
     "empty": "You're not working with a supporter yet."
+  },
+  "handover": {
+    "title": "Enter a handover code",
+    "lead": "Enter the code you received from an organization to make the request they registered for you your own.",
+    "code": "Handover code",
+    "submit": "Make it mine",
+    "wrong": "The code is wrong or has expired",
+    "rateLimit": "Too many wrong codes. Please wait a little"
   }
 }
