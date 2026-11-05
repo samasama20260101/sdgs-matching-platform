@@ -7,6 +7,7 @@ import { loadFaces, type Faces } from '@/lib/faces'
 import { canOffer, supporterCaseAccess, type CaseAccess as Access, type SupporterFace } from '@/lib/domain/visibility'
 import { optionsFor } from '@/lib/domain/intake'
 import { caseAreaGoals, isAreaSubject, type AreaSubject } from '@/lib/domain/supportAreas'
+import { stripConsolation } from '@/lib/ai/prompts/caseSummary'
 import { CASE_COLUMNS, type CaseRow, type OfferRow } from './caseAccess'
 
 export type FaceKey = { kind: 'ORGANIZATION'; organizationId: string } | { kind: 'INDIVIDUAL' }
@@ -91,6 +92,8 @@ export type SupportCaseItem = {
   isMinor: boolean
   isSensitive: boolean
   regionCode: string | null
+  // 地域の名前(regions の name_local と name_en)。札に「JP-13」と出さない(画面の見直し 所見 3)
+  regionName: { local: string; en: string | null } | null
   country: string | null
   language: string
   waitingHours: number
@@ -107,11 +110,15 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
   if (rows.length === 0) return []
   const ids = rows.map((r) => r.id)
   const orgIds = [...new Set(rows.map((r) => r.subject_organization_id).filter((v): v is string => Boolean(v)))]
-  const [{ data: offers }, { data: indicators }, { data: orgs }] = await Promise.all([
+  // 地域は外部キーの JOIN を使わず、2 回に分けて取る(AGENTS.md)
+  const regionCodes = [...new Set(rows.map((r) => r.region_code).filter((v): v is string => Boolean(v)))]
+  const [{ data: offers }, { data: indicators }, { data: orgs }, { data: regions }] = await Promise.all([
     supabaseAdmin.from('offers').select('id, case_id, supporter_kind, supporter_user_id, supporter_organization_id, status, accepted_order, message, invited_by_offer_id, created_at').in('case_id', ids),
     supabaseAdmin.from('case_indicators').select('case_id, indicator_code, source, status').in('case_id', ids).in('source', ['SELF', 'AI']).neq('status', 'REJECTED'),
     orgIds.length ? supabaseAdmin.from('organizations').select('id, name').in('id', orgIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    regionCodes.length ? supabaseAdmin.from('regions').select('code, name_local, name_en').in('code', regionCodes) : Promise.resolve({ data: [] as { code: string; name_local: string; name_en: string | null }[] }),
   ])
+  const regionName = new Map((regions ?? []).map((r) => [r.code as string, { local: r.name_local as string, en: (r.name_en as string | null) ?? null }]))
   const byCase = new Map<string, OfferRow[]>()
   for (const o of (offers ?? []) as OfferRow[]) byCase.set(o.case_id, [...(byCase.get(o.case_id) ?? []), o])
   const indByCase = new Map<string, { indicator_code: string; source: 'SELF' | 'AI'; status: string }[]>()
@@ -129,7 +136,8 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       id: c.id,
       locked,
       title: locked ? null : c.title,
-      summary: locked ? null : c.ai_sdg_suggestion?.summary ?? null,
+      // v1 の頃に作った要約には、相談した人に向けた共感の文が入っているので、表示のときに除く(画面の見直し 所見 4)
+      summary: locked || !c.ai_sdg_suggestion?.summary ? null : stripConsolation(c.ai_sdg_suggestion.summary),
       status: c.status,
       subjectType: c.subject_type,
       subjectName: c.subject_organization_id ? orgName.get(c.subject_organization_id) ?? null : null,
@@ -139,6 +147,7 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       isMinor: c.is_minor,
       isSensitive: c.is_sensitive,
       regionCode: c.region_code,
+      regionName: c.region_code ? regionName.get(c.region_code) ?? null : null,
       country: c.region_country,
       language: c.locale,
       waitingHours: Math.max(0, Math.floor((nowMs - new Date(c.created_at).getTime()) / 3_600_000)),

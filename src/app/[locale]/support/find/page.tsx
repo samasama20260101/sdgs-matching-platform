@@ -21,6 +21,7 @@ function Find() {
   const [category, setCategory] = useState<number | null>(null)
   const [remote, setRemote] = useState(false)
   const [involvement, setInvolvement] = useState<'all' | 'notOffered' | 'mine'>('notOffered')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [items, setItems] = useState<SupportCaseItem[] | null>(null)
   const [lockedCount, setLockedCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -38,6 +39,12 @@ function Find() {
   }, [current, subject, category, remote, involvement, t])
 
   const subjects = current ? areaSubjectsForFace(current.kind) : []
+  const filterSummary = [
+    subject ? t(`subject${subject}`) : t('subjectAll'),
+    subject && category ? tSdgs(`area.${subject}.${category}`) : null,
+    remote ? t('remoteShort') : null,
+    involvement === 'notOffered' ? t('notOffered') : involvement === 'mine' ? t('mine') : t('everything'),
+  ].filter(Boolean).join(' ・ ')
   // 顔を替えて、選んでいた種類がその顔で選べなくなったら外す
   useEffect(() => {
     if (subject && current && !areaSubjectsForFace(current.kind).includes(subject)) { setSubject(null); setCategory(null) }
@@ -51,7 +58,25 @@ function Find() {
         <Tip label={t('tipLabel')}>{t('tip')}</Tip>
       </div>
       {current?.kind === 'INDIVIDUAL' && <Card tone="support" className="p-3"><Lead>{t('individualNote')}</Lead></Card>}
-      {/* 大項目は選ぶ形にする(札を並べるとスマホで何段にも折り返し、横に流すと右端が切れて見えるため。AGENTS.md) */}
+      {/* 絞り込みは1つのボタンにまとめ、開いたときだけ出す(縦に積むと最初の結果まで遠い。画面の見直し 所見 9)。
+          閉じているときも、いまの絞り込みをボタンの中に書く */}
+      <Card tone="support" className="flex flex-col px-4 py-1">
+        <button
+          type="button"
+          aria-expanded={filtersOpen}
+          aria-controls="find-filters"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="flex min-h-[48px] items-center justify-between gap-3 text-left"
+        >
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[13px] font-bold">{t('filters')}</span>
+            <span className="truncate text-[12.5px] text-ink-soft">{filterSummary}</span>
+          </span>
+          <span aria-hidden className={filtersOpen ? 'rotate-180 text-mist' : 'text-mist'}>⌄</span>
+        </button>
+        {filtersOpen && (
+          <div id="find-filters" className="flex flex-col gap-3 border-t border-line pb-3 pt-3">
+            {/* 大項目は選ぶ形にする(札を並べるとスマホで何段にも折り返し、横に流すと右端が切れて見えるため。AGENTS.md) */}
       <label className="flex flex-col gap-1.5">
         <span className="text-[13px] font-bold">{t('subject')}</span>
         <select
@@ -76,7 +101,7 @@ function Find() {
         </select>
         {!subject && <span className="text-[12px] text-mist">{t('categoryNeedsSubject')}</span>}
       </label>
-      <Card tone="support" className="flex flex-col px-4 py-1">
+            <div className="flex flex-col">
         <Toggle checked={remote} onChange={setRemote} label={t('remote')} description={t('remoteNote')} />
         <label className="flex min-h-[48px] items-center justify-between gap-3 text-[14px] font-bold">
           {t('involvement')}
@@ -86,6 +111,9 @@ function Find() {
             <option value="all">{t('everything')}</option>
           </select>
         </label>
+            </div>
+          </div>
+        )}
       </Card>
       {lockedCount > 0 && <Card tone="support" className="bg-lamp-faint p-3"><Lead>{t('locked', { count: lockedCount })}</Lead></Card>}
       {error && <Lead>{error}</Lead>}

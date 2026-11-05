@@ -13,3 +13,15 @@ export function autoCloseCutoffs(now: Date) {
     escalateBefore: new Date(now.getTime() - ESCALATE_HOURS * HOUR).toISOString(),
   }
 }
+
+// 支える側の札の「待っている時間」(画面の見直し 所見 3)。24 時間までは時間、それより長いと日数で出す。
+// 長く待っている印(赤)は LONG_WAIT_HOURS を超えたものだけに付ける(ほぼ全部が赤だと目立たせる意味がない)
+export const LONG_WAIT_HOURS = 72
+
+export type WaitingLabel = { unit: 'hours' | 'days'; value: number; long: boolean }
+
+export function waitingLabel(hours: number): WaitingLabel {
+  const h = Math.max(0, Math.floor(hours))
+  const long = h >= LONG_WAIT_HOURS
+  return h < 24 ? { unit: 'hours', value: h, long } : { unit: 'days', value: Math.floor(h / 24), long }
+}

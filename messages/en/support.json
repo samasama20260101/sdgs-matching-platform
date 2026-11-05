@@ -13,7 +13,8 @@
     "company": "Company request",
     "community": "Community request",
     "language": "Original: {lang}",
-    "waiting": "Waiting {hours} h",
+    "waitingHours": "Waiting {value} h",
+    "waitingDays": "{value, plural, one {Waiting # day} other {Waiting # days}}",
     "offers": "{count} offers",
     "mine": {
       "PENDING": "Offered",
@@ -48,7 +49,7 @@
   "find": {
     "title": "Find requests",
     "tipLabel": "How to read the tags",
-    "tip": "Solid indicator tags were chosen by the person asking; dotted ones are AI suggestions (before the samasama team checks them). For requests written in other languages, you can see a translation in the messages.",
+    "tip": "The numbered tags are SDG goals, named for the kind of requester. Open a request to see the problems in detail (dashed ones are AI suggestions the team has not checked yet). Requests written in other languages can be translated in the conversation.",
     "individualNote": "Individual supporters see only company and community requests (requests from individuals are supported through organizations).",
     "category": "Category",
     "all": "All",
@@ -66,7 +67,9 @@
     "subjectPERSON": "From individuals",
     "subjectCOMPANY": "From companies",
     "subjectCOMMUNITY": "From communities",
-    "categoryNeedsSubject": "Area names differ by who asked, so choose \"Whose request\" first"
+    "categoryNeedsSubject": "Area names differ by who asked, so choose \"Whose request\" first",
+    "filters": "Filters",
+    "remoteShort": "Including remote"
   },
   "case": {
     "person": "Request from an individual",

@@ -1,6 +1,6 @@
 // 相談の整理の返事の読み取りと、運営への知らせの文面。実行: npm run test:units
 import assert from 'node:assert/strict'
-import { buildCaseSummaryPrompt, parseCaseSummary } from '../../src/lib/ai/prompts/caseSummary'
+import { buildCaseSummaryPrompt, parseCaseSummary, stripConsolation } from '../../src/lib/ai/prompts/caseSummary'
 import { formatOpsEvent } from '../../src/lib/server/opsNotifyFormat'
 
 const allowed = new Set(['1.1.1', '11.1.1'])
@@ -20,6 +20,17 @@ assert.ok(prompt.includes('1.1.1: お金'))
 // 運営への知らせに相談の中身を載せない
 assert.equal(formatOpsEvent({ kind: 'NEW_CASE', displayId: 'CASE-00012', subjectType: 'PERSON', urgent: true, sensitive: false }), '新しい相談 CASE-00012(個人) 緊急')
 assert.equal(formatOpsEvent({ kind: 'NEW_CASE', displayId: 'CASE-00013', subjectType: 'COMPANY', urgent: false, sensitive: false }), '新しい相談 CASE-00013(会社)')
+
+// 相談した人に向けた共感やお見舞いの文は、支える側の要約から除く(画面の見直し 所見 4)
+assert.equal(
+  stripConsolation('学校の授業の内容を理解しにくく、通学も難しい。どこに相談すればよいか分からず困っていらっしゃるとのこと、大変お辛い状況ですね。'),
+  '学校の授業の内容を理解しにくく、通学も難しい。どこに相談すればよいか分からず困っていらっしゃるとのこと。',
+)
+assert.equal(stripConsolation('家賃を2か月払えていない。お気持ちお察しします。'), '家賃を2か月払えていない。')
+assert.equal(stripConsolation('家賃を2か月払えていない。来月退去を求められている。'), '家賃を2か月払えていない。来月退去を求められている。')
+// 全部が共感の文なら、何も残らないよりは元のまま
+assert.equal(stripConsolation('大変ですね。'), '大変ですね。')
+assert.equal(parseCaseSummary({ title: 't', summary: '仕事がない。大変ですね。' }, allowed)?.summary, '仕事がない。')
 
 console.log('caseSummary: ok')
 

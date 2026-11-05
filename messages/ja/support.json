@@ -13,7 +13,8 @@
     "company": "会社の相談",
     "community": "地域の相談",
     "language": "原文: {lang}",
-    "waiting": "待機 {hours}時間",
+    "waitingHours": "待って {value}時間",
+    "waitingDays": "待って {value}日",
     "offers": "申し出 {count}",
     "mine": {
       "PENDING": "申し出中",
@@ -48,7 +49,7 @@
   "find": {
     "title": "相談をさがす",
     "tipLabel": "札の読み方",
-    "tip": "指標の札は、塗りが相談した人の選んだもの、点線が AI の候補(運営が確かめる前)です。日本語以外で書かれた相談は、やりとりで訳を出せます。",
+    "tip": "札の番号つきの印は、SDGs のゴールと、相談した人の種類ごとの大項目の名前です。困りごとの中身は、開くと見られます(点線は AI の候補で、運営が確かめる前のもの)。日本語以外で書かれた相談は、やりとりで訳を出せます。",
     "individualNote": "個人の支え手には、会社と地域の相談だけが出ます(個人の相談は団体を通して支えます)。",
     "category": "大項目",
     "all": "すべて",
@@ -66,7 +67,9 @@
     "subjectPERSON": "個人の相談",
     "subjectCOMPANY": "会社の相談",
     "subjectCOMMUNITY": "地域の相談",
-    "categoryNeedsSubject": "大項目の名前は相談した人の種類で変わるので、先に「だれの相談か」を選んでください"
+    "categoryNeedsSubject": "大項目の名前は相談した人の種類で変わるので、先に「だれの相談か」を選んでください",
+    "filters": "絞り込み",
+    "remoteShort": "遠隔も含める"
   },
   "case": {
     "person": "個人の相談",

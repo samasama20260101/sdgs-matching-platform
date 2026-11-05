@@ -15,7 +15,7 @@ ${input.fencedText}
 次の JSON だけを返してください:
 {
   "title": "相談の核心を一言で(日本語・20文字以内。例「家賃が払えず住まいを失いそう」)",
-  "summary": "支え手が最初に読む要約(日本語・2〜3文。推測で事実を足さない。名前・連絡先・住所は書かない)",
+  "summary": "支え手が最初に読む要約(日本語・2〜3文。困っていること・いつから・望むことの事実だけを短く。推測で事実を足さない。名前・連絡先・住所は書かない。相談した人に話しかけない。「お辛い」「大変ですね」などの共感やお見舞いの言葉、「〜とのこと」の伝聞の言い方は書かない)",
   "candidates": [{ "id": "下の一覧の番号", "confidence": 0.0〜1.0, "reason": "相談文のどこから(日本語・30文字以内)" }],
   "sensitive": true か false
 }
@@ -36,13 +36,25 @@ export type CaseSummary = {
   sensitive: boolean
 }
 
+// 支える側が読む要約から、相談した人に向けた共感やお見舞いの文を除く(画面の見直し 所見 4)。
+// v1 の頃に作った要約にも、表示のときにかける(src/lib/server/supportCases.ts)。文を全部除いてしまうときは元のまま返す
+const CONSOLATION = /(お辛い|おつらい|お気持ち|大変でしたね|大変ですね|ご心配ですね|心配ですね|ご安心|お察し|寄り添)/
+
+export function stripConsolation(text: string): string {
+  const sentences = text.split(/(?<=[。！？!?])/).map((s) => s.trim()).filter(Boolean)
+  const kept = sentences
+    .map((s) => s.replace(/[、,]\s*大変お辛い状況ですね[。]?$/, '。'))
+    .filter((s) => !CONSOLATION.test(s))
+  return kept.length > 0 ? kept.join('') : text.trim()
+}
+
 function stripLinks(text: string): string {
   return text.replace(/https?:\/\/\S+/g, '').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '').trim()
 }
 
 export function parseCaseSummary(json: Record<string, unknown>, allowedIds: Set<string>): CaseSummary | null {
   const title = typeof json.title === 'string' ? stripLinks(json.title).slice(0, 40) : ''
-  const summary = typeof json.summary === 'string' ? stripLinks(json.summary).slice(0, 400) : ''
+  const summary = typeof json.summary === 'string' ? stripConsolation(stripLinks(json.summary)).slice(0, 400) : ''
   if (!title || !summary) return null
   const raw = Array.isArray(json.candidates) ? json.candidates : []
   const candidates = raw
