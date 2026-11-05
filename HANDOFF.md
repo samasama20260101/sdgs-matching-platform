@@ -9,7 +9,7 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 ### dev(Staging)
 - v2.0 の画面と API は dev に入っている(PR #73・#75〜#82)。v1 の相談者・サポーターの画面と、v1 の運営ダッシュボードは消した(v1 は main にある)
 - Staging の DB は v2 の形(`migrations/v2_01〜06` を 2026-11-05 に流した)。つなぎ先 13,506 件を取り込み済み
-- Staging は今も Vercel(`sdgs-matching-platform-git-dev-samasama.vercel.app`、入口のパスワードあり)。Cloudflare Workers への載せ替えは設定まで済み(下の「止まっていること」)
+- Staging は Vercel(`sdgs-matching-platform-git-dev-samasama.vercel.app`)と Cloudflare Workers(`samasama-app-staging.samasama.workers.dev`、2026-11-05 に手元から初回デプロイ)の両方で動いている。どちらも入口のパスワードあり(別の値)。Workers は dev への push で自動で出る設定まで済み、GitHub のトークン待ち(下の「止まっていること」2)
 ### main(本番)
 - v1 のまま。本番の DB には何も流していない
 
@@ -18,7 +18,8 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
    - ログインのメールは Supabase の標準の文面(リンクだけ。リンクを押せば入れる)。`ops/supabase-auth/staging` の 6 けた・10 分・中身を書かない文面は未適用
    - Supabase の標準の送信は、Supabase の org のメンバーのアドレスにしか届かない(代表に試してもらうなら、代表が org のメンバーであること)
    - Workers の Staging の URL を戻り先に足すのもこの設定
-2. **Cloudflare Workers Paid**(代表の申し込み待ち)と、GitHub の `CLOUDFLARE_API_TOKEN`。そろったら `CF_STAGING_DEPLOY=true` で Staging を Workers に出す
+2. **GitHub の `CLOUDFLARE_API_TOKEN`**(Workers Paid は 2026-11-05 に申し込み済み)。入れたら `CF_STAGING_DEPLOY=true` で dev への push のたびに Workers の Staging に出る。それまでは手元から出す(`docs/operations.md` §2.1.1 の手順。手元の作業ツリーのままビルドしない)
+   - Workers の Staging でログインのリンクを押すと、戻り先が Vercel の Staging になる(戻り先の追加が 1. の設定のため)
 3. **鍵と費用**: OpenAI / xAI(Grok)の鍵(今は Gemini のまま)、SMS の会社(個人の支え手の電話番号の確認)、Resend(知らせのメール)、Discord の運営用 Webhook。どれも鍵がなければ黙って使わない作り
 4. **規約とポリシーの案文**(盤 70〜73)とリーガルチェック。同意の画面と版の管理はできている(`src/lib/validation/person.ts` の版を上げると同意し直しになる)
 

@@ -28,7 +28,7 @@ function ModeSwitch() {
           role="tab"
           aria-selected={mode === m}
           onClick={() => pick(m)}
-          className={cx('min-h-[36px] rounded-full px-3', mode === m ? 'bg-night text-white' : 'text-ink-soft')}
+          className={cx('min-h-[36px] whitespace-nowrap rounded-full px-3', mode === m ? 'bg-night text-white' : 'text-ink-soft')}
         >
           {t(`mode.${m}`)}
         </button>
@@ -47,7 +47,8 @@ export function AppHeader() {
       <header className="flex h-14 items-center justify-between gap-2">
         <Link href={state.status === 'ready' ? '/home' : '/'} className="flex items-center gap-2.5 text-ink no-underline">
           <Mark />
-          <span className="font-heading text-[16px] font-bold">{t('brand')}</span>
+          {/* 切り替えが出る人は、スマホの幅では名前を印だけにする(390px で名前と切り替えが折り返す) */}
+          <span className={cx('whitespace-nowrap font-heading text-[16px] font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
         </Link>
         <div className="flex items-center gap-1">
           {canSupport && <ModeSwitch />}

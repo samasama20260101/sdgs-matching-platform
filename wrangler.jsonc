@@ -20,7 +20,9 @@
     "staging": {
       "name": "samasama-app-staging",
       "vars": {
-        "APP_ENV": "staging"
+        "APP_ENV": "staging",
+        // 知らせのメールに書くアプリの URL(既定は本番の https://app.samasama.site)
+        "APP_ORIGIN": "https://samasama-app-staging.samasama.workers.dev"
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-staging" }],
