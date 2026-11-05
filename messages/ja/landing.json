@@ -4,11 +4,9 @@
     "description": "AIがあなたの困りごとを分析し、専門のNPO・支援団体・企業・行政につなげるマッチングプラットフォームです。"
   },
   "news": {
-    "listKicker": "News",
     "listTitle": "お知らせ",
     "listLead": "運営からのお知らせ、参加団体の紹介、インタビューなどを掲載しています。",
     "empty": "現在、お知らせはありません。",
-    "backToTop": "← トップへ",
     "backToList": "← お知らせ一覧へ",
     "external": "続きを読む(外部サイトが開きます)",
     "externalHost": "リンク先: {host}",

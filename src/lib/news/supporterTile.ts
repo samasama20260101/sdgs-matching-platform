@@ -34,6 +34,17 @@ export function supporterIdFromUrl(url: string): string | null {
   }
 }
 
-export function yearsSince(iso: string) {
-  return Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24 * 365)))
+// 団体の種類の名前(お知らせは日本語だけなので日本語で持つ。公開の団体ページの common.supporterType と同じ言葉)
+export const SUPPORTER_TYPE_LABEL_JA: Record<string, string> = {
+  NPO: 'NPO / 支援団体',
+  CORPORATE: '企業',
+  GOVERNMENT: '行政・公共機関',
+  OTHER: 'その他',
+}
+
+// 「2026年5月から参加」。登録して1年たっていなくても「1年目」としない(公開の団体ページと同じ書き方)
+export function joinedSinceJa(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  return `${new Intl.DateTimeFormat('ja-JP', { year: 'numeric', month: 'long', timeZone: 'Asia/Tokyo' }).format(date)}から参加`
 }

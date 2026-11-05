@@ -31,7 +31,7 @@ assert.equal(buildMaterialSection('INTERVIEW', { pageText: '  ', notes: '' }), n
 console.log('pageText: ok')
 
 // サイト内の団体ページのアドレス → 団体 ID(このサイトのホストだけ)
-import { supporterIdFromUrl, supporterPageUrl } from '../../src/lib/news/supporterTile'
+import { joinedSinceJa, supporterIdFromUrl, supporterPageUrl } from '../../src/lib/news/supporterTile'
 const ORG = '8b3a6da9-6904-4c49-a0cb-d216df0a4942'
 assert.equal(supporterIdFromUrl(supporterPageUrl(ORG)), ORG)
 assert.equal(supporterIdFromUrl(`https://app.samasama.site/en/supporters/${ORG}/`), ORG)
@@ -40,4 +40,9 @@ assert.equal(supporterIdFromUrl(`http://localhost:3000/supporters/${ORG}`), ORG)
 assert.equal(supporterIdFromUrl(`https://evil.example.com/supporters/${ORG}`), null)
 assert.equal(supporterIdFromUrl('https://app.samasama.site/supporters/not-a-uuid'), null)
 assert.equal(supporterIdFromUrl(`https://app.samasama.site/news/${ORG}`), null)
+// 参加した月は日本時間で数える(UTC の月末の夜は日本では翌月)
+assert.equal(joinedSinceJa('2026-04-30T16:00:00Z'), '2026年5月から参加')
+assert.equal(joinedSinceJa('2026-05-01T00:00:00+09:00'), '2026年5月から参加')
+assert.equal(joinedSinceJa('not a date'), '')
 console.log('supporterTile: ok')
+

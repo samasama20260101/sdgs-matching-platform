@@ -24,7 +24,7 @@ function linkify(text: string, keyPrefix: string): React.ReactNode[] {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-teal-600 underline decoration-teal-300 underline-offset-2 break-all hover:text-teal-700"
+        className="break-all text-night underline underline-offset-2"
       >
         {url}
       </a>
@@ -39,11 +39,11 @@ function linkify(text: string, keyPrefix: string): React.ReactNode[] {
 export function NewsBodyView({ body, renderLinkCard }: { body: string; renderLinkCard: (url: string, key: number) => React.ReactNode }) {
   const blocks = parseNewsBody(body)
   return (
-    <div className="space-y-5 text-[15px] leading-8 text-gray-700 sm:text-base">
+    <div className="flex flex-col gap-4 text-[15px] leading-[1.9] text-ink-soft">
       {blocks.map((block, blockIndex) => {
         if (block.kind === 'heading') {
           return (
-            <h2 key={blockIndex} className="pt-4 text-lg font-bold text-gray-900">
+            <h2 key={blockIndex} className="m-0 pt-3 font-heading text-[17px] font-bold leading-[1.5] text-ink">
               {block.text}
             </h2>
           )
@@ -52,7 +52,7 @@ export function NewsBodyView({ body, renderLinkCard }: { body: string; renderLin
           return renderLinkCard(block.lines[0].replace(TRAILING_PUNCTUATION, ''), blockIndex)
         }
         return (
-          <p key={blockIndex}>
+          <p key={blockIndex} className="m-0">
             {block.lines.map((line, lineIndex) => (
               <React.Fragment key={lineIndex}>
                 {lineIndex > 0 && <br />}
