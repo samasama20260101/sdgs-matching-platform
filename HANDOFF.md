@@ -1,31 +1,33 @@
 # HANDOFF: v2.0 の実装中 — Staging で代表に確かめてもらう前
-更新: 2026-11-05(それまでの経緯は `git log -p HANDOFF.md` で見られる。v1 の申し送りは 2026-10-30 の版)
+更新: 2026-11-06(それまでの経緯は `git log -p HANDOFF.md` で見られる。v1 の申し送りは 2026-10-30 の版)
 
 ## ゴール(完成条件)
 v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反映できているかを確かめ、OK が出たら本番に出す(11/5 定例)。
 設計の正本は `docs/v2_design.md`、決まりの置き場所はその表。
 
-## 現在地(2026-11-05)
+## 現在地(2026-11-06)
 ### dev(Staging)
-- v2.0 の画面と API は dev に入っている(PR #73・#75〜#82)。v1 の相談者・サポーターの画面と、v1 の運営ダッシュボードは消した(v1 は main にある)
-- Staging の DB は v2 の形(`migrations/v2_01〜10` を 2026-11-05 に流した)。つなぎ先 13,506 件を取り込み済み
-- Staging は Vercel(`sdgs-matching-platform-git-dev-samasama.vercel.app`)と Cloudflare Workers(`samasama-app-staging.samasama.workers.dev`、2026-11-05 に手元から初回デプロイ)の両方で動いている。どちらも入口のパスワードあり(別の値)。Workers は dev への push で自動で出る(2026-11-05 から)
+- v2.0 の画面と API は dev に入っている(PR #73・#75〜#82、#98〜#108)。v1 の画面と部品は消した(v1 は main と `archive/mask-lab-2026-11` などのタグにある)
+  - 11/5 夜〜11/6 に入れたもの: 本番前の直し(#98〜#101)、使っていないコードの削除(#102・#103)、性能(#104)、lint を CI で警告 0 件(#105)、古い見た目の画面を v2 に(#106)、団体の活動地域の編集(#107)、体験ページの「近いもの」を AI で出す・回数の上限を DB で(#108)
+- Staging の DB は v2 の形(`migrations/v2_01〜12`。v2_11・12 は 2026-11-06 に流した)。つなぎ先 13,506 件を取り込み済み
+- Staging は Vercel(`sdgs-matching-platform-git-dev-samasama.vercel.app`)と Cloudflare Workers(`samasama-app-staging.samasama.workers.dev`)の両方で動いている。**入口のパスワードは 2 つで別の値**(Workers の値は手元の `.env.workers-staging.local`。Git には入れない)。Workers は dev への push で自動で出る
 ### main(本番)
 - v1 のまま。本番の DB には何も流していない
 
 ## 止まっていること(人の操作が要る)
-1. **Supabase の Auth の設定を変えられない**: 岡本さんのアカウントで `config push` すると 403(SQL と読み取りはできる)。org の役割を Administrator 以上にしてもらうか、代表が流す。それまで:
-   - ログインのメールは Supabase の標準の文面(リンクだけ。リンクを押せば入れる)。`ops/supabase-auth/staging` の 6 けた・10 分・中身を書かない文面は未適用
+1. **Supabase の Auth の設定を変えられない**: 岡本さんのアカウントで `config push` すると 403(SQL と読み取りはできる。2026-11-06 に `config diff` の読み取りは通るようになったが、push は 403 のまま)。org の役割を Administrator 以上にしてもらうか、代表が流す(代表への依頼の【4】)。それまで:
+   - ログインのメールは Supabase の標準の英語の文面(「Your Magic Link」。リンクだけで**コードが入っていない**)。v2 のログイン画面はコードを入れる作りなので、Staging ではメールのコードで入れない。`ops/supabase-auth/staging` の 6 けた・10 分・中身を書かない文面は未適用
    - Supabase の標準の送信は、Supabase の org のメンバーのアドレスにしか届かない(代表に試してもらうなら、代表が org のメンバーであること)
    - Workers の Staging の URL を戻り先に足すのもこの設定
-2. **Workers の Staging でログインのリンクを押すと、戻り先が Vercel の Staging になる**(戻り先の追加が 1. の設定のため)。Workers Paid・GitHub の `CLOUDFLARE_API_TOKEN`・`CF_STAGING_DEPLOY=true` は 2026-11-05 にそろい、dev への push のたびに Workers の Staging に出る
-3. **鍵と費用**: OpenAI / xAI(Grok)の鍵(今は Gemini のまま)、SMS の会社(個人の支え手の電話番号の確認)、Resend(知らせのメール)、Discord の運営用 Webhook。どれも鍵がなければ黙って使わない作り
+2. **Workers の Staging でログインのリンクを押すと、戻り先が Vercel の Staging になる**(Staging の Auth の site_url が Vercel で、Workers の URL を戻り先に足すのが 1. の設定のため。2026-11-06 に確かめた)。Vercel の入口のパスワードは Workers と別の値なので、Workers のパスワードでは入れない。Workers Paid・GitHub の `CLOUDFLARE_API_TOKEN`・`CF_STAGING_DEPLOY=true` は 2026-11-05 にそろい、dev への push のたびに Workers の Staging に出る
+3. **鍵と費用**: OpenAI / xAI(Grok)の鍵(今は Gemini のまま)、SMS の会社(個人の支え手の電話番号の確認)、Resend(知らせのメール。Workers にはまだ入れていない)。どれも鍵がなければ黙って使わない作り。**Workers の Staging には AI の鍵がない**ので、相談の整理はデモの結果、「近いもの」(本番の画面と体験ページ)は文字の重なりになる。Staging で AI を見るには `npx wrangler secret put GEMINI_API_KEY --env staging`
 4. **規約とポリシーのリーガルチェック**: 改定案(利用規約・支える人と団体の決まり・プライバシーポリシーと説明)は 2026-11-05 に代表へ送った(Word。OneDrive の `700_岡本/v2.0_規約とポリシーの改定案_20261105/`)。代表の答え(15歳以下の保護者の同意)と、よろず支援拠点のリーガルチェック待ち。チェックが済んだら、本文を `/terms`・`/privacy` と支える側の決まりの画面に入れ、`src/lib/validation/person.ts` の版を上げる(版を上げると、初めて入るときに同意し直しになる)
 
 ## 本番に出すまで
 1. 代表の Staging での確認(相談する・支える・運営の3つの顔)
 2. 規約とポリシーのリーガルチェック → 本文を画面に入れる。前もっての告知期間は置かず、公開の日に施行し、今の利用者には初めて入るときに同意をもらい直す(2026-11-05 岡本さん。10/30 の「2週間前に告知」は取りやめ)
-3. 本番の DB を v1 の形のまま読み取りで確かめる → `migrations/v2_01〜10` を本番に流す(直前に内容を出して確認をもらう)
+3. 本番の DB を v1 の形のまま読み取りで確かめる → `migrations/v2_01〜12` を本番に流す(直前に内容を出して確認をもらう)
+   - 本番の Auth の設定(6 けたのコードのメール・戻り先・送り主)も入れる。今は `ops/supabase-auth/staging` しかないので、本番の分を作ってから(1. の権限が要る)
 4. DNS を Cloudflare に移し、本番を Workers に切り替える(Resend の送信用レコードを写す)→ 本番の目視確認
 5. 施行のあと、相談者の個人情報の列を消す(`v2_90_drop_pii.sql`、未作成)。Vercel を止め、リポジトリを非公開にする
 
@@ -35,13 +37,15 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 - **画面の確認は手元の `npm run dev` を Staging の DB につないで行う**。ログインはメールを送らずに、管理 API の `generateLink`(magiclink)で出したコードを `verifyOtp` に渡してセッションを作る(一回きりのスクリプトで。コミットしない)。2つ目の確認は、登録の画面に出る文字列から TOTP を計算して入れる
 - **auto mode の分類器は「一括削除っぽい」コマンドを止める**(xargs や for ループでのブランチ削除)。名前を並べた単一のコマンドなら通る。本番の psql も止まるので、ユーザーが `!` で実行する
 - **本番 DB の確認は、読み取りだけの確認 SQL をユーザーに渡して SQL Editor で流してもらう**
-- **SVG の `url(#id)` 参照は id の重複に弱い**: defs を持つ部品は `useId` で固有の id にする(`Logo.tsx` で対応済み)
+- **SVG の `url(#id)` 参照は id の重複に弱い**: defs を持つ部品は `useId` で固有の id にする(v1 の `Logo.tsx` は消した。今の印 `Mark` は defs を持たない)
 - **`opengraph-image.tsx` を `[locale]` の下に置くと画像の URL が `/ja/...` になって 307** → 共有画像は `/api/public/...` に置く
 - 積んだ PR は、土台の PR をマージする前に base を付け替える(`--delete-branch` で土台のブランチが消えると上の PR が閉じる)
 
 ## 地雷・注意(`AGENTS.md`・`docs/operations.md`・`docs/v2_design.md` にないもの)
 - **Staging のテスト用アカウントのパスワードは 2026-11-05 に無効にした**(公開リポに載っていたため。v2 はパスワードを使わない)。v1 の HANDOFF の版にあるパスワードは使えない。入るときはメールのコード(またはリンク)で
-- Staging には手元の確認で作ったテスト用のデータがある: `[テスト] 住まいの支援NPO`(承認済み)、`v2test.*@example.com` の人たち、CASE-00152〜00154
+- Staging には手元の確認で作ったテスト用のデータがある: `[テスト] 住まいの支援NPO`(承認済み・活動地域は未登録)、CASE-00152〜00154、`v2test.*@example.com` の人たち
+  - `v2test.new2`(相談 3 件)・`v2test.npo-staff`(上の団体の管理)・`v2test.person1`(団体は 2 つとも却下・停止で、支える顔なし)・`v2test.admin`(運営。2つ目の確認つき。TOTP の秘密は作った人の手元だけ)。個人の支え手のテスト用ユーザーはいない
+- サイト全体の共有画像(`public/og-image.png`。「中文」とキャラクター入り)と favicon・ホーム画面の印は v1 のまま。作り直すかは代表の判断
 - 離任メンバーの後始末(10/30 の版)は未実施のまま: GitHub・Vercel・Supabase・Discord・Google Analytics のメンバーから外す、Supabase の秘密キー・`CRON_SECRET`・Gemini の鍵・Discord Webhook・Resend の鍵の作り直し。GitHub の admin の `samasama20200101` はだれが使っているか要確認
 - ローカルの Vercel CLI は `samasama-4963` で入っている。デプロイの状態は `gh api repos/samasama20260101/sdgs-matching-platform/commits/<sha>/status` で見る
 - **リポジトリの外にある資料**(前の担当者の PC の `~/samasama/` にあり、引き継ぐなら別に渡す): 配布物・相談フォーム改善提案・営業用テンプレート・説明ドキュメント「案件登録QA 作り直し(指標ベース)」https://claude.ai/code/artifact/69f7caf3-563d-4cff-b359-e5e2d30176a7
