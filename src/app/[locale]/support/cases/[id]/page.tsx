@@ -88,6 +88,7 @@ function InviteForm({ caseId, face }: { caseId: string; face: string }) {
 function Inner({ id }: { id: string }) {
   const t = useTranslations('support.case')
   const tCard = useTranslations('support.card')
+  const tSdgs = useTranslations('sdgs')
   const face = useSearchParams().get('face') ?? ''
   const [data, setData] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -125,6 +126,7 @@ function Inner({ id }: { id: string }) {
       <div className="flex flex-col gap-1">
         <span className="text-[12px] text-mist">{c.subjectName ?? (c.subjectType === 'PERSON' ? t('person') : '')}</span>
         <Heading level={2}>{c.title}</Heading>
+        {c.areaGoals.length > 0 && <span className="text-[13px] font-bold text-ink-soft">{c.areaGoals.map((g) => tSdgs(`area.${c.subjectType}.${g}`)).join(' / ')}</span>}
         <span className="flex flex-wrap gap-1">
           {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${i.text}`}</Chip>)}
           {c.urgent && <Chip color="coral">{tCard('urgent')}</Chip>}

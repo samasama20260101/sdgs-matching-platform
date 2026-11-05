@@ -60,7 +60,13 @@
     "everything": "すべて",
     "locked": "2つ目の確認で見られる相談が {count} 件あります。わたしの画面から認証アプリを登録すると見られます。",
     "loadFailed": "読み込めませんでした",
-    "count": "条件に合う相談 {count}件 ・ 待っている時間が長い順"
+    "count": "条件に合う相談 {count}件 ・ 待っている時間が長い順",
+    "subject": "だれの相談か",
+    "subjectAll": "すべて",
+    "subjectPERSON": "個人の相談",
+    "subjectCOMPANY": "会社の相談",
+    "subjectCOMMUNITY": "地域の相談",
+    "categoryNeedsSubject": "大項目の名前は相談した人の種類で変わるので、先に「だれの相談か」を選んでください"
   },
   "case": {
     "person": "個人の相談",
@@ -171,7 +177,12 @@
     "apply": "申し込む",
     "appliedTitle": "申し込みを受け付けました",
     "appliedBody": "運営から面談の日の連絡をします。面談が済むと、相談に申し出られるようになります。",
-    "toSupportHome": "支える側のホームへ"
+    "toSupportHome": "支える側のホームへ",
+    "skillsFor": {
+      "COMPANY": "会社の相談で",
+      "COMMUNITY": "地域の相談で"
+    },
+    "skillsNote": "相談した人の種類によって、大項目の名前が違います"
   },
   "orgType": {
     "NPO": "NPO",

@@ -201,5 +201,59 @@
     "17_3_2": "I can't receive money sent by family working abroad, so I can't cover living costs",
     "17_6_1": "I can't use the internet at home",
     "17_8_1": "I can't use the internet"
+  },
+  "area": {
+    "PERSON": {
+      "1": "Money & living",
+      "2": "Food",
+      "3": "Body & mind",
+      "4": "Education",
+      "5": "Women's rights",
+      "6": "Water & toilets",
+      "7": "Electricity & energy",
+      "8": "Work & income",
+      "9": "Communications & infrastructure",
+      "10": "Discrimination & inequality",
+      "11": "Housing & community",
+      "12": "Resources & waste",
+      "13": "Climate & disasters",
+      "14": "Sea & fishing",
+      "16": "Rights & violence",
+      "17": "Partnerships"
+    },
+    "COMPANY": {
+      "1": "Poverty & livelihood support",
+      "2": "Agriculture & food",
+      "3": "Health & medical care",
+      "5": "Women's rights",
+      "6": "Water",
+      "8": "Working conditions & productivity",
+      "9": "Business & development",
+      "10": "Wage distribution & finance",
+      "11": "Disaster impact & living environment",
+      "12": "Resources & disclosure",
+      "13": "Greenhouse gases",
+      "14": "Sea & fishing",
+      "15": "Forests & wildlife",
+      "16": "Anti-corruption & human rights",
+      "17": "Funding, partnerships & statistics"
+    },
+    "COMMUNITY": {
+      "1": "Climate & disasters",
+      "2": "Agriculture & food",
+      "3": "Health & wellbeing",
+      "4": "Education",
+      "6": "Water resources",
+      "7": "Electricity & energy",
+      "8": "Resources",
+      "9": "Transport & CO2",
+      "11": "Housing & community / Community & disasters",
+      "12": "Resources & tourism",
+      "13": "Greenhouse gases",
+      "14": "Sea & fishing",
+      "15": "Forests & land",
+      "16": "Human rights protection",
+      "17": "Finance, collaboration & statistics"
+    }
   }
 }

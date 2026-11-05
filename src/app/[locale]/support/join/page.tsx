@@ -14,8 +14,8 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip, Toggle } from '@/components/app/ui'
 import type { MePerson } from '@/lib/client/meTypes'
+import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAreas'
 
-const CATEGORIES = Array.from({ length: 17 }, (_, i) => i + 1)
 const SUPPORTER_POINTS = ['purpose', 'inApp', 'sensitive', 'realName', 'records', 'stop'] as const
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER_PUBLIC', 'OTHER'] as const
 const APPLICATION_ITEMS = ['activities', 'areas', 'targets', 'staff', 'safeguarding', 'website', 'howFound'] as const
@@ -103,7 +103,7 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
   const tSdgs = useTranslations('sdgs')
   const locale = useLocale()
   const [realName, setRealName] = useState('')
-  const [skills, setSkills] = useState<number[]>([])
+  const [skills, setSkills] = useState<string[]>([])
   const [remote, setRemote] = useState(false)
   const [languages, setLanguages] = useState<AppLocale[]>([locale === 'en' || locale === 'es' ? locale : 'ja'])
   const [intro, setIntro] = useState('')
@@ -120,7 +120,7 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
     try {
       await apiFetch('/api/support/profile', {
         method: 'PUT',
-        json: { realName, skills, country: person.country, regionCode: person.regionCode, remoteOk: remote, languages, intro: intro || undefined, acceptSupporterTerms: true },
+        json: { realName, skillAreas: skills, country: person.country, regionCode: person.regionCode, remoteOk: remote, languages, intro: intro || undefined, acceptSupporterTerms: true },
       })
       onDone()
     } catch {
@@ -133,18 +133,25 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
     <div className="flex flex-col gap-4">
       <Card tone="support" className="flex flex-col gap-4 p-4">
         <TextField label={<span className="inline-flex items-center gap-2">{t('realName')} <Tip label={t('realNameTipLabel')}>{t('realNameTip')}</Tip></span>} value={realName} maxLength={100} autoComplete="name" onChange={(e) => setRealName(e.target.value)} />
+        {/* 得意なことは相談した人の種類ごとに選ぶ(大項目の名前が種類で違う。個人の支え手は会社と地域の相談だけ) */}
         <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-bold">{t('skills')}</span>
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORIES.map((c) => {
-              const on = skills.includes(c)
-              return (
-                <button key={c} type="button" aria-pressed={on} onClick={() => setSkills(on ? skills.filter((x) => x !== c) : [...skills, c])} className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
-                  {tSdgs(`category.${c}`)}
-                </button>
-              )
-            })}
-          </div>
+          <span className="inline-flex items-center gap-2 text-[13px] font-bold">{t('skills')} <Tip label={t('skills')}>{t('skillsNote')}</Tip></span>
+          {areaSubjectsForFace('INDIVIDUAL').map((subject) => (
+            <div key={subject} className="flex flex-col gap-1.5">
+              <span className="text-[12.5px] font-bold text-ink-soft">{t(`skillsFor.${subject}`)}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {AREA_GOALS[subject].map((g) => {
+                  const key = areaKey(subject, g)
+                  const on = skills.includes(key)
+                  return (
+                    <button key={key} type="button" aria-pressed={on} onClick={() => setSkills(on ? skills.filter((x) => x !== key) : [...skills, key])} className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+                      {tSdgs(`area.${subject}.${g}`)}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
         <Toggle checked={remote} onChange={setRemote} label={t('remote')} description={t('remoteNote')} />
         <div className="flex flex-col gap-2">

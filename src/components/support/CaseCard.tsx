@@ -8,6 +8,7 @@ import type { SupportCaseItem } from '@/lib/server/supportCases'
 
 export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }) {
   const t = useTranslations('support.card')
+  const tSdgs = useTranslations('sdgs')
   if (item.locked) {
     return (
       <Card tone="support" className="flex flex-col gap-1 p-3.5">
@@ -21,6 +22,10 @@ export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }
     <Link href={`/support/cases/${item.id}?face=${encodeURIComponent(face)}`} className="no-underline">
       <Card tone="support" className="flex flex-col gap-2 p-3.5 text-ink">
         <span className="text-[14.5px] font-bold leading-[1.5]">{item.title}</span>
+        {/* 大項目は相談した人の種類ごとの名前で出す(src/lib/domain/supportAreas.ts) */}
+        {item.areaGoals.length > 0 && (
+          <span className="text-[12px] font-bold text-ink-soft">{item.areaGoals.map((g) => tSdgs(`area.${item.subjectType}.${g}`)).join(' / ')}</span>
+        )}
         <span className="flex flex-wrap gap-1">
           {item.indicators.map((i) => (
             <span key={`${i.source}-${i.code}`} className={cx('inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold', i.source === 'SELF' ? 'bg-night text-white' : 'border-[1.5px] border-dashed border-mist-light text-ink-soft')}>

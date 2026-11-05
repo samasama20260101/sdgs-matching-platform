@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { loadFaces, type Faces } from '@/lib/faces'
 import { canOffer, supporterCaseAccess, type CaseAccess as Access, type SupporterFace } from '@/lib/domain/visibility'
 import { optionsFor } from '@/lib/domain/intake'
+import { caseAreaGoals, isAreaSubject, type AreaSubject } from '@/lib/domain/supportAreas'
 import { CASE_COLUMNS, type CaseRow, type OfferRow } from './caseAccess'
 
 export type FaceKey = { kind: 'ORGANIZATION'; organizationId: string } | { kind: 'INDIVIDUAL' }
@@ -84,6 +85,8 @@ export type SupportCaseItem = {
   subjectType: CaseRow['subject_type']
   subjectName: string | null
   indicators: { code: string; text: string; source: 'SELF' | 'AI'; status: string }[]
+  // 支える側の大項目(相談した人の種類ごとの名前で出す。src/lib/domain/supportAreas.ts)
+  areaGoals: number[]
   urgent: boolean
   isMinor: boolean
   isSensitive: boolean
@@ -131,6 +134,7 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       subjectType: c.subject_type,
       subjectName: c.subject_organization_id ? orgName.get(c.subject_organization_id) ?? null : null,
       indicators: locked ? [] : (indByCase.get(c.id) ?? []).map((i) => ({ code: i.indicator_code, text: indicatorText(c.subject_type, i.indicator_code), source: i.source, status: i.status })),
+      areaGoals: locked || !isAreaSubject(c.subject_type) ? [] : caseAreaGoals(c.subject_type, (indByCase.get(c.id) ?? []).map((i) => i.indicator_code)),
       urgent: c.urgency === 'High',
       isMinor: c.is_minor,
       isSensitive: c.is_sensitive,
@@ -146,7 +150,8 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
 }
 
 // escalated: コーディネーターの一覧(その地域で 24 時間申し出のない相談、盤 05「地域のコーディネーターの一覧に回す」)
-export type FindFilters = { category: number | null; includeRemote: boolean; involvement: 'all' | 'notOffered' | 'mine'; escalated?: boolean }
+// subject: だれの相談か(大項目の名前は相談した人の種類で変わるので、大項目で絞るときは種類も選ぶ)
+export type FindFilters = { subject: AreaSubject | null; category: number | null; includeRemote: boolean; involvement: 'all' | 'notOffered' | 'mine'; escalated?: boolean }
 
 export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise<SupportCaseItem[]> {
   let q = supabaseAdmin.from('cases').select(CASE_COLUMNS).in('status', ['OPEN', 'MATCHED']).eq('visibility', 'LISTED')
@@ -158,6 +163,10 @@ export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise
     q = q.in('region_code', rf.regionCodes)
   }
   if (rf.face.kind === 'INDIVIDUAL') q = q.in('subject_type', ['COMPANY', 'COMMUNITY']).eq('is_sensitive', false).eq('is_minor', false)
+  if (filters.subject) {
+    if (rf.face.kind === 'INDIVIDUAL' && filters.subject === 'PERSON') return []
+    q = q.eq('subject_type', filters.subject)
+  }
   const { data, error } = await q.order('created_at', { ascending: true }).limit(200)
   if (error) throw error
   let rows = (data ?? []) as CaseRow[]
