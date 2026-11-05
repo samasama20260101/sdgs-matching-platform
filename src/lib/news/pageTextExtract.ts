@@ -1,4 +1,5 @@
 // URL から材料を取り込むときの、HTML → 本文テキストの取り出しと、接続先アドレスの判定(純粋関数・テスト用に分離)。
+import { decodeEntities } from '@/lib/news/htmlEntities'
 
 // 内部ネットワーク・ループバック・リンクローカルなど、外部サイトではないアドレスへは接続しない
 export function isBlockedAddress(address: string): boolean {
@@ -17,14 +18,6 @@ export function isBlockedAddress(address: string): boolean {
     || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224
 }
 
-const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', '#39': "'" }
-
-function decodeEntities(text: string) {
-  return text
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
-    .replace(/&([a-z]+|#39);/gi, (m, name) => ENTITIES[name.toLowerCase()] ?? m)
-}
 
 function metaContent(html: string, key: string) {
   const re = new RegExp(`<meta[^>]+(?:property|name)=["']${key}["'][^>]*>`, 'i')

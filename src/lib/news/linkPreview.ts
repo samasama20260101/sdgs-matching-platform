@@ -4,6 +4,7 @@
 import 'server-only'
 
 import { safeFetchHtml } from '@/lib/news/pageText'
+import { decodeEntities } from '@/lib/news/htmlEntities'
 
 export type LinkPreview = {
   url: string
@@ -18,16 +19,6 @@ const MAX_BYTES = 512 * 1024          // 先頭 512KB だけ見る(meta は head
 const TIMEOUT_MS = 4000
 const REVALIDATE_SECONDS = 60 * 60 * 24
 
-function decodeEntities(value: string) {
-  return value
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-}
 
 function clean(value: string | null | undefined) {
   if (!value) return null

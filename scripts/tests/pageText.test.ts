@@ -32,6 +32,7 @@ console.log('pageText: ok')
 
 // サイト内の団体ページのアドレス → 団体 ID(このサイトのホストだけ)
 import { joinedSinceJa, supporterIdFromUrl, supporterPageUrl } from '../../src/lib/news/supporterTile'
+import { decodeEntities } from '../../src/lib/news/htmlEntities'
 const ORG = '8b3a6da9-6904-4c49-a0cb-d216df0a4942'
 assert.equal(supporterIdFromUrl(supporterPageUrl(ORG)), ORG)
 assert.equal(supporterIdFromUrl(`https://app.samasama.site/en/supporters/${ORG}/`), ORG)
@@ -46,3 +47,9 @@ assert.equal(joinedSinceJa('2026-05-01T00:00:00+09:00'), '2026年5月から参�
 assert.equal(joinedSinceJa('not a date'), '')
 console.log('supporterTile: ok')
 
+// 文字参照: 名前つき(&nbsp; を含む)・番号・16 進。1 回の走査なので &amp;nbsp; は &nbsp; のまま。範囲外の番号でも投げない
+assert.equal(decodeEntities('フェア2026&nbsp;with&nbsp;おだわら'), 'フェア2026 with おだわら')
+assert.equal(decodeEntities('&lt;b&gt; &quot;A&quot; &#39;B&#39; &#x41;&#66;'), '<b> "A" \'B\' AB')
+assert.equal(decodeEntities('&amp;nbsp;'), '&nbsp;')
+assert.equal(decodeEntities('&#99999999; &#0; &unknown;'), '&#99999999; &#0; &unknown;')
+console.log('htmlEntities: ok')
