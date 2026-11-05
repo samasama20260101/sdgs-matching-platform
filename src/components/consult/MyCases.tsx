@@ -14,6 +14,7 @@ export type MyCaseItem = {
   subjectType: 'PERSON' | 'COMPANY' | 'COMMUNITY' | 'NATION'
   subjectName: string | null
   pendingOffers: number
+  isProxy: boolean
   unread: number
   createdAt: string
 }
@@ -35,6 +36,7 @@ export function MyCases() {
             <span className="text-[14.5px] font-bold">{c.title}</span>
             <span className="flex flex-wrap items-center gap-1.5">
               <Chip color={c.status === 'RESOLVED' ? 'leaf' : c.status === 'MATCHED' ? 'dawn' : c.status === 'OPEN' ? 'lamp' : 'steel'}>{t(`status.${c.status}`)}</Chip>
+              {c.isProxy && <Chip color="dawn">{t('proxy')}</Chip>}
               {c.subjectName && <Chip>{c.subjectName}</Chip>}
               {c.pendingOffers > 0 && <Chip color="night">{t('newOffers', { count: c.pendingOffers })}</Chip>}
             </span>

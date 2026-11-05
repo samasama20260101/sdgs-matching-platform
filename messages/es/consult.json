@@ -150,5 +150,13 @@
   "talk": {
     "title": "Mensajes",
     "empty": "Todavía no estás trabajando con nadie que te apoye."
+  },
+  "handover": {
+    "title": "Introducir un código de traspaso",
+    "lead": "Introduce el código que te dio la organización para que la consulta que registraron por ti pase a ser tuya.",
+    "code": "Código de traspaso",
+    "submit": "Hacerla mía",
+    "wrong": "El código no es correcto o ha caducado",
+    "rateLimit": "Demasiados códigos incorrectos. Espera un poco"
   }
 }

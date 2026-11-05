@@ -161,7 +161,8 @@
       "CLOSED": "終わりました",
       "CANCELLED": "取り消しました"
     },
-    "newOffers": "申し出 {count}件"
+    "newOffers": "申し出 {count}件",
+    "proxy": "代理の相談"
   },
   "learn": {
     "title": "知る",

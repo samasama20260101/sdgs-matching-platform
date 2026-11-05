@@ -10,6 +10,8 @@ type Row = {
   status: MyCaseItem['status']
   subject_type: MyCaseItem['subjectType']
   subject_organization_id: string | null
+  proxy_organization_id: string | null
+  owner_user_id: string | null
   created_at: string
 }
 
@@ -26,10 +28,13 @@ export async function consulteeOrganizationIds(userId: string): Promise<string[]
 export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
   const orgIds = await consulteeOrganizationIds(userId)
   const filters = [`and(owner_user_id.eq.${userId},subject_type.eq.PERSON)`]
-  if (orgIds.length > 0) filters.push(`subject_organization_id.in.(${orgIds.join(',')})`)
+  if (orgIds.length > 0) {
+    filters.push(`subject_organization_id.in.(${orgIds.join(',')})`)
+    filters.push(`and(owner_user_id.is.null,proxy_organization_id.in.(${orgIds.join(',')}))`)
+  }
   const { data, error } = await supabaseAdmin
     .from('cases')
-    .select('id, title, status, subject_type, subject_organization_id, created_at')
+    .select('id, title, status, subject_type, subject_organization_id, proxy_organization_id, owner_user_id, created_at')
     .or(filters.join(','))
     .order('created_at', { ascending: false })
     .limit(50)
@@ -38,7 +43,7 @@ export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
   if (rows.length === 0) return []
 
   const ids = rows.map((r) => r.id)
-  const subjectOrgIds = [...new Set(rows.map((r) => r.subject_organization_id).filter((v): v is string => Boolean(v)))]
+  const subjectOrgIds = [...new Set(rows.map((r) => r.subject_organization_id ?? (r.owner_user_id ? null : r.proxy_organization_id)).filter((v): v is string => Boolean(v)))]
   const [{ data: offers, error: oErr }, { data: orgs, error: gErr }] = await Promise.all([
     supabaseAdmin.from('offers').select('case_id, status').in('case_id', ids).in('status', ['PENDING', 'INVITED']),
     subjectOrgIds.length > 0
@@ -56,7 +61,10 @@ export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
     title: r.title,
     status: r.status,
     subjectType: r.subject_type,
-    subjectName: r.subject_organization_id ? orgName.get(r.subject_organization_id) ?? null : null,
+    subjectName: r.subject_organization_id
+      ? orgName.get(r.subject_organization_id) ?? null
+      : !r.owner_user_id && r.proxy_organization_id ? orgName.get(r.proxy_organization_id) ?? null : null,
+    isProxy: !r.owner_user_id && Boolean(r.proxy_organization_id),
     pendingOffers: pending.get(r.id) ?? 0,
     unread: 0,
     createdAt: r.created_at,
