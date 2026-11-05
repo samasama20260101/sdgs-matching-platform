@@ -9,8 +9,9 @@ import { apiFetch, ApiError } from '@/lib/client/api'
 import type { MeResponse } from '@/lib/client/meTypes'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { isAppLocale } from '@/i18n/routing'
+import { modeForPath, type AppMode } from '@/lib/client/appMode'
 
-export type Mode = 'consult' | 'support'
+export type Mode = AppMode
 
 type ReadyMe = Extract<MeResponse, { onboarded: true }>
 
@@ -120,10 +121,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // 立場は開いている画面から決め、保存の値は両方で使う画面(わたし)と入口のためだけに使う
+  const shownMode: Mode = canSupport ? modeForPath(pathname, mode) : 'consult'
+  useEffect(() => {
+    if (canSupport && shownMode !== mode) setMode(shownMode)
+  }, [canSupport, shownMode, mode, setMode])
+
   const value = useMemo<SessionContextValue>(() => ({
     state,
     session,
-    mode: canSupport ? mode : 'consult',
+    mode: shownMode,
     canSupport,
     setMode,
     refresh: () => load(session),
@@ -136,7 +143,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
       setState({ status: 'anonymous' })
     },
-  }), [state, session, mode, canSupport, setMode, load])
+  }), [state, session, shownMode, canSupport, setMode, load])
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
