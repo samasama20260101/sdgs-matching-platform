@@ -1,7 +1,7 @@
 'use client'
 
 // 運営の画面の枠。運営で、2つ目の確認まで済んだときだけ中身を出す(済んでいなければ /admin で確認する)。日本語だけ
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { Link, usePathname } from '@/i18n/navigation'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Card, cx, Heading, Lead, Screen } from '@/components/app/ui'
@@ -17,17 +17,21 @@ export const ADMIN_TOOLS: readonly { href: string; title: string; note: string; 
   { href: '/admin/news', title: 'お知らせ', note: '書く・公開する・AI の下書き' },
 ]
 
-export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
+// wide: 2 列の編集画面。canLeave: 書きかけがあるときに、上の道具へ移る前に確かめる(false なら移らない)
+export function AdminShell({ title, wide = false, canLeave, children }: { title: string; wide?: boolean; canLeave?: () => boolean; children: ReactNode }) {
   const pathname = usePathname()
+  const guard = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (canLeave && !canLeave()) e.preventDefault()
+  }
   return (
     <RequireMe admin>
       {(me) => (
-        <Screen tone="support">
+        <Screen tone="support" wide={wide}>
           <div className="flex flex-col gap-4 py-6">
             <nav className="flex flex-wrap gap-1.5 text-[12.5px]">
-              <Link href="/admin" className="font-bold text-night">運営</Link>
+              <Link href="/admin" onClick={guard} className="font-bold text-night">運営</Link>
               {ADMIN_TOOLS.map((t) => (
-                <Link key={t.href} href={t.href} className={cx('rounded-full px-2.5 py-1 no-underline', pathname.startsWith(t.href) ? 'bg-night text-white' : 'bg-paper text-ink-soft')}>{t.title}</Link>
+                <Link key={t.href} href={t.href} onClick={guard} className={cx('rounded-full px-2.5 py-1 no-underline', pathname.startsWith(t.href) ? 'bg-night text-white' : 'bg-paper text-ink-soft')}>{t.title}</Link>
               ))}
             </nav>
             <Heading level={2}>{title}</Heading>
