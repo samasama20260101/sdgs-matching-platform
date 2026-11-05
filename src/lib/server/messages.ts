@@ -47,14 +47,15 @@ function parseSystem(content: string): { key: string; params: Record<string, str
   }
 }
 
-export async function listThread(access: CaseAccess, userId: string, lang: string | null): Promise<ThreadMessage[]> {
-  const { data, error } = await supabaseAdmin
+// after を渡すと、その時刻より後のものだけを返す(20 秒ごとの読み直し。決まりは domain/thread.ts)
+export async function listThread(access: CaseAccess, userId: string, lang: string | null, after: string | null = null): Promise<ThreadMessage[]> {
+  let q = supabaseAdmin
     .from('messages')
     .select('id, sender_user_id, sender_organization_id, sender_display_name_snapshot, sender_organization_name_snapshot, sender_role_snapshot, content, message_type, original_language, created_at')
     .eq('case_id', access.caseRow.id)
-    // 新しい 500 件を取ってから古い順に並べ直す(古い順で 500 件に切ると、新しいメッセージが出なくなる)
-    .order('created_at', { ascending: false })
-    .limit(500)
+  if (after) q = q.gt('created_at', after)
+  // 新しい 500 件を取ってから古い順に並べ直す(古い順で 500 件に切ると、新しいメッセージが出なくなる)
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(500)
   if (error) throw error
   const rows = ((data ?? []) as MessageRow[]).reverse()
   let translations = new Map<string, string>()
@@ -87,21 +88,26 @@ export async function listThread(access: CaseAccess, userId: string, lang: strin
 }
 
 export async function postUserMessage(access: CaseAccess, userId: string, content: string) {
-  const { data: me, error: meErr } = await supabaseAdmin.from('users').select('display_name, locale').eq('id', userId).single()
+  // 送る人の呼び名・言語と、画面に出す名前(団体名・個人の支え手の本名・会社と地域の団体名)を並べて読む
+  const nameQuery = access.role === 'SUPPORTER' && access.organizationId
+    ? supabaseAdmin.from('organizations').select('name').eq('id', access.organizationId).maybeSingle()
+    : access.role === 'SUPPORTER'
+      ? supabaseAdmin.from('supporter_profiles').select('real_name').eq('user_id', userId).maybeSingle()
+      : access.caseRow.subject_organization_id
+        // 会社・地域の相談は団体の名前で出す(担当者の呼び名は出さない、盤 16)
+        ? supabaseAdmin.from('organizations').select('name').eq('id', access.caseRow.subject_organization_id).maybeSingle()
+        : null
+  const [{ data: me, error: meErr }, named] = await Promise.all([
+    supabaseAdmin.from('users').select('display_name, locale').eq('id', userId).single(),
+    nameQuery ?? Promise.resolve(null),
+  ])
   if (meErr) throw meErr
+  const found = (named?.data ?? null) as { name?: string; real_name?: string } | null
   let organizationName: string | null = null
   let displayName = me.display_name as string
-  if (access.role === 'SUPPORTER' && access.organizationId) {
-    const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', access.organizationId).single()
-    organizationName = (org?.name as string | undefined) ?? null
-  } else if (access.role === 'SUPPORTER') {
-    const { data: profile } = await supabaseAdmin.from('supporter_profiles').select('real_name').eq('user_id', userId).maybeSingle()
-    displayName = (profile?.real_name as string | undefined) ?? displayName
-  } else if (access.caseRow.subject_organization_id) {
-    // 会社・地域の相談は団体の名前で出す(担当者の呼び名は出さない、盤 16)
-    const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', access.caseRow.subject_organization_id).single()
-    displayName = (org?.name as string | undefined) ?? displayName
-  }
+  if (access.role === 'SUPPORTER' && access.organizationId) organizationName = found?.name ?? null
+  else if (access.role === 'SUPPORTER') displayName = found?.real_name ?? displayName
+  else if (access.caseRow.subject_organization_id) displayName = found?.name ?? displayName
   const { data, error } = await supabaseAdmin
     .from('messages')
     .insert({

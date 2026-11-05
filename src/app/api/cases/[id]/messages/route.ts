@@ -1,4 +1,5 @@
-// やりとり(相談する側と、選ばれた支え手)。GET ?lang=xx で、その言語の訳があれば一緒に返す
+// やりとり(相談する側と、選ばれた支え手)。GET ?lang=xx で、その言語の訳があれば一緒に返す。
+// ?after=<日時> を付けると、その時刻より後のものだけを返す(画面の 20 秒ごとの読み直し)
 import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -7,6 +8,7 @@ import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { isThreadOpen, listThread, MESSAGE_MAX, postUserMessage } from '@/lib/server/messages'
 import { locales } from '@/i18n/routing'
 import { chosenSupporterUserIds, consulteeUserIds, notifyUsers } from '@/lib/server/notifyUser'
+import { parseThreadAfter } from '@/lib/domain/thread'
 
 const schema = z.object({ content: z.string().transform((v) => v.trim()).pipe(z.string().min(1).max(MESSAGE_MAX)) })
 
@@ -15,11 +17,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const auth = await requireActiveAppUser(request, { roles: ['PERSON'] })
   if ('response' in auth) return auth.response
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const lang = new URL(request.url).searchParams.get('lang')
+  const search = new URL(request.url).searchParams
+  const lang = search.get('lang')
+  const after = parseThreadAfter(search.get('after'))
   try {
     const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal)
     if (!access) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    const messages = await listThread(access, auth.appUser.id, lang && (locales as readonly string[]).includes(lang) ? lang : null)
+    const messages = await listThread(access, auth.appUser.id, lang && (locales as readonly string[]).includes(lang) ? lang : null, after)
     return NextResponse.json({ messages, open: isThreadOpen(access.caseRow.status), role: access.role })
   } catch (e) {
     console.error('[api/cases/messages]', e)

@@ -1,11 +1,13 @@
 'use client'
 
 // やりとり(盤 15)。相談する側と支える側で同じ部品を使う。原文と訳を切り替えられる。
-// 更新はリアルタイムの購読を使わず、画面を開いている間だけ 20 秒ごとに読み直す(operations.md §7: Realtime の直接購読はしない)
+// 更新はリアルタイムの購読を使わず、画面を開いている間だけ 20 秒ごとに読み直す(operations.md §7: Realtime の直接購読はしない)。
+// 読み直しは新しい分だけを取って足す(domain/thread.ts)。開いたときと訳を作ったあとは全部を取り直す
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
 import { Button, cx, ErrorNote } from '@/components/app/ui'
+import { mergeThread, threadPollAfter } from '@/lib/domain/thread'
 
 type Message = {
   id: string
@@ -39,11 +41,18 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
+  // 読み直しの起点。描画のたびに変わる messages を load の依存に入れないため ref で持つ
+  const messagesRef = useRef<Message[] | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (mode: 'all' | 'new' = 'all') => {
+    const after = mode === 'new' && messagesRef.current ? threadPollAfter(messagesRef.current) : null
     try {
-      const d = await apiFetch<{ messages: Message[]; open: boolean }>(`/api/cases/${caseId}/messages?lang=${locale}`)
-      setMessages(d.messages)
+      const qs = new URLSearchParams({ lang: locale })
+      if (after) qs.set('after', after)
+      const d = await apiFetch<{ messages: Message[]; open: boolean }>(`/api/cases/${caseId}/messages?${qs}`)
+      const next = after && messagesRef.current ? mergeThread(messagesRef.current, d.messages) : d.messages
+      messagesRef.current = next
+      setMessages(next)
       setOpen(d.open)
     } catch {
       setError(t('loadFailed'))
@@ -51,8 +60,9 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
   }, [caseId, locale, t])
 
   useEffect(() => {
-    void load()
-    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void load() }, POLL_MS)
+    messagesRef.current = null
+    void load('all')
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void load('new') }, POLL_MS)
     return () => window.clearInterval(timer)
   }, [load])
 
@@ -64,7 +74,7 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
     try {
       await apiFetch(`/api/cases/${caseId}/messages`, { method: 'POST', json: { content } })
       setDraft('')
-      await load()
+      await load('new')
       endRef.current?.scrollIntoView({ behavior: 'smooth' })
     } catch {
       setError(t('sendFailed'))
@@ -78,7 +88,7 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
     setError(null)
     try {
       await apiFetch(`/api/cases/${caseId}/messages/translate`, { method: 'POST', json: { lang: locale } })
-      await load()
+      await load('all')
       setShowTranslation(true)
     } catch {
       setError(t('translateFailed'))
