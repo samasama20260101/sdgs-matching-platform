@@ -8,7 +8,7 @@ assert.equal(modeForPath('/support/find', 'consult'), 'support')
 assert.equal(modeForPath('/support/cases/abc', 'consult'), 'support')
 
 // 相談する側だけの画面は「相談する」
-for (const p of ['/home', '/talk', '/learn', '/consult/new', '/consult/org', '/cases/abc', '/handover']) {
+for (const p of ['/home', '/talk', '/learn', '/consult/new', '/consult/org', '/cases/abc', '/handover', '/trial']) {
   assert.equal(modeForPath(p, 'support'), 'consult', p)
 }
 

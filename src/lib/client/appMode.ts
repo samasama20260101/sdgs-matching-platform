@@ -4,7 +4,7 @@
 // 立場を保存の値だけで決めると、知らせのメールやブックマークから支える側の画面を直接開いたとき、相談する側のタブが出る
 export type AppMode = 'consult' | 'support'
 
-const CONSULT_ONLY = ['/home', '/talk', '/learn', '/consult', '/cases', '/handover']
+const CONSULT_ONLY = ['/home', '/talk', '/learn', '/consult', '/cases', '/handover', '/trial']
 
 function under(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)

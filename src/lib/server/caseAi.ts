@@ -6,7 +6,7 @@ import { generateJson } from '@/lib/ai/client'
 import { fenceConsultation } from '@/lib/aiSafety'
 import { maskPii } from '@/lib/pii'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { optionsFor, type SubjectType } from '@/lib/domain/intake'
+import { caseBodyForAi, optionsFor, type SubjectType } from '@/lib/domain/intake'
 import { applyAiSensitivity, type SensitiveReason } from '@/lib/domain/sensitivity'
 import { buildCaseSummaryPrompt, parseCaseSummary } from '@/lib/ai/prompts/caseSummary'
 
@@ -25,7 +25,7 @@ export async function summarizeNewCase(caseId: string): Promise<boolean> {
 
   const subject = c.subject_type as SubjectType
   const intake = (c.intake_qna ?? {}) as { indicator_texts?: string[]; indicators?: string[]; since?: string | null; wish?: string | null }
-  const body = [c.description_free, intake.since ? `いつから: ${intake.since}` : '', intake.wish ? `どうしたいか: ${intake.wish}` : ''].filter(Boolean).join('\n')
+  const body = caseBodyForAi({ description: c.description_free, since: intake.since, wish: intake.wish })
   const options = optionsFor(subject)
   const prompt = buildCaseSummaryPrompt({
     selected: intake.indicator_texts ?? [],

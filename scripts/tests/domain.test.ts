@@ -123,7 +123,7 @@ assert.throws(() => formatHandoverCode(new Uint8Array(20).fill(255))) // 使え�
 console.log('domain: ok')
 
 // ---- 相談の受付
-import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
+import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBodyForAi, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
   assert.equal(optionsFor('PERSON').length, 115)
   assert.ok(optionsFor('COMPANY').length > 0 && optionsFor('COMMUNITY').length > 0)
   // 主体の選択肢にない番号・重複は落とし、3つで切る
@@ -155,6 +155,10 @@ import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, option
   // 仮の題
   assert.equal(provisionalTitle('PERSON', ['11.1.1'], '本文'), '安全に暮らせる住まいがない')
   assert.equal(provisionalTitle('PERSON', [], 'あ'.repeat(50)).length, 41)
+  // AI に渡す相談文の並び(本文 → いつから → どうしたいか)。空の欄は行ごと省く
+  assert.equal(caseBodyForAi({ description: ' 家賃が払えない ', since: '3か月前', wish: ' 住み続けたい ' }), '家賃が払えない\nいつから: 3か月前\nどうしたいか: 住み続けたい')
+  assert.equal(caseBodyForAi({ description: '家賃が払えない', since: '  ', wish: null }), '家賃が払えない')
+  assert.equal(caseBodyForAi({ description: null, wish: '住み続けたい' }), 'どうしたいか: 住み続けたい')
   // 相談所コード
   assert.equal(sanitizeEntryCode('shop-01'), 'shop-01')
   assert.equal(sanitizeEntryCode('<script>'), null)

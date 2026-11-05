@@ -6,7 +6,7 @@ import { isAppLocale } from '@/i18n/routing';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale: isAppLocale(locale) ? locale : 'ja', namespace: 'sos.trial' });
+  const t = await getTranslations({ locale: isAppLocale(locale) ? locale : 'ja', namespace: 'consult.trial' });
   const title = `${t('title')} | 明日もsamasama`;
   const description = t('subtitle');
   return {

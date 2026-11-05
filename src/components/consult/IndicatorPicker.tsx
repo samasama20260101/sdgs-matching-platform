@@ -96,3 +96,40 @@ export function IndicatorPicker({
     </div>
   )
 }
+
+// 書いた内容から出した「近いもの」(盤 12b)。押すと選ぶ・外す。3つ選ぶと、ほかは押せない
+export function SuggestedOptions({
+  ids,
+  selected,
+  onToggle,
+  textOf,
+}: {
+  ids: string[]
+  selected: string[]
+  onToggle: (id: string) => void
+  textOf: (id: string) => string
+}) {
+  if (ids.length === 0) return null
+  const full = selected.length >= MAX_INDICATOR_SELECTIONS
+  return (
+    <ul className="m-0 flex list-none flex-col gap-2 p-0">
+      {ids.map((id) => {
+        const on = selected.includes(id)
+        return (
+          <li key={id}>
+            <button
+              type="button"
+              aria-pressed={on}
+              disabled={!on && full}
+              onClick={() => onToggle(id)}
+              className={cx('flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2 text-left text-[14.5px] leading-[1.6]', on ? 'border-night bg-lamp-soft font-bold' : 'border-line bg-paper disabled:text-mist')}
+            >
+              <span>{textOf(id)}</span>
+              <span aria-hidden className="shrink-0">{on ? '✓' : '＋'}</span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
