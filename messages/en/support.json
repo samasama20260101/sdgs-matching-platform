@@ -291,6 +291,17 @@
     "save": "Save",
     "saved": "Saved",
     "saveFailed": "Could not save",
-    "displayId": "Organization number (for contacting the team): {id}"
+    "displayId": "Organization number (for contacting the team): {id}",
+    "areas": "Areas you work in",
+    "areasTipLabel": "How areas are used",
+    "areasTip": "Find shows requests from these areas (turn on “Include requests I can support remotely” to also see requests from outside them). They are also shown on your public organization page. Until you choose, the area from your application is used.",
+    "areasFromApplication": "Using the area from your application",
+    "areasNationwide": "Nationwide",
+    "areasPick": "Choose areas",
+    "areasEdit": "Change areas",
+    "areasPicked": "{count} selected",
+    "areasNeedOne": "Choose at least one area",
+    "areasCancel": "Cancel",
+    "areasNone": "Not set yet"
   }
 }

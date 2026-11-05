@@ -291,6 +291,17 @@
     "save": "Guardar",
     "saved": "Guardado",
     "saveFailed": "No se pudo guardar",
-    "displayId": "Número de la organización (para contactar al equipo): {id}"
+    "displayId": "Número de la organización (para contactar al equipo): {id}",
+    "areas": "Zonas donde trabajan",
+    "areasTipLabel": "Para qué sirven las zonas",
+    "areasTip": "En Buscar aparecen las consultas de estas zonas (con «Incluir consultas que puedo apoyar a distancia» también verán las de fuera). También se muestran en la página pública de la organización. Mientras no elijan, se usa la zona de la solicitud.",
+    "areasFromApplication": "Se usa la zona de la solicitud",
+    "areasNationwide": "Todo el país",
+    "areasPick": "Elegir zonas",
+    "areasEdit": "Cambiar zonas",
+    "areasPicked": "{count} elegidas",
+    "areasNeedOne": "Elijan al menos una zona",
+    "areasCancel": "Cancelar",
+    "areasNone": "Aún sin definir"
   }
 }

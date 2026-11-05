@@ -1,4 +1,5 @@
-// 団体のページ(メンバーが見る)。GET: 団体の中身・メンバー・招待中 / PATCH: 紹介・連絡先・人数・遠隔・言語(管理だけ)
+// 団体のページ(メンバーが見る)。GET: 団体の中身・活動地域・メンバー・招待中 / PATCH: 紹介・連絡先・人数・遠隔・言語(管理だけ)
+// 活動地域を変えるのは ./areas(PUT)
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -6,6 +7,7 @@ import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { myOrgRole } from '@/lib/server/orgAccess'
 import { locales } from '@/i18n/routing'
+import { effectiveServiceAreas, type ServiceAreaRow } from '@/lib/domain/serviceAreas'
 
 const patchSchema = z.object({
   bio: z.string().max(1000).nullable().optional(),
@@ -24,21 +26,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!role) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   // organization_memberships と users の間には外部キーが 2 つある(本人と、招いた人)。
   // どちらで結ぶかを名指ししないと PostgREST が断り(PGRST201)、一員の一覧が空になる
-  const [orgRes, membersRes, invitesRes] = await Promise.all([
-    supabaseAdmin.from('organizations').select('id, display_id, name, org_type, vetting_status, bio, contact_email, population, remote_ok, languages').eq('id', id).single(),
+  const [orgRes, areasRes, membersRes, invitesRes] = await Promise.all([
+    supabaseAdmin.from('organizations').select('id, display_id, name, org_type, vetting_status, bio, contact_email, population, remote_ok, languages, region_country, prefecture').eq('id', id).single(),
+    supabaseAdmin.from('supporter_service_areas').select('region_code, is_nationwide').eq('organization_id', id),
     supabaseAdmin.from('organization_memberships').select('id, role, status, joined_at, user_id, users!organization_memberships_user_id_fkey(display_name)').eq('organization_id', id).in('status', ['ACTIVE', 'SUSPENDED']).order('joined_at', { ascending: true }),
     role === 'MEMBER' ? Promise.resolve({ data: [], error: null }) : supabaseAdmin.from('organization_invitations').select('id, email, role, created_at, expires_at').eq('organization_id', id).eq('status', 'PENDING'),
   ])
-  const failed = orgRes.error ?? membersRes.error ?? invitesRes.error
+  const failed = orgRes.error ?? areasRes.error ?? membersRes.error ?? invitesRes.error
   if (failed) {
     console.error('[api/support/orgs/[id]] GET', failed)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   const org = orgRes.data
+  if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const members = membersRes.data
   const invites = invitesRes.data
+  const country = (org.region_country as string | null) ?? 'JP'
   return NextResponse.json({
     organization: org,
+    areas: { country, ...effectiveServiceAreas((areasRes.data ?? []) as ServiceAreaRow[], org.prefecture as string | null) },
     myRole: role,
     members: (members ?? []).map((m) => {
       const u = m.users as unknown as { display_name?: string } | null

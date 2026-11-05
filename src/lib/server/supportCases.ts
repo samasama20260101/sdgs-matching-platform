@@ -22,6 +22,7 @@ export function parseFaceParam(value: string | null): FaceKey | null {
 
 export { requireMfaForSensitive } from './mfaPolicy'
 import { requireMfaForSensitive } from './mfaPolicy'
+import { effectiveServiceAreas, type ServiceAreaRow } from '@/lib/domain/serviceAreas'
 
 export type ResolvedFace = { face: SupporterFace; key: FaceKey; label: string; phoneVerified: boolean; regionCodes: string[]; country: string; nationwide: boolean; coordinatorRegions: string[] }
 
@@ -67,8 +68,8 @@ export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'a
   const org = (membership.data as FaceMembershipRow | null)?.organizations
   if (!org || org.status === 'ARCHIVED') return null
   const approved = org.vetting_status === 'APPROVED'
-  const codes = (areas.data ?? []).filter((a) => a.region_code).map((a) => a.region_code as string)
-  if (org.prefecture && /^[A-Z]{2}-/.test(org.prefecture)) codes.push(org.prefecture)
+  // 活動地域の決まりは公開の団体ページと同じ(登録した地域だけ。なければ申し込みのときの都道府県)
+  const served = effectiveServiceAreas((areas.data ?? []) as ServiceAreaRow[], org.prefecture)
   return {
     face: {
       kind: 'ORGANIZATION',
@@ -81,9 +82,9 @@ export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'a
     key,
     label: org.name,
     phoneVerified: true,
-    regionCodes: [...new Set(codes)],
+    regionCodes: served.regionCodes,
     country: org.region_country ?? 'JP',
-    nationwide: (areas.data ?? []).some((a) => a.is_nationwide),
+    nationwide: served.nationwide,
     coordinatorRegions: approved ? (scopes.data ?? []).map((x) => x.region_code as string).filter(Boolean) : [],
   }
 }

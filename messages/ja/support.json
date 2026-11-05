@@ -291,6 +291,17 @@
     "save": "保存する",
     "saved": "保存しました",
     "saveFailed": "保存できませんでした",
-    "displayId": "団体の番号(運営への問い合わせ用): {id}"
+    "displayId": "団体の番号(運営への問い合わせ用): {id}",
+    "areas": "活動地域",
+    "areasTipLabel": "活動地域の使い方",
+    "areasTip": "「さがす」に出る相談の地域です(「遠隔も含める」を選ぶと、地域の外の相談も出ます)。公開の団体ページにも出ます。決めていないあいだは、申し込みのときの地域を使います。",
+    "areasFromApplication": "申し込みのときの地域を使っています",
+    "areasNationwide": "全国",
+    "areasPick": "地域を選ぶ",
+    "areasEdit": "活動地域を変える",
+    "areasPicked": "{count}か所を選んでいます",
+    "areasNeedOne": "地域を1つ以上選んでください",
+    "areasCancel": "やめる",
+    "areasNone": "まだ決めていません"
   }
 }
