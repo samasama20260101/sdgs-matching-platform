@@ -1,4 +1,4 @@
-// トップページお知らせ欄の定数(設計: docs/news_section_design.md)。
+// お知らせの定数(設計: docs/news_section_design.md)。
 // 種別は5つ固定(2026-10-24 に「話題」を追加)。DB(news_posts.category)には英字コードだけを入れ、表示名はここと i18n(landing.news.category)で持つ。
 
 // 線引きは「誰が書いたか」: 運営の連絡は NOTICE、運営が書いた紹介は SUPPORTER_JOINED / INTERVIEW、外の人が書いた記事の紹介は TOPIC
@@ -38,8 +38,7 @@ export const NEWS_MATERIAL_MAX = 8000
 export const NEWS_PAGE_TEXT_MAX = 18000
 export const NEWS_SOURCE_URLS_MAX = 3
 
-// トップページに並べる件数と一覧の上限
-export const NEWS_TOP_LIMIT = 3
+// 一覧の上限
 export const NEWS_LIST_MAX = 50
 // お知らせ一覧ページで「次の 50 件を見る」を押して広げられる上限
 export const NEWS_LIST_PAGE_CAP = 1000

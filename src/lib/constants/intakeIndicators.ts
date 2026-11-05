@@ -162,43 +162,7 @@ export function findIndicator(id: string): IntakeIndicator | undefined {
     return INDICATOR_BY_ID.get(id);
 }
 
-// 大項目ごとの選択肢(表示順は表の順)
-export function indicatorsInCategory(category: number): IntakeIndicator[] {
-    return INTAKE_INDICATORS.filter((indicator) => indicator.category === category);
-}
-
-// 選択肢を持つ大項目(相談フォームとサポーターのフィルターに出す順)
-export const SELECTABLE_CATEGORIES: number[] = [...new Set(INTAKE_INDICATORS.map((indicator) => indicator.category))];
-
-export function intakeCategoryLabel(category: number): string {
-    return INTAKE_CATEGORIES[category] ?? `SDG ${category}`;
-}
-
 // next-intl はキーの「.」を入れ子として扱うので、メッセージキーは「_」区切りにする
 export function indicatorMessageKey(id: string): string {
     return id.replace(/\./g, '_');
-}
-
-// 不正な ID・重複を落とし、上限で切る(API とフォームの両方で使う)
-export function sanitizeIndicatorIds(value: unknown): string[] {
-    if (!Array.isArray(value)) return [];
-    const ids = value.filter((id): id is string => typeof id === 'string' && INDICATOR_BY_ID.has(id));
-    return [...new Set(ids)].slice(0, MAX_INDICATOR_SELECTIONS);
-}
-
-// 選んだ選択肢から大項目を決める(重複なし・選んだ順)。0 個なら「SDGsの隣のお困りごと」
-export function categoriesFromIndicators(ids: string[]): number[] {
-    const categories = [...new Set(ids.map((id) => findIndicator(id)?.category).filter((c): c is number => c !== undefined))];
-    return categories.length > 0 ? categories : [NEIGHBOR_CATEGORY];
-}
-
-export function hasUrgentIndicator(ids: string[]): boolean {
-    return ids.some((id) => findIndicator(id)?.urgent);
-}
-
-// AI に渡す文の組み立て(本番の gemini/analyze と体験ページ /trial で同じ並びにする):
-// 「選んだ困りごと: A、B」→ 空行 → 自由記述。選択 0 個なら自由記述だけ
-export function buildIntakeTextForAi(heading: string, indicatorTexts: string[], description: string): string {
-    const selectedLine = indicatorTexts.length > 0 ? `${heading}: ${indicatorTexts.join('、')}` : '';
-    return [selectedLine, description.trim()].filter(Boolean).join('\n\n');
 }

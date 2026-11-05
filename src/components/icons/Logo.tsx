@@ -24,26 +24,6 @@ const cfg = {
   lg: { icon: 64, textSize: 25, subSize: 12, gap: 16, totalW: 370 },
 }
 
-// アイコン（ダーク背景 + 涙型）単体
-export function LogoIcon({ size = 36 }: { size?: number }) {
-  const id = useSvgId('li')
-  const r = Math.round(size * 0.23)
-  return (
-    <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0BC5A4"/>
-          <stop offset="100%" stopColor="#0A8FD4"/>
-        </linearGradient>
-        <filter id={`g${id}`}><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <rect width="56" height="56" rx={r} fill="#0A1628"/>
-      <path d="M28 7C28 7 11 24 11 36C11 45.4 18.6 49 28 49C37.4 49 45 45.4 45 36C45 24 28 7 28 7Z" fill={`url(#${id})`} filter={`url(#g${id})`}/>
-      <circle cx="28" cy="38.5" r="7" fill="white" opacity="0.22"/>
-    </svg>
-  )
-}
-
 // シンボルのみ（背景なし）
 export function LogoMark({ size = 36, white = false }: { size?: number; white?: boolean }) {
   const id = useSvgId('lm')
@@ -119,9 +99,4 @@ export function Logo({ variant = 'default', size = 'md', showText = true, classN
       )}
     </svg>
   )
-}
-
-// 後方互換
-export function LogoSymbol({ size = 24 }: { size?: number }) {
-  return <LogoIcon size={size}/>
 }

@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import React, { useEffect, useRef } from 'react';
-import { LogoIcon, LogoMark, Logo } from '@/components/icons/Logo';
+import { LogoMark, Logo } from '@/components/icons/Logo';
 import { JaOnlyNotice } from '@/components/i18n/JaOnlyNotice';
 
 const TeardropMark = ({ size = 40 }: { size?: number }) => <LogoMark size={size} />;
-const TeardropIcon = ({ size = 36 }: { size?: number }) => <LogoIcon size={size} />;
 
 /* ─── フェードイン ─────────────────────── */
 function Reveal({ children, delay = 0, className = '' }: {

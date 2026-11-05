@@ -7,7 +7,6 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { Card, cx, Heading, Lead, Screen } from '@/components/app/ui'
 
 // 運営の道具。countKey のあるものは、運営のホームの札に待っている件数を出す(/api/admin/counts)。
-// 個人情報マスクの検証(/admin/mask-lab)は開発の道具なので、一覧には出さない
 export const ADMIN_TOOLS: readonly { href: string; title: string; note: string; countKey?: 'vetting' | 'indicators' | 'inquiries' }[] = [
   { href: '/admin/vetting', title: '審査', note: '団体の申し込み・面談・承認・コーディネーター', countKey: 'vetting' },
   { href: '/admin/indicators', title: '指標の仕分け', note: '本人が選んだ指標と AI の候補を確定する', countKey: 'indicators' },

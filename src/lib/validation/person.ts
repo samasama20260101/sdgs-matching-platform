@@ -37,10 +37,8 @@ export const onboardingSchema = z.object({
   locale,
   acceptTerms: z.literal(true),
 })
-export type OnboardingInput = z.infer<typeof onboardingSchema>
 
 export const profileUpdateSchema = z
   .object({ displayName, age, country, regionCode, city, locale })
   .partial()
   .refine((v) => Object.keys(v).length > 0, { message: 'empty' })
-export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>

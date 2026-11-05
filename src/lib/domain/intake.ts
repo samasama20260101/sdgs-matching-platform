@@ -10,7 +10,6 @@ import { detectUrgency } from '@/lib/urgency'
 import { deriveSensitivity } from './sensitivity'
 
 export type SubjectType = 'PERSON' | 'COMPANY' | 'COMMUNITY' | 'NATION'
-export const OPEN_SUBJECTS: readonly SubjectType[] = ['PERSON', 'COMPANY', 'COMMUNITY']
 
 export type IntakeOption = { id: string; category: number; text: string; urgent?: boolean }
 

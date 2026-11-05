@@ -1,5 +1,7 @@
 // 相談の整理のプロンプトと、返事の読み取り(純粋関数。テストする)。
 // 題と要約は支え手が読むもの。相談した人には「書いてくださった内容を読みやすく整理した」とだけ伝える
+import { stripLinks } from '@/lib/aiSafety'
+
 export function buildCaseSummaryPrompt(input: { selected: string[]; fencedText: string; candidates: { id: string; text: string }[] }): string {
   const selected = input.selected.length > 0 ? input.selected.map((s) => `- ${s}`).join('\n') : '- (選んでいない)'
   const candidates = input.candidates.map((c) => `${c.id}: ${c.text}`).join('\n')
@@ -46,10 +48,6 @@ export function stripConsolation(text: string): string {
     .map((s) => s.replace(/[、,]\s*大変お辛い状況ですね[。]?$/, '。'))
     .filter((s) => !CONSOLATION.test(s))
   return kept.length > 0 ? kept.join('') : text.trim()
-}
-
-function stripLinks(text: string): string {
-  return text.replace(/https?:\/\/\S+/g, '').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '').trim()
 }
 
 export function parseCaseSummary(json: Record<string, unknown>, allowedIds: Set<string>): CaseSummary | null {

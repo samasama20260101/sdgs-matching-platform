@@ -13,9 +13,6 @@ export type AppLocale = (typeof locales)[number];
 
 export const defaultLocale: AppLocale = 'ja';
 
-// v2.0 で世界中からの相談と支援への参加を受けるので、言語の切り替えを出す(11/5 定例)。
-export const LANGUAGE_SWITCHER_ENABLED = true;
-
 export const localeLabels: Record<SupportedLocale, string> = {
   ja: '日本語',
   en: 'English',

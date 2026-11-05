@@ -4,12 +4,12 @@
 // 設計: docs/news_section_design.md §2.2 / §3。管理ダッシュボードには足さず独立ページにする。
 // 2026-10-21 レビュー(運営者・操作設計・安全の 3 観点)を反映: 状態ごとの操作ボタン、毎回の確認、
 // 未保存の変更の保護、保存中・AI 作成中の切り替え禁止、本物と同じ見え方の確認。
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import {
-    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX, NEWS_SOURCE_URLS_MAX, NEWS_TOP_LIMIT,
+    NEWS_CATEGORIES, NEWS_CATEGORY_META, NEWS_TITLE_MAX, NEWS_BODY_MAX, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX, NEWS_SOURCE_URLS_MAX,
     type NewsCategory, type NewsPostAdmin, type NewsPostListItem, type NewsStatus,
 } from '@/lib/constants/news'
 import { NewsBodyView } from '@/components/news/NewsBodyView'
@@ -163,11 +163,6 @@ export default function AdminNewsPage() {
     const isDirty = mode === 'new'
         ? Boolean(form.title.trim() || form.body.trim() || form.external_url.trim() || form.published_at || hasMaterials)
         : !sameForm(form, savedForm) || hasMaterials
-
-    // トップに出ている記事(公開中の新しい順に NEWS_TOP_LIMIT 件。一覧 API と同じ並び)
-    const topIds = useMemo(() => new Set(
-        posts.filter((p) => p.status === 'PUBLISHED').slice(0, NEWS_TOP_LIMIT).map((p) => p.id)
-    ), [posts])
 
     const authHeader = useCallback(async () => {
         const { data: { session } } = await supabase.auth.getSession()
@@ -490,9 +485,8 @@ export default function AdminNewsPage() {
             setForm(next)
             setSavedForm(next)
             setMaterials(emptyMaterials())
-            const list = await loadPosts()
-            const onTop = (list ?? []).filter((p) => p.status === 'PUBLISHED').slice(0, NEWS_TOP_LIMIT).some((p) => p.id === saved.id)
-            const where = onTop ? 'トップページとお知らせ一覧ページに出ています' : 'お知らせ一覧ページに出ています(トップには、より新しい記事が出ています)'
+            await loadPosts()
+            const where = 'お知らせ一覧ページに出ています'
             const time = JST_TIME.format(new Date())
             const message: Record<SaveAction, string> = {
                 draft: `✓ ${time} 下書き保存しました。サイトにはまだ出ていません`,
@@ -534,7 +528,7 @@ export default function AdminNewsPage() {
     const handleSaveDraft = () => save('draft')
 
     const handlePublish = () => {
-        if (!window.confirm('この記事をサイトに公開します。トップページとお知らせ一覧ページにすぐ出ます。いいですか?')) return
+        if (!window.confirm('この記事をサイトに公開します。お知らせ一覧ページにすぐ出ます。いいですか?')) return
         const date = confirmPublishDate()
         if (date === null) return
         save('publish', date)
@@ -609,7 +603,7 @@ export default function AdminNewsPage() {
                         <p className="text-xs text-gray-500">管理者メニュー</p>
                         <h1 className="text-2xl font-bold text-gray-900">お知らせ管理</h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            トップページの「お知らせ」欄に出す記事を作成・公開します。公開中の新しい{NEWS_TOP_LIMIT}件がトップに、全件がお知らせ一覧ページに並びます。
+                            お知らせ一覧ページ(/news)に出す記事を作成・公開します。公開中の記事が新しい順に並びます。
                         </p>
                     </div>
                     <Link
@@ -691,7 +685,6 @@ export default function AdminNewsPage() {
                                                     <span className={`rounded-full px-2 py-0.5 font-bold ${post.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                                                         {STATUS_LABEL[post.status]}
                                                     </span>
-                                                    {topIds.has(post.id) && <span className="rounded-full bg-teal-100 px-2 py-0.5 font-bold text-teal-700">トップに表示中</span>}
                                                     <span className="text-gray-500">{NEWS_CATEGORY_META[post.category]?.labelJa ?? post.category}</span>
                                                     <span className="text-gray-400 tabular-nums">{toDateInput(post.published_at) || '日付なし'}</span>
                                                 </div>
@@ -751,7 +744,7 @@ export default function AdminNewsPage() {
                             {/* 今の状態(サイトに出ているかどうか)を常に見せる */}
                             {savedStatus === 'PUBLISHED' ? (
                                 <div className="rounded-lg bg-green-50 border border-green-300 px-3 py-2 text-sm text-green-900">
-                                    <span className="font-bold">● サイトに公開中</span> — {selected && topIds.has(selected.id) ? 'トップページとお知らせ一覧ページに出ています' : 'お知らせ一覧ページに出ています(トップには出ていません)'}
+                                    <span className="font-bold">● サイトに公開中</span> — お知らせ一覧ページに出ています
                                 </div>
                             ) : savedStatus === 'DRAFT' ? (
                                 <div className="rounded-lg bg-gray-100 border border-gray-300 px-3 py-2 text-sm text-gray-800">

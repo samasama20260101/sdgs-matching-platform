@@ -1,42 +1,4 @@
 {
-  "goal": {
-    "1": "Fin de la pobreza",
-    "2": "Hambre cero",
-    "3": "Salud y bienestar",
-    "4": "Educación de calidad",
-    "5": "Igualdad de género",
-    "6": "Agua limpia y saneamiento",
-    "7": "Energía asequible y no contaminante",
-    "8": "Trabajo decente y crecimiento económico",
-    "9": "Industria, innovación e infraestructura",
-    "10": "Reducción de las desigualdades",
-    "11": "Ciudades y comunidades sostenibles",
-    "12": "Producción y consumo responsables",
-    "13": "Acción por el clima",
-    "14": "Vida submarina",
-    "15": "Vida de ecosistemas terrestres",
-    "16": "Paz, justicia e instituciones sólidas",
-    "17": "Alianzas para lograr los objetivos"
-  },
-  "caseStatus": {
-    "OPEN": "Esperando apoyo",
-    "MATCHED": "Con apoyo en curso",
-    "RESOLVED": "Resuelta",
-    "CANCELLED": "Cancelada",
-    "CLOSED": "Cerrada"
-  },
-  "offerStatus": {
-    "PENDING": "Pendiente",
-    "ACCEPTED": "Aceptado",
-    "DECLINED": "No elegido",
-    "WITHDRAWN": "Retirado"
-  },
-  "statusSteps": {
-    "waiting": "Esperando",
-    "matched": "Con apoyo",
-    "reported": "Informada",
-    "resolved": "Resuelta"
-  },
   "badge": {
     "gold_medal": "Gracias (principal)",
     "silver_medal": "Gracias (apoyo)",
@@ -45,25 +7,6 @@
     "sincere_support": "Apoyo sincero",
     "problem_solved": "Resolvió algo que ya daba por perdido",
     "grateful_partner": "Lo enfrentamos juntos, muy agradecido/a"
-  },
-  "goalShort": {
-    "1": "Pobreza",
-    "2": "Hambre",
-    "3": "Salud",
-    "4": "Educación",
-    "5": "Género",
-    "6": "Agua",
-    "7": "Energía",
-    "8": "Economía",
-    "9": "Industria",
-    "10": "Desigualdad",
-    "11": "Ciudades",
-    "12": "Consumo",
-    "13": "Clima",
-    "14": "Océanos",
-    "15": "Tierra",
-    "16": "Paz",
-    "17": "Alianzas"
   },
   "category": {
     "1": "Dinero y vida diaria",
