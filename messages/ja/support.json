@@ -1,18 +1,36 @@
 {
-  "face": { "label": "どの立場で支えますか", "asIndividual": "個人として({name})", "pending": "審査中" },
+  "face": {
+    "label": "どの立場で支えますか",
+    "asIndividual": "個人として({name})",
+    "pending": "審査中"
+  },
   "card": {
     "locked": "2つ目の確認で見られる相談",
     "lockedNote": "命や暴力にかかわる相談と18歳未満の相談は、認証アプリのコードを入れた人だけが中身を見られます。",
-    "urgent": "緊急", "minor": "18歳未満", "sensitive": "機微", "company": "会社の相談", "community": "地域の相談",
-    "language": "原文: {lang}", "waiting": "待機 {hours}時間", "offers": "申し出 {count}",
-    "mine": { "PENDING": "申し出中", "INVITED": "招待が届いています", "ACCEPTED": "選ばれました", "DECLINED": "見送られました", "WITHDRAWN": "取り下げました" }
+    "urgent": "緊急",
+    "minor": "18歳未満",
+    "sensitive": "機微",
+    "company": "会社の相談",
+    "community": "地域の相談",
+    "language": "原文: {lang}",
+    "waiting": "待機 {hours}時間",
+    "offers": "申し出 {count}",
+    "mine": {
+      "PENDING": "申し出中",
+      "INVITED": "招待が届いています",
+      "ACCEPTED": "選ばれました",
+      "DECLINED": "見送られました",
+      "WITHDRAWN": "取り下げました"
+    }
   },
   "home": {
     "noFace": "支える側になると、ここに合う相談が出ます。個人でも、団体でも登録できます。",
     "join": "支え手になる",
     "helloIndividual": "{name}さん",
-    "individual": "個人の支え手", "organization": "団体",
-    "approved": "運営と面談済み", "applied": "申し込み中",
+    "individual": "個人の支え手",
+    "organization": "団体",
+    "approved": "運営と面談済み",
+    "applied": "申し込み中",
     "appliedNote": "申し込みを受け付けました。運営から面談の日の連絡をします。面談が済むと、相談に申し出られます。",
     "involved": "関わっている相談",
     "forYou": "あなたに合う相談",
@@ -22,16 +40,24 @@
     "findMore": "相談をさがす",
     "contributions": "わたしの社会貢献",
     "proxy": "代理で相談を登録",
-    "orgPage": "団体のページ"
+    "orgPage": "団体のページ",
+    "unmatched": "地域の行き先のない相談 {count}件",
+    "unmatchedTipLabel": "コーディネーターの一覧",
+    "unmatchedTip": "担当の地域で、24時間たっても申し出のない相談です。近くの窓口や団体に声をかけてください。登録していない団体には、管理権の取り方を案内できます。"
   },
   "find": {
     "title": "相談をさがす",
     "tipLabel": "札の読み方",
     "tip": "指標の札は、塗りが相談した人の選んだもの、点線が AI の候補(運営が確かめる前)です。日本語以外で書かれた相談は、やりとりで訳を出せます。",
     "individualNote": "個人の支え手には、会社と地域の相談だけが出ます(個人の相談は団体を通して支えます)。",
-    "category": "大項目", "all": "すべて",
-    "remote": "遠隔で受けられる相談も含める", "remoteNote": "活動地域の外の相談も出します",
-    "involvement": "関わり", "notOffered": "まだ申し出ていない", "mine": "申し出中・支援中", "everything": "すべて",
+    "category": "大項目",
+    "all": "すべて",
+    "remote": "遠隔で受けられる相談も含める",
+    "remoteNote": "活動地域の外の相談も出します",
+    "involvement": "関わり",
+    "notOffered": "まだ申し出ていない",
+    "mine": "申し出中・支援中",
+    "everything": "すべて",
     "locked": "2つ目の確認で見られる相談が {count} 件あります。わたしの画面から認証アプリを登録すると見られます。",
     "loadFailed": "読み込めませんでした",
     "count": "条件に合う相談 {count}件 ・ 待っている時間が長い順"
@@ -40,7 +66,8 @@
     "person": "個人の相談",
     "summary": "整理した要約",
     "words": "相談した人の言葉",
-    "since": "いつから", "wish": "どうなったらよいか",
+    "since": "いつから",
+    "wish": "どうなったらよいか",
     "offerMessage": "申し出のメッセージ(相談した人が読みます)",
     "offer": "申し出る",
     "offerFailed": "申し出られませんでした",
@@ -58,26 +85,37 @@
     "reported": "解決を報告しました。相談した人の返事を待っています(14日で自動で解決になります)",
     "invite": "ほかの団体を共同支援に招く",
     "inviteLead": "相談した人の同意を得てから招いてください。招かれた団体が受けると、相談した人に提案として届きます。",
-    "inviteOrg": "招く団体", "inviteOrgHint": "選んでください",
+    "inviteOrg": "招く団体",
+    "inviteOrgHint": "選んでください",
     "inviteMessage": "招く理由(招かれた団体と相談した人が読みます)",
-    "sendInvite": "招く", "invited": "招きました", "inviteFailed": "招けませんでした",
+    "sendInvite": "招く",
+    "invited": "招きました",
+    "inviteFailed": "招けませんでした",
     "invitation": "共同支援の招待が届いています",
-    "acceptInvitation": "受ける", "declineInvitation": "断る",
+    "acceptInvitation": "受ける",
+    "declineInvitation": "断る",
     "failed": "うまくいきませんでした",
     "notFound": "相談が見つかりません。",
     "lockedBody": "この相談は、2つ目の確認(認証アプリのコード)を済ませると中身を見られます。"
   },
-  "talk": { "title": "やりとり", "empty": "関わっている相談はまだありません。" },
+  "talk": {
+    "title": "やりとり",
+    "empty": "関わっている相談はまだありません。"
+  },
   "join": {
     "title": "支え手になる",
     "tipLabel": "同じアカウントで",
     "tip": "同じアカウントのまま支える側になります。あなたの相談は、支える側からは見えません。",
-    "tab": { "individual": "個人として", "organization": "団体として" },
+    "tab": {
+      "individual": "個人として",
+      "organization": "団体として"
+    },
     "realName": "お名前(本名)",
     "realNameTipLabel": "本名を使うところ",
     "realNameTip": "申し出た相談の相手と、手を挙げた団体に届きます。相談する側では使わず、これまでどおり呼び名だけが出ます。",
     "skills": "得意なこと(いくつでも)",
-    "remote": "遠隔でも支えられる", "remoteNote": "オンにすると、住んでいる地域の外の相談にも出ます",
+    "remote": "遠隔でも支えられる",
+    "remoteNote": "オンにすると、住んでいる地域の外の相談にも出ます",
     "languages": "話せる言語",
     "intro": "ひとこと(任意)",
     "individualLimit": "個人の支え手には、会社と地域の相談だけが出ます。個人の相談と、命や暴力にかかわる相談、18歳未満の相談は、運営と面談した団体が受けます。",
@@ -108,7 +146,8 @@
     "smsUnavailable": "SMS の確認はいま準備中です。しばらくお待ちください。",
     "codeWrong": "コードが違うか、期限が切れています",
     "phoneDone": "電話番号を確認しました",
-    "orgName": "団体の名前", "orgNameHint": "(部署や支部の単位でもかまいません)",
+    "orgName": "団体の名前",
+    "orgNameHint": "(部署や支部の単位でもかまいません)",
     "orgNameRequired": "団体の名前を入れてください",
     "orgType": "団体の種類",
     "contactEmail": "団体の連絡先メール",
@@ -135,17 +174,34 @@
     "toSupportHome": "支える側のホームへ"
   },
   "orgType": {
-    "NPO": "NPO", "NGO": "NGO", "COMPANY": "企業", "MUNICIPALITY": "自治体", "COMMUNITY": "地域団体(町内会など)",
-    "SCHOOL": "学校", "INTERMEDIARY": "中間支援団体", "PRO_BONO_LAWYER": "プロボノの弁護士", "OTHER_PUBLIC": "その他の公的機関",
-    "NATIONAL_AGENCY": "国の機関", "OTHER": "その他"
+    "NPO": "NPO",
+    "NGO": "NGO",
+    "COMPANY": "企業",
+    "MUNICIPALITY": "自治体",
+    "COMMUNITY": "地域団体(町内会など)",
+    "SCHOOL": "学校",
+    "INTERMEDIARY": "中間支援団体",
+    "PRO_BONO_LAWYER": "プロボノの弁護士",
+    "OTHER_PUBLIC": "その他の公的機関",
+    "NATIONAL_AGENCY": "国の機関",
+    "OTHER": "その他"
   },
-  "vetting": { "APPLIED": "申し込み中", "INTERVIEW": "面談の調整中", "APPROVED": "運営と面談済み", "REJECTED": "見送り", "SUSPENDED": "停止中" },
+  "vetting": {
+    "APPLIED": "申し込み中",
+    "INTERVIEW": "面談の調整中",
+    "APPROVED": "運営と面談済み",
+    "REJECTED": "見送り",
+    "SUSPENDED": "停止中"
+  },
   "proxy": {
     "title": "代理で相談を登録",
     "tipLabel": "登録する前に",
     "tip": "本人から同意を得てから登録してください。登録したあなたの名前は、団体の記録に残ります。",
-    "name": "本人の呼び名", "nameHint": "(仮でよい)",
-    "minor": "18歳未満ですか", "yes": "はい", "no": "いいえ",
+    "name": "本人の呼び名",
+    "nameHint": "(仮でよい)",
+    "minor": "18歳未満ですか",
+    "yes": "はい",
+    "no": "いいえ",
     "words": "本人の言葉(聞き取ったとおりに)",
     "consent": "本人から、ここに相談を登録することの同意を得ました",
     "submit": "登録して引き継ぎコードを出す",
@@ -162,7 +218,8 @@
   "contrib": {
     "title": "わたしの社会貢献",
     "resolvedCount": "これまでに {count}件の相談の解決に関わりました",
-    "score": "スコア", "thanks": "ありがとう",
+    "score": "スコア",
+    "thanks": "ありがとう",
     "howCalculated": "計算のしかた",
     "formulaLabel": "スコアの計算のしかた",
     "formula": "スコア = 解決した相談に付いた指標の数 × 対象の人数。個人の相談は1人、会社や地域の相談は登録した人数で数えます。指標は運営が確かめて決めたものだけ、ありがとうはスコアに足さず別に数えます。数えるのは、相談した人が「解決した」と確定した支えだけで、申し出の数や返信の速さでは増えません。指標は SDGs のグローバル指標をもとにしていますが、この数え方は samasama が独自に決めたもので、国連などが定めたり認めたりしたものではありません。",
@@ -180,14 +237,19 @@
   "invitations": {
     "title": "{name} から招待が届いています",
     "lead": "受けると、この団体の一員として相談を支えられます。「支える人と団体の決まり」にも同意したことになります。",
-    "accept": "受ける", "decline": "断る"
+    "accept": "受ける",
+    "decline": "断る"
   },
   "org": {
     "members": "メンバー",
     "membersTipLabel": "メンバーと相談",
     "membersTip": "団体の相談とやりとりは団体のものです。読めるのは今いるメンバーだけで、外した日から読めなくなります。社会貢献の記録は本人に残ります。",
     "me": "(あなた)",
-    "role": { "OWNER": "管理", "ADMIN": "追加", "MEMBER": "担当" },
+    "role": {
+      "OWNER": "管理",
+      "ADMIN": "追加",
+      "MEMBER": "担当"
+    },
     "remove": "外す",
     "invite": "メンバーを招く",
     "inviteTipLabel": "招き方",

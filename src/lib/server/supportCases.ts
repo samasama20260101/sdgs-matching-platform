@@ -21,7 +21,7 @@ export function requireMfaForSensitive(): boolean {
   return process.env.REQUIRE_MFA_FOR_SENSITIVE !== 'false'
 }
 
-export type ResolvedFace = { face: SupporterFace; key: FaceKey; label: string; phoneVerified: boolean; regionCodes: string[]; country: string; nationwide: boolean }
+export type ResolvedFace = { face: SupporterFace; key: FaceKey; label: string; phoneVerified: boolean; regionCodes: string[]; country: string; nationwide: boolean; coordinatorRegions: string[] }
 
 // 顔を確かめる(その団体に今いるか・個人の支え手として登録しているか)。活動地域も一緒に読む
 export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'aal2', faces?: Faces): Promise<ResolvedFace | null> {
@@ -37,13 +37,15 @@ export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'a
       regionCodes: p?.region_code ? [p.region_code as string] : [],
       country: (p?.region_country as string | undefined) ?? 'JP',
       nationwide: false,
+      coordinatorRegions: [],
     }
   }
   const org = f.organizations.find((o) => o.organizationId === key.organizationId)
   if (!org) return null
-  const [{ data: areas }, { data: orgRow }] = await Promise.all([
+  const [{ data: areas }, { data: orgRow }, { data: scopes }] = await Promise.all([
     supabaseAdmin.from('supporter_service_areas').select('region_code, is_nationwide').eq('organization_id', org.organizationId),
     supabaseAdmin.from('organizations').select('region_country, prefecture').eq('id', org.organizationId).single(),
+    supabaseAdmin.from('coordinator_scopes').select('region_code').eq('organization_id', org.organizationId),
   ])
   const codes = (areas ?? []).filter((a) => a.region_code).map((a) => a.region_code as string)
   if (orgRow?.prefecture && /^[A-Z]{2}-/.test(orgRow.prefecture as string)) codes.push(orgRow.prefecture as string)
@@ -62,6 +64,7 @@ export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'a
     regionCodes: [...new Set(codes)],
     country: (orgRow?.region_country as string | undefined) ?? 'JP',
     nationwide: (areas ?? []).some((a) => a.is_nationwide),
+    coordinatorRegions: org.vettingStatus === 'APPROVED' ? (scopes ?? []).map((x) => x.region_code as string).filter(Boolean) : [],
   }
 }
 
@@ -142,12 +145,18 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
   })
 }
 
-export type FindFilters = { category: number | null; includeRemote: boolean; involvement: 'all' | 'notOffered' | 'mine' }
+// escalated: コーディネーターの一覧(その地域で 24 時間申し出のない相談、盤 05「地域のコーディネーターの一覧に回す」)
+export type FindFilters = { category: number | null; includeRemote: boolean; involvement: 'all' | 'notOffered' | 'mine'; escalated?: boolean }
 
 export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise<SupportCaseItem[]> {
   let q = supabaseAdmin.from('cases').select(CASE_COLUMNS).in('status', ['OPEN', 'MATCHED']).eq('visibility', 'LISTED')
-  // 地域: 活動地域の相談だけ。全国対応・遠隔を含めるときは地域で絞らない
-  if (!filters.includeRemote && !rf.nationwide && rf.regionCodes.length > 0) q = q.in('region_code', rf.regionCodes)
+  if (filters.escalated) {
+    if (rf.coordinatorRegions.length === 0) return []
+    q = q.eq('status', 'OPEN').not('escalated_at', 'is', null).in('region_code', rf.coordinatorRegions)
+  } else if (!filters.includeRemote && !rf.nationwide && rf.regionCodes.length > 0) {
+    // 地域: 活動地域の相談だけ。全国対応・遠隔を含めるときは地域で絞らない
+    q = q.in('region_code', rf.regionCodes)
+  }
   if (rf.face.kind === 'INDIVIDUAL') q = q.in('subject_type', ['COMPANY', 'COMMUNITY']).eq('is_sensitive', false).eq('is_minor', false)
   const { data, error } = await q.order('created_at', { ascending: true }).limit(200)
   if (error) throw error

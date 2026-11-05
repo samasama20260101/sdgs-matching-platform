@@ -236,5 +236,22 @@
     "doneBody": "The samasama team will read it and reply by email if needed.",
     "receipt": "Reference number",
     "back": "Back"
+  },
+  "mfa": {
+    "title": "Second check",
+    "enrollLeadAdmin": "The admin pages need a code from an authenticator app (such as Google Authenticator). Scan this QR code with the app.",
+    "enrollLeadMember": "To read requests about life or violence and from people under 18, you need a code from an authenticator app (such as Google Authenticator). Scan this QR code with the app.",
+    "qrAlt": "QR code to register in your authenticator app",
+    "secret": "If you can't scan, enter this",
+    "verifyLead": "Enter the 6-digit code shown in your authenticator app.",
+    "code": "Authenticator code",
+    "verify": "Verify",
+    "loadFailed": "Couldn't read the authenticator status",
+    "enrollFailed": "Couldn't start registering the authenticator",
+    "codeInvalid": "Enter the 6-digit code",
+    "codeWrong": "Wrong code. Enter the current code from your app",
+    "done": "Second check completed",
+    "card": "Second check (organization members)",
+    "cardNote": "Needed to read sensitive requests"
   }
 }
