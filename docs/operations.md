@@ -121,7 +121,9 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 | `npm run check:i18n` | 全言語の翻訳キーが日本語と一致するか |
 
 - GitHub は SSH で接続し、`gh` CLI も使う。
-- Supabase CLI は Staging にリンクする(`npx supabase link --project-ref fzawgdmqewmwdqjsqjwt`)。`supabase/.temp/` は Git に入れない。
+- Supabase CLI はリポジトリの devDependency(v3)を `npx supabase` で使う。v3 は既定で手元の DB を指すので、Staging を指すときは `--remote=fzawgdmqewmwdqjsqjwt` を付ける。ホストを変える操作は `--yes` がないと止まる(本番に誤って流さないための作り)。`supabase/.temp/` は Git に入れない。
+- 初回はターミナルのアプリで `npx supabase login`(`!` からは TTY がなく通らない)。CLI を上げたあとに止まって見えるときは、Mac の画面にキーチェーンの許可が出ていないかを見る。
+- Staging のスキーマを書き出す(Docker なし): `npx supabase db dump --remote=fzawgdmqewmwdqjsqjwt --schema public --dry-run > dump.sh` で手順を出し、`PATH=/opt/homebrew/opt/postgresql@17/bin:$PATH bash dump.sh > out.sql`(pg_dump は 17 以上。dump.sh には一時ロールのパスワードが入るので使ったら消す)。v1 の全体は `migrations/000_baseline_schema_20261105.sql`。
 - CI(`.github/workflows/ci.yml`)が PR と dev・main への push で、型チェック・単体テスト・翻訳キー・Workers 向けのビルドを通す。単体テストは `scripts/tests/*.test.ts` を全部拾う(足すときに package.json を直さなくてよい)。
 - Playwright はプロジェクトに入れていない。画面の撮影は `~/samasama/.qa-tools/` の道具を使う。
 - `docs/assets/` はファビコンと共有画像(`public/og-image.png` など)の元の SVG。`docs/email_templates/change_email.html` は Supabase の Authentication → Emails → Change Email Address に貼るメール本文(件名と注意点はファイル先頭のコメント)。
