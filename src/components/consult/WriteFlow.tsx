@@ -8,11 +8,12 @@ import { apiFetch, ApiError } from '@/lib/client/api'
 import { detectUrgency } from '@/lib/urgency'
 import { DESCRIPTION_MAX, EXTRA_MAX, optionsFor, type SubjectType } from '@/lib/domain/intake'
 import { CrisisLinks } from '@/components/app/CrisisLinks'
-import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip } from '@/components/app/ui'
-import { IndicatorPicker } from './IndicatorPicker'
+import { Button, Card, ErrorNote, Heading, Lead, TextArea, TextField, Tip } from '@/components/app/ui'
+import { IndicatorPicker, SuggestedOptions } from './IndicatorPicker'
 import { indicatorMessageKey, MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
 
-function CrisisNotice({ country }: { country: string }) {
+// 重い言葉や緊急の選択肢に気づいたとき、その場で窓口を出す(体験ページ /trial でも使う)
+export function CrisisNotice({ country }: { country?: string | null }) {
   const t = useTranslations('consult.write')
   return (
     <div role="status" className="flex flex-col gap-2 rounded-[16px] bg-coral-soft p-4">
@@ -145,27 +146,7 @@ export function WriteFlow({
           {suggested === null ? (
             <Lead>{t('suggestLoading')}</Lead>
           ) : (
-            suggested.length > 0 && (
-              <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                {suggested.map((id) => {
-                  const on = selected.includes(id)
-                  return (
-                    <li key={id}>
-                      <button
-                        type="button"
-                        aria-pressed={on}
-                        disabled={!on && full}
-                        onClick={() => toggle(id)}
-                        className={cx('flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2 text-left text-[14.5px] leading-[1.6]', on ? 'border-night bg-lamp-soft font-bold' : 'border-line bg-paper disabled:text-mist')}
-                      >
-                        <span>{textOf(id)}</span>
-                        <span aria-hidden className="shrink-0">{on ? '✓' : '＋'}</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )
+            <SuggestedOptions ids={suggested} selected={selected} onToggle={toggle} textOf={textOf} />
           )}
           {suggested !== null && suggested.length === 0 && <Lead>{t('suggestNone')}</Lead>}
           {browseAll ? (

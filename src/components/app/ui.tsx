@@ -19,6 +19,20 @@ export function Screen({ tone = 'consult', children, className }: { tone?: Tone;
   )
 }
 
+// 何段目かの帯(相談を書く・はじめる・体験)。読み上げには文字で伝え、帯は飾り
+export function StepBar({ label, step, total }: { label?: string; step: number; total: number }) {
+  return (
+    <div className="flex flex-col gap-1">
+      {label && <span className="text-[12px] font-bold text-mist">{label}</span>}
+      <div className="flex gap-2" aria-hidden>
+        {Array.from({ length: total }, (_, i) => (
+          <span key={i} className={cx('h-1.5 flex-1 rounded-full', i < step ? 'bg-night' : 'bg-line')} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function Heading({ children, level = 1, className }: { children: ReactNode; level?: 1 | 2 | 3; className?: string }) {
   const size = level === 1 ? 'text-[24px] leading-[1.5]' : level === 2 ? 'text-[18px] leading-[1.5]' : 'text-[15px] leading-[1.6]'
   const Tag = level === 1 ? 'h1' : level === 2 ? 'h2' : 'h3'

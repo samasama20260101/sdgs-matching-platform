@@ -85,6 +85,14 @@ export function provisionalTitle(subject: SubjectType, indicatorIds: string[], t
   return base.length > 40 ? `${base.slice(0, 40)}…` : base
 }
 
+// AI に渡す相談文の並び(本文 → いつから → どうしたいか)。届けたあとの整理(caseAi)と体験ページ(/trial)で同じものを使う。
+// 見出しは AI 向けなので、画面の言語にかかわらず日本語
+export function caseBodyForAi(input: { description: string | null; since?: string | null; wish?: string | null }): string {
+  const since = input.since?.trim()
+  const wish = input.wish?.trim()
+  return [input.description?.trim(), since ? `いつから: ${since}` : '', wish ? `どうしたいか: ${wish}` : ''].filter(Boolean).join('\n')
+}
+
 // 相談所コード(本屋などの QR)。英数字とハイフンだけ、32 字まで
 export function sanitizeEntryCode(value: unknown): string | null {
   if (typeof value !== 'string') return null
