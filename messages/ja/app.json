@@ -88,6 +88,7 @@
     "step1": "1 ／ 2",
     "step2": "2 ／ 2",
     "loginTitle": "どちらで続けますか",
+    "loginTitleEmailOnly": "メールアドレスで続けます",
     "loginTipLabel": "ログインのしくみ",
     "loginTip": "パスワードは作りません。次からも同じ方法で入れます。メールアドレスはログインのためだけに使い、支え手には渡りません。",
     "google": "Google で続ける",

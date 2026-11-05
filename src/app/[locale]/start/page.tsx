@@ -96,7 +96,7 @@ function LoginStep() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
-        <Heading>{t('loginTitle')}</Heading>
+        <Heading>{t(GOOGLE_ENABLED ? 'loginTitle' : 'loginTitleEmailOnly')}</Heading>
         <Tip label={t('loginTipLabel')}>{t('loginTip')}</Tip>
       </div>
       {GOOGLE_ENABLED && !sentTo && (
