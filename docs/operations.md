@@ -46,7 +46,7 @@
 | 多言語 | next-intl(`src/i18n/`、`messages/<言語>/*.json`) |
 | DB・認証・保存場所 | Supabase(PostgreSQL・GoTrue・Storage) |
 | ホスティング | Vercel Pro |
-| AI | Google Gemini `gemini-2.5-flash`(`@google/generative-ai`) |
+| AI | `src/lib/ai/client.ts` が唯一の入口。提供元は環境変数で Gemini・OpenAI・xAI(Grok)から選ぶ(今の本番は Gemini `gemini-2.5-flash`) |
 | 見た目 | Tailwind CSS 4、Radix UI |
 | アクセス解析 | Google Analytics(`G-8S5GP8P7EZ`、`src/app/[locale]/layout.tsx`) |
 | 郵便番号 | zipcloud → 見つからなければ HeartRails Geo API(`/api/zipcode`) |
@@ -72,7 +72,9 @@
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の URL と公開キー(`sb_publishable_` 形式) |
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー用の秘密キー(`sb_secret_` 形式)。Vercel では Secret |
-| `GOOGLE_GEMINI_API_KEY`(または `GEMINI_API_KEY`) | Gemini。ない場合、相談の整理は決まった内容のデモ結果を返す |
+| `GOOGLE_GEMINI_API_KEY`(または `GEMINI_API_KEY`)/ `OPENAI_API_KEY` / `XAI_API_KEY` | AI の鍵。どれもない場合、相談の整理は決まった内容のデモ結果を返す |
+| `AI_PROVIDER`・`AI_<用途>_PROVIDER` | 使う提供元(`gemini` / `openai` / `xai`)。用途は `CONSULTATION`(相談の整理)・`DISASTER`・`NEWS`・`TRANSLATION`。書かなければ鍵のある提供元を選ぶ(翻訳は xAI が先、ほかは Gemini が先) |
+| `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`) |
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
 | `DEV_PASSWORD` | Staging の入口パスワード。**本番には設定しない** |
 | `MAINTENANCE_MODE` / `MAINTENANCE_BYPASS_TOKEN` | メンテナンスモード(§6) |

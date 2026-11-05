@@ -149,7 +149,7 @@ OPEN / MATCHED → CANCELLED     相談者が取り消し
 
 ## 10. AI の使い方と安全対策
 
-AI は Google Gemini(`gemini-2.5-flash`、有料 API)。使う場所は 3 つだけ。
+AI は `src/lib/ai/client.ts` だけから呼ぶ。提供元は環境変数で Gemini・OpenAI・xAI(Grok)から選び(`docs/operations.md` §2.2)、今の本番は Google Gemini(`gemini-2.5-flash`、有料 API)。使う場所は 3 つだけ。
 
 | 用途 | 何をするか | 誰が動かすか |
 |---|---|---|
