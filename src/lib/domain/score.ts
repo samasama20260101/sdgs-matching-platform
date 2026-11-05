@@ -29,9 +29,12 @@ export type ScoreSummary = {
   byIndicator: Record<string, number>
 }
 
+// rows は新しい順に渡す(API は created_at の降順で読む)。指標の内訳は、相談ごとに最新の行(解決・訂正)の指標で数える
+// (解決のときに未確定だった指標を、あとで運営が確定すると訂正の行に入るため)
 export function summarizeContributions(rows: ContributionRow[]): ScoreSummary {
   const summary: ScoreSummary = { score: 0, resolvedCases: 0, thanks: 0, byIndicator: {} }
   const resolved = new Set<string>()
+  const latestCodes = new Map<string, string[]>()
   for (const row of rows) {
     if (row.kind === 'THANKS') {
       summary.thanks += 1
@@ -39,10 +42,12 @@ export function summarizeContributions(rows: ContributionRow[]): ScoreSummary {
     }
     // 訂正の行は点の増減だけを持つ(負の値もある)
     summary.score += row.points
-    if (row.kind === 'RESOLVED') {
-      if (row.case_id) resolved.add(row.case_id)
-      for (const code of row.indicator_codes) summary.byIndicator[code] = (summary.byIndicator[code] ?? 0) + 1
-    }
+    if (row.kind === 'RESOLVED' && row.case_id) resolved.add(row.case_id)
+    if (row.case_id && !latestCodes.has(row.case_id)) latestCodes.set(row.case_id, row.indicator_codes)
+  }
+  for (const [caseId, codes] of latestCodes) {
+    if (!resolved.has(caseId)) continue
+    for (const code of codes) summary.byIndicator[code] = (summary.byIndicator[code] ?? 0) + 1
   }
   summary.resolvedCases = resolved.size
   return summary
