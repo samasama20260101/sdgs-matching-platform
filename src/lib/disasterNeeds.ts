@@ -3,13 +3,12 @@
 // 原則: 失敗しても案件には一切影響しない(公開済みのまま・タグなしになるだけ)。
 import 'server-only'
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateJson, isAiConfigured } from '@/lib/ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { DISASTER_NEEDS, DISASTER_NEED_KEYS, MAX_DISASTER_NEEDS, type DisasterNeedKey } from '@/lib/constants/disaster'
 import { maskPii } from '@/lib/pii'
 import { fenceConsultation } from '@/lib/aiSafety'
 
-const GEMINI_MODEL = 'gemini-2.5-flash'
 
 function buildPrompt(text: string) {
   const categories = DISASTER_NEED_KEYS
@@ -43,24 +42,13 @@ ${fenceConsultation(text)}`
 
 // 相談文をニーズタグに分類する。失敗時は null(呼び出し側は何もしない)。
 export async function classifyDisasterNeedsText(text: string): Promise<DisasterNeedKey[] | null> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''
-  if (!apiKey || !text.trim()) return null
+  if (!isAiConfigured('disaster') || !text.trim()) return null
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    // 注意: gemini-2.5-flash は内部思考にも出力トークンを消費するため、
-    // maxOutputTokens が小さいとJSONが途中で切れる(実測済み)。余裕を持たせること。
-    const model = genAI.getGenerativeModel({
-      model: GEMINI_MODEL,
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 2048,
-        responseMimeType: 'application/json',
-      },
-    })
-    const result = await model.generateContent(buildPrompt(maskPii(text)))
-    const raw = result.response.text().replace(/```json|```/g, '').trim()
-    const parsed = JSON.parse(raw) as { tags?: unknown }
+    // Gemini 2.5 は内部思考にも出力トークンを消費するため、上限が小さいと JSON が途中で切れる(実測済み)
+    const result = await generateJson('disaster', buildPrompt(maskPii(text)), { temperature: 0.1, maxOutputTokens: 2048 })
+    if (!result.ok) return null
+    const parsed = result.json as { tags?: unknown }
     if (!Array.isArray(parsed.tags)) return null
     return parsed.tags
       .filter((tag): tag is DisasterNeedKey => typeof tag === 'string' && tag in DISASTER_NEEDS)
