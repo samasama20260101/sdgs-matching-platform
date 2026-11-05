@@ -123,7 +123,7 @@ console.log('domain: ok')
 
 // ---- 相談の受付
 import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
-  assert.equal(optionsFor('PERSON').length, 114)
+  assert.equal(optionsFor('PERSON').length, 115)
   assert.ok(optionsFor('COMPANY').length > 0 && optionsFor('COMMUNITY').length > 0)
   // 主体の選択肢にない番号・重複は落とし、3つで切る
   assert.deepEqual(sanitizeSelection('PERSON', ['1.1.1', '1.1.1', 'x', '11.1.1', '2.1.1', '3.4.2']), ['1.1.1', '11.1.1', '2.1.1'])

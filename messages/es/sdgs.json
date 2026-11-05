@@ -103,7 +103,7 @@
     "2_3_1": "Me dedico a la agricultura, la ganadería o la silvicultura, pero no logro aumentar la producción",
     "2_3_2": "Tengo una finca pequeña, pero no me alcanza para vivir",
     "2_4_1": "Tengo una finca, pero no puedo mantenerla de forma sostenible",
-    "3_1_1": "Necesito atención médica durante o alrededor del embarazo y el parto, pero no la recibo",
+    "3_1_1": "Necesito atención durante o alrededor del embarazo y el parto, pero no la recibo",
     "3_1_2": "Voy a dar a luz pronto, pero no tengo un médico o una matrona que me atienda",
     "3_2_1": "No consigo para mi hijo/a menor de 5 años la atención médica que necesita",
     "3_2_2": "No consigo para mi bebé recién nacido los controles y cuidados que necesita",
@@ -199,6 +199,7 @@
     "16_9_1": "Mi nacimiento o el de mi hijo/a no está registrado oficialmente",
     "16_10_1": "Sufro violencia o detención injusta por mi trabajo en derechos humanos",
     "17_3_2": "No puedo recibir el dinero que me envía mi familia desde el extranjero y no me alcanza para vivir",
-    "17_6_1": "No puedo usar internet en casa"
+    "17_6_1": "No puedo usar internet en casa",
+    "17_8_1": "No puedo usar internet"
   }
 }

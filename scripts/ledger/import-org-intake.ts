@@ -93,7 +93,7 @@ export const NATION_INTAKE_INDICATORS: OrgIntakeIndicator[] = ${JSON.stringify(s
   console.log(`書いた: ${out}`)
   console.log(`会社 ${sets.COMPANY.length} / 地域 ${sets.COMMUNITY.length} / 国 ${sets.NATION.length}`)
 
-  // 個人の選択肢(列P)とアプリの 114 のずれ。直さず一覧だけ出す
+  // 個人の選択肢(列P)とアプリのずれ。直さず一覧だけ出す
   const app = new Map(INTAKE_INDICATORS.map((i) => [i.id, i]))
   const changed = [...personInSheet].filter(([id, text]) => app.has(id) && app.get(id)!.text !== text)
   const onlySheet = [...personInSheet.keys()].filter((id) => !app.has(id))
