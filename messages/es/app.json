@@ -9,7 +9,8 @@
       "consult": "Pedir ayuda",
       "support": "Apoyar"
     },
-    "login": "Entrar"
+    "login": "Entrar",
+    "crisisNow": "Hablar ahora"
   },
   "tabs": {
     "label": "Navegación",
@@ -166,7 +167,6 @@
   },
   "learn": {
     "title": "Conocer",
-    "mapSoon": "Pronto habrá un mapa de los problemas sociales (234 temas).",
     "news": "Noticias",
     "noNews": "Todavía no hay noticias."
   },
@@ -186,8 +186,6 @@
     "alwaysOn": "Siempre activo",
     "email": "Correo",
     "emailNote": "Solo te avisa de que llegó un ofrecimiento o un mensaje",
-    "push": "Avisos en el teléfono",
-    "pushNote": "Disponible al añadir la app a la pantalla de inicio (próximamente)",
     "loadFailed": "No se pudo cargar",
     "withdraw": "Darme de baja",
     "withdrawTipLabel": "Antes de darte de baja",

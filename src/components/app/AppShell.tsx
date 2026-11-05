@@ -1,12 +1,13 @@
 'use client'
 
-// 画面の枠(盤 04): 上のヘッダー(相談する / 支える の切り替え)と下のタブ。
-// いますぐの窓口はヘッダーに置かず、入口・相談を書く画面(緊急のとき)・緊急の相談のホーム・わたしに出す(11/5 岡本さん)
+// 画面の枠(盤 04): 上のヘッダー(相談する / 支える の切り替え・相談する側だけ「いますぐ話したい」)と下のタブ。
+// いますぐの窓口は、印でなく言葉のボタンで相談する側の全画面に置く(11/5 岡本さん。他社と英国政府の設計の決まりに合わせる)
 // 相談する: ホーム・やりとり・知る・わたし / 支える: ホーム・さがす・やりとり・わたし
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
+import { CrisisLinks } from './CrisisLinks'
 import { Mark } from './Mark'
 import { useSession, type Mode } from './SessionProvider'
 import { cx, Screen, type Tone } from './ui'
@@ -39,7 +40,12 @@ function ModeSwitch() {
 
 export function AppHeader() {
   const t = useTranslations('app.shell')
-  const { state, canSupport } = useSession()
+  const { state, canSupport, mode } = useSession()
+  const pathname = usePathname()
+  const [crisisOpen, setCrisisOpen] = useState(false)
+  const country = state.status === 'ready' ? state.me.person.country : null
+  // ログインしたあとの相談する側の画面だけに出す(入口と相談を書く画面には、窓口がもう出ている)
+  const showCrisis = state.status === 'ready' && state.me.person.role !== 'ADMIN' && mode === 'consult'
   return (
     <>
       <header className="flex h-14 items-center justify-between gap-2">
@@ -53,13 +59,26 @@ export function AppHeader() {
           {state.status === 'anonymous' && (
             <>
               <LanguageSwitcher />
-              <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-[13px] font-bold text-night no-underline">
-                {t('login')}
-              </Link>
+              {pathname !== '/start' && (
+                <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-[13px] font-bold text-night no-underline">
+                  {t('login')}
+                </Link>
+              )}
             </>
+          )}
+          {showCrisis && (
+            <button
+              type="button"
+              aria-expanded={crisisOpen}
+              onClick={() => setCrisisOpen((v) => !v)}
+              className="flex min-h-[44px] items-center whitespace-nowrap rounded-full px-2.5 text-[13px] font-bold text-coral-ink"
+            >
+              {t('crisisNow')}
+            </button>
           )}
         </div>
       </header>
+      {showCrisis && crisisOpen && <div className="mb-3"><CrisisLinks country={country} /></div>}
     </>
   )
 }

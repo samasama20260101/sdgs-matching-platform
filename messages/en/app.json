@@ -9,7 +9,8 @@
       "consult": "Ask",
       "support": "Support"
     },
-    "login": "Sign in"
+    "login": "Sign in",
+    "crisisNow": "Talk now"
   },
   "tabs": {
     "label": "Navigation",
@@ -166,7 +167,6 @@
   },
   "learn": {
     "title": "Learn",
-    "mapSoon": "A map of social problems (234 issues) is coming.",
     "news": "News",
     "noNews": "No news yet."
   },
@@ -186,8 +186,6 @@
     "alwaysOn": "Always on",
     "email": "Email",
     "emailNote": "Only tells you that an offer or message has arrived",
-    "push": "Phone notifications",
-    "pushNote": "Available when you add the app to your home screen (coming soon)",
     "loadFailed": "Couldn't load",
     "withdraw": "Delete my account",
     "withdrawTipLabel": "Before you delete your account",

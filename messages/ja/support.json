@@ -240,10 +240,9 @@
     "keep": "所属が変わっても、この記録は消えません。相談の中身は残りません(指標とその時の所属だけ)。退会するとすべて消えます。",
     "noRecords": "まだ記録はありません。",
     "thanksArrived": "相談した人からありがとうが届いた",
-    "resolvedRecord": "相談が解決した(指標 {count})",
+    "resolvedRecord": "{count, plural, =0 {相談が解決した} other {相談が解決した(確かめた指標 #)}}",
     "asMemberOf": "{name} の一員として",
-    "asIndividual": "個人として",
-    "exportSoon": "証明の書き出し(PDF・デジタルバッジ)と公開ページは、これから足します。"
+    "asIndividual": "個人として"
   },
   "invitations": {
     "title": "{name} から招待が届いています",

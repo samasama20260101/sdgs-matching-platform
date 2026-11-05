@@ -240,10 +240,9 @@
     "keep": "These records stay even if your affiliation changes. The content of requests is not kept (only indicators and your affiliation at the time). Everything is deleted if you leave.",
     "noRecords": "No records yet.",
     "thanksArrived": "Thanks from the person who asked",
-    "resolvedRecord": "A request was solved ({count} indicators)",
+    "resolvedRecord": "{count, plural, =0 {A request was solved} one {A request was solved (# confirmed indicator)} other {A request was solved (# confirmed indicators)}}",
     "asMemberOf": "As a member of {name}",
-    "asIndividual": "As an individual",
-    "exportSoon": "Certificate export (PDF, digital badge) and a public page are coming."
+    "asIndividual": "As an individual"
   },
   "invitations": {
     "title": "{name} has invited you",
