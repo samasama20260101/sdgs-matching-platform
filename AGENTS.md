@@ -42,8 +42,9 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
 - 画面の言語は ja・en・es(v2.0、11/5 定例。中国語は入れない)。相談する側と支える側の画面は 3 言語、運営の画面は日本語だけ。文言は `messages/<言語>/app|consult|support.json` に足し、`npm run check:i18n` で 3 言語のキーをそろえる。
-- 災害SOSは受付終了中。再開するときは `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` と `DISASTER_CASES_SHOWN_TO_SUPPORTERS` を両方戻す。
-- 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。並列マッチングには戻さない。2 団体目以降を足すなら「承認済みの団体が招待する」形(未着手)。
+- 災害SOS(2026-09-16 に受付終了)の画面と処理は v2.0 で外した。再開するときは v1(main の履歴)から取り出して v2 の形で作り直す。
+- 支え手は 1 件の相談に 3 者まで(`src/lib/domain/offers.ts`、DB の `accept_sos_offer`)。最初に選ばれた 1 者が中心。中心は相談した人の同意を得てほかの支え手を招く(招かれた申し出は INVITED)。
+- 解決したときの社会貢献の記録は DB の `record_case_resolution` だけで付ける(手で確定・14 日の自動・運営が指標を直したとき、すべて同じ関数)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
 - 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。
 - **v2.0 の作業中(#72)。Staging の DB は 2026-11-05 から v2 の形**(`migrations/v2_0*.sql`)。dev の v1 の画面は v2 の画面に置き換わるまで Staging で動かないところがある。本番(main)は v1 の DB のまま。

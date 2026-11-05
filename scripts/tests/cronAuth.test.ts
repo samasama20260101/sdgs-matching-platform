@@ -15,3 +15,12 @@ assert.equal(isValidCronAuthorization('Bearer ', ''), false)
 assert.equal(isValidCronAuthorization('Bearer undefined', ''), false)
 
 console.log('cronAuth: ok')
+
+// 自動処理の締め切り
+import('../../src/lib/domain/schedule').then(({ autoCloseCutoffs }) => {
+  const c = autoCloseCutoffs(new Date('2026-11-20T00:00:00Z'))
+  assert.equal(c.autoResolveBefore, '2026-11-06T00:00:00.000Z')
+  assert.equal(c.inactiveBefore, '2026-10-21T00:00:00.000Z')
+  assert.equal(c.escalateBefore, '2026-11-19T00:00:00.000Z')
+  console.log('schedule: ok')
+})
