@@ -37,17 +37,26 @@ assert.equal(resolvedPoints(3, 1), 3)
 assert.equal(resolvedPoints(2, 120000), 240000)
 assert.equal(resolvedPoints(0, 5), 0)
 assert.equal(resolvedPoints(2, 0), 2) // 人数は最低 1
+// 新しい順に渡す。c1 は解決のときに指標 2 つ、あとで運営が 1 つ外した(訂正 -1、最新の指標は 1.3.1 だけ)
 const summary = summarizeContributions([
-  { kind: 'RESOLVED', indicator_codes: ['1.3.1', '4.4.1'], population: 1, points: 2, case_id: 'c1' },
-  { kind: 'RESOLVED', indicator_codes: ['1.3.1'], population: 300, points: 300, case_id: 'c2' },
-  { kind: 'THANKS', indicator_codes: [], population: 1, points: 0, case_id: 'c1' },
+  { kind: 'CORRECTION', indicator_codes: ['1.3.1'], population: 1, points: -1, case_id: 'c1' },
   { kind: 'THANKS', indicator_codes: [], population: 1, points: 0, case_id: 'c2' },
-  { kind: 'CORRECTION', indicator_codes: ['4.4.1'], population: 1, points: -1, case_id: 'c1' },
+  { kind: 'THANKS', indicator_codes: [], population: 1, points: 0, case_id: 'c1' },
+  { kind: 'RESOLVED', indicator_codes: ['1.3.1'], population: 300, points: 300, case_id: 'c2' },
+  { kind: 'RESOLVED', indicator_codes: ['1.3.1', '4.4.1'], population: 1, points: 2, case_id: 'c1' },
 ])
 assert.equal(summary.score, 301)
 assert.equal(summary.resolvedCases, 2)
 assert.equal(summary.thanks, 2)
-assert.deepEqual(summary.byIndicator, { '1.3.1': 2, '4.4.1': 1 })
+assert.deepEqual(summary.byIndicator, { '1.3.1': 2 })
+// 解決のときは指標が未確定(0 点)で、あとで確定した(訂正 +2)
+const later = summarizeContributions([
+  { kind: 'CORRECTION', indicator_codes: ['1.3.1', '11.1.1'], population: 1, points: 1, case_id: 'c3' },
+  { kind: 'CORRECTION', indicator_codes: ['1.3.1'], population: 1, points: 1, case_id: 'c3' },
+  { kind: 'RESOLVED', indicator_codes: [], population: 1, points: 0, case_id: 'c3' },
+])
+assert.equal(later.score, 2)
+assert.deepEqual(later.byIndicator, { '1.3.1': 1, '11.1.1': 1 })
 assert.equal(organizationScore([summary, { score: 9, resolvedCases: 1, thanks: 0, byIndicator: {} }]), 310)
 
 // ---- 機微: 指標の印・18歳未満・AI は上げるだけ
