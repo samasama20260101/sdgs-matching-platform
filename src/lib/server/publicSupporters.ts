@@ -36,20 +36,16 @@ export async function listPublicSupporters(opts: { ids?: string[]; limit?: numbe
   if (orgs.length === 0) return []
   const ids = orgs.map((o) => o.id)
 
-  const [offers, badges, areas] = await Promise.all([
-    supabaseAdmin.from('offers').select('supporter_organization_id').in('supporter_organization_id', ids).eq('status', 'ACCEPTED'),
-    supabaseAdmin.from('supporter_badges').select('supporter_organization_id').in('supporter_organization_id', ids),
+  // 解決した相談とありがとうの数は DB の中で数える(v2_10。行を運んで数えると 1000 行で黙って切れる)
+  const [counts, areas] = await Promise.all([
+    supabaseAdmin.rpc('public_supporter_counts', { p_org_ids: ids }),
     supabaseAdmin.from('supporter_service_areas').select('organization_id, region_code, is_nationwide, country').in('organization_id', ids),
   ])
-  const failed = offers.error ?? badges.error ?? areas.error
+  const failed = counts.error ?? areas.error
   if (failed) throw failed
-  const count = (rows: { supporter_organization_id: string }[] | null) => {
-    const m = new Map<string, number>()
-    for (const r of rows ?? []) m.set(r.supporter_organization_id, (m.get(r.supporter_organization_id) ?? 0) + 1)
-    return m
-  }
-  const resolved = count(offers.data as { supporter_organization_id: string }[] | null)
-  const badgeCount = count(badges.data as { supporter_organization_id: string }[] | null)
+  const countRows = (counts.data ?? []) as { organization_id: string; resolved_cases: number; thanks: number }[]
+  const resolved = new Map(countRows.map((r) => [r.organization_id, Number(r.resolved_cases)]))
+  const badgeCount = new Map(countRows.map((r) => [r.organization_id, Number(r.thanks)]))
   const areaRows = (areas.data ?? []) as { organization_id: string; region_code: string | null; is_nationwide: boolean; country: string | null }[]
 
   // 活動地域: v1 から移った団体は supporter_service_areas、v2 で登録した団体は団体の都道府県
