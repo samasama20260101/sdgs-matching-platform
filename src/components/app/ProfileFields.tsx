@@ -33,21 +33,19 @@ export function profileDraftErrors(d: ProfileDraft) {
   }
 }
 
+// 読んだ地域はどの国のものかと一緒に持ち、今の国のものだけを出す(国を替えた直後に前の国の地域を選ばせない)
 function useRegions(country: string) {
-  const [regions, setRegions] = useState<Region[]>([])
+  const [loaded, setLoaded] = useState<{ country: string; regions: Region[] }>({ country: '', regions: [] })
   useEffect(() => {
+    if (!country) return
     let alive = true
-    if (!country) {
-      setRegions([])
-      return
-    }
     fetch(`/api/regions?country=${encodeURIComponent(country)}&level=${country === 'JP' ? 'prefecture' : 'province'}`)
       .then((r) => (r.ok ? r.json() : { regions: [] }))
-      .then((d: { regions?: Region[] }) => { if (alive) setRegions(d.regions ?? []) })
-      .catch(() => { if (alive) setRegions([]) })
+      .then((d: { regions?: Region[] }) => { if (alive) setLoaded({ country, regions: d.regions ?? [] }) })
+      .catch(() => { if (alive) setLoaded({ country, regions: [] }) })
     return () => { alive = false }
   }, [country])
-  return regions
+  return loaded.country === country ? loaded.regions : []
 }
 
 export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileDraft; onChange: (d: ProfileDraft) => void; showErrors: boolean }) {

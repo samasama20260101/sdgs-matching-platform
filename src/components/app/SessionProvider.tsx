@@ -10,6 +10,8 @@ import type { MeResponse } from '@/lib/client/meTypes'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { isAppLocale } from '@/i18n/routing'
 import { modeForPath, type AppMode } from '@/lib/client/appMode'
+import { LOCALE_RESTORED_KEY } from '@/lib/client/locale'
+import { useStoredValue } from '@/lib/client/storedValue'
 
 export type Mode = AppMode
 
@@ -34,20 +36,13 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null)
 const MODE_KEY = 'samasama.mode'
-const LOCALE_RESTORED_KEY = 'samasama.localeRestored'
-
-function readStoredMode(): Mode {
-  try {
-    return window.localStorage.getItem(MODE_KEY) === 'support' ? 'support' : 'consult'
-  } catch {
-    return 'consult'
-  }
-}
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<SessionState>({ status: 'loading' })
   const [session, setSession] = useState<Session | null>(null)
-  const [mode, setModeState] = useState<Mode>('consult')
+  // 最後に選んだ立場(端末に覚える)。サーバーの描画と水和の最初の描画では「相談する」
+  const [storedMode, storeMode] = useStoredValue(MODE_KEY)
+  const mode: Mode = storedMode === 'support' ? 'support' : 'consult'
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
@@ -83,7 +78,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    setModeState(readStoredMode())
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       void load(data.session)
@@ -116,20 +110,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     && state.me.person.role === 'PERSON'
     && (state.me.faces.organizations.length > 0 || state.me.faces.individual !== null)
 
-  const setMode = useCallback((next: Mode) => {
-    setModeState(next)
-    try {
-      window.localStorage.setItem(MODE_KEY, next)
-    } catch {
-      // 保存できなくても今の画面では切り替わる
-    }
-  }, [])
+  const setMode = useCallback((next: Mode) => storeMode(next), [storeMode])
 
-  // 立場は開いている画面から決め、保存の値は両方で使う画面(わたし)と入口のためだけに使う
+  // 立場は開いている画面から決め、保存の値は両方で使う画面(わたし)と入口のためだけに使う。
+  // 開いている画面の立場を端末に覚えておく(端末の保存という外の仕組みに合わせる副作用)
   const shownMode: Mode = canSupport ? modeForPath(pathname, mode) : 'consult'
   useEffect(() => {
-    if (canSupport && shownMode !== mode) setMode(shownMode)
-  }, [canSupport, shownMode, mode, setMode])
+    if (canSupport && shownMode !== mode) storeMode(shownMode)
+  }, [canSupport, shownMode, mode, storeMode])
 
   const value = useMemo<SessionContextValue>(() => ({
     state,

@@ -1,4 +1,4 @@
-# PR と dev・main への push で、型チェック・単体テスト・翻訳キー・ビルドを通す。
+# PR と dev・main への push で、lint・型チェック・単体テスト・翻訳キー・ビルドを通す。
 # public リポジトリなので GitHub のランナーは無料。秘密の値は使わない(ビルドはダミーの値で通す)。
 name: CI
 
@@ -33,6 +33,9 @@ jobs:
           check-latest: true
           cache: npm
       - run: npm ci
+      # 警告も 0 件で通す(消し残しの import や、副作用の中で状態を変える書き方を入れない)
+      - name: lint
+        run: npm run lint -- --max-warnings 0
       - name: 型チェック
         run: npx tsc --noEmit
       - name: 単体テスト

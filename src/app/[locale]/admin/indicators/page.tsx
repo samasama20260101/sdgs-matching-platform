@@ -1,8 +1,9 @@
 'use client'
 
 // 運営｜指標の仕分け。確定した指標だけが社会貢献の記録と地図に数えられる。解決済みの相談は記録が付け直される
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { apiFetch } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { Button, Card, Chip, Lead, TextField } from '@/components/app/ui'
 
@@ -14,16 +15,12 @@ const SUBJECT_LABEL: Record<string, string> = { PERSON: '個人', COMPANY: '会�
 const STATUS_LABEL: Record<string, string> = { OPEN: '受付中', MATCHED: '一緒に進めている', RESOLVED: '解決', CLOSED: '終了', CANCELLED: '取り消し' }
 
 export default function IndicatorsPage() {
-  const [cases, setCases] = useState<CaseQ[] | null>(null)
   const [add, setAdd] = useState<Record<string, string>>({})
-  const load = useCallback(async () => {
-    const d = await apiFetch<{ cases: CaseQ[] }>('/api/admin/indicators').catch(() => ({ cases: [] }))
-    setCases(d.cases)
-  }, [])
-  useEffect(() => { void load() }, [load])
+  const fetchCases = useCallback(() => apiFetch<{ cases: CaseQ[] }>('/api/admin/indicators').then((d) => d.cases, () => [] as CaseQ[]), [])
+  const { data: cases, reload } = useLoad(fetchCases)
   const decide = async (caseId: string, code: string, decision: 'CONFIRM' | 'REJECT' | 'ADD') => {
     await apiFetch('/api/admin/indicators', { method: 'POST', json: { caseId, code, decision } }).catch(() => undefined)
-    await load()
+    await reload()
   }
   return (
     <AdminShell title="指標の仕分け">

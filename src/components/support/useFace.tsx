@@ -1,10 +1,11 @@
 'use client'
 
 // どの立場で支えるか(盤 22「どの立場で支えますか」)。団体の一員(複数可)か、個人として。選んだものは端末に覚えておく
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useReadyMe } from '@/components/app/SessionProvider'
 import { cx } from '@/components/app/ui'
+import { useStoredValue } from '@/lib/client/storedValue'
 
 export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'ADMIN' | 'MEMBER'; organizationId?: string; coordinator?: boolean }
 
@@ -20,18 +21,9 @@ export function useFace() {
     const ind = me.faces.individual ? [{ key: 'individual', label: me.faces.individual.realName, kind: 'INDIVIDUAL' as const, approved: me.faces.individual.status === 'ACTIVE' }] : []
     return [...orgs, ...ind]
   }, [me])
-  const [selected, setSelected] = useState<string | null>(null)
-  useEffect(() => {
-    let stored: string | null = null
-    try { stored = window.localStorage.getItem(STORAGE_KEY) } catch { stored = null }
-    const valid = options.find((o) => o.key === stored) ?? options.find((o) => o.approved) ?? options[0]
-    setSelected(valid?.key ?? null)
-  }, [options])
-  const choose = (key: string) => {
-    setSelected(key)
-    try { window.localStorage.setItem(STORAGE_KEY, key) } catch { /* 覚えられなくても今の画面では切り替わる */ }
-  }
-  const current = options.find((o) => o.key === selected) ?? null
+  // 覚えた立場が今の選択肢にないときは、承認済みの最初の立場(なければ最初の立場)にする
+  const [stored, choose] = useStoredValue(STORAGE_KEY)
+  const current = options.find((o) => o.key === stored) ?? options.find((o) => o.approved) ?? options[0] ?? null
   return { options, current, choose }
 }
 

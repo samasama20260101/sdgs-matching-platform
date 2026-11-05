@@ -7,6 +7,7 @@ import { Check, Languages } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
+import { rememberChosenLocale } from '@/lib/client/locale';
 import { supabase } from '@/lib/supabase/client';
 
 export function LanguageSwitcher() {
@@ -42,12 +43,7 @@ export function LanguageSwitcher() {
   const handleChange = (nextLocale: AppLocale) => {
     setOpen(false);
     if (nextLocale === locale) return;
-    try {
-      sessionStorage.setItem('samasama.localeRestored', '1');
-    } catch {
-      // 保存できなくても切り替えはできる
-    }
-    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; samesite=lax`;
+    rememberChosenLocale(nextLocale);
     router.replace(pathname, { locale: nextLocale });
 
     // ログイン中なら本人の言語として残す(知らせと訳の言語に使う)

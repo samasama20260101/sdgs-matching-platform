@@ -2,10 +2,11 @@
 
 // 相談のホーム(盤 13)・申し出を選ぶ(盤 14)・一緒に進める(盤 15)・解決の確定とありがとう。
 // 画面は相談の「いま」を映す。決めるのは本人で、大きな行動は1画面に1つ(設計原則 1・2)
-import { Suspense, use, useCallback, useEffect, useState } from 'react'
+import { Suspense, use, useCallback, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { Link } from '@/i18n/navigation'
 import { THANKS_WORDS, type ThanksWord } from '@/lib/domain/offers'
 import { AppFrame } from '@/components/app/AppShell'
@@ -121,24 +122,17 @@ function CaseInner({ id }: { id: string }) {
   const { state: session } = useSession()
   const country = session.status === 'ready' ? session.me.person.country : null
   const params = useSearchParams()
-  const [data, setData] = useState<Payload | null>(null)
+  const fetchCase = useCallback(() => apiFetch<Payload>(`/api/cases/${id}`), [id])
+  const { data, error: loadError, reload } = useLoad(fetchCase)
   const [error, setError] = useState<string | null>(null)
   const [cancelOpen, setCancelOpen] = useState(false)
-
-  const load = useCallback(async () => {
-    try {
-      setData(await apiFetch<Payload>(`/api/cases/${id}`))
-    } catch (e) {
-      setError(e instanceof ApiError && e.status === 404 ? t('notFound') : t('loadFailed'))
-    }
-  }, [id, t])
-  useEffect(() => { void load() }, [load])
+  const loadMessage = loadError ? (loadError instanceof ApiError && loadError.status === 404 ? t('notFound') : t('loadFailed')) : null
 
   const actOnOffer = async (offerId: string, action: 'accept' | 'decline') => {
     setError(null)
     try {
       await apiFetch(`/api/cases/${id}/offers/${offerId}`, { method: 'POST', json: { action } })
-      await load()
+      await reload()
     } catch (e) {
       setError(e instanceof ApiError && e.code === 'MAX_REACHED' ? tOffers('full') : tOffers('failed'))
     }
@@ -147,13 +141,13 @@ function CaseInner({ id }: { id: string }) {
     try {
       await apiFetch(`/api/cases/${id}/actions`, { method: 'POST', json: { action: 'cancel' } })
       setCancelOpen(false)
-      await load()
+      await reload()
     } catch {
       setError(t('cancelFailed'))
     }
   }
 
-  if (error && !data) return <Card className="p-4"><Lead>{error}</Lead></Card>
+  if (!data && loadMessage) return <Card className="p-4"><Lead>{loadMessage}</Lead></Card>
   if (!data) return <Spinner />
   const c = data.case
   const open = c.status === 'OPEN' || c.status === 'MATCHED'
@@ -183,7 +177,7 @@ function CaseInner({ id }: { id: string }) {
 
       {/* いまの段階で次にすること(画面の見直し 所見 6) */}
       {c.status === 'OPEN' && waiting.length === 0 && params.get('sent') !== '1' && <Lead>{t('nextOpen')}</Lead>}
-      {c.status === 'MATCHED' && c.supporterResolvedAt && data.canDecide && <ResolvePanel caseId={c.id} onDone={load} />}
+      {c.status === 'MATCHED' && c.supporterResolvedAt && data.canDecide && <ResolvePanel caseId={c.id} onDone={reload} />}
       {c.status === 'RESOLVED' && <Card className="bg-leaf-soft p-4"><span className="text-[15px] font-bold text-leaf-ink">{t('resolved')}</span></Card>}
 
       {waiting.length > 0 && open && (
@@ -233,7 +227,7 @@ function CaseInner({ id }: { id: string }) {
           <button type="button" onClick={() => setCancelOpen(true)} className="self-start min-h-[44px] px-1 text-[12.5px] text-mist underline">{c.status === 'MATCHED' ? t('cancelMatched') : t('cancel')}</button>
         )
       )}
-      <ErrorNote>{error}</ErrorNote>
+      <ErrorNote>{error ?? loadMessage}</ErrorNote>
     </>
   )
 }

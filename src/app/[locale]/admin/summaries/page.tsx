@@ -1,20 +1,20 @@
 'use client'
 
 // 運営｜解決の要約(ナレッジ)。よい取り組みはモデルケースとして紹介する(11/5)
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { apiFetch } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { Button, Card, Chip, Lead, SectionLabel } from '@/components/app/ui'
 
 type Summary = { case_id: string; content: string; actions: string; aftermath: string; source: string; is_model_case: boolean; created_at: string; cases: { display_id: string } | null }
 
 export default function SummariesPage() {
-  const [items, setItems] = useState<Summary[] | null>(null)
-  const load = useCallback(async () => setItems((await apiFetch<{ summaries: Summary[] }>('/api/admin/summaries').catch(() => ({ summaries: [] }))).summaries), [])
-  useEffect(() => { void load() }, [load])
+  const fetchSummaries = useCallback(() => apiFetch<{ summaries: Summary[] }>('/api/admin/summaries').then((d) => d.summaries, () => [] as Summary[]), [])
+  const { data: items, reload } = useLoad(fetchSummaries)
   const toggle = async (caseId: string, isModelCase: boolean) => {
     await apiFetch('/api/admin/summaries', { method: 'PATCH', json: { caseId, isModelCase } }).catch(() => undefined)
-    await load()
+    await reload()
   }
   return (
     <AdminShell title="解決の要約">

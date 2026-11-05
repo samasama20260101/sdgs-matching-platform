@@ -1,8 +1,9 @@
 'use client'
 
 // 運営｜お問い合わせ(最後のセーフティネット)。退会・ログインの方法の付け替え・支え手とのやりとりの困りごとなど
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { apiFetch } from '@/lib/client/api'
+import { useLoad } from '@/lib/client/useLoad'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { Button, Card, Chip, cx, Lead, TextArea } from '@/components/app/ui'
 
@@ -30,9 +31,8 @@ function Row({ q, onSaved }: { q: Inquiry; onSaved: () => Promise<void> }) {
 
 export default function InquiriesPage() {
   const [status, setStatus] = useState('OPEN')
-  const [items, setItems] = useState<Inquiry[] | null>(null)
-  const load = useCallback(async () => setItems((await apiFetch<{ inquiries: Inquiry[] }>(`/api/admin/inquiries?status=${status}`).catch(() => ({ inquiries: [] }))).inquiries), [status])
-  useEffect(() => { void load() }, [load])
+  const fetchInquiries = useCallback(() => apiFetch<{ inquiries: Inquiry[] }>(`/api/admin/inquiries?status=${status}`).then((d) => d.inquiries, () => [] as Inquiry[]), [status])
+  const { data: items, reload } = useLoad(fetchInquiries)
   return (
     <AdminShell title="お問い合わせ">
       <Lead>ログインの方法の付け替えは、本人だと確かめてから Supabase の画面で行い、メモに確かめた内容を残してください。</Lead>
@@ -40,7 +40,7 @@ export default function InquiriesPage() {
         {STATUS.map(([k, label]) => <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-[12.5px] font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label}</button>)}
       </div>
       {items?.length === 0 && <Lead>ありません。</Lead>}
-      {items?.map((q) => <Row key={q.id} q={q} onSaved={load} />)}
+      {items?.map((q) => <Row key={q.id} q={q} onSaved={reload} />)}
     </AdminShell>
   )
 }
