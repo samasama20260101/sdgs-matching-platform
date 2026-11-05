@@ -8,7 +8,7 @@ import { requireAdmin } from '@/lib/api/auth'
 // 運営で、2つ目の確認まで済んだログインだけ(src/lib/api/auth.ts の requireAdmin)
 async function verifyAdmin(request: Request) {
     const auth = await requireAdmin(request)
-    return 'response' in auth ? null : auth.authUser
+    return 'response' in auth ? null : auth.appUser
 }
 
 // GET: 一覧取得
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
     let query = supabaseAdmin
         .from('inquiries')
-        .select('*, users(display_name, organization_name)')
+        .select('id, display_id, user_id, role, name, email, organization, category, message, status, admin_memo, created_at, updated_at, users(display_name, organization_name)')
         .order('created_at', { ascending: false })
 
     if (status) query = query.eq('status', status)
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     const { data, error } = await query
     if (error) {
         console.error('[admin/inquiries GET] error:', error)
-        return NextResponse.json({ error: error.message, detail: error }, { status: 500 })
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
 
     // 団体名の正本は organizations（users.organization_name は移行前の遺物で更新されない）。
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
         users: { display_name: string | null; organization_name: string | null } | null
         [key: string]: unknown
     }
-    const inquiries = (data ?? []) as InquiryRow[]
+    const inquiries = (data ?? []) as unknown as InquiryRow[]
     const organizationByUserId = await getOrganizationsByUserIds(
         inquiries.map((i) => i.user_id).filter((id): id is string => Boolean(id)),
     )
@@ -62,8 +62,14 @@ export async function PATCH(request: Request) {
     const admin = await verifyAdmin(request)
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { id, status, admin_memo } = await request.json()
+    const body = (await request.json().catch(() => null)) as { id?: unknown; status?: unknown; admin_memo?: unknown } | null
+    const id = typeof body?.id === 'string' ? body.id : null
+    const status = body?.status
+    const admin_memo = body?.admin_memo
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+    // 状態は決まった値だけ(仕様書 §15: 値を検証していなかった)
+    if (status !== undefined && !['OPEN', 'IN_PROGRESS', 'CLOSED'].includes(String(status))) return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    if (admin_memo !== undefined && (typeof admin_memo !== 'string' || admin_memo.length > 5000)) return NextResponse.json({ error: 'Invalid memo' }, { status: 400 })
     if (!isUuid(id)) return NextResponse.json({ error: 'Invalid inquiry id' }, { status: 400 })
 
     const updateData: Record<string, unknown> = {}
@@ -73,6 +79,7 @@ export async function PATCH(request: Request) {
     const { error } = await supabaseAdmin
         .from('inquiries').update(updateData).eq('id', id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    await supabaseAdmin.from('audit_logs').insert({ actor_user_id: admin.id, action: 'admin.inquiry_update', target_table: 'inquiries', target_id: id, metadata: { status } })
     return NextResponse.json({ ok: true })
 }

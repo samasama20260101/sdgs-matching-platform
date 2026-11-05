@@ -2,12 +2,13 @@
 
 // 運営の入口。運営はメールのコードで入ったあと、認証アプリのコード(2つ目の確認)を必ず通す。
 // 初めてのときはここで認証アプリを登録する(HANDOFF の申し送り 1: 管理者に MFA がない)。運営の画面は日本語だけ
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Link } from '@/i18n/navigation'
 import { RequireMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, ErrorNote, Heading, Lead, Screen, Spinner, TextField } from '@/components/app/ui'
+import { ADMIN_TOOLS as TOOLS } from '@/components/admin/AdminShell'
 
 type Enrollment = { factorId: string; qr: string; secret: string }
 
@@ -18,8 +19,12 @@ function MfaGate({ onVerified }: { onVerified: () => Promise<void> }) {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 登録は1回だけ始める(副作用が2回動いても、因子を2つ作って片方が失敗しないように)
+  const started = useRef(false)
 
   const load = useCallback(async () => {
+    if (started.current) return
+    started.current = true
     setLoading(true)
     const { data, error: listError } = await supabase.auth.mfa.listFactors()
     if (listError) {
@@ -35,7 +40,7 @@ function MfaGate({ onVerified }: { onVerified: () => Promise<void> }) {
       for (const f of data.all.filter((x) => x.factor_type === 'totp' && x.status !== 'verified')) {
         await supabase.auth.mfa.unenroll({ factorId: f.id })
       }
-      const { data: enrolled, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'samasama-admin' })
+      const { data: enrolled, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `samasama-admin-${Date.now()}` })
       if (enrollError || !enrolled) {
         setError('認証アプリの登録を始められませんでした')
       } else {
@@ -86,10 +91,6 @@ function MfaGate({ onVerified }: { onVerified: () => Promise<void> }) {
   )
 }
 
-const TOOLS = [
-  { href: '/admin/news', title: 'お知らせ', note: '書く・公開する・AI の下書き' },
-  { href: '/admin/mask-lab', title: '個人情報マスクの検証', note: 'AI に渡す前に伏せる処理を試す' },
-] as const
 
 export default function AdminHomePage() {
   const { refresh, signOut } = useSession()
