@@ -1,7 +1,10 @@
 'use client';
 
+// Staging の入口(本番には出ない。src/proxy.ts が DEV_PASSWORD のある環境だけここへ回す)。運営の画面と同じく日本語だけ
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Mark } from '@/components/app/Mark';
+import { Button, Card, ErrorNote, Heading, Lead, TextField } from '@/components/app/ui';
 
 export default function DevLoginPage() {
   const router = useRouter();
@@ -29,35 +32,26 @@ export default function DevLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
-        <h1 className="text-xl font-bold text-gray-800 mb-2">
-          🔐 開発環境
-        </h1>
-        <p className="text-sm text-gray-500 mb-6">
-          アクセスにはパスワードが必要です
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            placeholder="パスワードを入力"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-            autoFocus
-          />
-          {error && (
-            <p className="text-red-500 text-sm">パスワードが違います</p>
-          )}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {isLoading ? '確認中...' : '入力'}
-          </button>
-        </form>
-      </div>
+    <div className="min-h-dvh bg-steel-faint text-ink">
+      <main className="mx-auto flex min-h-dvh w-full max-w-[400px] flex-col justify-center gap-4 px-4 py-10">
+        <span className="flex items-center gap-2.5">
+          <Mark />
+          <span className="font-heading text-[16px] font-bold">明日もsamasama</span>
+        </span>
+        <Card tone="support" className="p-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Heading level={2}>開発環境</Heading>
+              <Lead>入るにはパスワードが要ります。</Lead>
+            </div>
+            <TextField label="パスワード" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+            <ErrorNote>{error ? 'パスワードが違います' : null}</ErrorNote>
+            <Button type="submit" tone="support" disabled={isLoading || !password}>
+              {isLoading ? '確かめています…' : '入る'}
+            </Button>
+          </form>
+        </Card>
+      </main>
     </div>
   );
 }
