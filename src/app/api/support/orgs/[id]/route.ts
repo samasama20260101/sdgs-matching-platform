@@ -22,11 +22,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const role = await myOrgRole(auth.appUser.id, id)
   if (!role) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const [{ data: org }, { data: members }, { data: invites }] = await Promise.all([
+  // organization_memberships と users の間には外部キーが 2 つある(本人と、招いた人)。
+  // どちらで結ぶかを名指ししないと PostgREST が断り(PGRST201)、一員の一覧が空になる
+  const [orgRes, membersRes, invitesRes] = await Promise.all([
     supabaseAdmin.from('organizations').select('id, display_id, name, org_type, vetting_status, bio, contact_email, population, remote_ok, languages').eq('id', id).single(),
-    supabaseAdmin.from('organization_memberships').select('id, role, status, joined_at, user_id, users(display_name)').eq('organization_id', id).in('status', ['ACTIVE', 'SUSPENDED']).order('joined_at', { ascending: true }),
-    role === 'MEMBER' ? Promise.resolve({ data: [] }) : supabaseAdmin.from('organization_invitations').select('id, email, role, created_at, expires_at').eq('organization_id', id).eq('status', 'PENDING'),
+    supabaseAdmin.from('organization_memberships').select('id, role, status, joined_at, user_id, users!organization_memberships_user_id_fkey(display_name)').eq('organization_id', id).in('status', ['ACTIVE', 'SUSPENDED']).order('joined_at', { ascending: true }),
+    role === 'MEMBER' ? Promise.resolve({ data: [], error: null }) : supabaseAdmin.from('organization_invitations').select('id, email, role, created_at, expires_at').eq('organization_id', id).eq('status', 'PENDING'),
   ])
+  const failed = orgRes.error ?? membersRes.error ?? invitesRes.error
+  if (failed) {
+    console.error('[api/support/orgs/[id]] GET', failed)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  }
+  const org = orgRes.data
+  const members = membersRes.data
+  const invites = invitesRes.data
   return NextResponse.json({
     organization: org,
     myRole: role,
