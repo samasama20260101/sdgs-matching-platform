@@ -11,7 +11,7 @@ import { useRouter } from '@/i18n/navigation'
 import { isAppLocale, withLocalePath } from '@/i18n/routing'
 import { useSession } from '@/components/app/SessionProvider'
 import { AppHeader } from '@/components/app/AppShell'
-import { Button, Card, ErrorNote, Heading, Screen, Spinner, TextField, Tip } from '@/components/app/ui'
+import { Button, Card, ErrorNote, Heading, Screen, Spinner, StepBar, TextField, Tip } from '@/components/app/ui'
 import { ConsentCheckbox, ConsentSummary } from '@/components/app/ConsentPanel'
 import { draftToPayload, emptyProfileDraft, profileDraftErrors, ProfileFields, type ProfileDraft } from '@/components/app/ProfileFields'
 
@@ -21,14 +21,6 @@ const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED === 'true'
 const RESEND_SECONDS = 60
 
 
-function StepBar({ step }: { step: 1 | 2 }) {
-  return (
-    <div className="flex items-center gap-2" aria-hidden>
-      <span className="h-1.5 flex-1 rounded-full bg-night" />
-      <span className={`h-1.5 flex-1 rounded-full ${step === 2 ? 'bg-night' : 'bg-line'}`} />
-    </div>
-  )
-}
 
 function LoginStep() {
   const t = useTranslations('app.start')
@@ -204,8 +196,7 @@ function StartInner() {
     <Screen>
       <AppHeader />
       <div className="flex flex-col gap-4 pb-8">
-        <span className="text-[12px] font-bold text-mist">{state.status === 'needsOnboarding' ? t('step2') : t('step1')}</span>
-        <StepBar step={state.status === 'needsOnboarding' ? 2 : 1} />
+        <StepBar label={state.status === 'needsOnboarding' ? t('step2') : t('step1')} step={state.status === 'needsOnboarding' ? 2 : 1} total={2} />
         {state.status === 'loading' || state.status === 'ready' ? (
           <Spinner />
         ) : state.status === 'needsOnboarding' ? (

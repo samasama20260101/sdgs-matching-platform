@@ -8,7 +8,7 @@ import { apiFetch, ApiError } from '@/lib/client/api'
 import { detectUrgency } from '@/lib/urgency'
 import { DESCRIPTION_MAX, EXTRA_MAX, optionsFor, type SubjectType } from '@/lib/domain/intake'
 import { CrisisLinks } from '@/components/app/CrisisLinks'
-import { Button, Card, ErrorNote, Heading, Lead, TextArea, TextField, Tip } from '@/components/app/ui'
+import { Button, Card, ErrorNote, Heading, Lead, StepBar, TextArea, TextField, Tip } from '@/components/app/ui'
 import { IndicatorPicker, SuggestedOptions } from './IndicatorPicker'
 import { indicatorMessageKey, MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
 
@@ -110,13 +110,7 @@ export function WriteFlow({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <span className="text-[12px] font-bold text-mist">{step === 1 ? t('step1') : t('step2')}</span>
-        <div className="flex gap-2" aria-hidden>
-          <span className="h-1.5 flex-1 rounded-full bg-night" />
-          <span className={`h-1.5 flex-1 rounded-full ${step === 2 ? 'bg-night' : 'bg-line'}`} />
-        </div>
-      </div>
+      <StepBar label={step === 1 ? t('step1') : t('step2')} step={step} total={2} />
       {organizationName && (
         <Card className="flex items-center justify-between gap-2 p-3">
           <span className="text-[13px] text-mist">{t('shownName')}</span>
