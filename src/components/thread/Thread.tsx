@@ -1,0 +1,137 @@
+'use client'
+
+// やりとり(盤 15)。相談する側と支える側で同じ部品を使う。原文と訳を切り替えられる。
+// 更新はリアルタイムの購読を使わず、画面を開いている間だけ 20 秒ごとに読み直す(operations.md §7: Realtime の直接購読はしない)
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { apiFetch } from '@/lib/client/api'
+import { Button, cx, ErrorNote } from '@/components/app/ui'
+
+type Message = {
+  id: string
+  kind: 'USER' | 'SYSTEM'
+  content: string
+  system: { key: string; params: Record<string, string> } | null
+  mine: boolean
+  side: 'CONSULTEE' | 'SUPPORTER'
+  senderLabel: string
+  originalLanguage: string | null
+  translation: string | null
+  createdAt: string
+}
+
+const POLL_MS = 20_000
+
+export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'consult' | 'support' }) {
+  const t = useTranslations('consult.thread')
+  const locale = useLocale()
+  const [messages, setMessages] = useState<Message[] | null>(null)
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [showTranslation, setShowTranslation] = useState(false)
+  const [translating, setTranslating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const endRef = useRef<HTMLDivElement | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      const d = await apiFetch<{ messages: Message[]; open: boolean }>(`/api/cases/${caseId}/messages?lang=${locale}`)
+      setMessages(d.messages)
+      setOpen(d.open)
+    } catch {
+      setError(t('loadFailed'))
+    }
+  }, [caseId, locale, t])
+
+  useEffect(() => {
+    void load()
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void load() }, POLL_MS)
+    return () => window.clearInterval(timer)
+  }, [load])
+
+  const send = async () => {
+    const content = draft.trim()
+    if (!content) return
+    setBusy(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/cases/${caseId}/messages`, { method: 'POST', json: { content } })
+      setDraft('')
+      await load()
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } catch {
+      setError(t('sendFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const translate = async () => {
+    setTranslating(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/cases/${caseId}/messages/translate`, { method: 'POST', json: { lang: locale } })
+      await load()
+      setShowTranslation(true)
+    } catch {
+      setError(t('translateFailed'))
+    } finally {
+      setTranslating(false)
+    }
+  }
+
+  if (messages === null) return null
+  const foreign = messages.some((m) => m.kind === 'USER' && !m.mine && m.originalLanguage && m.originalLanguage !== locale)
+
+  return (
+    <section aria-label={t('label')} className="flex flex-col gap-2">
+      {foreign && (
+        <div className="flex justify-end">
+          {messages.some((m) => m.translation) ? (
+            <Button tone={tone} variant="quiet" onClick={() => setShowTranslation((v) => !v)} className="min-h-[36px] text-[13px]">
+              {showTranslation ? t('showOriginal') : t('showTranslation')}
+            </Button>
+          ) : (
+            <Button tone={tone} variant="quiet" disabled={translating} onClick={() => void translate()} className="min-h-[36px] text-[13px]">{t('translate')}</Button>
+          )}
+        </div>
+      )}
+      {messages.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('empty')}</p>}
+      <ol className="m-0 flex list-none flex-col gap-2 p-0">
+        {messages.map((m) => m.kind === 'SYSTEM' ? (
+          <li key={m.id} className="self-center rounded-full bg-steel px-3 py-1 text-[12px] text-ink-soft">
+            {m.system ? t(`system.${m.system.key}`) : ''}
+          </li>
+        ) : (
+          <li key={m.id} className={cx('flex max-w-[85%] flex-col gap-1', m.mine ? 'self-end items-end' : 'self-start')}>
+            {!m.mine && <span className="text-[11.5px] font-bold text-mist">{m.senderLabel}</span>}
+            <span className={cx('whitespace-pre-wrap break-words rounded-[16px] px-3.5 py-2.5 text-[14px] leading-[1.7]', m.mine ? 'bg-night text-white' : 'border border-line bg-paper text-ink')}>
+              {showTranslation && m.translation && !m.mine ? m.translation : m.content}
+            </span>
+            {showTranslation && m.translation && !m.mine && <span className="text-[11px] text-mist">{t('translated')}</span>}
+          </li>
+        ))}
+      </ol>
+      <div ref={endRef} />
+      <ErrorNote>{error}</ErrorNote>
+      {open ? (
+        <div className="sticky bottom-20 flex items-end gap-2 rounded-[16px] border border-line bg-paper p-2">
+          <label className="sr-only" htmlFor={`compose-${caseId}`}>{t('message')}</label>
+          <textarea
+            id={`compose-${caseId}`}
+            value={draft}
+            maxLength={2000}
+            rows={2}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={t('message')}
+            className="min-h-[48px] flex-1 resize-none rounded-tool px-2 py-2 text-[16px] outline-none"
+          />
+          <Button tone={tone} variant="night" disabled={busy || !draft.trim()} onClick={() => void send()} className="min-h-[44px] px-4 text-[14px]">{t('send')}</Button>
+        </div>
+      ) : (
+        <p className="m-0 px-1 text-[12.5px] text-mist">{t('closed')}</p>
+      )}
+    </section>
+  )
+}

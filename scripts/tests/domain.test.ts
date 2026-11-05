@@ -111,3 +111,42 @@ assert.equal(normalizeHandoverInput('234-5'), null)
 assert.throws(() => formatHandoverCode(new Uint8Array(3)))
 
 console.log('domain: ok')
+
+// ---- 相談の受付
+import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
+  assert.equal(optionsFor('PERSON').length, 114)
+  assert.ok(optionsFor('COMPANY').length > 0 && optionsFor('COMMUNITY').length > 0)
+  // 主体の選択肢にない番号・重複は落とし、3つで切る
+  assert.deepEqual(sanitizeSelection('PERSON', ['1.1.1', '1.1.1', 'x', '11.1.1', '2.1.1', '3.4.2']), ['1.1.1', '11.1.1', '2.1.1'])
+  const companyFirst = optionsFor('COMPANY')[0].id
+  assert.deepEqual(sanitizeSelection('PERSON', [companyFirst]).length <= 1, true)
+  assert.deepEqual(sanitizeSelection('COMPANY', [companyFirst]), [companyFirst])
+  // 緊急: 緊急の印のある選択肢か、本文の言葉
+  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: ['3.4.2'], text: '…', personIsMinor: false, organizationPopulation: null }).urgency, 'High')
+  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: [], text: 'もう死にたい', personIsMinor: false, organizationPopulation: null }).urgency, 'High')
+  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: [], text: 'quiero morir', personIsMinor: false, organizationPopulation: null }).urgency, 'High')
+  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: ['1.1.1'], text: 'お金がない', personIsMinor: false, organizationPopulation: null }).urgency, 'Medium')
+  // 18歳未満は機微。会社の相談では担当者の年齢を使わない
+  const minor = assessIntake({ subject: 'PERSON', indicatorIds: ['1.1.1'], text: 'x', personIsMinor: true, organizationPopulation: null })
+  assert.equal(minor.isMinor, true)
+  assert.equal(minor.isSensitive, true)
+  const company = assessIntake({ subject: 'COMPANY', indicatorIds: [companyFirst], text: 'x', personIsMinor: true, organizationPopulation: 120 })
+  assert.equal(company.isMinor, false)
+  // 対象の人数: 個人は 1、団体は登録した人数(なければ 1)
+  assert.equal(company.affectedPopulation, 120)
+  assert.equal(assessIntake({ subject: 'COMMUNITY', indicatorIds: [], text: 'x', personIsMinor: false, organizationPopulation: null }).affectedPopulation, 1)
+  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: [], text: 'x', personIsMinor: false, organizationPopulation: 999 }).affectedPopulation, 1)
+  // 会社として相談できるのは会社、地域として相談できるのは自治体と地域団体
+  assert.equal(canConsultAs('COMPANY', 'COMPANY'), true)
+  assert.equal(canConsultAs('COMPANY', 'NPO'), false)
+  assert.equal(canConsultAs('COMMUNITY', 'MUNICIPALITY'), true)
+  assert.equal(canConsultAs('COMMUNITY', 'COMMUNITY'), true)
+  assert.equal(canConsultAs('COMMUNITY', 'COMPANY'), false)
+  // 仮の題
+  assert.equal(provisionalTitle('PERSON', ['11.1.1'], '本文'), '安全に暮らせる住まいがない')
+  assert.equal(provisionalTitle('PERSON', [], 'あ'.repeat(50)).length, 41)
+  // 相談所コード
+  assert.equal(sanitizeEntryCode('shop-01'), 'shop-01')
+  assert.equal(sanitizeEntryCode('<script>'), null)
+  console.log('domain intake: ok')
+})

@@ -1,169 +1,96 @@
-// src/app/api/cron/auto-close-cases/route.ts
-// Vercel Cron: 以下の2条件で自動処理（毎日午前2時）
-// 1. サポーター解決報告から14日後に自動RESOLVED
-// 2. MATCHEDのまま最終メッセージから30日間無活動 → 自動CLOSED
-import { supabaseAdmin } from '@/lib/supabase/server'
-import { classifyDisasterNeedsForCase } from '@/lib/disasterNeeds'
+// 毎日の自動処理(JST 2:00。Cloudflare では Cron Triggers、Vercel では vercel.json)。v2.0:
+// 1. 支え手の解決の報告から 14 日たった支援中の相談 → 解決。社会貢献の記録は手で確定したときと同じ関数で付ける
+//    (v1 の「自動で解決になった相談にはバッジが付かない」課題の手当て)
+// 2. 解決の報告がなく、最後の動きから 30 日たった支援中の相談 → 終了
+// 3. 24 時間申し出のない受付中の相談 → コーディネーターの一覧に回す印(escalated_at)を付け、運営に件数を知らせる
 import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import { isValidCronAuthorization } from '@/lib/api/cronAuth'
+import { notifyOps } from '@/lib/server/opsNotify'
+import { autoCloseCutoffs } from '@/lib/domain/schedule'
+
+type CaseRef = { id: string; owner_user_id: string | null; assignee_user_id: string | null; updated_at: string; created_at: string }
+
+async function systemMessage(c: CaseRef, key: string) {
+  const sender = c.assignee_user_id ?? c.owner_user_id
+  if (!sender) return
+  await supabaseAdmin.from('messages').insert({ case_id: c.id, sender_user_id: sender, message_type: 'SYSTEM', content: JSON.stringify({ key, params: {} }) })
+}
 
 export async function GET(request: Request) {
-    // Vercel Cronからのリクエストのみ許可
-    if (!isValidCronAuthorization(request.headers.get('Authorization'), process.env.CRON_SECRET)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isValidCronAuthorization(request.headers.get('Authorization'), process.env.CRON_SECRET)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const cut = autoCloseCutoffs(new Date())
+
+  // 1. 自動の解決
+  const { data: reported, error: reportedError } = await supabaseAdmin
+    .from('cases')
+    .select('id, owner_user_id, assignee_user_id, updated_at, created_at')
+    .eq('status', 'MATCHED')
+    .not('supporter_resolved_at', 'is', null)
+    .lt('supporter_resolved_at', cut.autoResolveBefore)
+  if (reportedError) {
+    console.error('[cron] reported fetch:', reportedError)
+    return NextResponse.json({ error: 'fetch failed' }, { status: 500 })
+  }
+  let resolved = 0
+  for (const c of (reported ?? []) as CaseRef[]) {
+    const { data: updated } = await supabaseAdmin
+      .from('cases')
+      .update({ status: 'RESOLVED', resolved_at: new Date().toISOString() })
+      .eq('id', c.id)
+      .eq('status', 'MATCHED')
+      .select('id')
+      .maybeSingle()
+    if (!updated) continue
+    const { error } = await supabaseAdmin.rpc('record_case_resolution', { p_case_id: c.id })
+    if (error) console.error('[cron] record:', c.id, error)
+    await systemMessage(c, 'autoResolved')
+    resolved += 1
+  }
+
+  // 2. 動きのない支援中の相談を終える
+  const { data: matched, error: matchedError } = await supabaseAdmin
+    .from('cases')
+    .select('id, owner_user_id, assignee_user_id, updated_at, created_at')
+    .eq('status', 'MATCHED')
+    .is('supporter_resolved_at', null)
+    .lt('updated_at', cut.inactiveBefore)
+  if (matchedError) console.error('[cron] matched fetch:', matchedError)
+  let closed = 0
+  for (const c of (matched ?? []) as CaseRef[]) {
+    const { data: last } = await supabaseAdmin.from('messages').select('created_at').eq('case_id', c.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    if (last && last.created_at >= cut.inactiveBefore) continue
+    const { data: updated } = await supabaseAdmin.from('cases').update({ status: 'CLOSED' }).eq('id', c.id).eq('status', 'MATCHED').select('id').maybeSingle()
+    if (!updated) continue
+    await systemMessage(c, 'autoClosed')
+    closed += 1
+  }
+
+  // 3. 申し出のない相談をコーディネーターの一覧に回す
+  const { data: waiting, error: waitingError } = await supabaseAdmin
+    .from('cases')
+    .select('id')
+    .eq('status', 'OPEN')
+    .is('escalated_at', null)
+    .lt('created_at', cut.escalateBefore)
+    .limit(500)
+  if (waitingError) console.error('[cron] waiting fetch:', waitingError)
+  let escalated = 0
+  const waitingIds = (waiting ?? []).map((c) => c.id as string)
+  if (waitingIds.length > 0) {
+    const { data: withOffers } = await supabaseAdmin.from('offers').select('case_id').in('case_id', waitingIds).in('status', ['PENDING', 'INVITED', 'ACCEPTED'])
+    const offered = new Set((withOffers ?? []).map((o) => o.case_id as string))
+    const targets = waitingIds.filter((id) => !offered.has(id))
+    if (targets.length > 0) {
+      const { error } = await supabaseAdmin.from('cases').update({ escalated_at: new Date().toISOString() }).in('id', targets)
+      if (error) console.error('[cron] escalate:', error)
+      else escalated = targets.length
     }
+  }
+  if (escalated > 0) await notifyOps({ kind: 'UNMATCHED', count: escalated }).catch(() => undefined)
 
-    const now = new Date()
-    const deadline = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) // 14日前（解決報告の自動RESOLVED用）
-    const inactivityDeadline = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // 30日前（MATCHED無活動の自動CLOSED用）
-
-    // ─────────────────────────────────────────────────────
-    // 処理1: supporter_resolved_at から14日経過 → RESOLVED
-    // ─────────────────────────────────────────────────────
-    const { data: resolvedCases, error: fetchError } = await supabaseAdmin
-        .from('cases')
-        .select('id, owner_user_id')
-        .eq('status', 'MATCHED')
-        .not('supporter_resolved_at', 'is', null)
-        .lt('supporter_resolved_at', deadline.toISOString())
-
-    if (fetchError) {
-        console.error('[auto-close] fetch error:', fetchError)
-        return NextResponse.json({ error: fetchError.message }, { status: 500 })
-    }
-
-    let resolvedCount = 0
-    const alreadyResolvedIds: string[] = []
-
-    if (resolvedCases && resolvedCases.length > 0) {
-        const resolvedIds = resolvedCases.map((c: { id: string }) => c.id)
-
-        const { error: updateError } = await supabaseAdmin
-            .from('cases')
-            .update({ status: 'RESOLVED', resolved_at: now.toISOString() })
-            .in('id', resolvedIds)
-
-        if (updateError) {
-            console.error('[auto-close] resolved update error:', updateError)
-        } else {
-            const messageInserts = resolvedCases.map((c: { id: string; owner_user_id: string }) => ({
-                case_id: c.id,
-                sender_user_id: c.owner_user_id,
-                sender_display_name_snapshot: 'システム',
-                sender_role_snapshot: 'SYSTEM',
-                message_type: 'SYSTEM',
-                content: '__SYSTEM__サポーターの解決報告から14日が経過したため、自動的に解決済みとなりました。',
-            }))
-            await supabaseAdmin.from('messages').insert(messageInserts)
-            resolvedCount = resolvedIds.length
-            alreadyResolvedIds.push(...resolvedIds)
-            console.log(`[auto-close] ${resolvedCount}件を自動RESOLVED`)
-        }
-    }
-
-    // ─────────────────────────────────────────────────────
-    // 処理2: MATCHEDのまま最終メッセージから30日無活動 → CLOSED
-    // 判定：最後のメッセージ送信日が30日以上前、またはメッセージが0件で
-    //       案件のupdated_atが30日以上前
-    // ─────────────────────────────────────────────────────
-    const { data: matchedCases, error: matchedError } = await supabaseAdmin
-        .from('cases')
-        .select('id, owner_user_id, updated_at')
-        .eq('status', 'MATCHED')
-        .is('supporter_resolved_at', null)
-
-    if (matchedError) {
-        console.error('[auto-close] matched fetch error:', matchedError)
-        return NextResponse.json({ error: matchedError.message }, { status: 500 })
-    }
-
-    let closedCount = 0
-
-    if (matchedCases && matchedCases.length > 0) {
-        // 処理1で更新済みの案件を除外
-        const targetCases = matchedCases.filter(
-            (c: { id: string }) => !alreadyResolvedIds.includes(c.id)
-        )
-
-        if (targetCases.length > 0) {
-            const targetIds = targetCases.map((c: { id: string }) => c.id)
-
-            // 各案件の最終メッセージ日時を取得
-            const { data: lastMessages } = await supabaseAdmin
-                .from('messages')
-                .select('case_id, created_at')
-                .in('case_id', targetIds)
-                .order('created_at', { ascending: false })
-
-            // case_id → 最終メッセージ日時 のマップを作成
-            const lastMessageMap: Record<string, string> = {}
-            ;(lastMessages || []).forEach((m: { case_id: string; created_at: string }) => {
-                if (!lastMessageMap[m.case_id]) {
-                    lastMessageMap[m.case_id] = m.created_at
-                }
-            })
-
-            // 無活動判定：最終メッセージ or updated_at が30日以上前
-            const inactiveCases = targetCases.filter((c: { id: string; updated_at: string }) => {
-                const lastActivity = lastMessageMap[c.id] ?? c.updated_at
-                return new Date(lastActivity) < inactivityDeadline
-            })
-
-            if (inactiveCases.length > 0) {
-                const inactiveIds = inactiveCases.map((c: { id: string }) => c.id)
-
-                const { error: closeError } = await supabaseAdmin
-                    .from('cases')
-                    .update({ status: 'CLOSED' })
-                    .in('id', inactiveIds)
-
-                if (closeError) {
-                    console.error('[auto-close] closed update error:', closeError)
-                } else {
-                    const closeMessages = inactiveCases.map((c: { id: string; owner_user_id: string }) => ({
-                        case_id: c.id,
-                        sender_user_id: c.owner_user_id,
-                        sender_display_name_snapshot: 'システム',
-                        sender_role_snapshot: 'SYSTEM',
-                        message_type: 'SYSTEM',
-                        content: '__SYSTEM__最後のメッセージから30日間活動がなかったため、この案件は自動的に終了しました。',
-                    }))
-                    await supabaseAdmin.from('messages').insert(closeMessages)
-                    closedCount = inactiveIds.length
-                    console.log(`[auto-close] ${closedCount}件を自動CLOSED`)
-                }
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────────────────
-    // 処理3: 災害案件のニーズ分類の取りこぼし再試行(登録直後の分類が失敗した分)
-    // ─────────────────────────────────────────────────────
-    let needsClassifiedCount = 0
-    const { data: unclassified, error: unclassifiedError } = await supabaseAdmin
-        .from('cases')
-        .select('id')
-        .in('status', ['OPEN', 'MATCHED'])
-        .not('intake_qna->disaster', 'is', null)
-        .is('intake_qna->disaster->needs', null)
-        .order('created_at', { ascending: false })
-        .limit(10)
-    if (unclassifiedError) {
-        console.error('[auto-close] needs sweep fetch error:', unclassifiedError)
-    } else {
-        for (const c of unclassified || []) {
-            const ok = await classifyDisasterNeedsForCase(c.id).catch(() => false)
-            if (ok) needsClassifiedCount += 1
-        }
-        if ((unclassified || []).length > 0) {
-            console.log(`[auto-close] 災害ニーズ分類: ${needsClassifiedCount}/${unclassified?.length}件`)
-        }
-    }
-
-    return NextResponse.json({
-        message: `自動処理完了: RESOLVED ${resolvedCount}件 / CLOSED ${closedCount}件 / ニーズ分類 ${needsClassifiedCount}件`,
-        resolved: resolvedCount,
-        closed: closedCount,
-        needsClassified: needsClassifiedCount,
-    })
+  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated}`)
+  return NextResponse.json({ resolved, closed, escalated })
 }

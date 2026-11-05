@@ -6,7 +6,7 @@
 //   推測で既定値を置かない(Gemini だけ今の本番と同じ値を既定にする)。決まらなければ null を返し、
 //   呼び出し側は AI を使わない動き(デモの結果・下書きなし)に落とす。
 export type AiProvider = 'gemini' | 'openai' | 'xai'
-export type AiTask = 'consultation' | 'disaster' | 'news' | 'translation'
+export type AiTask = 'consultation' | 'news' | 'translation'
 
 export type AiTarget = {
   provider: AiProvider
