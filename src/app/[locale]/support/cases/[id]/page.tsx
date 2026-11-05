@@ -2,7 +2,7 @@
 
 // 支える｜相談の詳細と申し出(盤 22 から)。選ばれたらやりとり、中心は解決の報告と共同支援の招待
 import { Suspense, use, useCallback, useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { AppFrame } from '@/components/app/AppShell'
@@ -10,6 +10,8 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea } from '@/components/app/ui'
 import { Thread } from '@/components/thread/Thread'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
+import { waitingLabel } from '@/lib/domain/schedule'
+import { regionText, WaitingText } from '@/components/support/caseText'
 
 type Detail = {
   case: SupportCaseItem & { description: string; since: string | null; wish: string | null; supporterResolvedAt: string | null; createdAt: string }
@@ -89,6 +91,7 @@ function Inner({ id }: { id: string }) {
   const t = useTranslations('support.case')
   const tCard = useTranslations('support.card')
   const tSdgs = useTranslations('sdgs')
+  const locale = useLocale()
   const face = useSearchParams().get('face') ?? ''
   const [data, setData] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -131,7 +134,7 @@ function Inner({ id }: { id: string }) {
           {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${i.text}`}</Chip>)}
           {c.urgent && <Chip color="coral">{tCard('urgent')}</Chip>}
           {c.isMinor && <Chip color="lamp">{tCard('minor')}</Chip>}
-          {c.regionCode && <Chip>{c.regionCode}</Chip>}
+          {c.regionCode && <Chip>{regionText(c, locale)}</Chip>}
         </span>
       </div>
       {c.summary && <Card tone="support" className="flex flex-col gap-1 p-4"><SectionLabel>{t('summary')}</SectionLabel><Lead>{c.summary}</Lead></Card>}
@@ -140,7 +143,7 @@ function Inner({ id }: { id: string }) {
         <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75]">{c.description}</p>
         {c.since && <p className="m-0 text-[13px] text-ink-soft">{t('since')}: {c.since}</p>}
         {c.wish && <p className="m-0 text-[13px] text-ink-soft">{t('wish')}: {c.wish}</p>}
-        <span className="text-[12px] text-mist">{tCard('waiting', { hours: c.waitingHours })}</span>
+        <span className="text-[12px]"><WaitingText wait={waitingLabel(c.waitingHours)} /></span>
       </Card>
 
       {mine?.status === 'INVITED' && (

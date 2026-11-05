@@ -13,7 +13,8 @@
     "company": "Consulta de empresa",
     "community": "Consulta de comunidad",
     "language": "Original: {lang}",
-    "waiting": "Esperando {hours} h",
+    "waitingHours": "Esperando {value} h",
+    "waitingDays": "{value, plural, one {Esperando # día} other {Esperando # días}}",
     "offers": "{count} ofrecimientos",
     "mine": {
       "PENDING": "Ofrecido",
@@ -48,7 +49,7 @@
   "find": {
     "title": "Buscar consultas",
     "tipLabel": "Cómo leer las etiquetas",
-    "tip": "Las etiquetas llenas las eligió la persona que consulta; las punteadas son sugerencias de la IA (antes de que el equipo de samasama las revise). En las consultas escritas en otros idiomas puedes ver una traducción en los mensajes.",
+    "tip": "Las etiquetas con número son los Objetivos de los ODS, con el nombre según quién consulta. Abre la consulta para ver los problemas en detalle (las punteadas son sugerencias de la IA que el equipo aún no revisó). Las consultas en otros idiomas se pueden traducir en la conversación.",
     "individualNote": "A título individual solo ves consultas de empresas y comunidades (las de personas se apoyan a través de organizaciones).",
     "category": "Categoría",
     "all": "Todas",
@@ -66,7 +67,9 @@
     "subjectPERSON": "De personas",
     "subjectCOMPANY": "De empresas",
     "subjectCOMMUNITY": "De comunidades",
-    "categoryNeedsSubject": "Los nombres de las áreas cambian según quién pide ayuda; elige primero \"De quién es la solicitud\""
+    "categoryNeedsSubject": "Los nombres de las áreas cambian según quién pide ayuda; elige primero \"De quién es la solicitud\"",
+    "filters": "Filtros",
+    "remoteShort": "Incluye a distancia"
   },
   "case": {
     "person": "Consulta de una persona",
