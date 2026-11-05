@@ -8,6 +8,7 @@ const URGENT_PHRASES = [
   'want to die', 'kill myself', 'end my life', 'commit suicide', 'attempt suicide', 'suicidal thoughts',
   'suicide', 'suicidal', 'abuse', 'abused', 'violence', 'trafficked', 'trafficking',
   'muốn chết', 'muon chet', 'tự tử', 'muon tu tu', 'cứu tôi', 'cuu toi', 'bạo lực', 'bao luc', 'bạo hành', 'bao hanh', 'buôn người', 'buon nguoi', 'chiến tranh', 'chien tranh',
+  'quiero morir', 'quiero morirme', 'suicidio', 'suicidarme', 'matarme', 'quitarme la vida', 'me van a matar', 'ayúdenme', 'ayudenme', 'violencia', 'maltrato', 'abuso', 'trata de personas', 'secuestro',
   'bunuh diri', 'ingin mati', 'mau mati', 'ingin bunuh diri', 'tolong saya', 'kekerasan', 'perdagangan orang', 'kdrt', 'penganiayaan', 'diculik',
 ];
 
