@@ -66,6 +66,14 @@
 
 手元で Workers のとおりに動かす: `.dev.vars` に Staging の値を入れて `npm run build:cf && npx wrangler dev --env staging`(cron は `--test-scheduled` を付けて `/__scheduled?cron=0+17+*+*+*`)。
 
+**手元でビルドしたものをデプロイしない。** OpenNext は `.env`・`.env.local` などの中身を Worker のコード(`.open-next/cloudflare/next-env.mjs`)に焼き込むので、手元の `.env.local` の秘密キーが Worker に入る。デプロイは GitHub Actions に任せる。どうしても手元から出すときは、`.env` のない作業ツリー(`git worktree add --detach <場所> origin/dev`)で `npm ci` してビルドし、`next-env.mjs` が空(`export const production = {};`)なのを見てから `npx opennextjs-cloudflare deploy --env staging`。
+
+| Staging(Workers) | 値 |
+|---|---|
+| URL | https://samasama-app-staging.samasama.workers.dev(入口パスワードあり) |
+| 入口パスワード | Vercel の Staging とは別の値。作った人の手元の `.env.workers-staging.local`(コミットしない)にある |
+| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`(2026-11-05)。AI の鍵は未設定(相談の整理はデモの結果を返す) |
+
 ### 2.2 環境変数
 
 | 変数 | 用途 |
