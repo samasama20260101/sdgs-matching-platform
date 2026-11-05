@@ -62,6 +62,7 @@
 | 写真の変換 | Images binding(`IMAGES`)。Workers の外では sharp(`src/lib/images/reencode.ts`) |
 | デプロイ | `.github/workflows/deploy-cloudflare.yml`。dev への push で Staging、main への push で本番。リポジトリの変数 `CF_STAGING_DEPLOY` / `CF_PRODUCTION_DEPLOY` が `true` のときだけ動く(本番は切り替えの日まで止めておく) |
 | 秘密の値 | Worker の Secret(`npx wrangler secret put <名前> --env staging`)。GitHub には `CLOUDFLARE_API_TOKEN` と `DISCORD_DEPLOY_WEBHOOK_URL` だけ |
+| `CLOUDFLARE_API_TOKEN` | 岡本さんのユーザーの API トークン「samasama GitHub Actions deploy (sdgs-matching-platform)」(2026-11-05、テンプレート Edit Cloudflare Workers、samasama のアカウントだけ、期限なし)。アカウントの API トークンは Super Administrator しか作れないため。岡本さんが抜けるときは、代表がアカウントの API トークンを作って入れ替える |
 | 公開してよい値 | GitHub の Environment「staging」「production」の変数 `NEXT_PUBLIC_SUPABASE_URL`・`NEXT_PUBLIC_SUPABASE_ANON_KEY`・`NEXT_PUBLIC_TURNSTILE_SITE_KEY`(ビルド時に焼き込まれる) |
 
 手元で Workers のとおりに動かす: `.dev.vars` に Staging の値を入れて `npm run build:cf && npx wrangler dev --env staging`(cron は `--test-scheduled` を付けて `/__scheduled?cron=0+17+*+*+*`)。
