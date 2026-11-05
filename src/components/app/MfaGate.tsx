@@ -2,12 +2,30 @@
 
 // 2つ目の確認(認証アプリのコード)。運営は必ず、団体のメンバーは機微な相談の中身を見るときに要る(盤 65)。
 // 登録は1回だけ始める。途中で止まった因子は消してから作り直す
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase/client'
 import { Button, Card, ErrorNote, Heading, Lead, Spinner, TextField } from './ui'
 
 type Enrollment = { factorId: string; qr: string; secret: string }
+type Prepared =
+  | { kind: 'verified'; factorId: string }
+  | { kind: 'enrolled'; enrollment: Enrollment }
+  | { kind: 'failed'; reason: 'loadFailed' | 'enrollFailed' }
+
+// 登録済みの因子があればそれを使い、なければ作る。途中で止まった因子は消してから作り直す(同じ名前の因子が残ると登録できない)
+async function prepareFactor(purpose: 'admin' | 'member'): Promise<Prepared> {
+  const { data, error: listError } = await supabase.auth.mfa.listFactors()
+  if (listError) return { kind: 'failed', reason: 'loadFailed' }
+  const verified = data.totp.find((f) => f.status === 'verified')
+  if (verified) return { kind: 'verified', factorId: verified.id }
+  for (const f of data.all.filter((x) => x.factor_type === 'totp' && x.status !== 'verified')) {
+    await supabase.auth.mfa.unenroll({ factorId: f.id })
+  }
+  const { data: enrolled, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `samasama-${purpose}-${Date.now()}` })
+  if (enrollError || !enrolled) return { kind: 'failed', reason: 'enrollFailed' }
+  return { kind: 'enrolled', enrollment: { factorId: enrolled.id, qr: enrolled.totp.qr_code, secret: enrolled.totp.secret } }
+}
 
 export function MfaGate({ onVerified, purpose }: { onVerified: () => Promise<void>; purpose: 'admin' | 'member' }) {
   const t = useTranslations('app.mfa')
@@ -20,36 +38,23 @@ export function MfaGate({ onVerified, purpose }: { onVerified: () => Promise<voi
   // 登録は1回だけ始める(副作用が2回動いても、因子を2つ作って片方が失敗しないように)
   const started = useRef(false)
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (started.current) return
     started.current = true
-    setLoading(true)
-    const { data, error: listError } = await supabase.auth.mfa.listFactors()
-    if (listError) {
-      setError(t('loadFailed'))
-      setLoading(false)
-      return
-    }
-    const verified = data.totp.find((f) => f.status === 'verified')
-    if (verified) {
-      setFactorId(verified.id)
-    } else {
-      // 登録の途中で止まった因子は消してから作り直す(同じ名前の因子が残ると登録できない)
-      for (const f of data.all.filter((x) => x.factor_type === 'totp' && x.status !== 'verified')) {
-        await supabase.auth.mfa.unenroll({ factorId: f.id })
-      }
-      const { data: enrolled, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `samasama-${purpose}-${Date.now()}` })
-      if (enrollError || !enrolled) {
-        setError(t('enrollFailed'))
-      } else {
-        setEnrollment({ factorId: enrolled.id, qr: enrolled.totp.qr_code, secret: enrolled.totp.secret })
-        setFactorId(enrolled.id)
-      }
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { void load() }, [load])
+    void prepareFactor(purpose)
+      .catch((): Prepared => ({ kind: 'failed', reason: 'loadFailed' }))
+      .then((prepared) => {
+        if (prepared.kind === 'failed') {
+          setError(t(prepared.reason))
+        } else if (prepared.kind === 'verified') {
+          setFactorId(prepared.factorId)
+        } else {
+          setEnrollment(prepared.enrollment)
+          setFactorId(prepared.enrollment.factorId)
+        }
+        setLoading(false)
+      })
+  }, [purpose, t])
 
   const verify = async () => {
     if (!factorId || !/^\d{6}$/.test(code)) {
