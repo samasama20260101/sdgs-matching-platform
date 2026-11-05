@@ -46,7 +46,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - 支え手は 1 件の相談に 3 者まで(`src/lib/domain/offers.ts`、DB の `accept_sos_offer`)。最初に選ばれた 1 者が中心。中心は相談した人の同意を得てほかの支え手を招く(招かれた申し出は INVITED)。
 - 解決したときの社会貢献の記録は DB の `record_case_resolution` だけで付ける(手で確定・14 日の自動・運営が指標を直したとき、すべて同じ関数)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
-- 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。
+- 作業の前後に `npm run lint -- --max-warnings 0`・`npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。画面で読み込むデータは `src/lib/client/useLoad.ts`、端末に覚える値は `src/lib/client/storedValue.ts` を使う(副作用の中で同期的に状態を変える書き方は lint が止める)。
 - **v2.0 の作業中(#72)。Staging の DB は 2026-11-05 から v2 の形**(`migrations/v2_0*.sql`)。dev の v1 の画面は v2 の画面に置き換わるまで Staging で動かないところがある。本番(main)は v1 の DB のまま。
 - **支える側から見える相談の決まりは `src/lib/domain/visibility.ts` だけで判定する。** API ごとに条件を書き直さない(個人の支え手に個人の相談を出さない・機微は2つ目の確認・自分の相談を出さない)。
 - **`contributions` は追記だけ。** UPDATE は DB が断る。直すときは CORRECTION の行を足す。消すのは退会のときだけ。
