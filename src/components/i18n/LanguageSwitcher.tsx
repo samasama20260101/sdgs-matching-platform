@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Check, Languages } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { LANGUAGE_SWITCHER_ENABLED, localeLabels, locales, type AppLocale } from '@/i18n/routing';
+import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
 import { supabase } from '@/lib/supabase/client';
 
 export function LanguageSwitcher() {
@@ -41,7 +41,7 @@ export function LanguageSwitcher() {
 
   const handleChange = (nextLocale: AppLocale) => {
     setOpen(false);
-    if (!LANGUAGE_SWITCHER_ENABLED || nextLocale === locale) return;
+    if (nextLocale === locale) return;
     try {
       sessionStorage.setItem('samasama.localeRestored', '1');
     } catch {
@@ -65,8 +65,6 @@ export function LanguageSwitcher() {
       console.error('[LanguageSwitcher] locale save error:', error);
     });
   };
-
-  if (!LANGUAGE_SWITCHER_ENABLED) return null;
 
   return (
     <div ref={rootRef} className="relative">

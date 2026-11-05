@@ -89,7 +89,3 @@ export async function loadFaces(userId: string): Promise<Faces> {
 
   return { organizations, individual }
 }
-
-export function findOrganizationFace(faces: Faces, organizationId: string): OrganizationFace | null {
-  return faces.organizations.find((f) => f.organizationId === organizationId) ?? null
-}
