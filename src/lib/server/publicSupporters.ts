@@ -86,3 +86,34 @@ export async function listPublicSupporters(opts: { ids?: string[]; limit?: numbe
     }
   })
 }
+
+// 団体ページを開く id から団体を引く。旧 URL(/supporters/{user_id})から来た場合は、その人の団体に読み替える
+// (本の相談所など外からのリンクが残っている)
+export async function findPublicSupporter(id: string): Promise<PublicSupporter | null> {
+  const [direct] = await listPublicSupporters({ ids: [id], limit: 1 })
+  if (direct) return direct
+  const { data: membership, error } = await supabaseAdmin
+    .from('organization_memberships')
+    .select('organization_id')
+    .eq('user_id', id)
+    .eq('status', 'ACTIVE')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  if (!membership?.organization_id) return null
+  const [viaUser] = await listPublicSupporters({ ids: [membership.organization_id as string], limit: 1 })
+  return viaUser ?? null
+}
+
+// 相談した人が贈った「ありがとう」の言葉ごとの数
+export async function publicThanksWords(organizationId: string): Promise<Record<string, number>> {
+  const { data, error } = await supabaseAdmin
+    .from('supporter_badges')
+    .select('badge_key')
+    .eq('supporter_organization_id', organizationId)
+  if (error) throw error
+  const words: Record<string, number> = {}
+  for (const b of data ?? []) words[b.badge_key as string] = (words[b.badge_key as string] ?? 0) + 1
+  return words
+}

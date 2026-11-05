@@ -1,315 +1,135 @@
-// src/app/supporters/[id]/page.tsx（認証不要・公開プロフィール）
-'use client';
+// 団体のページ(公開・ログイン不要)。サーバーで読み、載せる決まりと集計は src/lib/server/publicSupporters.ts の 1 か所だけ。
+// 旧 URL(/supporters/{user_id})で来たときは、団体の URL に移す
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
+import { Link, redirect } from '@/i18n/navigation'
+import { AppHeader } from '@/components/app/AppShell'
+import { Footer } from '@/components/app/Footer'
+import { Card, Chip, Heading, Lead, Screen, SectionLabel } from '@/components/app/ui'
+import { isUuid } from '@/lib/api/validation'
+import { SUPPORTER_BADGES, type BadgeKey } from '@/lib/constants/sdgs'
+import { publicSocialLinks } from '@/lib/domain/publicSupporter'
+import { findPublicSupporter, publicThanksWords } from '@/lib/server/publicSupporters'
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { Link, useRouter } from '@/i18n/navigation';
-import { getSupporterTypeConfig } from '@/lib/supporterType';
-import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
-import { Logo } from '@/components/icons/Logo';
-import { supabase } from '@/lib/supabase/client';
-import { SUPPORTER_BADGES, type BadgeKey } from '@/lib/constants/sdgs';
+export const dynamic = 'force-dynamic'
 
-type SocialLinks = {
-  website?: string; twitter?: string;
-  instagram?: string; facebook?: string; line?: string;
-};
+type PageProps = { params: Promise<{ locale: string; id: string }> }
 
-type Supporter = {
-  id: string; display_name: string; organization_name: string | null;
-  supporter_type: string; service_area_nationwide: boolean;
-  service_areas: Array<{ region_code: string; name_local: string; name_en: string; country: string }>;
-  created_at: string; resolved_count: number;
-  bio?: string | null; social_links?: SocialLinks | null;
-};
+const isBadgeKey = (key: string): key is BadgeKey => Object.hasOwn(SUPPORTER_BADGES, key)
 
-type UserRole = 'PERSON' | 'ADMIN' | null;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  if (!isUuid(id)) return {}
+  const supporter = await findPublicSupporter(id).catch(() => null)
+  if (!supporter) return {}
+  return { title: `${supporter.name} | 明日もsamasama`, description: supporter.bio?.slice(0, 120) ?? undefined }
+}
 
-type MeLite = { onboarded: boolean; person?: { role: UserRole } };
+export default async function SupporterPage({ params }: PageProps) {
+  const { locale, id } = await params
+  if (!isUuid(id)) notFound()
+  const supporter = await findPublicSupporter(id)
+  if (!supporter) notFound()
+  if (supporter.id !== id) redirect({ href: `/supporters/${supporter.id}`, locale })
 
-const getDashboardHref = (role: UserRole) => {
-  if (role === 'PERSON') return '/home';
-  if (role === 'ADMIN') return '/admin';
-  return null;
-};
-
-export default function SupporterProfilePage() {
-  const t = useTranslations('supporter.public.detail');
-  const tList = useTranslations('supporter.public.list');
-  const tNav = useTranslations('landing.nav');
-  const tSection = useTranslations('landing.supportersSection');
-  const tSupporterType = useTranslations('common.supporterType');
-  const tBadge = useTranslations('sdgs.badge');
-  const tForm = useTranslations('common.form');
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const [supporter, setSupporter] = useState<Supporter | null>(null);
-  const [badges, setBadges] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [ctaHref, setCtaHref] = useState('/');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [dashboardHref, setDashboardHref] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  useEffect(() => {
-    fetch(`/api/public/supporters/${id}`, { cache: 'no-store' })
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) { router.push('/supporters'); return; }
-        setSupporter(d.supporter);
-        setBadges(d.badges || {});
-        setIsLoading(false);
-      })
-      .catch(() => router.push('/supporters'));
-  }, [id, router]);
-
-  // ログイン状態でCTA遷移先を切り替え
-  useEffect(() => {
-    supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
-        if (!session) {
-          setCtaHref('/');
-          setIsLoggedIn(false);
-          setAuthChecked(true);
-          return;
-        }
-
-        try {
-          const response = await fetch('/api/me', {
-            cache: 'no-store',
-            headers: { 'Authorization': `Bearer ${session.access_token}` },
-          });
-          if (!response.ok) {
-            setCtaHref('/');
-            setIsLoggedIn(false);
-            return;
-          }
-
-          const data = await response.json() as MeLite;
-          const href = getDashboardHref(data.person?.role ?? null);
-          setDashboardHref(href);
-
-          if (href) {
-            setCtaHref(href);
-            setIsLoggedIn(true);
-          } else {
-            setCtaHref('/');
-            setIsLoggedIn(false);
-          }
-        } finally {
-          setAuthChecked(true);
-        }
-      })
-      .catch(() => setAuthChecked(true));
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center text-gray-400">
-          <div className="text-4xl mb-3 animate-pulse">🔍</div>
-          <p>{tForm('loading')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!supporter) return null;
-
-  const areas = supporter.service_area_nationwide
-    ? [tSection('nationwide')]
-    : (supporter.service_areas || []).map(a => a.name_local || a.region_code);
-
-  const totalBadges = Object.values(badges).reduce((s, n) => s + n, 0);
-  const yearsActive = Math.max(1, Math.floor(
-    (Date.now() - new Date(supporter.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)
-  ));
-  const sl = supporter.social_links || {};
-  const hasSocialLinks = !!(sl.website || sl.twitter || sl.instagram || sl.facebook || sl.line);
+  const [t, tType, tBadge, words] = await Promise.all([
+    getTranslations({ locale, namespace: 'app.supporters.detail' }),
+    getTranslations({ locale, namespace: 'common.supporterType' }),
+    getTranslations({ locale, namespace: 'sdgs.badge' }),
+    publicThanksWords(supporter.id),
+  ])
+  const thanks = Object.entries(words).filter(([key]) => isBadgeKey(key)).sort((a, b) => b[1] - a[1])
+  const thanksTotal = thanks.reduce((n, [, c]) => n + c, 0)
+  const areaNames = supporter.areas.map((a) => (locale === 'ja' ? a.name_local : a.name_en))
+  const links = publicSocialLinks(supporter.socialLinks)
+  const since = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'Asia/Tokyo' }).format(new Date(supporter.createdAt))
+  const linkLabel = (l: (typeof links)[number]) =>
+    l.kind === 'website' ? t('website') : l.kind === 'x' ? l.label || 'X' : l.kind === 'instagram' ? l.label || 'Instagram' : l.kind === 'facebook' ? 'Facebook' : t('line', { id: l.label })
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href={dashboardHref ?? '/'} className="flex items-center no-underline">
-            <Logo variant="default" size="sm" showText={true} />
-          </Link>
-          <div className="flex items-center gap-3">
-            {authChecked && dashboardHref ? (
-              <Link href={dashboardHref} className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium">
-                {tList('backToDashboardShort')}
-              </Link>
-            ) : authChecked ? (
-              <>
-                <Link href="/start" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">{tNav('login')}</Link>
-                <Link href="/start"
-                  className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
-                  {tNav('consult')}
-                </Link>
-              </>
-            ) : null}
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </header>
+    <Screen>
+      <AppHeader />
+      <main className="flex flex-col gap-4 pb-6">
+        <Link href="/supporters" className="flex min-h-[40px] items-center self-start text-[13px] text-night">← {t('backToList')}</Link>
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        <Link href="/supporters" className="text-xs text-gray-400 hover:text-teal-500 transition-colors">
-          {t('backToList')}
-        </Link>
-
-        {/* ── ヒーローカード ── */}
-        <div className="mt-4 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* グラデーションバナー */}
-          <div className="h-28 bg-gradient-to-r from-teal-400 via-teal-400 to-blue-400 relative">
-            <div className="absolute inset-0 opacity-20"
-              style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-          </div>
-
-          {/* プロフィール情報 */}
-          <div className="px-6 pb-6">
-            {/* アイコン + タイプバッジ */}
-            <div className="relative z-10 flex items-end gap-4 -mt-8 mb-3">
-              <div className="w-16 h-16 rounded-2xl bg-white shadow-md border-2 border-white flex items-center justify-center text-3xl flex-shrink-0">
-                {getSupporterTypeConfig(supporter.supporter_type).emoji}
-              </div>
-              <div className="pb-1 flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${getSupporterTypeConfig(supporter.supporter_type).badgeClass}`}>
-                  {tSupporterType(supporter.supporter_type)}
-                </span>
-                <span className="text-xs text-gray-400">{t('registeredYears', { years: yearsActive })}</span>
-              </div>
-            </div>
-
-            {/* 団体名 */}
-            <h1 className="text-xl font-black text-gray-900 mb-4 break-words">
-              {supporter.organization_name || supporter.display_name}
-            </h1>
-
-            {/* SNSリンク（団体名の下に独立配置） */}
-            {hasSocialLinks && (
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
-                {sl.website && (
-                  <a href={sl.website} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full transition-colors">
-                    {t('website')}
+        <Card className="flex flex-col gap-2.5 p-4">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <Chip>{tType(supporter.supporterType)}</Chip>
+            <span className="text-[12px] text-mist">{t('since', { date: since })}</span>
+          </span>
+          <Heading className="wrap-anywhere">{supporter.name}</Heading>
+          {links.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 border-t border-line pt-2.5">
+              {links.map((l) =>
+                l.href ? (
+                  <a key={l.kind} href={l.href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[36px] max-w-full items-center truncate rounded-full border border-line-strong px-3 text-[12.5px] font-bold text-night no-underline">
+                    {linkLabel(l)}
                   </a>
-                )}
-                {sl.twitter && (
-                  <a href={sl.twitter.startsWith('http') ? sl.twitter : `https://twitter.com/${sl.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-white bg-black hover:bg-gray-800 px-3 py-1.5 rounded-full transition-colors max-w-[240px] overflow-hidden">
-                    <span className="flex-shrink-0">𝕏</span>
-                    <span className="truncate min-w-0">{sl.twitter.startsWith('http') ? 'X (Twitter)' : `@${sl.twitter.replace('@', '')}`}</span>
-                  </a>
-                )}
-                {sl.instagram && (
-                  <a href={sl.instagram.startsWith('http') ? sl.instagram : `https://instagram.com/${sl.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-3 py-1.5 rounded-full transition-colors max-w-[240px] overflow-hidden">
-                    <span className="flex-shrink-0">IG</span>
-                    <span className="truncate min-w-0">{sl.instagram.startsWith('http') ? 'Instagram' : `@${sl.instagram.replace('@', '')}`}</span>
-                  </a>
-                )}
-                {sl.facebook && (
-                  <a href={sl.facebook} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-full transition-colors">
-                    👥 Facebook
-                  </a>
-                )}
-                {sl.line && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-white bg-teal-500 px-3 py-1.5 rounded-full max-w-[240px] overflow-hidden">
-                    <span className="flex-shrink-0">💬 LINE:</span>
-                    <span className="truncate min-w-0">{sl.line}</span>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── 実績3点セット ── */}
-        <div className="grid grid-cols-3 gap-3 mt-4">
-          {[
-            { value: supporter.resolved_count, label: t('statResolved'), suffix: t('statResolvedUnit'), color: 'text-teal-600' },
-            { value: totalBadges, label: t('statBadges'), suffix: t('statBadgesUnit'), color: 'text-amber-500' },
-            { value: supporter.service_area_nationwide ? 47 : areas.length, label: t('statAreas'), suffix: t('statAreasUnit'), color: 'text-blue-600' },
-          ].map((item, i) => (
-            <div key={i} className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-              <div className={`text-2xl font-black ${item.color}`}>{item.value}</div>
-              <div className="text-[10px] text-gray-400 font-medium mt-0.5">{item.suffix}</div>
-              <div className="text-xs text-gray-500 mt-1">{item.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── 自己紹介文 ── */}
-        {supporter.bio && (
-          <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span>✍️</span> {t('bioTitle')}
-            </h2>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-all">{supporter.bio}</p>
-          </div>
-        )}
-
-        {/* ── 活動エリア ── */}
-        <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span>📍</span> {t('areasTitle')}
-          </h2>
-          {supporter.service_area_nationwide ? (
-            <span className="inline-block bg-teal-50 text-teal-700 border border-teal-200 text-sm font-bold px-4 py-2 rounded-full">
-              {t('nationwideBadge')}
-            </span>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {areas.map((area, i) => (
-                <span key={i} className="text-xs bg-gray-50 text-gray-600 border border-gray-200 px-2.5 py-1 rounded-full">
-                  {area}
-                </span>
-              ))}
+                ) : (
+                  <span key={l.kind} className="inline-flex min-h-[36px] max-w-full items-center truncate rounded-full bg-kinari-deep px-3 text-[12.5px] text-ink-soft">{linkLabel(l)}</span>
+                ),
+              )}
             </div>
           )}
-        </div>
+        </Card>
 
-        {/* ── 感謝バッジ ── */}
-        {totalBadges > 0 && (
-          <div className="mt-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
-              <span>🏆</span> {t('badgesTitle')}
-            </h2>
-            <p className="text-xs text-gray-400 mb-4">{t('badgesSubtitle')}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {Object.entries(badges).map(([key, count]) => {
-                const info = SUPPORTER_BADGES[key as BadgeKey];
-                if (!info || count === 0) return null;
-                return (
-                  <div key={key} className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3">
-                    <span className="text-2xl">{info.emoji}</span>
-                    <div>
-                      <div className="text-xs font-bold text-amber-700">{tBadge(key)}</div>
-                      <div className="text-xs text-amber-500">{t('badgeCount', { count })}</div>
-                    </div>
-                  </div>
-                );
-              })}
+        <dl className="m-0 grid grid-cols-3 gap-2">
+          {[
+            { label: t('statResolved'), value: String(supporter.resolvedCount) },
+            { label: t('statThanks'), value: String(thanksTotal) },
+            { label: t('statAreas'), value: supporter.nationwide ? t('areasNationwide') : String(areaNames.length) },
+          ].map((s) => (
+            <div key={s.label} className="flex flex-col items-center gap-0.5 rounded-soft border border-line bg-paper px-2 py-3">
+              <dd className="m-0 text-[20px] font-bold text-night">{s.value}</dd>
+              <dt className="text-[11.5px] text-mist">{s.label}</dt>
             </div>
-          </div>
+          ))}
+        </dl>
+
+        {supporter.bio && (
+          <Card className="flex flex-col gap-2 p-4">
+            <SectionLabel>{t('bioTitle')}</SectionLabel>
+            <p className="m-0 whitespace-pre-wrap wrap-anywhere text-[14px] leading-[1.8]">{supporter.bio}</p>
+          </Card>
         )}
 
-        {/* ── CTA ── */}
-        <div className="mt-6 bg-gradient-to-r from-teal-500 to-teal-500 rounded-2xl p-6 text-white text-center">
-          <p className="font-bold mb-1">{t('ctaTitle')}</p>
-          <p className="text-teal-100 text-xs mb-4">
-            {t('ctaBody')}
-          </p>
-          <Link href={ctaHref}
-            className="inline-block bg-white text-teal-600 font-bold px-6 py-3 rounded-xl hover:bg-teal-50 transition-colors text-sm shadow">
-            {isLoggedIn ? t('ctaDashboard') : t('ctaConsult')}
+        {(supporter.nationwide || areaNames.length > 0) && (
+          <Card className="flex flex-col gap-2 p-4">
+            <SectionLabel>{t('areasTitle')}</SectionLabel>
+            <div className="flex flex-wrap gap-1.5">
+              {supporter.nationwide ? <Chip color="leaf">{t('areasNationwide')}</Chip> : areaNames.map((n) => <Chip key={n} color="outline">{n}</Chip>)}
+            </div>
+          </Card>
+        )}
+
+        {thanks.length > 0 && (
+          <Card className="flex flex-col gap-2 p-4">
+            <SectionLabel>{t('thanksTitle')}</SectionLabel>
+            <span className="px-1 text-[12px] text-mist">{t('thanksLead')}</span>
+            <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0">
+              {thanks.map(([key, count]) => (
+                <li key={key} className="flex items-center gap-2 rounded-tool bg-lamp-faint px-3 py-2">
+                  <span aria-hidden className="text-[18px]">{SUPPORTER_BADGES[key as BadgeKey].emoji}</span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-[12.5px] font-bold">{tBadge(key)}</span>
+                    <span className="text-[11.5px] text-mist">{t('thanksCount', { count })}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        <div className="flex flex-col gap-2 rounded-[16px] bg-kinari-deep p-4">
+          <span className="text-[14.5px] font-bold">{t('ctaTitle')}</span>
+          <Lead>{t('ctaBody')}</Lead>
+          <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-[15px] font-bold text-white no-underline">
+            {t('ctaConsult')}
           </Link>
         </div>
+        <Footer />
       </main>
-    </div>
-  );
+    </Screen>
+  )
 }
