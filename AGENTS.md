@@ -33,15 +33,15 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 
 ## 知らないと事故になること
 
-- **サーバーの API は `supabaseAdmin`(RLS を通らない)で DB を読み書きする。認可は API のコードで必ず行う。** 新しい API では `requireActiveAppUser()`(`src/lib/api/auth.ts`)を使う。ブラウザから DB を直接読まない。詳細は `docs/operations.md` §7。
+- **サーバーの API は `supabaseAdmin`(RLS を通らない)で DB を読み書きする。認可は API のコードで必ず行う。** 新しい API では `requireActiveAppUser()`(`src/lib/api/auth.ts`)を使う。**運営の API は `requireAdmin()`**(2つ目の確認まで済んだログインだけを通す)。ロールは PERSON と ADMIN だけで、支える側の顔は `src/lib/faces.ts`(所属と個人の支え手の登録)で決まる。ブラウザから DB を直接読まない。詳細は `docs/operations.md` §7。
 - **テスト用ユーザーは `supabaseAdmin.auth.admin.createUser()` で作る。** SQL で直接入れると Auth の identities ができずログインできない。消す順番: messages → offers → cases → public.users → auth.users。
-- **パスワード更新は本人のトークンで GoTrue の `PUT /user` を呼ぶ。** admin API で変えると本人のセッションごと失効して即ログアウトする。
+- **v2.0 はパスワードを持たない**(メールのコードと Google)。相談する人について DB に持つのは呼び名・年齢と基準日・国と地域・言語だけで、メールは Auth の中だけ。users に氏名やメールを書き足さない。
 - **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。** 大項目と緊急度は AI に決めさせない。
 - **AI は `src/lib/ai/client.ts` の `generateJson` だけから呼ぶ。** 提供元の SDK を直接 import しない(提供元とモデルは `src/lib/ai/config.ts` が環境変数から決める)。
 - **体験ページ `/trial` に fetch を足さない。** API・DB・AI を呼ばない作り。
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
-- 公開している言語は ja・en・zh だけ。資料で「6 言語対応」と書かない。サポーター・運営の画面は翻訳しない。
+- 画面の言語は ja・en・es(v2.0、11/5 定例。中国語は入れない)。相談する側と支える側の画面は 3 言語、運営の画面は日本語だけ。文言は `messages/<言語>/app|consult|support.json` に足し、`npm run check:i18n` で 3 言語のキーをそろえる。
 - 災害SOSは受付終了中。再開するときは `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` と `DISASTER_CASES_SHOWN_TO_SUPPORTERS` を両方戻す。
 - 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。並列マッチングには戻さない。2 団体目以降を足すなら「承認済みの団体が招待する」形(未着手)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
