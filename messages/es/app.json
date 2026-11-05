@@ -88,6 +88,7 @@
     "step1": "1 / 2",
     "step2": "2 / 2",
     "loginTitle": "¿Cómo quieres continuar?",
+    "loginTitleEmailOnly": "Continúa con tu correo electrónico",
     "loginTipLabel": "Cómo funciona el acceso",
     "loginTip": "No hay contraseña. La próxima vez entra de la misma forma. Tu correo solo se usa para entrar y nunca se muestra a quienes apoyan.",
     "google": "Continuar con Google",
