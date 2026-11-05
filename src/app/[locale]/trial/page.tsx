@@ -296,7 +296,7 @@ export default function TrialPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <p className="text-xs text-gray-500">{t('ctaSosTitle')}</p>
-                <Link href="/signup" className="mt-2 block rounded-lg bg-gradient-to-r from-blue-600 to-teal-600 px-4 py-3 text-center text-sm font-bold text-white hover:from-blue-700 hover:to-teal-700">
+                <Link href="/start" className="mt-2 block rounded-lg bg-gradient-to-r from-blue-600 to-teal-600 px-4 py-3 text-center text-sm font-bold text-white hover:from-blue-700 hover:to-teal-700">
                   {t('ctaSos')}
                 </Link>
               </div>

@@ -172,7 +172,7 @@ export default function AdminNewsPage() {
     const authHeader = useCallback(async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
-            router.push('/admin/login')
+            router.push('/start?next=/admin/news')
             return null
         }
         return { Authorization: `Bearer ${session.access_token}` }
@@ -183,13 +183,12 @@ export default function AdminNewsPage() {
         try {
             const headers = await authHeader()
             if (!headers) return
-            const roleRes = await fetch('/api/admin/check-role', { headers })
-            const roleData = await roleRes.json()
-            if (roleData.role !== 'ADMIN') {
-                router.push('/admin/login')
+            const res = await fetch('/api/admin/news', { headers, cache: 'no-store' })
+            // 運営で、2つ目の確認まで済んでいなければ運営の入口へ(そこで認証アプリのコードを入れる)
+            if (res.status === 401 || res.status === 403) {
+                router.push('/admin')
                 return
             }
-            const res = await fetch('/api/admin/news', { headers, cache: 'no-store' })
             const result = await res.json()
             if (!res.ok) throw new Error(result.error || 'お知らせの取得に失敗しました')
             const list = (result.posts ?? []) as NewsPostListItem[]
@@ -614,7 +613,7 @@ export default function AdminNewsPage() {
                         </p>
                     </div>
                     <Link
-                        href="/admin/dashboard"
+                        href="/admin"
                         onClick={(e) => { if (isDirty && !window.confirm(DISCARD_MESSAGE)) e.preventDefault() }}
                         className="text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline"
                     >

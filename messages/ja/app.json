@@ -1,0 +1,239 @@
+{
+  "common": {
+    "loading": "読み込んでいます"
+  },
+  "shell": {
+    "brand": "明日もsamasama",
+    "modeLabel": "使い方の切り替え",
+    "mode": {
+      "consult": "相談する",
+      "support": "支える"
+    },
+    "login": "ログイン",
+    "crisis": "いますぐ話せる窓口"
+  },
+  "tabs": {
+    "label": "画面の切り替え",
+    "home": "ホーム",
+    "talk": "やりとり",
+    "learn": "知る",
+    "find": "さがす",
+    "me": "わたし"
+  },
+  "crisis": {
+    "title": "いま、すぐに話したいときは",
+    "jp": {
+      "yorisoi": "よりそいホットライン",
+      "fire": "119",
+      "police": "110"
+    },
+    "abroad": "命の危険があるときは、いま住んでいる国の緊急の番号(警察・救急)に電話してください。"
+  },
+  "gate": {
+    "suspended": "このアカウントは、いま使えなくなっています。お問い合わせから運営にご連絡ください。",
+    "signOut": "ログアウトする",
+    "notAdmin": "この画面は運営だけが使えます。"
+  },
+  "consent": {
+    "points": {
+      "noPersonalInfo": {
+        "title": "持たない情報",
+        "body": "相談する人に聞くのは、呼び名・年齢・地域・言語だけです。名前・電話番号・住所・性別・生年月日は持ちません。パスワードも作りません。"
+      },
+      "whoSees": {
+        "title": "誰に何が見えるか",
+        "body": "支え手に見えるのは、呼び名・地域・相談の内容だけです。命や暴力にかかわる相談と18歳未満の相談は、運営と面談した団体だけが受けます。"
+      },
+      "onlyChosen": {
+        "title": "あなたが選んだ相手にだけ届ける",
+        "body": "近くの窓口には、あなたが「伝えてよい」を選んだときだけ、呼び名と相談の内容を伝えます。"
+      },
+      "records": {
+        "title": "記録の扱い",
+        "body": "解決した相談は、内容・取った手立て・その後を要約して運営が見ます(名前や連絡先らしいところは伏せます)。支える側の社会貢献の記録は人に付き、退会するとすべて消えます。"
+      },
+      "roles": {
+        "title": "1つのアカウントで",
+        "body": "同じアカウントで、相談も支えもできます。支える側になるときは「支える人と団体の決まり」にも同意してもらいます。"
+      },
+      "providers": {
+        "title": "処理を任せる会社",
+        "body": "Cloudflare・Supabase と AI の会社(Google・OpenAI・xAI)など、海外の会社に処理を任せます。AI に渡す前に、名前や連絡先らしいところを伏せます。"
+      }
+    },
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "agree": "上の内容と、利用規約・プライバシーポリシーに同意します",
+    "error": "記録できませんでした。もう一度お試しください。",
+    "updatedTitle": "約束の中身が変わりました",
+    "updatedLead": "続けて使う前に、変わった点を確かめてください。",
+    "continue": "同意して続ける"
+  },
+  "profile": {
+    "displayName": "呼び名",
+    "displayNameHint": "(本名でなくてかまいません)",
+    "displayNameError": "呼び名を20文字までで入れてください",
+    "age": "年齢",
+    "ageHint": "(今の年齢を数字で)",
+    "ageError": "年齢を数字で入れてください",
+    "country": "住んでいる国",
+    "choose": "選んでください",
+    "countryError": "国を選んでください",
+    "region": "都道府県・州",
+    "optional": "(任意)",
+    "city": "市区町村",
+    "language": "使う言語"
+  },
+  "start": {
+    "step1": "1 ／ 2",
+    "step2": "2 ／ 2",
+    "loginTitle": "どちらで続けますか",
+    "loginTipLabel": "ログインのしくみ",
+    "loginTip": "パスワードは作りません。次からも同じ方法で入れます。メールアドレスはログインのためだけに使い、支え手には渡りません。",
+    "google": "Google で続ける",
+    "or": "または",
+    "email": "メールアドレス",
+    "sendCode": "コードを送る",
+    "sendCodeNote": "届いたコードを入れると、続きに進みます。",
+    "emailInvalid": "メールアドレスの形を確かめてください",
+    "tooMany": "続けて送りすぎました。少し待ってからお試しください。",
+    "sendFailed": "送れませんでした。少し待ってからお試しください。",
+    "sentTo": "{email} にコードを送りました。",
+    "code": "届いたコード",
+    "verify": "続ける",
+    "codeInvalid": "届いた数字のコードを入れてください",
+    "codeWrong": "コードが違うか、期限が切れています。送り直してください。",
+    "linkAlsoWorks": "メールのリンクを押しても入れます。",
+    "resend": "コードを送り直す",
+    "resendIn": "{seconds}秒後に送り直せます",
+    "changeEmail": "メールアドレスを変える",
+    "profileTitle": "呼び名と、住んでいるところだけ教えてください",
+    "profileTipLabel": "聞くことと聞かないこと",
+    "profileTip": "名前・電話番号・住所・性別・生年月日はうかがいません。連絡はこのアプリの中だけで行います。地域は、近くの窓口を探すのに使います。年齢は、その日を基準に1年ごとに進めます。",
+    "agreeRequired": "続けるには同意が必要です",
+    "saveFailed": "保存できませんでした。もう一度お試しください。",
+    "finish": "はじめる",
+    "useAnotherAccount": "別のアカウントで入る",
+    "callbackFailed": "ログインを受け取れませんでした。もう一度お試しください。",
+    "backToStart": "はじめるに戻る"
+  },
+  "entry": {
+    "fromShop": "相談所の QR から来ました",
+    "title": "困っていることを、<br></br>ここに置いていってください",
+    "lead": "名前や電話番号は聞きません。あなたに合う支え手と、近くの窓口におつなぎします。",
+    "whose": "だれの困りごとですか",
+    "entriesLabel": "相談の入口",
+    "mine": "わたしの困りごと",
+    "mineNote": "ひとりで抱えていること、家族のこと",
+    "company": "会社の困りごと",
+    "companyNote": "会社の一員として",
+    "community": "地域の困りごと",
+    "communityNote": "自治体・町内会として",
+    "besides": "相談のほかに",
+    "becomeSupporter": "支える側になる",
+    "becomeSupporterNote": "個人でも、団体でも",
+    "learn": "社会の困りごとを知る",
+    "learnNote": "お知らせと、課題の話題",
+    "trial": "ログインせずに相談フォームを試す"
+  },
+  "footer": {
+    "news": "お知らせ",
+    "story": "私たちの思い",
+    "supporters": "支え手と団体",
+    "contact": "お問い合わせ",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "company": "合同会社samasama",
+    "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "home": {
+    "hello": "{name}さん",
+    "lead": "困りごとを書くと、合う支え手と近くの窓口におつなぎします。",
+    "write": "相談を書く",
+    "asCompany": "会社として相談する",
+    "asCommunity": "地域として相談する",
+    "noCases": "まだ相談はありません。",
+    "myCases": "あなたの相談",
+    "status": {
+      "OPEN": "申し出を待っています",
+      "MATCHED": "一緒に進めています",
+      "RESOLVED": "解決しました",
+      "CLOSED": "終わりました",
+      "CANCELLED": "取り消しました"
+    },
+    "newOffers": "申し出 {count}件"
+  },
+  "learn": {
+    "title": "知る",
+    "mapSoon": "社会の困りごとの地図(234の課題)は、これから足します。",
+    "news": "お知らせ",
+    "noNews": "お知らせはまだありません。"
+  },
+  "me": {
+    "title": "わたし",
+    "checkInput": "入力を確かめてください",
+    "saveFailed": "保存できませんでした",
+    "save": "保存する",
+    "cancel": "やめる",
+    "ageUnknown": "年齢は未入力",
+    "ageYears": "{age}歳",
+    "edit": "変える",
+    "notifications": "お知らせの受け取り方",
+    "notificationsTipLabel": "受け取るときの注意",
+    "notificationsTip": "家族と端末を共有しているときは、オフのままをおすすめします。オンにしても、件名と本文に相談の中身は書きません。メールの件名は「明日もsamasama からのお知らせ」だけです。",
+    "inApp": "アプリの中",
+    "alwaysOn": "いつも有効",
+    "email": "メール",
+    "emailNote": "申し出やメッセージが届いたことだけを知らせます",
+    "push": "スマホの通知",
+    "pushNote": "ホーム画面に追加すると使えます(準備中)",
+    "loadFailed": "読み込めませんでした",
+    "withdraw": "退会する",
+    "withdrawTipLabel": "退会するときの注意",
+    "withdrawTip": "受付中・支援中の相談は取り消しになります。支える側でも活動していたときは、社会貢献の記録もすべて消えます。",
+    "withdrawConfirm": "退会すると、元に戻せません。本当に退会しますか。",
+    "withdrawYes": "退会する",
+    "withdrawLastOwner": "あなたが管理者の団体があります。別の人を管理者にしてから退会してください。",
+    "withdrawFailed": "退会できませんでした。お問い合わせから運営にご連絡ください。",
+    "loginMethods": "ログインの方法",
+    "loginMethodsTipLabel": "使えなくなったとき",
+    "loginMethodsTip": "どちらも使えなくなったときは、運営に連絡すると付け替えられます。",
+    "emailCode": "メールのコード",
+    "linked": "使っています",
+    "notLinked": "使っていません",
+    "toSupport": "支える側の画面へ",
+    "becomeSupporter": "支える側にもなる",
+    "becomeSupporterNote": "同じアカウントのまま",
+    "account": "アカウント",
+    "signOut": "ログアウトする"
+  },
+  "contact": {
+    "title": "お問い合わせ",
+    "lead": "使い方の質問、相談が進まないとき、支え手とのやりとりに困ったときなど、運営にお知らせください。",
+    "name": "お名前",
+    "email": "メールアドレス",
+    "organization": "団体名",
+    "optional": "(任意)",
+    "category": "内容の種類",
+    "choose": "選んでください",
+    "categories": {
+      "aboutService": "サービスについて知りたい",
+      "joinAsSupporter": "支援団体として参加したい",
+      "media": "取材・メディア",
+      "other": "その他",
+      "howto": "使い方がわからない",
+      "stuck": "相談が進まない・困っている",
+      "matchingComplaint": "支え手とのやりとりに困っている",
+      "relink": "ログインの方法を付け替えたい"
+    },
+    "message": "内容",
+    "loggedInNote": "ログイン中のアカウントのメールアドレスに返事をします。",
+    "required": "必要なところを入れてください",
+    "failed": "送れませんでした。もう一度お試しください。",
+    "submit": "送る",
+    "doneTitle": "受け付けました",
+    "doneBody": "運営が読んで、必要なときはメールで返事をします。",
+    "receipt": "受付番号",
+    "back": "戻る"
+  }
+}

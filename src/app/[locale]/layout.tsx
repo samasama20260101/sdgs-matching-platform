@@ -1,31 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Sans, Noto_Serif, Noto_Serif_JP, Zen_Maru_Gothic } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { isAppLocale, locales, type SupportedLocale } from "@/i18n/routing";
 import "../globals.css";
+import { SessionProvider } from "@/components/app/SessionProvider";
 
 // OGP用のロケール表記（BCP47 → Open Graph形式）。非公開ロケール分も保持しておく。
 const OG_LOCALES: Record<SupportedLocale, string> = {
   ja: "ja_JP",
   en: "en_US",
+  es: "es_ES",
   zh: "zh_CN",
   ko: "ko_KR",
   vi: "vi_VN",
   id: "id_ID",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// 書体は言語ごとに Noto を切り替える(11/4 代表のコメント・盤 06)。読み込むのは表示中の言語の書体だけ:
+// 使わない書体のクラスを <html> に付けないので、ブラウザはその書体のファイルを取りに行かない。
+// 日本語は字の範囲ごとに分かれたファイル(unicode-range)で配られ、使う字の分だけ落ちる。
+const jaBody = Zen_Maru_Gothic({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-v2-body", display: "swap", preload: false });
+const jaHeading = Noto_Serif_JP({ weight: ["600", "700"], subsets: ["latin"], variable: "--font-v2-heading", display: "swap", preload: false });
+const latinBody = Noto_Sans({ weight: ["400", "500", "700"], subsets: ["latin", "latin-ext"], variable: "--font-v2-body", display: "swap" });
+const latinHeading = Noto_Serif({ weight: ["600", "700"], subsets: ["latin", "latin-ext"], variable: "--font-v2-heading", display: "swap" });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+function fontClassesFor(locale: string) {
+  return locale === "ja" ? `${jaBody.variable} ${jaHeading.variable}` : `${latinBody.variable} ${latinHeading.variable}`;
+}
 
 // hreflang の alternates は next-intl ミドルウェアが Link ヘッダで自動出力する
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -35,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: t("title"),
     description: t("description"),
-    keywords: ["SDGs", "NPO", "支援", "マッチング", "相談", "社会課題"],
+    keywords: ["SDGs", "NPO", "支援", "相談", "社会課題"],
     icons: {
       icon: [
         { url: "/favicon.ico", sizes: "48x48" },
@@ -92,12 +96,10 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang={locale} className={fontClassesFor(locale)}>
+      <body className="antialiased font-body">
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <SessionProvider>{children}</SessionProvider>
         </NextIntlClientProvider>
         <GoogleAnalytics gaId="G-8S5GP8P7EZ" />
       </body>

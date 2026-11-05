@@ -2,7 +2,7 @@
 // 管理者: お知らせ 1 件の取得(編集を開いたとき)・更新(公開/下書き切替を含む)・削除
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { requireActiveAppUser } from '@/lib/api/auth'
+import { requireAdmin } from '@/lib/api/auth'
 import { type NewsPostAdmin } from '@/lib/constants/news'
 import { isUuid } from '@/lib/api/validation'
 import { parseNewsInput } from '@/lib/news/adminInput'
@@ -23,7 +23,7 @@ async function writeAudit(actorId: string, action: string, targetId: string, met
 }
 
 export async function GET(request: Request, { params }: Params) {
-  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
   const { id } = await params
   if (!isUuid(id)) return NextResponse.json({ error: 'お知らせが見つかりません' }, { status: 404 })
@@ -42,7 +42,7 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
-  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
 
   const { id } = await params
@@ -89,7 +89,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
-  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
 
   const { id } = await params

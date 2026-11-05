@@ -14,14 +14,19 @@ export function LanguageSwitcher() {
 
   const handleChange = (nextLocale: AppLocale) => {
     if (!LANGUAGE_SWITCHER_ENABLED) return;
-    sessionStorage.setItem('localeRestored', '1');
+    try {
+      sessionStorage.setItem('samasama.localeRestored', '1');
+    } catch {
+      // 保存できなくても切り替えはできる
+    }
     document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; samesite=lax`;
     router.replace(pathname, { locale: nextLocale });
 
+    // ログイン中なら本人の言語として残す(知らせと訳の言語に使う)
     void supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return;
-      return fetch('/api/profile', {
-        method: 'POST',
+      return fetch('/api/me', {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
@@ -36,13 +41,13 @@ export function LanguageSwitcher() {
   if (!LANGUAGE_SWITCHER_ENABLED) return null;
 
   return (
-    <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+    <label className="inline-flex items-center gap-1.5 text-[13px] text-mist">
       <Languages className="hidden sm:block h-4 w-4" aria-hidden="true" />
       <span className="sr-only">{t('label')}</span>
       <select
         value={locale}
         onChange={(event) => handleChange(event.target.value as AppLocale)}
-        className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:border-blue-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        className="min-h-[36px] rounded-tool border border-line-strong bg-paper px-2 text-[13px] text-ink focus:border-night focus:outline-none"
         aria-label={t('label')}
       >
         {locales.map((option) => (

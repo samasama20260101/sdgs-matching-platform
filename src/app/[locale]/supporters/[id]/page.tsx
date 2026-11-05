@@ -24,16 +24,13 @@ type Supporter = {
   bio?: string | null; social_links?: SocialLinks | null;
 };
 
-type UserRole = 'SOS' | 'SUPPORTER' | 'ADMIN' | null;
+type UserRole = 'PERSON' | 'ADMIN' | null;
 
-type AuthRoleResponse = {
-  role?: UserRole;
-};
+type MeLite = { onboarded: boolean; person?: { role: UserRole } };
 
 const getDashboardHref = (role: UserRole) => {
-  if (role === 'SOS') return '/sos/dashboard';
-  if (role === 'SUPPORTER') return '/supporter/dashboard';
-  if (role === 'ADMIN') return '/admin/dashboard';
+  if (role === 'PERSON') return '/home';
+  if (role === 'ADMIN') return '/admin';
   return null;
 };
 
@@ -79,7 +76,7 @@ export default function SupporterProfilePage() {
         }
 
         try {
-          const response = await fetch('/api/auth/get-role', {
+          const response = await fetch('/api/me', {
             cache: 'no-store',
             headers: { 'Authorization': `Bearer ${session.access_token}` },
           });
@@ -89,8 +86,8 @@ export default function SupporterProfilePage() {
             return;
           }
 
-          const data = await response.json() as AuthRoleResponse;
-          const href = getDashboardHref(data.role ?? null);
+          const data = await response.json() as MeLite;
+          const href = getDashboardHref(data.person?.role ?? null);
           setDashboardHref(href);
 
           if (href) {
@@ -146,8 +143,8 @@ export default function SupporterProfilePage() {
               </Link>
             ) : authChecked ? (
               <>
-                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">{tNav('login')}</Link>
-                <Link href="/signup"
+                <Link href="/start" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">{tNav('login')}</Link>
+                <Link href="/start"
                   className="text-sm bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium">
                   {tNav('consult')}
                 </Link>

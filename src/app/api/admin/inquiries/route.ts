@@ -3,16 +3,12 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { getOrganizationsByUserIds } from '@/lib/organizations'
 import { isUuid } from '@/lib/api/validation'
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/api/auth'
 
+// 運営で、2つ目の確認まで済んだログインだけ(src/lib/api/auth.ts の requireAdmin)
 async function verifyAdmin(request: Request) {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-    if (!user) return null
-    const { data } = await supabaseAdmin
-        .from('users').select('role').eq('auth_user_id', user.id).single()
-    return data?.role === 'ADMIN' ? user : null
+    const auth = await requireAdmin(request)
+    return 'response' in auth ? null : auth.authUser
 }
 
 // GET: 一覧取得

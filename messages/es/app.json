@@ -1,0 +1,239 @@
+{
+  "common": {
+    "loading": "Cargando"
+  },
+  "shell": {
+    "brand": "Ashita mo samasama",
+    "modeLabel": "Cambiar de modo",
+    "mode": {
+      "consult": "Pedir ayuda",
+      "support": "Apoyar"
+    },
+    "login": "Entrar",
+    "crisis": "Hablar con alguien ahora"
+  },
+  "tabs": {
+    "label": "Navegación",
+    "home": "Inicio",
+    "talk": "Mensajes",
+    "learn": "Conocer",
+    "find": "Buscar",
+    "me": "Yo"
+  },
+  "crisis": {
+    "title": "Si necesitas hablar ahora mismo",
+    "jp": {
+      "yorisoi": "Yorisoi Hotline",
+      "fire": "119",
+      "police": "110"
+    },
+    "abroad": "Si tu vida corre peligro, llama al número de emergencias (policía o ambulancia) del país donde vives."
+  },
+  "gate": {
+    "suspended": "Esta cuenta no se puede usar ahora. Escríbenos desde el formulario de contacto.",
+    "signOut": "Salir",
+    "notAdmin": "Solo el equipo de samasama puede usar esta página."
+  },
+  "consent": {
+    "points": {
+      "noPersonalInfo": {
+        "title": "Lo que no guardamos",
+        "body": "Solo te pedimos un apodo, tu edad, dónde vives y tu idioma. No guardamos tu nombre, teléfono, dirección, género ni fecha de nacimiento. No hay contraseña."
+      },
+      "whoSees": {
+        "title": "Quién ve qué",
+        "body": "Quienes apoyan solo ven tu apodo, tu zona y lo que escribiste. Las consultas sobre la vida, la violencia y las de menores de 18 años solo llegan a organizaciones que hemos entrevistado."
+      },
+      "onlyChosen": {
+        "title": "Solo a quien tú elijas",
+        "body": "Pasamos tu apodo y lo que escribiste a un servicio cercano solo si eliges «Se puede compartir»."
+      },
+      "records": {
+        "title": "Cómo se guardan los registros",
+        "body": "Cuando se resuelve una consulta, el equipo de samasama guarda un resumen de la situación, lo que se hizo y lo que pasó después (ocultando nombres y datos de contacto). Los registros de contribución de quienes apoyan les pertenecen y se borran si se dan de baja."
+      },
+      "roles": {
+        "title": "Una sola cuenta",
+        "body": "Con la misma cuenta puedes pedir ayuda y apoyar a otras personas. Para apoyar, también aceptas las normas para personas y organizaciones que apoyan."
+      },
+      "providers": {
+        "title": "Empresas que usamos",
+        "body": "Usamos empresas fuera de Japón, como Cloudflare, Supabase y proveedores de IA (Google, OpenAI, xAI). Antes de enviar algo a la IA, ocultamos lo que parecen nombres y datos de contacto."
+      }
+    },
+    "terms": "Condiciones de uso",
+    "privacy": "Política de privacidad",
+    "agree": "Acepto lo anterior, las condiciones de uso y la política de privacidad",
+    "error": "No pudimos guardarlo. Inténtalo de nuevo.",
+    "updatedTitle": "Nuestros compromisos han cambiado",
+    "updatedLead": "Revisa lo que ha cambiado antes de continuar.",
+    "continue": "Aceptar y continuar"
+  },
+  "profile": {
+    "displayName": "Apodo",
+    "displayNameHint": "(no tiene que ser tu nombre real)",
+    "displayNameError": "Escribe un apodo de hasta 20 caracteres",
+    "age": "Edad",
+    "ageHint": "(tu edad actual, en números)",
+    "ageError": "Escribe tu edad con números",
+    "country": "País donde vives",
+    "choose": "Elige",
+    "countryError": "Elige un país",
+    "region": "Prefectura / provincia",
+    "optional": "(opcional)",
+    "city": "Ciudad o municipio",
+    "language": "Idioma"
+  },
+  "start": {
+    "step1": "1 / 2",
+    "step2": "2 / 2",
+    "loginTitle": "¿Cómo quieres continuar?",
+    "loginTipLabel": "Cómo funciona el acceso",
+    "loginTip": "No hay contraseña. La próxima vez entra de la misma forma. Tu correo solo se usa para entrar y nunca se muestra a quienes apoyan.",
+    "google": "Continuar con Google",
+    "or": "o",
+    "email": "Correo electrónico",
+    "sendCode": "Enviarme un código",
+    "sendCodeNote": "Escribe el código que recibas para continuar.",
+    "emailInvalid": "Revisa tu correo electrónico",
+    "tooMany": "Demasiados intentos. Espera un poco y vuelve a intentarlo.",
+    "sendFailed": "No pudimos enviarlo. Espera un poco y vuelve a intentarlo.",
+    "sentTo": "Enviamos un código a {email}.",
+    "code": "Código",
+    "verify": "Continuar",
+    "codeInvalid": "Escribe el código (solo números)",
+    "codeWrong": "El código no es correcto o ha caducado. Pide uno nuevo.",
+    "linkAlsoWorks": "También puedes tocar el enlace del correo.",
+    "resend": "Enviar el código otra vez",
+    "resendIn": "Podrás reenviarlo en {seconds} s",
+    "changeEmail": "Usar otro correo",
+    "profileTitle": "Solo dinos un apodo y dónde vives",
+    "profileTipLabel": "Qué preguntamos y qué no",
+    "profileTip": "No pedimos tu nombre, teléfono, dirección, género ni fecha de nacimiento. Todo el contacto se hace dentro de esta app. Tu zona sirve para buscar servicios cercanos. Tu edad sube uno cada año a partir de hoy.",
+    "agreeRequired": "Tienes que aceptar para continuar",
+    "saveFailed": "No pudimos guardarlo. Inténtalo de nuevo.",
+    "finish": "Empezar",
+    "useAnotherAccount": "Usar otra cuenta",
+    "callbackFailed": "No pudimos completar el acceso. Inténtalo de nuevo.",
+    "backToStart": "Volver al inicio"
+  },
+  "entry": {
+    "fromShop": "Vienes del código QR de un punto de ayuda",
+    "title": "Deja aquí<br></br>lo que te preocupa",
+    "lead": "No te pediremos tu nombre ni tu teléfono. Te pondremos en contacto con personas que apoyan y con servicios cercanos.",
+    "whose": "¿De quién es el problema?",
+    "entriesLabel": "Formas de consultar",
+    "mine": "Un problema mío",
+    "mineNote": "Algo que llevas en solitario o de tu familia",
+    "company": "Un problema de una empresa",
+    "companyNote": "Como miembro de una empresa",
+    "community": "Un problema de la comunidad",
+    "communityNote": "Como gobierno local o asociación de vecinos",
+    "besides": "Además de consultar",
+    "becomeSupporter": "Apoyar",
+    "becomeSupporterNote": "Como persona u organización",
+    "learn": "Conocer los problemas sociales",
+    "learnNote": "Noticias y temas",
+    "trial": "Probar el formulario sin entrar"
+  },
+  "footer": {
+    "news": "Noticias",
+    "story": "Nuestra historia",
+    "supporters": "Quienes apoyan",
+    "contact": "Contacto",
+    "terms": "Condiciones de uso",
+    "privacy": "Política de privacidad",
+    "company": "samasama, LLC",
+    "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "home": {
+    "hello": "Hola, {name}",
+    "lead": "Escribe lo que te preocupa y te pondremos en contacto con personas que apoyan y servicios cercanos.",
+    "write": "Pedir ayuda",
+    "asCompany": "Consultar como empresa",
+    "asCommunity": "Consultar como comunidad",
+    "noCases": "Todavía no tienes consultas.",
+    "myCases": "Tus consultas",
+    "status": {
+      "OPEN": "Esperando ofrecimientos",
+      "MATCHED": "Avanzando juntos",
+      "RESOLVED": "Resuelta",
+      "CLOSED": "Cerrada",
+      "CANCELLED": "Cancelada"
+    },
+    "newOffers": "{count} ofrecimientos"
+  },
+  "learn": {
+    "title": "Conocer",
+    "mapSoon": "Pronto habrá un mapa de los problemas sociales (234 temas).",
+    "news": "Noticias",
+    "noNews": "Todavía no hay noticias."
+  },
+  "me": {
+    "title": "Yo",
+    "checkInput": "Revisa lo que escribiste",
+    "saveFailed": "No pudimos guardarlo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "ageUnknown": "Edad sin indicar",
+    "ageYears": "{age} años",
+    "edit": "Cambiar",
+    "notifications": "Avisos",
+    "notificationsTipLabel": "Antes de activarlos",
+    "notificationsTip": "Si compartes el dispositivo con tu familia, te recomendamos dejarlos desactivados. Aunque los actives, nunca ponemos el contenido de tu consulta en el asunto ni en el mensaje. El asunto del correo es solo «Un aviso de samasama».",
+    "inApp": "Dentro de la app",
+    "alwaysOn": "Siempre activo",
+    "email": "Correo",
+    "emailNote": "Solo te avisa de que llegó un ofrecimiento o un mensaje",
+    "push": "Avisos en el teléfono",
+    "pushNote": "Disponible al añadir la app a la pantalla de inicio (próximamente)",
+    "loadFailed": "No se pudo cargar",
+    "withdraw": "Darme de baja",
+    "withdrawTipLabel": "Antes de darte de baja",
+    "withdrawTip": "Las consultas abiertas o en curso se cancelarán. Si apoyaste a otras personas, también se borrarán todos tus registros de contribución.",
+    "withdrawConfirm": "No se puede deshacer. ¿Seguro que quieres darte de baja?",
+    "withdrawYes": "Darme de baja",
+    "withdrawLastOwner": "Eres la persona responsable de una organización. Nombra a otra persona antes de darte de baja.",
+    "withdrawFailed": "No pudimos darte de baja. Escríbenos desde el formulario de contacto.",
+    "loginMethods": "Formas de entrar",
+    "loginMethodsTipLabel": "Si no puedes entrar",
+    "loginMethodsTip": "Si pierdes el acceso a ambas, contacta con el equipo de samasama y podremos cambiar tu forma de entrar.",
+    "emailCode": "Código por correo",
+    "linked": "En uso",
+    "notLinked": "Sin usar",
+    "toSupport": "Ir a la parte de apoyar",
+    "becomeSupporter": "Apoyar también",
+    "becomeSupporterNote": "Con la misma cuenta",
+    "account": "Cuenta",
+    "signOut": "Salir"
+  },
+  "contact": {
+    "title": "Contacto",
+    "lead": "Avísanos si tienes preguntas, si tu consulta no avanza o si tienes problemas con alguien que te apoya.",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "organization": "Organización",
+    "optional": "(opcional)",
+    "category": "Tema",
+    "choose": "Elige",
+    "categories": {
+      "aboutService": "Sobre el servicio",
+      "joinAsSupporter": "Participar como organización",
+      "media": "Prensa y medios",
+      "other": "Otro",
+      "howto": "Cómo usar la app",
+      "stuck": "Mi consulta no avanza",
+      "matchingComplaint": "Problemas con quien me apoya",
+      "relink": "Cambiar mi forma de entrar"
+    },
+    "message": "Mensaje",
+    "loggedInNote": "Responderemos al correo de la cuenta con la que has entrado.",
+    "required": "Completa los campos necesarios",
+    "failed": "No pudimos enviarlo. Inténtalo de nuevo.",
+    "submit": "Enviar",
+    "doneTitle": "Recibido",
+    "doneBody": "El equipo de samasama lo leerá y, si hace falta, te responderá por correo.",
+    "receipt": "Número de referencia",
+    "back": "Volver"
+  }
+}

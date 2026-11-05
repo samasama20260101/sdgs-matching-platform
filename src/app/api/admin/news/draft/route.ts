@@ -1,7 +1,7 @@
 // src/app/api/admin/news/draft/route.ts
 // 管理者: お知らせの AI 下書き生成。DB には書かない(結果はフォームに入れて人が直す)。
 import { NextResponse } from 'next/server'
-import { requireActiveAppUser } from '@/lib/api/auth'
+import { requireAdmin } from '@/lib/api/auth'
 import { isNewsCategory, NEWS_MATERIAL_MAX, NEWS_PAGE_TEXT_MAX } from '@/lib/constants/news'
 import { normalizeHttpUrl } from '@/lib/api/validation'
 import { generateNewsDraft } from '@/lib/newsDraft'
@@ -14,7 +14,7 @@ function pickText(value: unknown, max = NEWS_MATERIAL_MAX) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
 
   let body: { category?: unknown; externalUrl?: unknown; materials?: { site?: unknown; memo?: unknown; notes?: unknown; pageText?: unknown } }

@@ -1,0 +1,26 @@
+# Staging(fzawgdmqewmwdqjsqjwt)の Auth のうち、v2.0 で決めて持つ項目だけ(#72)。
+# ここに書いた項目だけが書き換わり、書いていない項目(site_url・SMTP など)はそのまま残る。
+#   npx supabase config diff --workdir ops/supabase-auth/staging --remote=fzawgdmqewmwdqjsqjwt
+#   npx supabase config push --workdir ops/supabase-auth/staging --remote=fzawgdmqewmwdqjsqjwt --yes
+project_id = "sdgs-staging"
+
+[auth]
+# Workers の Staging(切り替えたら)と Vercel の Staging、手元の開発に戻れるようにする
+additional_redirect_urls = [
+  "https://sdgs-matching-platform-git-dev-samasama.vercel.app/**",
+  "https://samasama-app-staging.samasama.workers.dev/**",
+  "http://localhost:3000/**",
+]
+
+[auth.email]
+# パスワードを持たず、メールに届く 6 けたのコードで入る(キャンバス盤 11)
+otp_length = 6
+otp_expiry = 600
+
+[auth.email.template.magic_link]
+subject = "明日もsamasama のログインコード / Sign-in code"
+content_path = "./supabase/templates/login-code.html"
+
+[auth.email.template.confirmation]
+subject = "明日もsamasama のログインコード / Sign-in code"
+content_path = "./supabase/templates/login-code.html"

@@ -18,7 +18,7 @@ export const SUPPORTER_PAGE_ORIGIN = 'https://app.samasama.site'
 export const supporterPageUrl = (id: string) => `${SUPPORTER_PAGE_ORIGIN}/supporters/${id}`
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
-const SUPPORTER_PATH = new RegExp(`^/(?:(?:ja|en|zh)/)?supporters/(${UUID})/?$`, 'i')
+const SUPPORTER_PATH = new RegExp(`^/(?:(?:ja|en|es)/)?supporters/(${UUID})/?$`, 'i')
 // このサイトとして扱うホスト(本番・Staging やプレビュー・手元)
 const isSiteHost = (host: string) =>
   host === 'app.samasama.site' || host.startsWith('localhost:') || host === 'localhost' || /^sdgs-matching-platform[a-z0-9-]*\.vercel\.app$/.test(host)
