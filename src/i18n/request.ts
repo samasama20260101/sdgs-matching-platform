@@ -11,6 +11,9 @@ const namespaces = [
   'system',
   'sdgs',
   'legal',
+  'app',
+  'consult',
+  'support',
 ] as const;
 
 async function loadMessages(locale: string) {

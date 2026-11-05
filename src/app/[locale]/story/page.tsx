@@ -464,7 +464,7 @@ export default function StoryPage() {
         </Reveal>
         <Reveal delay={200}>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <Link href="/signup"
+            <Link href="/start"
               className="brand-btn inline-flex items-center justify-center gap-2 text-white px-8 py-4 rounded-full font-bold text-sm tracking-wide no-underline">
               <TeardropMark size={16} /> 無料で相談する
             </Link>

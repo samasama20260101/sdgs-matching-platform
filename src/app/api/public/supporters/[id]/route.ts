@@ -16,9 +16,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     let { data: organization, error } = await supabaseAdmin
         .from('organizations')
-        .select('id, name, supporter_type, bio, social_links, created_at')
+        .select('id, name, supporter_type, org_type, bio, social_links, created_at')
         .eq('id', id)
         .eq('status', 'ACTIVE')
+        .eq('vetting_status', 'APPROVED')
         .maybeSingle()
 
     // 旧URL（/supporters/{user_id}）から来た場合の互換。
@@ -32,9 +33,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         if (membership?.organization_id) {
             const result = await supabaseAdmin
                 .from('organizations')
-                .select('id, name, supporter_type, bio, social_links, created_at')
+                .select('id, name, supporter_type, org_type, bio, social_links, created_at')
                 .eq('id', membership.organization_id)
                 .eq('status', 'ACTIVE')
+                .eq('vetting_status', 'APPROVED')
                 .maybeSingle()
             organization = result.data
             error = result.error

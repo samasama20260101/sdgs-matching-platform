@@ -19,14 +19,16 @@ type ServiceArea = {
 export async function GET() {
     const { data: supporters, error } = await supabaseAdmin
         .from('organizations')
-        .select('id, name, supporter_type, created_at')
+        .select('id, name, supporter_type, org_type, created_at')
         .eq('status', 'ACTIVE')
+        // v2.0: 運営が承認した団体だけを載せる(申し込み中・面談前の団体は出さない)
+        .eq('vetting_status', 'APPROVED')
         .order('created_at', { ascending: false })
         .limit(100)  // 上限100件（将来的にページネーション対応予定）
 
     if (error) {
         console.error('supporters API error:', error)
-        return NextResponse.json({ error: error.message, supporters: [] }, { status: 500 })
+        return NextResponse.json({ error: 'サーバーエラーが発生しました', supporters: [] }, { status: 500 })
     }
 
     if (!supporters || supporters.length === 0) return NextResponse.json({ supporters: [] })

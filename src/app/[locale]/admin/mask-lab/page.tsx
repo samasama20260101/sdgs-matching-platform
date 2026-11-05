@@ -340,7 +340,7 @@ export default function MaskLabPage() {
                         AIに渡す直前の「データ最小化」層の実験ページ。完全なマスクを保証するものではありません。
                     </p>
                 </div>
-                <Link href="/admin/dashboard" className="text-sm text-blue-600 hover:underline whitespace-nowrap">← 管理画面へ</Link>
+                <Link href="/admin" className="text-sm text-blue-600 hover:underline whitespace-nowrap">← 管理画面へ</Link>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">

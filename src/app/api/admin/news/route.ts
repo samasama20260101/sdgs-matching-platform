@@ -2,7 +2,7 @@
 // 管理者: お知らせの一覧(下書き含む)・新規作成
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { requireActiveAppUser } from '@/lib/api/auth'
+import { requireAdmin } from '@/lib/api/auth'
 import { type NewsPostListItem, type NewsPostAdmin } from '@/lib/constants/news'
 import { parseNewsInput } from '@/lib/news/adminInput'
 
@@ -10,7 +10,7 @@ import { parseNewsInput } from '@/lib/news/adminInput'
 const ADMIN_NEWS_COLUMNS: string = 'id, category, title, body, external_url, status, published_at, created_at, updated_at'
 
 export async function GET(request: Request) {
-  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
 
   // 一覧には本文を入れない(件数が増えても軽く保つ。本文は GET /api/admin/news/[id] で 1 件ずつ)
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireActiveAppUser(request, { roles: ['ADMIN'] })
+  const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
 
   let raw: unknown
