@@ -9,6 +9,12 @@ import { isValidCronAuthorization } from '@/lib/api/cronAuth'
 import { notifyOps } from '@/lib/server/opsNotify'
 import { summarizeNewCase } from '@/lib/server/caseAi'
 import { autoCloseCutoffs } from '@/lib/domain/schedule'
+import { mapInBatches } from '@/lib/concurrency'
+
+// 1 回の実行で扱う件数の上限と、同時に進める件数。残りは次の日に回る(相談が積もっても 1 回が長くなりすぎない)
+const CRON_BATCH_MAX = 200
+const CRON_CONCURRENCY = 5
+const SUMMARIZE_CONCURRENCY = 3
 
 type CaseRef = { id: string; owner_user_id: string | null; assignee_user_id: string | null; updated_at: string; created_at: string }
 
@@ -31,12 +37,13 @@ export async function GET(request: Request) {
     .eq('status', 'MATCHED')
     .not('supporter_resolved_at', 'is', null)
     .lt('supporter_resolved_at', cut.autoResolveBefore)
+    .order('supporter_resolved_at', { ascending: true })
+    .limit(CRON_BATCH_MAX)
   if (reportedError) {
     console.error('[cron] reported fetch:', reportedError)
     return NextResponse.json({ error: 'fetch failed' }, { status: 500 })
   }
-  let resolved = 0
-  for (const c of (reported ?? []) as CaseRef[]) {
+  const resolvedFlags = await mapInBatches((reported ?? []) as CaseRef[], CRON_CONCURRENCY, async (c) => {
     const { data: updated } = await supabaseAdmin
       .from('cases')
       .update({ status: 'RESOLVED', resolved_at: new Date().toISOString() })
@@ -44,12 +51,13 @@ export async function GET(request: Request) {
       .eq('status', 'MATCHED')
       .select('id')
       .maybeSingle()
-    if (!updated) continue
+    if (!updated) return false
     const { error } = await supabaseAdmin.rpc('record_case_resolution', { p_case_id: c.id })
     if (error) console.error('[cron] record:', c.id, error)
     await systemMessage(c, 'autoResolved')
-    resolved += 1
-  }
+    return true
+  })
+  const resolved = resolvedFlags.filter(Boolean).length
 
   // 2. 動きのない支援中の相談を終える
   const { data: matched, error: matchedError } = await supabaseAdmin
@@ -58,16 +66,18 @@ export async function GET(request: Request) {
     .eq('status', 'MATCHED')
     .is('supporter_resolved_at', null)
     .lt('updated_at', cut.inactiveBefore)
+    .order('updated_at', { ascending: true })
+    .limit(CRON_BATCH_MAX)
   if (matchedError) console.error('[cron] matched fetch:', matchedError)
-  let closed = 0
-  for (const c of (matched ?? []) as CaseRef[]) {
+  const closedFlags = await mapInBatches((matched ?? []) as CaseRef[], CRON_CONCURRENCY, async (c) => {
     const { data: last } = await supabaseAdmin.from('messages').select('created_at').eq('case_id', c.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-    if (last && last.created_at >= cut.inactiveBefore) continue
+    if (last && last.created_at >= cut.inactiveBefore) return false
     const { data: updated } = await supabaseAdmin.from('cases').update({ status: 'CLOSED' }).eq('id', c.id).eq('status', 'MATCHED').select('id').maybeSingle()
-    if (!updated) continue
+    if (!updated) return false
     await systemMessage(c, 'autoClosed')
-    closed += 1
-  }
+    return true
+  })
+  const closed = closedFlags.filter(Boolean).length
 
   // 3. 申し出のない相談をコーディネーターの一覧に回す
   const { data: waiting, error: waitingError } = await supabaseAdmin
@@ -105,13 +115,15 @@ export async function GET(request: Request) {
     .order('created_at', { ascending: true })
     .limit(10)
   if (uErr) console.error('[cron] unsummarized:', uErr)
-  for (const c of unsummarized ?? []) {
+  const summarizedFlags = await mapInBatches(unsummarized ?? [], SUMMARIZE_CONCURRENCY, async (c) => {
     try {
-      if (await summarizeNewCase(c.id as string)) summarized++
+      return await summarizeNewCase(c.id as string)
     } catch (e) {
       console.error('[cron] summarize:', e)
+      return false
     }
-  }
+  })
+  summarized = summarizedFlags.filter(Boolean).length
 
   console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated} summarized=${summarized}`)
   return NextResponse.json({ resolved, closed, escalated, summarized })

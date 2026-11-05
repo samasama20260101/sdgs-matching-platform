@@ -5,6 +5,9 @@ import 'server-only'
 // Resend の鍵(RESEND_API_KEY)と差出人(NOTIFY_FROM_EMAIL)がない環境では何もしない
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { buildNoticeEmail } from './noticeEmail'
+import { mapInBatches } from '@/lib/concurrency'
+
+const NOTIFY_CONCURRENCY = 5
 
 export type NoticeKind = 'NEW_OFFER' | 'NEW_MESSAGE' | 'RESOLVE_REPORTED' | 'CHOSEN' | 'INVITED'
 
@@ -14,15 +17,18 @@ export async function notifyUsers(userIds: string[], kind: NoticeKind): Promise<
   const origin = process.env.APP_ORIGIN ?? 'https://app.samasama.site'
   const ids = [...new Set(userIds.filter(Boolean))]
   if (!key || !from || ids.length === 0) return
-  const { data: prefs } = await supabaseAdmin.from('notification_prefs').select('user_id').in('user_id', ids).eq('email_enabled', true)
+  // 受け取る設定と、宛先の人を並べて読む
+  const [{ data: prefs }, { data: users }] = await Promise.all([
+    supabaseAdmin.from('notification_prefs').select('user_id').in('user_id', ids).eq('email_enabled', true),
+    supabaseAdmin.from('users').select('id, auth_user_id, locale, withdrawn_at').in('id', ids),
+  ])
   const enabled = new Set((prefs ?? []).map((p) => p.user_id as string))
-  if (enabled.size === 0) return
-  const { data: users } = await supabaseAdmin.from('users').select('id, auth_user_id, locale, withdrawn_at').in('id', [...enabled])
-  for (const u of users ?? []) {
-    if (u.withdrawn_at) continue
+  const targets = (users ?? []).filter((u) => enabled.has(u.id as string) && !u.withdrawn_at)
+  // 1 人ずつ待つと、after() の 30 秒(Workers)に収まらないことがある。数人ずつ並べて送る
+  await mapInBatches(targets, NOTIFY_CONCURRENCY, async (u) => {
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(u.auth_user_id as string)
     const to = authUser.user?.email
-    if (!to) continue
+    if (!to) return
     const mail = buildNoticeEmail(u.locale as string, kind, origin)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -34,7 +40,7 @@ export async function notifyUsers(userIds: string[], kind: NoticeKind): Promise<
       return null
     })
     if (res && !res.ok) console.error('[notify] resend status', res.status)
-  }
+  })
 }
 
 // 相談する側(本人の相談の持ち主・会社と地域の相談の担当者)
