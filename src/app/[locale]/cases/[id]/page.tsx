@@ -13,6 +13,8 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, cx, ErrorNote, Heading, Lead, SectionLabel, Spinner, Tip } from '@/components/app/ui'
 import { Thread } from '@/components/thread/Thread'
 import { Referrals } from '@/components/consult/Referrals'
+import { CrisisLinks } from '@/components/app/CrisisLinks'
+import { useSession } from '@/components/app/SessionProvider'
 import type { ConsulteeCaseView, ConsulteeOffer } from '@/lib/server/consulteeView'
 
 type Payload = { case: ConsulteeCaseView; canDecide: boolean }
@@ -116,6 +118,8 @@ function ResolvePanel({ caseId, onDone }: { caseId: string; onDone: () => Promis
 function CaseInner({ id }: { id: string }) {
   const t = useTranslations('consult.case')
   const tOffers = useTranslations('consult.offers')
+  const { state: session } = useSession()
+  const country = session.status === 'ready' ? session.me.person.country : null
   const params = useSearchParams()
   const [data, setData] = useState<Payload | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -164,6 +168,8 @@ function CaseInner({ id }: { id: string }) {
         <Heading level={2}>{c.title}</Heading>
       </div>
       <Steps c={c} />
+      {/* 緊急の印が付いた相談は、受付のあいだ、いますぐ話せる窓口を出しておく(行き止まりを作らない) */}
+      {c.urgent && open && <CrisisLinks country={country} />}
 
       {params.get('sent') === '1' && c.status === 'OPEN' && (
         <Card className="flex flex-col gap-1 bg-lamp-faint p-4">
