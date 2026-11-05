@@ -2,9 +2,10 @@
 
 // 相談を書く流れの体験(ログイン不要・公開)。本番(WriteFlow)と同じ順に 1 書く → 2 近いものを選ぶ → 結果。
 // 結果では、AI に渡す直前に個人情報を伏せる様子(src/lib/pii.ts の層1)を原文と並べて見せる。
-// すべてブラウザの中で終わる。API・DB・AI は一切呼ばない(費用が出ない・入力が端末の外に出ない、がこのページの約束)。
-// ここに fetch や supabase の呼び出しを足さないこと。近いものは AI の代わりに文字の重なり(suggestByOverlap)で出す
-import { useMemo, useState, type ReactNode } from 'react'
+// 呼ぶのは「近いもの」の API(/api/public/trial/suggest)だけ。連絡先らしいところを伏せてから AI に渡し、何も保存しない(11/6 代表)。
+// 費用は API の回数の上限(DB)で抑え、上限を超えたとき・失敗したときは文字の重なり(suggestByOverlap)で出す。
+// ほかの fetch や supabase の呼び出しは足さないこと(相談の保存・届け出はしない)
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AppHeader } from '@/components/app/AppShell'
@@ -86,7 +87,10 @@ export default function TrialPage() {
   const [since, setSince] = useState('')
   const [wish, setWish] = useState('')
   const [selected, setSelected] = useState<string[]>([])
-  const [suggested, setSuggested] = useState<string[]>([])
+  // null = 探している途中。source が overlap なら、AI を使えなかったことを添える
+  const [suggested, setSuggested] = useState<string[] | null>([])
+  const [suggestSource, setSuggestSource] = useState<'ai' | 'overlap'>('ai')
+  const suggestTicket = useRef(0)
   const [browseAll, setBrowseAll] = useState(false)
   // 「結果を見る」を押した時点の、AI に渡すはずの文と選んだもの(戻って直しても結果がずれないように固定する)
   const [result, setResult] = useState<Result | null>(null)
@@ -108,14 +112,26 @@ export default function TrialPage() {
     setWish(t('sample.wish'))
   }
 
-  const toPick = () => {
+  const toPick = async () => {
     if (!ready) return
-    // 本番は AI が候補を出す(/api/cases/suggest)。体験では呼ばずに、文字の重なりだけで出す
-    const ids = suggestByOverlap([words, since, wish].join('\n'), options)
-    setSuggested(ids)
-    setBrowseAll(ids.length === 0)
     setStep(2)
+    setSuggested(null)
     top()
+    // AI に渡す文は結果の「AI に渡る内容」と同じ並び(本文 → いつから → どうしたいか)
+    const text = caseBodyForAi({ description: words, since, wish })
+    const ticket = ++suggestTicket.current
+    let next: { ids: string[]; source: 'ai' | 'overlap' }
+    try {
+      const res = await fetch('/api/public/trial/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+      if (!res.ok) throw new Error(String(res.status))
+      next = (await res.json()) as { ids: string[]; source: 'ai' | 'overlap' }
+    } catch {
+      next = { ids: suggestByOverlap(text, options), source: 'overlap' }
+    }
+    if (ticket !== suggestTicket.current) return
+    setSuggested(next.ids)
+    setSuggestSource(next.source)
+    setBrowseAll(next.ids.length === 0)
   }
 
   const showResult = () => {
@@ -155,21 +171,21 @@ export default function TrialPage() {
             {urgent && <CrisisNotice />}
             <TextField label={tWrite('since')} hint={tWrite('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
             <TextField label={tWrite('wish')} hint={tWrite('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
-            <Button variant="lamp" disabled={!ready} onClick={toPick}>{ready ? tWrite('nextToPick') : t('needsWords')}</Button>
+            <Button variant="lamp" disabled={!ready} onClick={() => void toPick()}>{ready ? tWrite('nextToPick') : t('needsWords')}</Button>
           </>
         ) : (
           <>
             <StepBar label={tWrite('step2')} step={2} total={2} />
             <Heading level={2}>{tWrite('suggestTitle')}</Heading>
             <Lead>{tWrite('suggestLead')}</Lead>
-            <p className="m-0 rounded-tool bg-kinari-deep px-3 py-2 text-[12.5px] leading-[1.7] text-ink-soft">{t('overlapNote')}</p>
+            {suggested !== null && suggestSource === 'overlap' && <p className="m-0 rounded-tool bg-kinari-deep px-3 py-2 text-[12.5px] leading-[1.7] text-ink-soft">{t('overlapNote')}</p>}
             {urgent && <CrisisNotice />}
-            <SuggestedOptions ids={suggested} selected={selected} onToggle={toggle} textOf={textOf} />
-            {suggested.length === 0 && <Lead>{tWrite('suggestNone')}</Lead>}
+            {suggested === null ? <Lead>{tWrite('suggestLoading')}</Lead> : <SuggestedOptions ids={suggested} selected={selected} onToggle={toggle} textOf={textOf} />}
+            {suggested !== null && suggested.length === 0 && <Lead>{tWrite('suggestNone')}</Lead>}
             {browseAll ? (
               <IndicatorPicker options={options} selected={selected} onChange={setSelected} translate />
             ) : (
-              <button type="button" onClick={() => setBrowseAll(true)} className="min-h-[44px] self-start text-[13.5px] font-bold text-night underline">{tWrite('browseAll')}</button>
+              suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="min-h-[44px] self-start text-[13.5px] font-bold text-night underline">{tWrite('browseAll')}</button>
             )}
             <p className="m-0 text-[12.5px] text-mist">{t('noneIsOk')}</p>
             <Button variant="night" onClick={showResult}>{t('submit')}</Button>

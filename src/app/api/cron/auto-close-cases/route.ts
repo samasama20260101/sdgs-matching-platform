@@ -3,6 +3,8 @@
 //    (v1 の「自動で解決になった相談にはバッジが付かない」課題の手当て)
 // 2. 解決の報告がなく、最後の動きから 30 日たった支援中の相談 → 終了
 // 3. 24 時間申し出のない受付中の相談 → コーディネーターの一覧に回す印(escalated_at)を付け、運営に件数を知らせる
+// 4. AI の整理がまだの相談を整理する
+// 5. 回数の上限の古い行(2 日より前)を消す(v2_12)
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { isValidCronAuthorization } from '@/lib/api/cronAuth'
@@ -10,6 +12,7 @@ import { notifyOps } from '@/lib/server/opsNotify'
 import { summarizeNewCase } from '@/lib/server/caseAi'
 import { autoCloseCutoffs } from '@/lib/domain/schedule'
 import { mapInBatches } from '@/lib/concurrency'
+import { pruneRateLimitHits } from '@/lib/server/rateLimit'
 
 // 1 回の実行で扱う件数の上限と、同時に進める件数。残りは次の日に回る(相談が積もっても 1 回が長くなりすぎない)
 const CRON_BATCH_MAX = 200
@@ -124,6 +127,8 @@ export async function GET(request: Request) {
     }
   })
   summarized = summarizedFlags.filter(Boolean).length
+
+  await pruneRateLimitHits()
 
   console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated} summarized=${summarized}`)
   return NextResponse.json({ resolved, closed, escalated, summarized })

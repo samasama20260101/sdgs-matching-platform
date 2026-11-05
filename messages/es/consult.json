@@ -174,7 +174,7 @@
     "badge": "Prueba",
     "title": "Prueba a escribir una consulta",
     "subtitle": "Escribe y elige lo más parecido, en el mismo orden que el servicio real. No hace falta registrarse ni iniciar sesión.",
-    "safe": "Lo que escribas no sale de este dispositivo. No se envía ni se guarda, y no se entrega a la IA.",
+    "safe": "Nada de lo que escribas se guarda. Para buscar opciones cercanas, a la IA solo le pasamos el texto con los datos de contacto ocultos.",
     "fillSample": "Rellenar con un ejemplo",
     "sampleNote": "El ejemplo es ficticio. Incluye a propósito un nombre y datos de contacto para que veas cómo se ocultan.",
     "sample": {
@@ -182,10 +182,10 @@
       "since": "Desde hace tres meses, cuando quebró la empresa de mi marido (03-1234-5678)",
       "wish": "Quiero seguir viviendo en nuestra casa. Escríbanme a hanako.yamada@example.com o al LINE ID: hanako_0123"
     },
-    "overlapNote": "Esta prueba no usa IA, así que solo muestra opciones que comparten palabras en japonés con lo que escribiste. En el servicio real, la IA busca lo más parecido en cualquier idioma.",
+    "overlapNote": "Ahora no podemos usar la IA, así que solo mostramos opciones que comparten palabras en japonés con lo que escribiste.",
     "noneIsOk": "Si nada encaja, puedes seguir sin elegir.",
     "needsWords": "Escribe aunque sea unas palabras para seguir",
-    "submit": "Ver el resultado (no se envía nada)",
+    "submit": "Ver el resultado (no les llega a quienes apoyan)",
     "resultTitle": "Resultado de la prueba",
     "resultLead": "En el servicio real, después de enviarla, la IA escribe un resumen breve para quienes apoyan. Antes de entregar el texto a la IA, se oculta todo lo que parezca un dato de contacto, como ves abajo.",
     "chosenTitle": "Lo que elegiste",
