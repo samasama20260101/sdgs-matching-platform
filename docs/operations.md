@@ -166,7 +166,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 
 ### 5.1 変更の進め方
 1. `migrations/<内容>.sql` を書く(先頭のコメントに: 目的・実行場所・影響・戻し方)。何度流しても同じ結果になる書き方(`IF NOT EXISTS` など)にする。
-2. Staging に流す。Staging は Supabase の SQL Editor か Management API(`POST https://api.supabase.com/v1/projects/fzawgdmqewmwdqjsqjwt/database/query`、トークンは `~/.supabase/access-token`)。
+2. Staging に流す。Staging は Supabase の SQL Editor か、CLI v3 の `npx supabase db query --remote=fzawgdmqewmwdqjsqjwt -f migrations/<内容>.sql`(書き込むときは確認が出る。`--yes` で飛ばせる)。読むだけなら `--read-only`。
 3. Staging で動作を確かめる。
 4. 本番は代表者が SQL Editor で流す。その前に project ref・SQL 全文・影響・戻し方を確かめる。大きな変更ではメンテナンスモードとバックアップを使う。
 5. 流したあと、読み取りだけの確認 SQL で結果を確かめる(テーブル・制約・RLS など)。
