@@ -240,10 +240,9 @@
     "keep": "Estos registros se mantienen aunque cambies de organización. No se guarda el contenido de las consultas (solo los indicadores y tu organización de entonces). Todo se borra si te das de baja.",
     "noRecords": "Todavía no hay registros.",
     "thanksArrived": "Agradecimiento de la persona que consultó",
-    "resolvedRecord": "Se resolvió una consulta ({count} indicadores)",
+    "resolvedRecord": "{count, plural, =0 {Se resolvió una consulta} one {Se resolvió una consulta (# indicador confirmado)} other {Se resolvió una consulta (# indicadores confirmados)}}",
     "asMemberOf": "Como miembro de {name}",
-    "asIndividual": "A título individual",
-    "exportSoon": "Pronto podrás exportar certificados (PDF, insignia digital) y tener una página pública."
+    "asIndividual": "A título individual"
   },
   "invitations": {
     "title": "{name} te ha invitado",

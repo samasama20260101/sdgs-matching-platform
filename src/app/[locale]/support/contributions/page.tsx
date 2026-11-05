@@ -53,7 +53,6 @@ function Contributions() {
           </div>
         ))}
       </Card>
-      <Card tone="support" className="p-4"><Lead>{t('exportSoon')}</Lead></Card>
     </>
   )
 }

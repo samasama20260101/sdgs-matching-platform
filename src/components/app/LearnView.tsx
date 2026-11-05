@@ -1,17 +1,16 @@
 'use client'
 
-// 知る: お知らせの一覧。社会課題の地図・指標のページは段階2(キャンバス盤 40・41)
+// 知る: お知らせの一覧。社会課題の地図・指標のページは段階2(キャンバス盤 40・41)。準備中の案内は出さない
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AppFrame } from './AppShell'
-import { Card, Heading, Lead } from './ui'
+import { Card, Heading } from './ui'
 
 export function LearnView({ title, news }: { title: string; news: { id: string; title: string; publishedAt: string | null }[] }) {
   const t = useTranslations('app.learn')
   return (
     <AppFrame>
       <Heading level={2}>{title}</Heading>
-      <Card className="p-4"><Lead>{t('mapSoon')}</Lead></Card>
       <span className="px-1 text-[12.5px] font-bold text-mist">{t('news')}</span>
       {news.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('noNews')}</p>}
       {news.map((n) => (

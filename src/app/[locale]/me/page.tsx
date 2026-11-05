@@ -15,7 +15,8 @@ import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } 
 import type { MePerson } from '@/lib/client/meTypes'
 import { Invitations } from '@/components/support/Invitations'
 import { MfaGate } from '@/components/app/MfaGate'
-import { CrisisLinks } from '@/components/app/CrisisLinks'
+
+const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED === 'true'
 
 function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Promise<void> }) {
   const t = useTranslations('app.me')
@@ -120,7 +121,7 @@ function NotificationsCard() {
         <span className="text-[12px] text-mist">{t('alwaysOn')}</span>
       </div>
       <Toggle checked={prefs?.email ?? false} disabled={!prefs} onChange={(v) => void update({ email: v })} label={t('email')} description={t('emailNote')} />
-      <Toggle checked={prefs?.push ?? false} disabled label={t('push')} description={t('pushNote')} onChange={() => undefined} />
+      {/* スマホへの通知は、使えるようになったら出す(準備中の行は出さない) */}
       <ErrorNote>{error}</ErrorNote>
     </Card>
   )
@@ -161,7 +162,7 @@ function WithdrawCard() {
           </div>
         </>
       ) : (
-        <Button variant="danger" onClick={() => setConfirming(true)}>{t('withdraw')}</Button>
+        <button type="button" onClick={() => setConfirming(true)} className="self-start min-h-[44px] text-[13px] font-bold text-coral-ink underline">{t('withdraw')}</button>
       )}
       <ErrorNote>{error}</ErrorNote>
     </Card>
@@ -192,10 +193,12 @@ export default function MePage() {
               <span>{t('emailCode')}</span>
               <span className="text-[12.5px] text-mist">{me.email ?? '—'}</span>
             </div>
-            <div className="flex min-h-[44px] items-center justify-between text-[14px]">
-              <span>Google</span>
-              <span className="text-[12.5px] text-mist">{me.loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
-            </div>
+            {(GOOGLE_ENABLED || me.loginMethods.includes('google')) && (
+              <div className="flex min-h-[44px] items-center justify-between text-[14px]">
+                <span>Google</span>
+                <span className="text-[12.5px] text-mist">{me.loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
+              </div>
+            )}
           </Card>
 
           {me.faces.organizations.length > 0 && (
@@ -225,9 +228,6 @@ export default function MePage() {
               </Link>
             )}
           </Card>
-
-          {/* いますぐ話せる窓口(下のタブからいつでも来られる場所に置く) */}
-          <CrisisLinks country={me.person.country} />
 
           <SectionLabel>{t('account')}</SectionLabel>
           <Button variant="outline" onClick={() => { void signOut().then(() => router.replace('/')) }}>{t('signOut')}</Button>
