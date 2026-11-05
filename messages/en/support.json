@@ -229,7 +229,8 @@
     "codeTip": "When the person has a phone, they can enter this code to make the request their own. Until then, offers and messages come to your organization's proxy requests.",
     "handOnPaper": "Write this code on paper and give it to the person (valid until {date}). Once you close this screen, it can't be shown again.",
     "print": "Print a sheet for the person",
-    "openCase": "Open the proxy request"
+    "openCase": "Open the proxy request",
+    "noneIsOk": "If nothing fits, you can continue without picking."
   },
   "contrib": {
     "title": "My contributions",
