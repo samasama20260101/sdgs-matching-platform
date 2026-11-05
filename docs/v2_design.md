@@ -43,6 +43,7 @@
 | `v2_05_resolution_records.sql` | 解決したときの社会貢献の記録(`record_case_resolution`) |
 | `v2_06_backfill_sensitivity.sql` | v1 の相談に機微の印を付け直す |
 | `v2_07_supporter_skill_areas.sql` | 個人の支え手の得意なことを「相談した人の種類 × ゴール」に変える |
+| `v2_08_case_last_messages.sql` | 相談ごとの最後のメッセージを取る関数(やりとりの一覧とホームの「あなたの番」)。service_role だけが呼べる |
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
 
 Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を取り込んだ(`scripts/import-directory-entries.mts`、データは directory-data の出力)。

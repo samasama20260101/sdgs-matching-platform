@@ -44,7 +44,9 @@
     "orgPage": "Página de la organización",
     "unmatched": "Consultas sin apoyo en tu zona: {count}",
     "unmatchedTipLabel": "Lista de coordinación",
-    "unmatchedTip": "Consultas de tu zona que llevan 24 horas sin ofrecimientos. Contacta con servicios y organizaciones cercanas. Puedes explicar a las organizaciones no registradas cómo reclamar su página."
+    "unmatchedTip": "Consultas de tu zona que llevan 24 horas sin ofrecimientos. Contacta con servicios y organizaciones cercanas. Puedes explicar a las organizaciones no registradas cómo reclamar su página.",
+    "yourTurn": "Tu turno ({count})",
+    "invitedToCase": "El apoyo principal te invitó"
   },
   "find": {
     "title": "Buscar consultas",

@@ -163,7 +163,11 @@
       "CANCELLED": "取り消しました"
     },
     "newOffers": "申し出 {count}件",
-    "proxy": "代理の相談"
+    "proxy": "代理の相談",
+    "yourTurn": "あなたの番({count}件)",
+    "turnOffers": "申し出が {count}件 届いています",
+    "turnReply": "返事が来ています",
+    "replyArrived": "返事が来ています"
   },
   "learn": {
     "title": "知る",
@@ -251,5 +255,13 @@
     "done": "2つ目の確認が済んでいます",
     "card": "2つ目の確認(団体のメンバー)",
     "cardNote": "機微な相談の中身を見るのに使います"
+  },
+  "talkRow": {
+    "you": "あなた",
+    "consultee": "相談した人",
+    "supporter": "支え手",
+    "noMessages": "まだやりとりはありません",
+    "yourTurn": "返事が来ています",
+    "resolved": "解決しました"
   }
 }

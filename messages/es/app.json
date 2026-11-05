@@ -163,7 +163,11 @@
       "CANCELLED": "Cancelada"
     },
     "newOffers": "{count} ofrecimientos",
-    "proxy": "Registrada en nombre de otra persona"
+    "proxy": "Registrada en nombre de otra persona",
+    "yourTurn": "Tu turno ({count})",
+    "turnOffers": "{count, plural, one {Llegó # oferta} other {Llegaron # ofertas}}",
+    "turnReply": "Tienes una nueva respuesta",
+    "replyArrived": "Nueva respuesta"
   },
   "learn": {
     "title": "Conocer",
@@ -251,5 +255,13 @@
     "done": "Segunda verificación completada",
     "card": "Segunda verificación (miembros de organizaciones)",
     "cardNote": "Necesaria para leer consultas delicadas"
+  },
+  "talkRow": {
+    "you": "Tú",
+    "consultee": "Quien consulta",
+    "supporter": "Apoyo",
+    "noMessages": "Aún no hay mensajes",
+    "yourTurn": "Nueva respuesta",
+    "resolved": "Resuelta"
   }
 }

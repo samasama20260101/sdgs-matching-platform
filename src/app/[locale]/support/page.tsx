@@ -1,6 +1,6 @@
 'use client'
 
-// 支える｜ホーム(盤 20): 返信を待っているやりとりと、あなたに合う新しい相談
+// 支える｜ホーム(盤 20): 一番上に「あなたの番」(返す番のやりとり・招かれた相談)、あなたに合う新しい相談(画面の見直し 所見 7)
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
@@ -11,6 +11,8 @@ import { Card, Chip, Heading, Lead, SectionLabel, Tip } from '@/components/app/u
 import { CaseCard } from '@/components/support/CaseCard'
 import { FacePicker, useFace } from '@/components/support/useFace'
 import { Invitations } from '@/components/support/Invitations'
+import { TalkRow } from '@/components/thread/TalkRow'
+import { sortTalks, talkTurn } from '@/lib/domain/talk'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
 
 function Home() {
@@ -28,6 +30,10 @@ function Home() {
     apiFetch<{ cases: SupportCaseItem[]; face: { coordinator?: boolean } }>(`/api/support/cases?face=${face}&escalated=1&involvement=all`).then((d) => setUnmatched(d.face.coordinator ? d.cases : null)).catch(() => setUnmatched(null))
   }, [current])
 
+  const visible = sortTalks((involved ?? []).filter((c) => !c.locked), 'SUPPORTER')
+  const isTurn = (c: SupportCaseItem) => c.myOfferStatus === 'INVITED' || (c.status === 'MATCHED' && talkTurn(c.lastMessage, 'SUPPORTER') === 'mine')
+  const turn = visible.filter(isTurn)
+  const others = visible.filter((c) => !isTurn(c))
   if (options.length === 0) {
     return (
       <>
@@ -53,6 +59,22 @@ function Home() {
         </div>
       )}
       {current?.kind === 'ORGANIZATION' && !current.approved && <Card tone="support" className="p-4"><Lead>{t('appliedNote')}</Lead></Card>}
+      {turn.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <SectionLabel>{t('yourTurn', { count: turn.length })}</SectionLabel>
+          {turn.map((c) => (
+            <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={c.title ?? ''} sub={c.myOfferStatus === 'INVITED' ? t('invitedToCase') : c.subjectName} last={c.lastMessage} viewer="SUPPORTER" />
+          ))}
+        </section>
+      )}
+      {others.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <SectionLabel>{t('involved')}</SectionLabel>
+          {others.map((c) => (
+            <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={c.title ?? ''} sub={c.subjectName} last={c.lastMessage} viewer="SUPPORTER" resolved={c.status === 'RESOLVED'} />
+          ))}
+        </section>
+      )}
       {unmatched && (
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -60,12 +82,6 @@ function Home() {
             <Tip label={t('unmatchedTipLabel')}>{t('unmatchedTip')}</Tip>
           </div>
           {unmatched.map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ''} />)}
-        </section>
-      )}
-      {involved && involved.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <SectionLabel>{t('involved')}</SectionLabel>
-          {involved.map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ""} />)}
         </section>
       )}
       <section className="flex flex-col gap-2">
