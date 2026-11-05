@@ -10,14 +10,18 @@ import { optionsFor, type SubjectType } from '@/lib/domain/intake'
 import { applyAiSensitivity, type SensitiveReason } from '@/lib/domain/sensitivity'
 import { buildCaseSummaryPrompt, parseCaseSummary } from '@/lib/ai/prompts/caseSummary'
 
-export async function summarizeNewCase(caseId: string): Promise<void> {
+// 応答のあと(after)で動くので、Workers の 30 秒の打ち切りに収まる長さで待つ。間に合わなかった相談は毎日の処理が拾い直す
+export const AFTER_RESPONSE_AI_TIMEOUT_MS = 20_000
+
+// 整理して書き込めたら true(AI の鍵がない・失敗した・もう整理済みなら false)
+export async function summarizeNewCase(caseId: string): Promise<boolean> {
   const { data: c, error } = await supabaseAdmin
     .from('cases')
     .select('id, subject_type, description_free, intake_qna, ai_sdg_suggestion, is_sensitive, sensitive_reasons')
     .eq('id', caseId)
     .single()
   if (error) throw error
-  if (c.ai_sdg_suggestion) return
+  if (c.ai_sdg_suggestion) return false
 
   const subject = c.subject_type as SubjectType
   const intake = (c.intake_qna ?? {}) as { indicator_texts?: string[]; indicators?: string[]; since?: string | null; wish?: string | null }
@@ -28,10 +32,10 @@ export async function summarizeNewCase(caseId: string): Promise<void> {
     fencedText: fenceConsultation(maskPii(body)),
     candidates: options.filter((o) => !(intake.indicators ?? []).includes(o.id)).map((o) => ({ id: o.id, text: o.text })),
   })
-  const result = await generateJson('consultation', prompt, { temperature: 0.1, maxOutputTokens: 8192 })
-  if (!result.ok) return
+  const result = await generateJson('consultation', prompt, { temperature: 0.1, maxOutputTokens: 8192, timeoutMs: AFTER_RESPONSE_AI_TIMEOUT_MS })
+  if (!result.ok) return false
   const parsed = parseCaseSummary(result.json, new Set(options.map((o) => o.id)))
-  if (!parsed) return
+  if (!parsed) return false
 
   const current = { isSensitive: Boolean(c.is_sensitive), reasons: (c.sensitive_reasons ?? []) as SensitiveReason[] }
   const next = applyAiSensitivity(current, parsed.sensitive, current.reasons.includes('ADMIN'))
@@ -54,4 +58,5 @@ export async function summarizeNewCase(caseId: string): Promise<void> {
       { onConflict: 'case_id,indicator_code,source', ignoreDuplicates: true },
     )
   }
+  return true
 }

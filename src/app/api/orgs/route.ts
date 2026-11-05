@@ -1,7 +1,7 @@
 // 団体を登録する(v2.0)。会社・地域として相談するための登録と、支え手の団体の申し込みの入口を兼ねる。
 // どちらも「申し込み」(APPLIED)から始まり、支え手として一覧に載るのは運営の面談のあと(11/5 の審査の流れ)。
 // 登録した人がその団体の管理者(OWNER)になる
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -78,7 +78,8 @@ export async function POST(request: Request) {
   if (input.purpose === 'SUPPORT') {
     // 申し込みは運営に知らせ、面談の日を決める(11/5 の審査の流れ: 申し込み → 運営へ → 面談 → 承認)
     await recordSupporterConsent(auth.appUser.id).catch((e) => console.error('[api/orgs] consent', e))
-    await notifyOps({ kind: 'ORG_APPLICATION', organizationDisplayId: org.display_id }).catch(() => undefined)
+    // 応答を待たせない(Discord が遅いと画面が待つため)
+    after(() => notifyOps({ kind: 'ORG_APPLICATION', organizationDisplayId: org.display_id }).catch(() => undefined))
   }
   return NextResponse.json({ id: org.id, displayId: org.display_id })
 }

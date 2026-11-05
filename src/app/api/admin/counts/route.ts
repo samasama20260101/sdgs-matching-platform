@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if ('response' in auth) return auth.response
   const [vetting, indicators, inquiries] = await Promise.all([
     supabaseAdmin.from('organizations').select('id', { count: 'exact', head: true }).in('vetting_status', ['APPLIED', 'INTERVIEW']).neq('status', 'ARCHIVED'),
-    supabaseAdmin.from('case_indicators').select('case_id').eq('status', 'PROPOSED').limit(5000),
+    supabaseAdmin.rpc('admin_cases_with_proposed_indicators'),
     supabaseAdmin.from('inquiries').select('id', { count: 'exact', head: true }).eq('status', 'OPEN'),
   ])
   const failed = vetting.error ?? indicators.error ?? inquiries.error
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   }
   return NextResponse.json({
     vetting: vetting.count ?? 0,
-    indicators: new Set((indicators.data ?? []).map((r) => r.case_id as string)).size,
+    indicators: Number(indicators.data ?? 0),
     inquiries: inquiries.count ?? 0,
   })
 }

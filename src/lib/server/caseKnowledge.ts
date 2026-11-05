@@ -2,6 +2,7 @@ import 'server-only'
 
 // 解決した相談の要約を作って残す(運営だけが見る。プライバシーポリシーに書く)。相談文とやりとりは伏せて囲んでから AI へ
 import { generateJson } from '@/lib/ai/client'
+import { AFTER_RESPONSE_AI_TIMEOUT_MS } from './caseAi'
 import { fenceConsultation } from '@/lib/aiSafety'
 import { maskPii } from '@/lib/pii'
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -24,7 +25,7 @@ export async function summarizeResolvedCase(caseId: string): Promise<void> {
     .map((m) => `${m.sender_organization_id ? '支え手' : '相談した人'}: ${m.content}`)
     .join('\n')
     .slice(-THREAD_CHARS)
-  const result = await generateJson('consultation', buildKnowledgePrompt(fenceConsultation(maskPii(caseText)), fenceConsultation(maskPii(thread))), { temperature: 0.2 })
+  const result = await generateJson('consultation', buildKnowledgePrompt(fenceConsultation(maskPii(caseText)), fenceConsultation(maskPii(thread))), { temperature: 0.2, timeoutMs: AFTER_RESPONSE_AI_TIMEOUT_MS })
   if (!result.ok) return
   const k = parseKnowledge(result.json)
   if (!k) return

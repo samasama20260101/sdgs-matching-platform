@@ -19,14 +19,14 @@ export async function GET(request: Request) {
     count(supabaseAdmin.from('supporter_profiles').select('user_id', { count: 'exact', head: true }).eq('status', 'ACTIVE')),
   ])
   // 申し出が少ない指標: 受付中の相談の指標ごとの件数
-  const { data: open } = await supabaseAdmin.from('cases').select('id, intake_qna').eq('status', 'OPEN').limit(1000)
-  const byCode: Record<string, number> = {}
-  for (const c of open ?? []) for (const code of ((c.intake_qna as { indicators?: string[] } | null)?.indicators ?? [])) byCode[code] = (byCode[code] ?? 0) + 1
+  // DB の関数で数える(行を運んで数えると、1 回の上限の 1000 行で黙って切れる。migrations/v2_09)
+  const { data: top, error: topErr } = await supabaseAdmin.rpc('admin_open_cases_by_indicator', { p_limit: 10 })
+  if (topErr) console.error('[api/admin/stats] by indicator', topErr)
   return NextResponse.json({
     thisMonth,
     resolvedRate: closedAll > 0 ? Math.round((resolved / closedAll) * 100) : null,
     unmatched,
     supporters: { organizations: orgs, individuals },
-    waitingByIndicator: Object.entries(byCode).sort((a, b) => b[1] - a[1]).slice(0, 10),
+    waitingByIndicator: ((top ?? []) as { indicator_code: string; cases: number }[]).map((r) => [r.indicator_code, Number(r.cases)]),
   })
 }
