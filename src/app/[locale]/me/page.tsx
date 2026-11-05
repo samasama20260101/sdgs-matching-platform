@@ -15,6 +15,7 @@ import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } 
 import type { MePerson } from '@/lib/client/meTypes'
 import { Invitations } from '@/components/support/Invitations'
 import { MfaGate } from '@/components/app/MfaGate'
+import { CrisisLinks } from '@/components/app/CrisisLinks'
 
 function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Promise<void> }) {
   const t = useTranslations('app.me')
@@ -224,6 +225,9 @@ export default function MePage() {
               </Link>
             )}
           </Card>
+
+          {/* いますぐ話せる窓口(下のタブからいつでも来られる場所に置く) */}
+          <CrisisLinks country={me.person.country} />
 
           <SectionLabel>{t('account')}</SectionLabel>
           <Button variant="outline" onClick={() => { void signOut().then(() => router.replace('/')) }}>{t('signOut')}</Button>

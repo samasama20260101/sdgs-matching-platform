@@ -1,12 +1,12 @@
 'use client'
 
-// 画面の枠(盤 04): 上のヘッダー(相談する / 支える の切り替え・いますぐの窓口)と下のタブ。
+// 画面の枠(盤 04): 上のヘッダー(相談する / 支える の切り替え)と下のタブ。
+// いますぐの窓口はヘッダーに置かず、入口・相談を書く画面(緊急のとき)・緊急の相談のホーム・わたしに出す(11/5 岡本さん)
 // 相談する: ホーム・やりとり・知る・わたし / 支える: ホーム・さがす・やりとり・わたし
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
-import { CrisisLinks } from './CrisisLinks'
 import { Mark } from './Mark'
 import { useSession, type Mode } from './SessionProvider'
 import { cx, Screen, type Tone } from './ui'
@@ -40,8 +40,6 @@ function ModeSwitch() {
 export function AppHeader() {
   const t = useTranslations('app.shell')
   const { state, canSupport } = useSession()
-  const [crisisOpen, setCrisisOpen] = useState(false)
-  const country = state.status === 'ready' ? state.me.person.country : null
   return (
     <>
       <header className="flex h-14 items-center justify-between gap-2">
@@ -60,20 +58,8 @@ export function AppHeader() {
               </Link>
             </>
           )}
-          <button
-            type="button"
-            aria-label={t('crisis')}
-            aria-expanded={crisisOpen}
-            onClick={() => setCrisisOpen((v) => !v)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-ink"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><path d="m4.9 4.9 4.3 4.3" /><path d="m14.8 14.8 4.3 4.3" /><path d="m14.8 9.2 4.3-4.3" /><path d="m4.9 19.1 4.3-4.3" />
-            </svg>
-          </button>
         </div>
       </header>
-      {crisisOpen && <div className="mb-3"><CrisisLinks country={country} /></div>}
     </>
   )
 }
