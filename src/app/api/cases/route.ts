@@ -160,17 +160,16 @@ export async function POST(request: Request) {
     if (ciError) console.error('[api/cases] case_indicators:', ciError)
   }
 
-  // 返事を待たせない処理(AI の整理・運営への知らせ)はあとで
-  after(async () => {
-    await summarizeNewCase(created.id).catch((e) => console.error('[api/cases] summarize:', e))
-    await notifyOps({
-      kind: 'NEW_CASE',
-      displayId: created.display_id,
-      subjectType: input.subjectType,
-      urgent: assessment.urgency === 'High',
-      sensitive: assessment.isSensitive,
-    }).catch((e) => console.error('[api/cases] notify:', e))
-  })
+  // 返事を待たせない処理はあとで。Workers では応答のあと 30 秒で打ち切られるので、
+  // 緊急の印つきの運営への知らせは AI の整理を待たずに先に送る(AI が遅くても知らせは消えない)
+  after(() => notifyOps({
+    kind: 'NEW_CASE',
+    displayId: created.display_id,
+    subjectType: input.subjectType,
+    urgent: assessment.urgency === 'High',
+    sensitive: assessment.isSensitive,
+  }).catch((e) => console.error('[api/cases] notify:', e)))
+  after(() => summarizeNewCase(created.id).catch((e) => console.error('[api/cases] summarize:', e)))
 
   return NextResponse.json({ id: created.id, displayId: created.display_id, urgent: assessment.urgency === 'High' })
 }

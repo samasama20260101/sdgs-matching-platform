@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { isValidCronAuthorization } from '@/lib/api/cronAuth'
 import { notifyOps } from '@/lib/server/opsNotify'
+import { summarizeNewCase } from '@/lib/server/caseAi'
 import { autoCloseCutoffs } from '@/lib/domain/schedule'
 
 type CaseRef = { id: string; owner_user_id: string | null; assignee_user_id: string | null; updated_at: string; created_at: string }
@@ -91,6 +92,27 @@ export async function GET(request: Request) {
   }
   if (escalated > 0) await notifyOps({ kind: 'UNMATCHED', count: escalated }).catch(() => undefined)
 
-  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated}`)
-  return NextResponse.json({ resolved, closed, escalated })
+  // 4. AI の整理が抜けた相談を拾い直す(届いた直後の after が Workers の 30 秒に間に合わなかったもの)。
+  //    届いて 10 分より前・7 日以内の受付中の相談を、1 回に 10 件まで
+  let summarized = 0
+  const { data: unsummarized, error: uErr } = await supabaseAdmin
+    .from('cases')
+    .select('id')
+    .is('ai_sdg_suggestion', null)
+    .eq('status', 'OPEN')
+    .lt('created_at', new Date(Date.now() - 10 * 60_000).toISOString())
+    .gt('created_at', new Date(Date.now() - 7 * 24 * 3_600_000).toISOString())
+    .order('created_at', { ascending: true })
+    .limit(10)
+  if (uErr) console.error('[cron] unsummarized:', uErr)
+  for (const c of unsummarized ?? []) {
+    try {
+      if (await summarizeNewCase(c.id as string)) summarized++
+    } catch (e) {
+      console.error('[cron] summarize:', e)
+    }
+  }
+
+  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated} summarized=${summarized}`)
+  return NextResponse.json({ resolved, closed, escalated, summarized })
 }

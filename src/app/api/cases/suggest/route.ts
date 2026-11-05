@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const options = optionsFor(subjectType).map((o) => ({ id: o.id, text: o.text }))
 
   if (allow(auth.appUser.id, Date.now())) {
-    const result = await generateJson('consultation', buildSuggestPrompt({ fencedText: fenceConsultation(maskPii(text)), options }), { temperature: 0, maxOutputTokens: 1024 })
+    const result = await generateJson('consultation', buildSuggestPrompt({ fencedText: fenceConsultation(maskPii(text)), options }), { temperature: 0, maxOutputTokens: 4096, timeoutMs: 8_000 })
     if (result.ok) {
       const ids = parseSuggestions(result.json, new Set(options.map((o) => o.id)))
       return NextResponse.json({ ids, source: 'ai' })

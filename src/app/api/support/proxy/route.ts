@@ -1,12 +1,13 @@
 // 代理で相談を登録する(盤 23)。団体の一員だけ。本人の同意を得てから登録し、登録した人の名前は団体の記録に残る。
 // 本人がスマホを持ったら引き継ぎコードで自分の相談にできる。それまで申し出とやりとりは、この団体の「代理の相談」に届く
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { requireFace } from '@/lib/server/supportAuth'
 import { assessIntake, DESCRIPTION_MAX, optionsFor, provisionalTitle, sanitizeSelection } from '@/lib/domain/intake'
 import { newHandoverCode } from '@/lib/server/handover'
 import { notifyOps } from '@/lib/server/opsNotify'
+import { summarizeNewCase } from '@/lib/server/caseAi'
 
 const schema = z.object({
   face: z.string(),
@@ -67,7 +68,9 @@ export async function POST(request: Request) {
   const { error: hError } = await supabaseAdmin.from('case_handover_codes').insert({ case_id: created.id, code_hash: handover.hash, expires_at: handover.expiresAt, created_by_user_id: auth.userId })
   if (hError) console.error('[api/support/proxy] handover', hError)
   await supabaseAdmin.from('audit_logs').insert({ actor_user_id: auth.userId, organization_id: orgId, action: 'case.proxy_register', target_table: 'cases', target_id: created.id, metadata: { display_id: created.display_id } })
-  await notifyOps({ kind: 'NEW_CASE', displayId: created.display_id, subjectType: 'PERSON', urgent: assessment.urgency === 'High', sensitive: assessment.isSensitive }).catch(() => undefined)
+  after(() => notifyOps({ kind: 'NEW_CASE', displayId: created.display_id, subjectType: 'PERSON', urgent: assessment.urgency === 'High', sensitive: assessment.isSensitive }).catch(() => undefined))
+  // 代理の相談も、本人の相談と同じく AI で整理する(題・要約・機微の引き上げ)
+  after(() => summarizeNewCase(created.id).catch((e) => console.error('[api/support/proxy] summarize:', e)))
   // コードはここで1回だけ返す(DB にはハッシュしかない)
   return NextResponse.json({ id: created.id, displayId: created.display_id, code: handover.code, expiresAt: handover.expiresAt })
 }

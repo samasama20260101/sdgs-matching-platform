@@ -52,10 +52,11 @@ export async function listThread(access: CaseAccess, userId: string, lang: strin
     .from('messages')
     .select('id, sender_user_id, sender_organization_id, sender_display_name_snapshot, sender_organization_name_snapshot, sender_role_snapshot, content, message_type, original_language, created_at')
     .eq('case_id', access.caseRow.id)
-    .order('created_at', { ascending: true })
+    // 新しい 500 件を取ってから古い順に並べ直す(古い順で 500 件に切ると、新しいメッセージが出なくなる)
+    .order('created_at', { ascending: false })
     .limit(500)
   if (error) throw error
-  const rows = (data ?? []) as MessageRow[]
+  const rows = ((data ?? []) as MessageRow[]).reverse()
   let translations = new Map<string, string>()
   if (lang && rows.length > 0) {
     const { data: tr } = await supabaseAdmin

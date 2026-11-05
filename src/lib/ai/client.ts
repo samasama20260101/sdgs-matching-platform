@@ -6,10 +6,13 @@ import 'server-only'
 import { resolveAiTarget, type AiTarget, type AiTask } from '@/lib/ai/config'
 import { parseJsonObject } from '@/lib/ai/json'
 
+// 既定の待ち時間。応答のあとに動く処理(after)は Workers では 30 秒で打ち切られるので、そこで呼ぶものは短く渡す
 const TIMEOUT_MS = 45_000
 
 export type GenerateJsonOptions = {
   temperature?: number
+  // 待つ時間の上限(ミリ秒)。書いていなければ 45 秒
+  timeoutMs?: number
   // Gemini 2.5 は内部の思考も出力の枠を使うので、JSON が切れないよう大きめにする(実測 1,400〜3,700)
   maxOutputTokens?: number
 }
@@ -30,7 +33,7 @@ export async function generateJson(task: AiTask, prompt: string, options: Genera
   try {
     text = target.provider === 'gemini'
       ? await callGemini(target, prompt, options)
-      : await callOpenAiCompatible(target, prompt)
+      : await callOpenAiCompatible(target, prompt, options)
   } catch (error) {
     console.error(`[ai] ${task} ${target.provider} request failed:`, error instanceof Error ? error.message : error)
     return { ok: false, code: 'REQUEST_FAILED' }
@@ -57,7 +60,7 @@ async function callGemini(target: AiTarget, prompt: string, options: GenerateJso
         responseMimeType: 'application/json',
       },
     }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const data = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
@@ -66,7 +69,7 @@ async function callGemini(target: AiTarget, prompt: string, options: GenerateJso
 
 // OpenAI と xAI(Grok)は同じ形の Chat Completions API。
 // 推論型のモデルは temperature の指定を断ることがあるので送らない。出力の上限も各社の既定に任せる。
-async function callOpenAiCompatible(target: AiTarget, prompt: string): Promise<string> {
+async function callOpenAiCompatible(target: AiTarget, prompt: string, options: GenerateJsonOptions): Promise<string> {
   const response = await fetch(`${target.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${target.apiKey}` },
@@ -75,7 +78,7 @@ async function callOpenAiCompatible(target: AiTarget, prompt: string): Promise<s
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const data = (await response.json()) as { choices?: { message?: { content?: string | null } }[] }
