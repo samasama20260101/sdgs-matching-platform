@@ -1,0 +1,239 @@
+{
+  "common": {
+    "loading": "Loading"
+  },
+  "shell": {
+    "brand": "Ashita mo samasama",
+    "modeLabel": "Switch mode",
+    "mode": {
+      "consult": "Ask",
+      "support": "Support"
+    },
+    "login": "Sign in",
+    "crisis": "Talk to someone now"
+  },
+  "tabs": {
+    "label": "Navigation",
+    "home": "Home",
+    "talk": "Messages",
+    "learn": "Learn",
+    "find": "Find",
+    "me": "Me"
+  },
+  "crisis": {
+    "title": "If you need to talk right now",
+    "jp": {
+      "yorisoi": "Yorisoi Hotline",
+      "fire": "119",
+      "police": "110"
+    },
+    "abroad": "If your life is in danger, call the emergency number (police or ambulance) of the country where you live."
+  },
+  "gate": {
+    "suspended": "This account can't be used right now. Please contact us through the contact form.",
+    "signOut": "Sign out",
+    "notAdmin": "Only the samasama team can use this page."
+  },
+  "consent": {
+    "points": {
+      "noPersonalInfo": {
+        "title": "What we don't keep",
+        "body": "We only ask for a nickname, your age, where you live and your language. We don't keep your name, phone number, address, gender or date of birth. There is no password."
+      },
+      "whoSees": {
+        "title": "Who sees what",
+        "body": "Supporters see only your nickname, your area and what you wrote. Requests about life, violence and those from people under 18 go only to organizations we have interviewed."
+      },
+      "onlyChosen": {
+        "title": "Only to people you choose",
+        "body": "We pass your nickname and what you wrote to a nearby service only when you choose \"OK to share\"."
+      },
+      "records": {
+        "title": "How records are kept",
+        "body": "When a request is solved, the samasama team keeps a short summary of the situation, what was done and what happened next (names and contact details are hidden). Supporters' contribution records belong to them and are deleted if they leave."
+      },
+      "roles": {
+        "title": "One account",
+        "body": "You can ask for help and support others with the same account. To become a supporter, you also agree to the rules for supporters and organizations."
+      },
+      "providers": {
+        "title": "Companies we use",
+        "body": "We use companies outside Japan, such as Cloudflare, Supabase and AI providers (Google, OpenAI, xAI). Before anything is sent to AI, we hide what looks like names and contact details."
+      }
+    },
+    "terms": "Terms of use",
+    "privacy": "Privacy policy",
+    "agree": "I agree to the points above, the terms of use and the privacy policy",
+    "error": "We couldn't save this. Please try again.",
+    "updatedTitle": "Our promises have changed",
+    "updatedLead": "Please check what has changed before you continue.",
+    "continue": "Agree and continue"
+  },
+  "profile": {
+    "displayName": "Nickname",
+    "displayNameHint": "(doesn't have to be your real name)",
+    "displayNameError": "Please enter a nickname of up to 20 characters",
+    "age": "Age",
+    "ageHint": "(your age now, in numbers)",
+    "ageError": "Please enter your age as a number",
+    "country": "Country where you live",
+    "choose": "Choose",
+    "countryError": "Please choose a country",
+    "region": "Prefecture / state",
+    "optional": "(optional)",
+    "city": "City or town",
+    "language": "Language"
+  },
+  "start": {
+    "step1": "1 / 2",
+    "step2": "2 / 2",
+    "loginTitle": "How would you like to continue?",
+    "loginTipLabel": "How signing in works",
+    "loginTip": "There is no password. Next time, sign in the same way. Your email is used only for signing in and is never shown to supporters.",
+    "google": "Continue with Google",
+    "or": "or",
+    "email": "Email address",
+    "sendCode": "Send me a code",
+    "sendCodeNote": "Enter the code you receive to continue.",
+    "emailInvalid": "Please check your email address",
+    "tooMany": "Too many attempts. Please wait a little and try again.",
+    "sendFailed": "We couldn't send it. Please wait a little and try again.",
+    "sentTo": "We sent a code to {email}.",
+    "code": "Code",
+    "verify": "Continue",
+    "codeInvalid": "Please enter the code (numbers only)",
+    "codeWrong": "The code is wrong or has expired. Please send a new one.",
+    "linkAlsoWorks": "You can also tap the link in the email.",
+    "resend": "Send the code again",
+    "resendIn": "You can resend in {seconds} s",
+    "changeEmail": "Use a different email",
+    "profileTitle": "Just tell us a nickname and where you live",
+    "profileTipLabel": "What we ask and what we don't",
+    "profileTip": "We don't ask for your name, phone number, address, gender or date of birth. All contact happens inside this app. Your area is used to find services near you. Your age goes up by one each year from today.",
+    "agreeRequired": "You need to agree to continue",
+    "saveFailed": "We couldn't save this. Please try again.",
+    "finish": "Start",
+    "useAnotherAccount": "Use a different account",
+    "callbackFailed": "We couldn't complete the sign-in. Please try again.",
+    "backToStart": "Back to start"
+  },
+  "entry": {
+    "fromShop": "You came from a help point QR code",
+    "title": "Leave what's troubling you<br></br>here with us",
+    "lead": "We won't ask for your name or phone number. We'll connect you with supporters and services near you.",
+    "whose": "Whose problem is it?",
+    "entriesLabel": "Ways to ask",
+    "mine": "My own problem",
+    "mineNote": "Something you carry alone, or about your family",
+    "company": "A company's problem",
+    "companyNote": "As a member of a company",
+    "community": "A community's problem",
+    "communityNote": "As a local government or neighborhood group",
+    "besides": "Other things you can do",
+    "becomeSupporter": "Become a supporter",
+    "becomeSupporterNote": "As a person or an organization",
+    "learn": "Learn about social problems",
+    "learnNote": "News and topics",
+    "trial": "Try the form without signing in"
+  },
+  "footer": {
+    "news": "News",
+    "story": "Our story",
+    "supporters": "Supporters",
+    "contact": "Contact",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy",
+    "company": "samasama, LLC",
+    "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "home": {
+    "hello": "Hi, {name}",
+    "lead": "Write what's troubling you and we'll connect you with supporters and services nearby.",
+    "write": "Ask for help",
+    "asCompany": "Ask as a company",
+    "asCommunity": "Ask as a community",
+    "noCases": "No requests yet.",
+    "myCases": "Your requests",
+    "status": {
+      "OPEN": "Waiting for offers",
+      "MATCHED": "Working on it together",
+      "RESOLVED": "Solved",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled"
+    },
+    "newOffers": "{count} offers"
+  },
+  "learn": {
+    "title": "Learn",
+    "mapSoon": "A map of social problems (234 issues) is coming.",
+    "news": "News",
+    "noNews": "No news yet."
+  },
+  "me": {
+    "title": "Me",
+    "checkInput": "Please check what you entered",
+    "saveFailed": "We couldn't save this",
+    "save": "Save",
+    "cancel": "Cancel",
+    "ageUnknown": "Age not entered",
+    "ageYears": "{age} years old",
+    "edit": "Edit",
+    "notifications": "Notifications",
+    "notificationsTipLabel": "Before you turn these on",
+    "notificationsTip": "If you share your device with family, we recommend leaving these off. Even when on, we never put the content of your request in the subject or the message. The email subject is only \"A notice from samasama\".",
+    "inApp": "In the app",
+    "alwaysOn": "Always on",
+    "email": "Email",
+    "emailNote": "Only tells you that an offer or message has arrived",
+    "push": "Phone notifications",
+    "pushNote": "Available when you add the app to your home screen (coming soon)",
+    "loadFailed": "Couldn't load",
+    "withdraw": "Delete my account",
+    "withdrawTipLabel": "Before you delete your account",
+    "withdrawTip": "Requests that are open or in progress will be cancelled. If you have supported others, all your contribution records will be deleted too.",
+    "withdrawConfirm": "This can't be undone. Do you really want to delete your account?",
+    "withdrawYes": "Delete my account",
+    "withdrawLastOwner": "You are the manager of an organization. Please make someone else the manager first.",
+    "withdrawFailed": "We couldn't delete your account. Please contact us through the contact form.",
+    "loginMethods": "Sign-in methods",
+    "loginMethodsTipLabel": "If you can't sign in",
+    "loginMethodsTip": "If you lose access to both, contact the samasama team and we can switch your sign-in method.",
+    "emailCode": "Email code",
+    "linked": "In use",
+    "notLinked": "Not in use",
+    "toSupport": "Go to the supporter side",
+    "becomeSupporter": "Become a supporter too",
+    "becomeSupporterNote": "With the same account",
+    "account": "Account",
+    "signOut": "Sign out"
+  },
+  "contact": {
+    "title": "Contact us",
+    "lead": "Let the samasama team know if you have questions, if your request isn't moving, or if you have trouble with a supporter.",
+    "name": "Name",
+    "email": "Email address",
+    "organization": "Organization",
+    "optional": "(optional)",
+    "category": "Topic",
+    "choose": "Choose",
+    "categories": {
+      "aboutService": "About the service",
+      "joinAsSupporter": "Join as a supporting organization",
+      "media": "Press and media",
+      "other": "Other",
+      "howto": "How to use the app",
+      "stuck": "My request isn't moving",
+      "matchingComplaint": "Trouble with a supporter",
+      "relink": "Change my sign-in method"
+    },
+    "message": "Message",
+    "loggedInNote": "We'll reply to the email address of the account you're signed in with.",
+    "required": "Please fill in the required fields",
+    "failed": "We couldn't send it. Please try again.",
+    "submit": "Send",
+    "doneTitle": "Received",
+    "doneBody": "The samasama team will read it and reply by email if needed.",
+    "receipt": "Reference number",
+    "back": "Back"
+  }
+}
