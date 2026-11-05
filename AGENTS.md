@@ -38,7 +38,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - **v2.0 はパスワードを持たない**(メールのコードと Google)。相談する人について DB に持つのは呼び名・年齢と基準日・国と地域・言語だけで、メールは Auth の中だけ。users に氏名やメールを書き足さない。
 - **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。** 大項目と緊急度は AI に決めさせない。
 - **AI は `src/lib/ai/client.ts` の `generateJson` だけから呼ぶ。** 提供元の SDK を直接 import しない(提供元とモデルは `src/lib/ai/config.ts` が環境変数から決める)。
-- **体験ページ `/trial` に fetch を足さない。** API・DB・AI を呼ばない作り。
+- **体験ページ `/trial` が呼ぶのは「近いもの」の API(`/api/public/trial/suggest`)だけ。** 相談の保存・届け出はしない。AI に渡す前に伏せる・何も保存しない・回数の上限(DB の `hit_rate_limit`、10 分に 10 回・1 日 300 回)を外さない(2026-11-06 代表。それまでは API・DB・AI を呼ばない作りだった)。
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
 - 画面の言語は ja・en・es(v2.0、11/5 定例。中国語は入れない)。相談する側と支える側の画面は 3 言語、運営の画面は日本語だけ。文言は `messages/<言語>/app|consult|support.json` に足し、`npm run check:i18n` で 3 言語のキーをそろえる。
