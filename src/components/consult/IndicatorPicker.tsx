@@ -93,7 +93,6 @@ export function IndicatorPicker({
           )
         })}
       </ul>
-      <p className="m-0 px-1 text-[12.5px] text-mist">{t('noneIsOk')}</p>
     </div>
   )
 }

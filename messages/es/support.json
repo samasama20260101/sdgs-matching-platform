@@ -229,7 +229,8 @@
     "codeTip": "Cuando la persona tenga un teléfono, podrá introducir este código para que la consulta sea suya. Hasta entonces, los ofrecimientos y mensajes llegan a las consultas en nombre de otros de tu organización.",
     "handOnPaper": "Escribe este código en un papel y dáselo a la persona (válido hasta {date}). Si cierras esta pantalla, no se podrá volver a mostrar.",
     "print": "Imprimir una hoja para la persona",
-    "openCase": "Abrir la consulta"
+    "openCase": "Abrir la consulta",
+    "noneIsOk": "Si nada encaja, puedes seguir sin elegir."
   },
   "contrib": {
     "title": "Mis contribuciones",
