@@ -19,7 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
 
-  const access = await resolveCaseAccess(auth.appUser.id, id).catch(() => null)
+  const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal).catch(() => null)
   if (!access || access.role !== 'CONSULTEE') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!access.canDecide) return NextResponse.json({ error: '担当の人だけが選べます', code: 'NOT_ASSIGNEE' }, { status: 403 })
 

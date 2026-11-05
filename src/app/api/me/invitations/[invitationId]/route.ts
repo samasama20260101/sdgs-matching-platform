@@ -15,7 +15,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ inv
   if (!isUuid(invitationId)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
-  const email = auth.authUser.email?.toLowerCase()
+  // 確かめ済みのメールのときだけ受けられる
+  const email = auth.authUser.email_confirmed_at ? auth.authUser.email?.toLowerCase() : undefined
   const { data: inv } = await supabaseAdmin.from('organization_invitations').select('id, organization_id, email, role, status, expires_at').eq('id', invitationId).maybeSingle()
   if (!inv || inv.status !== 'PENDING' || !email || (inv.email as string).toLowerCase() !== email || new Date(inv.expires_at as string) < new Date()) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })

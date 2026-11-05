@@ -108,16 +108,17 @@ assert.equal(canOffer(base, org, { alreadyOffered: true, requireMfaForSensitive:
 assert.equal(canOffer({ ...base, status: 'RESOLVED' }, org, { alreadyOffered: false, requireMfaForSensitive: true }), false)
 assert.equal(canOffer({ ...base, is_sensitive: true }, org, { alreadyOffered: false, requireMfaForSensitive: true }), false)
 
-// ---- 引き継ぎコード
-const code = formatHandoverCode(new Uint8Array([0, 1, 2, 3, 4, 29, 99]))
-assert.match(code, /^[2-9A-Z]{3}-[2-9A-Z]{3}$/)
-assert.equal(code, '234-56Z')
+// ---- 引き継ぎコード(10 字・XXXXX-XXXXX。240 以上のバイトは捨てて偏りを出さない)
+const code = formatHandoverCode(new Uint8Array([0, 1, 2, 3, 4, 250, 29, 99, 5, 6, 7]))
+assert.match(code, /^[2-9A-Z]{5}-[2-9A-Z]{5}$/)
+assert.equal(code, '23456-ZB789')
 assert.ok(![...'01OILU'].some((ch) => HANDOVER_ALPHABET.includes(ch)))
-assert.equal(normalizeHandoverInput('234 56z'), '234-56Z')
-assert.equal(normalizeHandoverInput('23456Z'), '234-56Z')
-assert.equal(normalizeHandoverInput('234-56O'), null) // O は使っていない
-assert.equal(normalizeHandoverInput('234-5'), null)
-assert.throws(() => formatHandoverCode(new Uint8Array(3)))
+assert.equal(normalizeHandoverInput('23456 zb789'), '23456-ZB789')
+assert.equal(normalizeHandoverInput('23456ZB789'), '23456-ZB789')
+assert.equal(normalizeHandoverInput('23456-ZB78O'), null) // O は使っていない
+assert.equal(normalizeHandoverInput('234-56Z'), null) // 6 字の古い形は受けない
+assert.throws(() => formatHandoverCode(new Uint8Array(9)))
+assert.throws(() => formatHandoverCode(new Uint8Array(20).fill(255))) // 使える値がない
 
 console.log('domain: ok')
 

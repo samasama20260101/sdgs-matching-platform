@@ -33,7 +33,7 @@ export default function HandoverPage() {
           <Heading level={2}>{t('title')}</Heading>
           <Lead>{t('lead')}</Lead>
           <Card className="flex flex-col gap-3 p-4">
-            <TextField label={t('code')} value={code} maxLength={10} autoCapitalize="characters" onChange={(e) => setCode(e.target.value.toUpperCase())} className="max-w-[220px]" />
+            <TextField label={t('code')} value={code} maxLength={14} autoCapitalize="characters" autoComplete="off" spellCheck={false} onChange={(e) => setCode(e.target.value.toUpperCase())} className="max-w-[260px] tracking-[0.08em]" />
             <ErrorNote>{error}</ErrorNote>
             <Button variant="night" disabled={busy || code.replace(/[^0-9A-Z]/g, '').length < 6} onClick={() => void submit()}>{t('submit')}</Button>
           </Card>

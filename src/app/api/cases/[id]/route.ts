@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if ('response' in auth) return auth.response
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   try {
-    const access = await resolveCaseAccess(auth.appUser.id, id)
+    const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal)
     if (!access || access.role !== 'CONSULTEE') return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ case: await buildConsulteeView(access.caseRow), canDecide: access.canDecide })
   } catch (e) {

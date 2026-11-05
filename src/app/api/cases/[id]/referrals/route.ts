@@ -54,7 +54,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const auth = await requireActiveAppUser(request, { roles: ['PERSON'] })
   if ('response' in auth) return auth.response
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const access = await resolveCaseAccess(auth.appUser.id, id).catch(() => null)
+  const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal).catch(() => null)
   if (!access || access.role !== 'CONSULTEE') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const c = access.caseRow
 
@@ -89,7 +89,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const parsed = postSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
-  const access = await resolveCaseAccess(auth.appUser.id, id).catch(() => null)
+  const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal).catch(() => null)
   if (!access || access.role !== 'CONSULTEE' || !access.canDecide) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!['OPEN', 'MATCHED'].includes(access.caseRow.status)) return NextResponse.json({ error: '受付が終わっています', code: 'NOT_ACTIVE' }, { status: 409 })
 

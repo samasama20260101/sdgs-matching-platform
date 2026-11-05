@@ -21,9 +21,8 @@ export function parseFaceParam(value: string | null): FaceKey | null {
   return m ? { kind: 'ORGANIZATION', organizationId: m[1].toLowerCase() } : null
 }
 
-export function requireMfaForSensitive(): boolean {
-  return process.env.REQUIRE_MFA_FOR_SENSITIVE !== 'false'
-}
+export { requireMfaForSensitive } from './mfaPolicy'
+import { requireMfaForSensitive } from './mfaPolicy'
 
 export type ResolvedFace = { face: SupporterFace; key: FaceKey; label: string; phoneVerified: boolean; regionCodes: string[]; country: string; nationwide: boolean; coordinatorRegions: string[] }
 
@@ -145,19 +144,20 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       summary: locked || !c.ai_sdg_suggestion?.summary ? null : stripConsolation(c.ai_sdg_suggestion.summary),
       status: c.status,
       subjectType: c.subject_type,
-      subjectName: c.subject_organization_id ? orgName.get(c.subject_organization_id) ?? null : null,
+      // 2つ目の確認がまだ(LOCKED)なら、相談した団体の名前・地域・印・言語・申し出の数も出さない(セキュリティのレビュー 11/5)
+      subjectName: !locked && c.subject_organization_id ? orgName.get(c.subject_organization_id) ?? null : null,
       indicators: locked ? [] : (indByCase.get(c.id) ?? []).map((i) => ({ code: i.indicator_code, text: indicatorText(c.subject_type, i.indicator_code), source: i.source, status: i.status })),
       areaGoals: locked || !isAreaSubject(c.subject_type) ? [] : caseAreaGoals(c.subject_type, (indByCase.get(c.id) ?? []).map((i) => i.indicator_code)),
-      urgent: c.urgency === 'High',
-      isMinor: c.is_minor,
-      isSensitive: c.is_sensitive,
-      regionCode: c.region_code,
-      regionName: c.region_code ? regionName.get(c.region_code) ?? null : null,
-      country: c.region_country,
-      language: c.locale,
+      urgent: !locked && c.urgency === 'High',
+      isMinor: !locked && c.is_minor,
+      isSensitive: !locked && c.is_sensitive,
+      regionCode: locked ? null : c.region_code,
+      regionName: !locked && c.region_code ? regionName.get(c.region_code) ?? null : null,
+      country: locked ? null : c.region_country,
+      language: locked ? '' : c.locale,
       waitingHours: Math.max(0, Math.floor((nowMs - new Date(c.created_at).getTime()) / 3_600_000)),
       createdAt: c.created_at,
-      offersCount: caseOffers.filter((o) => ['PENDING', 'ACCEPTED'].includes(o.status)).length,
+      offersCount: locked ? 0 : caseOffers.filter((o) => ['PENDING', 'ACCEPTED'].includes(o.status)).length,
       myOfferStatus: mine?.status ?? null,
       canOffer: canOffer(c, rf.face, { alreadyOffered: Boolean(mine && mine.status !== 'WITHDRAWN' && mine.status !== 'DECLINED'), phoneVerified: rf.phoneVerified, requireMfaForSensitive: requireMfaForSensitive() }),
     }]
@@ -207,8 +207,10 @@ export async function involvedCases(rf: ResolvedFace): Promise<SupportCaseItem[]
   const { data, error: cErr } = await supabaseAdmin.from('cases').select(CASE_COLUMNS).in('id', ids).order('updated_at', { ascending: false })
   if (cErr) throw cErr
   const items = await decorate((data ?? []) as CaseRow[], rf, Date.now())
-  const last = await lastMessagesFor(items.filter((i) => !i.locked).map((i) => i.id))
-  return items.map((i) => ({ ...i, lastMessage: last.get(i.id) ?? null }))
+  // やりとりを読めるのは選ばれた(ACCEPTED)支え手だけ(caseAccess.ts と同じ)。申し出中・招かれただけの相談には付けない
+  const readable = items.filter((i) => !i.locked && i.myOfferStatus === 'ACCEPTED').map((i) => i.id)
+  const last = await lastMessagesFor(readable)
+  return items.map((i) => ({ ...i, lastMessage: readable.includes(i.id) ? last.get(i.id) ?? null : null }))
 }
 
 export async function loadSupportCase(rf: ResolvedFace, caseId: string) {

@@ -1,4 +1,8 @@
-// やりとりと相談の訳(純粋関数)。原文はそれぞれの表に残し、訳だけを足す(盤 15・22)
+// やりとりと相談の訳(純粋関数)。原文はそれぞれの表に残し、訳だけを足す(盤 15・22)。
+// やりとりの訳は 1 つの文ごとに頼む(セキュリティのレビュー 11/5: まとめて頼むと、1 人の文に仕込んだ指示でほかの人の文の訳を書き換えられる)。
+// 訳の出力にも、URL・メールを除く stripLinks と、電話番号などを伏せる maskPii をかける
+import { stripLinks } from '@/lib/aiSafety'
+import { maskPii } from '@/lib/pii'
 export const TRANSLATION_LANGUAGES: Record<string, string> = { ja: '日本語', en: 'English', es: 'Español' }
 
 export function buildTranslatePrompt(target: string, items: { id: string; fenced: string }[]): string {
@@ -19,7 +23,10 @@ export function parseTranslations(json: Record<string, unknown>, ids: Set<string
   for (const item of list) {
     if (!item || typeof item !== 'object') continue
     const { id, text } = item as Record<string, unknown>
-    if (typeof id === 'string' && ids.has(id) && typeof text === 'string' && text.trim()) out.set(id, text.trim().slice(0, 4000))
+    if (typeof id === 'string' && ids.has(id) && typeof text === 'string' && text.trim()) {
+      const safe = stripLinks(maskPii(text.trim()))
+      if (safe) out.set(id, safe.slice(0, 4000))
+    }
   }
   return out
 }
