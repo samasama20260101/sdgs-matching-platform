@@ -1,0 +1,45 @@
+# PR と dev・main への push で、型チェック・単体テスト・翻訳キー・ビルドを通す。
+# public リポジトリなので GitHub のランナーは無料。秘密の値は使わない(ビルドはダミーの値で通す)。
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # ビルド時にモジュールの読み込みで参照される値。実際の接続には使わない
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ci_dummy
+      SUPABASE_SERVICE_ROLE_KEY: sb_secret_ci_dummy
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          check-latest: true
+          cache: npm
+      - run: npm ci
+      - name: 型チェック
+        run: npx tsc --noEmit
+      - name: 単体テスト
+        run: npm run test:units
+      - name: 翻訳キー
+        run: npm run check:i18n
+      - name: Workers の入口の型チェック
+        run: npm run cf-typegen && npx tsc -p worker
+      - name: ビルド(Next.js と Cloudflare Workers 向けの束ね)
+        run: npm run build:cf

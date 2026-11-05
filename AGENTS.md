@@ -43,7 +43,8 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - 災害SOSは受付終了中。再開するときは `src/lib/constants/disaster.ts` の `ACTIVE_DISASTER_EVENT` と `DISASTER_CASES_SHOWN_TO_SUPPORTERS` を両方戻す。
 - 承認できるのは 1 案件 1 団体(`MAX_SUPPORTERS_PER_CASE = 1`)。並列マッチングには戻さない。2 団体目以降を足すなら「承認済みの団体が招待する」形(未着手)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
-- 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す(CI はない)。
+- 作業の前後に `npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。
+- Cloudflare Workers への載せ替え中(v2.0、#72)。Vercel と Workers の両方で動く書き方にする: 環境の判定は `src/lib/deployEnv.ts`(`VERCEL_ENV` を直接見ない)、Workers で読めない Node のネイティブ部品(sharp など)を静的に import しない。
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -51,6 +51,21 @@
 | アクセス解析 | Google Analytics(`G-8S5GP8P7EZ`、`src/app/[locale]/layout.tsx`) |
 | 郵便番号 | zipcloud → 見つからなければ HeartRails Geo API(`/api/zipcode`) |
 
+### 2.1.1 Cloudflare Workers(v2.0 で載せ替え中、#72)
+
+| 項目 | 内容 |
+|---|---|
+| アカウント | samasama 名義(`wrangler.jsonc` の `account_id`) |
+| Worker | `samasama-app-staging`(dev)/ `samasama-app-production`(main) |
+| 仕組み | OpenNext(`@opennextjs/cloudflare`)が `.open-next/worker.js` を作り、`worker/index.ts` がそれを包んで Cron Triggers を足す |
+| 毎日の自動処理 | `wrangler.jsonc` の `triggers.crons`(UTC 17:00 = JST 2:00)→ `worker/index.ts` の `CRON_ROUTES` → `/api/cron/*` を `CRON_SECRET` 付きで内部から呼ぶ |
+| 写真の変換 | Images binding(`IMAGES`)。Workers の外では sharp(`src/lib/images/reencode.ts`) |
+| デプロイ | `.github/workflows/deploy-cloudflare.yml`。dev への push で Staging、main への push で本番。リポジトリの変数 `CF_STAGING_DEPLOY` / `CF_PRODUCTION_DEPLOY` が `true` のときだけ動く(本番は切り替えの日まで止めておく) |
+| 秘密の値 | Worker の Secret(`npx wrangler secret put <名前> --env staging`)。GitHub には `CLOUDFLARE_API_TOKEN` と `DISCORD_DEPLOY_WEBHOOK_URL` だけ |
+| 公開してよい値 | GitHub の Environment「staging」「production」の変数 `NEXT_PUBLIC_SUPABASE_URL`・`NEXT_PUBLIC_SUPABASE_ANON_KEY`・`NEXT_PUBLIC_TURNSTILE_SITE_KEY`(ビルド時に焼き込まれる) |
+
+手元で Workers のとおりに動かす: `.dev.vars` に Staging の値を入れて `npm run build:cf && npx wrangler dev --env staging`(cron は `--test-scheduled` を付けて `/__scheduled?cron=0+17+*+*+*`)。
+
 ### 2.2 環境変数
 
 | 変数 | 用途 |
@@ -61,7 +76,7 @@
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
 | `DEV_PASSWORD` | Staging の入口パスワード。**本番には設定しない** |
 | `MAINTENANCE_MODE` / `MAINTENANCE_BYPASS_TOKEN` | メンテナンスモード(§6) |
-| `VERCEL_ENV` | Vercel が付ける。`production` のときだけ 1 日の相談登録上限が効く |
+| `APP_ENV` / `VERCEL_ENV` | 動いている環境。Workers は `wrangler.jsonc` の vars `APP_ENV`、Vercel は自動の `VERCEL_ENV`。本番のときだけ 1 日の相談登録上限が効く(`src/lib/deployEnv.ts`) |
 
 - 環境変数を変えたら再デプロイしないと効かない。`NEXT_PUBLIC_` で始まるものはビルド時に埋め込まれる。
 - GitHub Actions の秘密: `DISCORD_DEPLOY_WEBHOOK_URL`(デプロイ通知)。
@@ -105,7 +120,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 
 - GitHub は SSH で接続し、`gh` CLI も使う。
 - Supabase CLI は Staging にリンクする(`npx supabase link --project-ref fzawgdmqewmwdqjsqjwt`)。`supabase/.temp/` は Git に入れない。
-- CI(自動テスト)はない。PR の前に上の 4 つを手元で通す。
+- CI(`.github/workflows/ci.yml`)が PR と dev・main への push で、型チェック・単体テスト・翻訳キー・Workers 向けのビルドを通す。単体テストは `scripts/tests/*.test.ts` を全部拾う(足すときに package.json を直さなくてよい)。
 - Playwright はプロジェクトに入れていない。画面の撮影は `~/samasama/.qa-tools/` の道具を使う。
 - `docs/assets/` はファビコンと共有画像(`public/og-image.png` など)の元の SVG。`docs/email_templates/change_email.html` は Supabase の Authentication → Emails → Change Email Address に貼るメール本文(件名と注意点はファイル先頭のコメント)。
 
