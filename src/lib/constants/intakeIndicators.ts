@@ -56,7 +56,7 @@ export const INTAKE_INDICATORS: IntakeIndicator[] = [
     { id: '2.3.1', category: 2, text: '農業・牧畜・林業を営んでいるが、生産性が上がらない' },
     { id: '2.3.2', category: 2, text: '小規模で農業をしているが、生活費をまかなえていない' },
     { id: '2.4.1', category: 2, text: '農業を営んでいるが、持続可能な運営ができていない' },
-    { id: '3.1.1', category: 3, text: '妊娠・出産前後に必要な医療を受けたいが、受けられていない' },
+    { id: '3.1.1', category: 3, text: '妊娠・出産前後のケアを受けたいが、受けられていない' },
     { id: '3.1.2', category: 3, text: '出産が近いのに、医師や助産師など診てもらう人が決まっていない' },
     { id: '3.2.1', category: 3, text: '5歳未満の子どもに、必要な医療を受けさせられていない' },
     { id: '3.2.2', category: 3, text: '生まれたばかりの赤ちゃんに必要な診察やケアを受けさせられていない' },
@@ -153,6 +153,7 @@ export const INTAKE_INDICATORS: IntakeIndicator[] = [
     { id: '16.10.1', category: 16, text: '人権を守る活動を理由に、暴力や不当な拘束を受けている', urgent: true },
     { id: '17.3.2', category: 17, text: '海外で働く家族からの仕送りを受け取れず、生活費を確保できない' },
     { id: '17.6.1', category: 17, text: '自宅でインターネットを利用できない' },
+    { id: '17.8.1', category: 17, text: 'インターネットが使えない' },
 ];
 
 const INDICATOR_BY_ID = new Map(INTAKE_INDICATORS.map((indicator) => [indicator.id, indicator]));

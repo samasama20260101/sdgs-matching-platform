@@ -6,7 +6,7 @@
 未実装の機能は本番仕様として説明しません。資料で触れるときは「今後検討中」と明記します。
 
 関連する正本:
-- 相談フォームの選択肢(114 個)と大項目: `docs/intake_indicators.md`
+- 相談フォームの選択肢(115 個)と大項目: `docs/intake_indicators.md`
 - お知らせ欄の設計と決定ログ: `docs/news_section_design.md`
 
 ---
@@ -71,7 +71,7 @@
 ## 5. 相談者(SOS)の機能
 
 ### 5.1 相談の登録(`/sos/hearing`)
-- 困りごとを **0〜3 個**選ぶ。選択肢は SDGs のグローバル指標をもとにした 114 個で、大項目ごとに開いて選ぶ(正本 `docs/intake_indicators.md`、コード `src/lib/constants/intakeIndicators.ts`)。0 個なら大項目 18「SDGsの隣のお困りごと」になる。
+- 困りごとを **0〜3 個**選ぶ。選択肢は SDGs のグローバル指標をもとにした 115 個で、大項目ごとに開いて選ぶ(正本 `docs/intake_indicators.md`、コード `src/lib/constants/intakeIndicators.ts`)。0 個なら大項目 18「SDGsの隣のお困りごと」になる。
 - 自由記述: 何に困っているか(必須)/ いつから / どうしたいか。
 - 自由記述欄の上に「個人情報を書かない」注意がある。
 - **緊急**: 選んだ選択肢に緊急の印(14 個)があるか、自由記述に緊急の語句があれば緊急(High)。サーバーでも同じ判定をする。AI は使わない(`src/lib/urgency.ts`)。

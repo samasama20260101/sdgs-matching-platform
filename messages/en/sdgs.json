@@ -103,7 +103,7 @@
     "2_3_1": "I work in farming, livestock, or forestry, but I can't increase my output",
     "2_3_2": "I run a small farm, but it doesn't cover my living costs",
     "2_4_1": "I run a farm, but I can't keep it going sustainably",
-    "3_1_1": "I need medical care during or around pregnancy and childbirth, but I'm not getting it",
+    "3_1_1": "I need care during or around pregnancy and childbirth, but I'm not getting it",
     "3_1_2": "I'm due to give birth soon, but I don't have a doctor or midwife to look after me",
     "3_2_1": "I can't get my child under 5 the medical care they need",
     "3_2_2": "I can't get my newborn baby the checkups and care they need",
@@ -199,6 +199,7 @@
     "16_9_1": "My own birth or my child's birth hasn't been officially registered",
     "16_10_1": "I'm facing violence or unjust detention because of my human rights work",
     "17_3_2": "I can't receive money sent by family working abroad, so I can't cover living costs",
-    "17_6_1": "I can't use the internet at home"
+    "17_6_1": "I can't use the internet at home",
+    "17_8_1": "I can't use the internet"
   }
 }
