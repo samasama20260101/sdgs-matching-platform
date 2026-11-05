@@ -2,9 +2,6 @@
   "locale": {
     "label": "Language"
   },
-  "form": {
-    "loading": "Loading..."
-  },
   "supporterType": {
     "NPO": "NPO / support organization",
     "CORPORATE": "Company",

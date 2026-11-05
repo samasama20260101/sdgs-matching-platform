@@ -4,7 +4,6 @@ import { defaultLocale, isAppLocale } from './routing';
 const namespaces = [
   'common',
   'landing',
-  'supporter',
   'sdgs',
   'app',
   'consult',
