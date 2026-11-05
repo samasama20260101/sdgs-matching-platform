@@ -5,6 +5,7 @@ import 'server-only'
 // 載せるのは、運営が承認した(APPROVED)・止めていない(ACTIVE)・支え手として登録した団体だけ
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { isSupporterPurpose, publicSupporterType, type PublicSupporterType } from '@/lib/domain/publicSupporter'
+import { effectiveServiceAreas } from '@/lib/domain/serviceAreas'
 
 export type PublicArea = { region_code: string; country: string; name_local: string; name_en: string }
 export type PublicSupporter = {
@@ -48,10 +49,10 @@ export async function listPublicSupporters(opts: { ids?: string[]; limit?: numbe
   const badgeCount = new Map(countRows.map((r) => [r.organization_id, Number(r.thanks)]))
   const areaRows = (areas.data ?? []) as { organization_id: string; region_code: string | null; is_nationwide: boolean; country: string | null }[]
 
-  // 活動地域: v1 から移った団体は supporter_service_areas、v2 で登録した団体は団体の都道府県
+  // 活動地域: 団体が登録した地域(全国か地域の一覧)。登録がなければ申し込みのときの都道府県(src/lib/domain/serviceAreas.ts)
+  const served = new Map(orgs.map((o) => [o.id, effectiveServiceAreas(areaRows.filter((a) => a.organization_id === o.id), o.prefecture)]))
   const codes = new Set<string>()
-  for (const a of areaRows) if (a.region_code) codes.add(a.region_code)
-  for (const o of orgs) if (o.prefecture) codes.add(o.prefecture)
+  for (const s of served.values()) for (const c of s.regionCodes) codes.add(c)
   const regionName = new Map<string, { name_local: string; name_en: string }>()
   if (codes.size > 0) {
     const { data: regions, error: rErr } = await supabaseAdmin.from('regions').select('code, name_local, name_en').in('code', [...codes])
@@ -66,8 +67,7 @@ export async function listPublicSupporters(opts: { ids?: string[]; limit?: numbe
   })
 
   return orgs.map((o) => {
-    const mine = areaRows.filter((a) => a.organization_id === o.id)
-    const listed = mine.filter((a) => !a.is_nationwide && a.region_code).map((a) => area(a.region_code as string, a.country))
+    const s = served.get(o.id) ?? { nationwide: false, regionCodes: [] }
     return {
       id: o.id,
       name: o.name,
@@ -77,8 +77,8 @@ export async function listPublicSupporters(opts: { ids?: string[]; limit?: numbe
       createdAt: o.created_at,
       resolvedCount: resolved.get(o.id) ?? 0,
       badgeCount: badgeCount.get(o.id) ?? 0,
-      nationwide: mine.some((a) => a.is_nationwide),
-      areas: listed.length > 0 || mine.length > 0 ? listed : o.prefecture ? [area(o.prefecture, o.region_country)] : [],
+      nationwide: s.nationwide,
+      areas: s.regionCodes.map((c) => area(c, o.region_country)),
     }
   })
 }
