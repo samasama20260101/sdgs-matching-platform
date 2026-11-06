@@ -164,3 +164,23 @@ import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBo
   assert.equal(sanitizeEntryCode('<script>'), null)
   console.log('domain intake: ok')
 })
+
+// ---- 待つあいだの近くの窓口(だれの相談か)
+import('../../src/lib/domain/referrals').then(({ fitsAudience, referralAudience }) => {
+  const person = referralAudience('PERSON')
+  const company = referralAudience('COMPANY')
+  // 個人の相談には事業者の窓口を出さず、会社の相談には事業者の窓口だけを出す
+  assert.equal(fitsAudience(['GENERAL_CONSULTATION_HOTLINE'], person), true)
+  assert.equal(fitsAudience(['TRADE_DISPUTE_HOTLINE'], person), false)
+  assert.equal(fitsAudience(['YOROZU_SUPPORT_CENTER'], person), false)
+  assert.equal(fitsAudience(['GENERAL_CONSULTATION_HOTLINE'], company), false)
+  assert.equal(fitsAudience(['HUMAN_RIGHTS_HOTLINE'], company), false)
+  assert.equal(fitsAudience(['NPO'], company), false)
+  assert.equal(fitsAudience(['YOROZU_SUPPORT_CENTER'], company), true)
+  assert.equal(fitsAudience(['IP_SUPPORT_HOTLINE'], company), true)
+  // 地域・国として相談したときに合う窓口はまだないので、何も出さない
+  assert.equal(referralAudience('COMMUNITY').kind, 'none')
+  assert.equal(fitsAudience(['PREFECTURAL_SOCIAL_WELFARE_COUNCIL'], referralAudience('COMMUNITY')), false)
+  assert.equal(referralAudience('NATION').kind, 'none')
+  console.log('domain referrals: ok')
+})

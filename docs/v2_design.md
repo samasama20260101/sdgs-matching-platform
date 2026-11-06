@@ -51,8 +51,9 @@
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
 
 Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を取り込んだ(`scripts/import-directory-entries.mts`、データは directory-data の出力)。
+2026-11-06 に、会社として相談した人に出す事業者向けの窓口 49 件(都道府県のよろず支援拠点 47・取引かけこみ寺・知財総合支援窓口)を Staging に足した。待つあいだの窓口は、個人の相談には事業者向けを出さず、会社の相談には事業者向けだけを出す(`src/lib/domain/referrals.ts`)。地域・国として相談したときに合う窓口はまだ集めていないので出さない。本番には未投入。
 
-会社・地域・国の相談の選択肢は、代表の指標一覧から `scripts/ledger/import-org-intake.ts` で `src/lib/constants/orgIntakeIndicators.generated.ts` に書き出す。読むのは画面に出す列だけ(AI の教師データの列はリポジトリに入れない)。
+会社・地域・国の相談の選択肢は、代表の指標一覧から `scripts/ledger/import-org-intake.ts` で `src/lib/constants/orgIntakeIndicators.generated.ts` に書き出す。読むのは画面に出す列だけ(AI の教師データの列はリポジトリに入れない)。英語・スペイン語の文言は `messages/<言語>/sdgs.json` の `orgIndicator.<主体>`(会社・地域。国は入口がまだないので訳がない)。取り込み直して文言が変わったら 3 言語をそろえる(`scripts/tests/intakeIndicators.test.ts` が ja の一致と en・es の訳の有無を検査する)。
 
 ## 4. 審査(11/5)
 
