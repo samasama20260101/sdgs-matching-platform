@@ -69,6 +69,7 @@ async function callGemini(target: AiTarget, prompt: string, options: GenerateJso
 
 // OpenAI と xAI(Grok)は同じ形の Chat Completions API。
 // 推論型のモデルは temperature の指定を断ることがあるので送らない。出力の上限も各社の既定に任せる。
+// 考える量は環境変数で決めたときだけ送る(src/lib/ai/config.ts)。
 async function callOpenAiCompatible(target: AiTarget, prompt: string, options: GenerateJsonOptions): Promise<string> {
   const response = await fetch(`${target.baseUrl}/chat/completions`, {
     method: 'POST',
@@ -77,6 +78,7 @@ async function callOpenAiCompatible(target: AiTarget, prompt: string, options: G
       model: target.model,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
+      ...(target.reasoningEffort ? { reasoning_effort: target.reasoningEffort } : {}),
     }),
     signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
   })

@@ -73,7 +73,7 @@
 |---|---|
 | URL | https://samasama-app-staging.samasama.workers.dev(入口パスワードあり) |
 | 入口パスワード | Vercel の Staging とは別の値。作った人の手元の `.env.workers-staging.local`(コミットしない)にある |
-| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`・`DISCORD_OPS_WEBHOOK_URL`・`DISCORD_OPS_APPLICATION_WEBHOOK_URL`(2026-11-05)。AI の鍵は未設定(相談の整理はデモの結果を返す) |
+| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`・`DISCORD_OPS_WEBHOOK_URL`・`DISCORD_OPS_APPLICATION_WEBHOOK_URL`(2026-11-05)。AI の鍵(`OPENAI_API_KEY`・`XAI_API_KEY`)は未設定(相談の整理はデモの結果を返す)。AI のモデル名と考える量は `wrangler.jsonc` の vars |
 
 ### 2.2 環境変数
 
@@ -83,7 +83,8 @@
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー用の秘密キー(`sb_secret_` 形式)。Vercel では Secret |
 | `GOOGLE_GEMINI_API_KEY`(または `GEMINI_API_KEY`)/ `OPENAI_API_KEY` / `XAI_API_KEY` | AI の鍵。どれもない場合、相談の整理は決まった内容のデモ結果を返す |
 | `AI_PROVIDER`・`AI_<用途>_PROVIDER` | 使う提供元(`gemini` / `openai` / `xai`)。用途は `CONSULTATION`(相談の整理・解決の要約)・`NEWS`・`TRANSLATION`。書かなければ鍵のある提供元を選ぶ(翻訳は xAI が先、ほかは Gemini が先) |
-| `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`) |
+| `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`)。Workers では `wrangler.jsonc` の vars に `gpt-6-luna`・`grok-4.20-0309-non-reasoning`(2026-11-06) |
+| `AI_OPENAI_REASONING_EFFORT`・`AI_XAI_REASONING_EFFORT` | 考えてから答える型のモデルに渡す考える量(`none`・`low`・`medium` など)。書かなければ送らず各社の既定(gpt-6-luna は medium で遅い)。考えない型のモデルには書かない |
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
 | `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせのうち相談のこと(新しい相談・つなぎ先の同意・申し出のない相談の件数)。Discord の「新着sos」の Webhook。中身は載せず、本番以外は先頭に `[Staging]` が付く。未設定なら送らない |
 | `DISCORD_OPS_APPLICATION_WEBHOOK_URL` | 団体の申し込みの知らせ。Discord の「サポーター申請」の Webhook。未設定なら `DISCORD_OPS_WEBHOOK_URL` に流す |

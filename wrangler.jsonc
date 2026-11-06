@@ -22,7 +22,12 @@
       "vars": {
         "APP_ENV": "staging",
         // 知らせのメールに書くアプリの URL(既定は本番の https://app.samasama.site)
-        "APP_ORIGIN": "https://samasama-app-staging.samasama.workers.dev"
+        "APP_ORIGIN": "https://samasama-app-staging.samasama.workers.dev",
+        // AI のモデル(2026-11-06 岡本さん)。相談の整理・お知らせは OpenAI、翻訳は xAI(Grok)。鍵は Secret で、なければ AI を使わない
+        "AI_OPENAI_MODEL": "gpt-6-luna",
+        // gpt-6-luna の既定は medium で遅い。「近いもの」の 8 秒に収まるかは Staging で測って決める
+        "AI_OPENAI_REASONING_EFFORT": "low",
+        "AI_XAI_MODEL": "grok-4.20-0309-non-reasoning"
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-staging" }],
@@ -32,7 +37,11 @@
     "production": {
       "name": "samasama-app-production",
       "vars": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        // staging と同じ値にそろえる
+        "AI_OPENAI_MODEL": "gpt-6-luna",
+        "AI_OPENAI_REASONING_EFFORT": "low",
+        "AI_XAI_MODEL": "grok-4.20-0309-non-reasoning"
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-production" }],
