@@ -9,6 +9,7 @@ import {
   NEIGHBOR_CATEGORY,
   indicatorMessageKey,
 } from '../../src/lib/constants/intakeIndicators'
+import { COMMUNITY_INTAKE_INDICATORS, COMPANY_INTAKE_INDICATORS } from '../../src/lib/constants/orgIntakeIndicators.generated'
 
 // ID の重複なし・大項目が定義済み・18 には選択肢がない
 const ids = INTAKE_INDICATORS.map((i) => i.id)
@@ -41,5 +42,20 @@ for (const [category, label] of Object.entries(INTAKE_CATEGORIES)) {
 }
 
 assert.equal(MAX_INDICATOR_SELECTIONS, 3)
+
+// 会社・地域の選択肢: messages/ja は定数と一致し、en・es には空でない訳がある(訳がないと画面に日本語が残る)
+const en = JSON.parse(readFileSync('messages/en/sdgs.json', 'utf8'))
+const es = JSON.parse(readFileSync('messages/es/sdgs.json', 'utf8'))
+for (const [subject, options] of [['COMPANY', COMPANY_INTAKE_INDICATORS], ['COMMUNITY', COMMUNITY_INTAKE_INDICATORS]] as const) {
+  assert.equal(Object.keys(ja.orgIndicator[subject]).length, options.length, `messages/ja の ${subject} の件数が定数と違う`)
+  for (const o of options) {
+    const key = indicatorMessageKey(o.id)
+    assert.equal(ja.orgIndicator[subject][key], o.text, `messages/ja の ${subject} ${o.id} が定数と違う`)
+    for (const [locale, data] of [['en', en], ['es', es]] as const) {
+      const text = data.orgIndicator[subject][key]
+      assert.ok(typeof text === 'string' && text.trim() !== '' && !/[\u3040-\u30ff\u4e00-\u9fff]/.test(text), `messages/${locale} の ${subject} ${o.id} に訳がない`)
+    }
+  }
+}
 
 console.log('intakeIndicators: ok')

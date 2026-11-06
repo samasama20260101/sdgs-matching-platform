@@ -8,15 +8,16 @@ import { Link } from '@/i18n/navigation'
 import { apiFetch } from '@/lib/client/api'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
-import { MyCases, type MyCaseItem } from '@/components/consult/MyCases'
+import { MyCases, useMyCaseTitle, type MyCaseItem } from '@/components/consult/MyCases'
 import { Card, Heading, Lead, SectionLabel } from '@/components/app/ui'
 import { talkTurn } from '@/lib/domain/talk'
 
 function YourTurn({ items }: { items: MyCaseItem[] }) {
   const t = useTranslations('app.home')
+  const titleOf = useMyCaseTitle()
   const rows = [
-    ...items.filter((c) => c.status === 'OPEN' && c.pendingOffers > 0).map((c) => ({ id: c.id, title: c.title, label: t('turnOffers', { count: c.pendingOffers }) })),
-    ...items.filter((c) => c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine').map((c) => ({ id: c.id, title: c.title, label: t('turnReply') })),
+    ...items.filter((c) => c.status === 'OPEN' && c.pendingOffers > 0).map((c) => ({ id: c.id, title: titleOf(c), label: t('turnOffers', { count: c.pendingOffers }) })),
+    ...items.filter((c) => c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine').map((c) => ({ id: c.id, title: titleOf(c), label: t('turnReply') })),
   ]
   if (rows.length === 0) return null
   return (

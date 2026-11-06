@@ -1,4 +1,4 @@
-// 待つあいだの近くの窓口(つなぎ先、盤 13)。GET: 地域と分野に合う窓口 / POST: 「運営から伝えてよい」を選ぶ
+// 待つあいだの近くの窓口(つなぎ先、盤 13)。GET: 地域と分野と、だれの相談か(個人・会社)に合う窓口 / POST: 「運営から伝えてよい」を選ぶ
 // 運営の担当者が窓口の受付(電話や相談フォーム)から伝える。自動のメールにはしない(決めてほしいこと 12 の推奨)
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -7,6 +7,7 @@ import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { optionsFor } from '@/lib/domain/intake'
+import { referralAudience, type ReferralAudience } from '@/lib/domain/referrals'
 import { notifyOps } from '@/lib/server/opsNotify'
 
 const MAX_LOCAL = 3
@@ -29,6 +30,13 @@ type Entry = {
   attribution: string | null
   source_url: string
   service_scope: string
+}
+
+// だれの相談かで窓口の種類を絞る(個人の相談に事業者の窓口を出さない・会社の相談に個人の窓口を出さない)
+function forAudience<Q extends { overlaps: (column: string, value: string[]) => Q; not: (column: string, operator: string, value: string) => Q }>(q: Q, audience: ReferralAudience): Q {
+  if (audience.kind === 'only') return q.overlaps('categories', [...audience.categories])
+  if (audience.kind === 'except') return q.not('categories', 'ov', `{${audience.categories.join(',')}}`)
+  return q
 }
 
 function present(e: Entry) {
@@ -57,13 +65,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal).catch(() => null)
   if (!access || access.role !== 'CONSULTEE') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const c = access.caseRow
+  const audience = referralAudience(c.subject_type)
+  if (audience.kind === 'none') return NextResponse.json({ local: [], national: [] })
 
   const optionCategory = new Map(optionsFor(c.subject_type).map((o) => [o.id, o.category]))
   const goals = [...new Set((c.intake_qna?.indicators ?? []).map((code) => optionCategory.get(code)).filter((g): g is number => typeof g === 'number'))]
 
   const local: Entry[] = []
   if (c.region_country === 'JP' && c.region_code) {
-    let q = supabaseAdmin.from('directory_entries').select(COLUMNS).eq('visibility', 'PUBLIC').eq('prefecture_code', c.region_code).neq('kind', 'NATIONAL_HOTLINE')
+    let q = forAudience(supabaseAdmin.from('directory_entries').select(COLUMNS).eq('visibility', 'PUBLIC').eq('prefecture_code', c.region_code).neq('kind', 'NATIONAL_HOTLINE'), audience)
     if (goals.length > 0) q = q.overlaps('sdgs_goals', goals)
     const { data, error } = await q.order('kind', { ascending: false }).limit(40)
     if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
@@ -72,7 +82,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
   let national: Entry[] = []
   if (c.region_country === 'JP') {
-    let q = supabaseAdmin.from('directory_entries').select(COLUMNS).eq('visibility', 'PUBLIC').eq('kind', 'NATIONAL_HOTLINE')
+    let q = forAudience(supabaseAdmin.from('directory_entries').select(COLUMNS).eq('visibility', 'PUBLIC').eq('kind', 'NATIONAL_HOTLINE'), audience)
     if (goals.length > 0) q = q.overlaps('sdgs_goals', goals)
     const { data } = await q.limit(MAX_NATIONAL)
     national = (data ?? []) as Entry[]

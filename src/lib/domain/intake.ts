@@ -4,7 +4,7 @@
 //   - 緊急: 選択肢の緊急の印か、自由記述の緊急の言葉(AI では決めない)
 //   - 機微: 指標の印と18歳未満(src/lib/domain/sensitivity.ts)
 //   - 対象の人数: 個人は 1、会社・地域は団体が登録した人数(スコアの「人口」)
-import { INTAKE_INDICATORS, MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
+import { INTAKE_INDICATORS, MAX_INDICATOR_SELECTIONS, indicatorMessageKey } from '@/lib/constants/intakeIndicators'
 import { COMMUNITY_INTAKE_INDICATORS, COMPANY_INTAKE_INDICATORS, NATION_INTAKE_INDICATORS } from '@/lib/constants/orgIntakeIndicators.generated'
 import { detectUrgency } from '@/lib/urgency'
 import { deriveSensitivity } from './sensitivity'
@@ -80,8 +80,30 @@ export function assessIntake(input: {
 // AI の整理が届く前の仮の題(選んだ1つ目の文言か、本文の書き出し)
 export function provisionalTitle(subject: SubjectType, indicatorIds: string[], text: string): string {
   const first = optionsFor(subject).find((o) => o.id === indicatorIds[0])
-  const base = first?.text ?? text.replace(/\s+/g, ' ').trim()
+  return shortTitle(first?.text ?? text)
+}
+
+// 題にする長さ(40 字)に縮める
+export function shortTitle(text: string): string {
+  const base = text.replace(/\s+/g, ' ').trim()
   return base.length > 40 ? `${base.slice(0, 40)}…` : base
+}
+
+// 選択肢の文言の訳のキー(messages/<言語>/sdgs.json)。個人は indicator、会社・地域は orgIndicator.<主体>。
+// 国の選択肢は相談の入口がまだないので訳を持たない(null なら定数の日本語を出す)
+export function indicatorLabelKey(subject: SubjectType, id: string): string | null {
+  if (!optionsFor(subject).some((o) => o.id === id)) return null
+  const key = indicatorMessageKey(id)
+  if (subject === 'PERSON') return `indicator.${key}`
+  if (subject === 'COMPANY' || subject === 'COMMUNITY') return `orgIndicator.${subject}.${key}`
+  return null
+}
+
+// 相談した側の画面に出す題。保存してある題(仮の題も AI の題も)は支え手が読む日本語なので、
+// 日本語の画面ではそのまま、ほかの言語では「選んだ1つ目の訳」か「本人の言葉の書き出し」にする(2026-11-06 代表の Staging での指摘)
+export function consulteeTitle(input: { locale: string; savedTitle: string; firstIndicatorLabel: string | null; ownWords: string | null }): string {
+  if (input.locale === 'ja') return input.savedTitle
+  return input.firstIndicatorLabel ?? (input.ownWords ? shortTitle(input.ownWords) : input.savedTitle)
 }
 
 // AI に渡す相談文の並び(本文 → いつから → どうしたいか)。届けたあとの整理(caseAi)と体験ページ(/trial)で同じものを使う。

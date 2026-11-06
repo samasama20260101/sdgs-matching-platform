@@ -4,6 +4,7 @@ import 'server-only'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import type { MyCaseItem } from '@/components/consult/MyCases'
 import { lastMessagesFor } from './lastMessages'
+import { shortTitle } from '@/lib/domain/intake'
 
 type Row = {
   id: string
@@ -14,6 +15,8 @@ type Row = {
   proxy_organization_id: string | null
   owner_user_id: string | null
   created_at: string
+  description_free: string | null
+  intake_qna: { indicators?: string[] } | null
 }
 
 export async function consulteeOrganizationIds(userId: string): Promise<string[]> {
@@ -35,7 +38,7 @@ export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
   }
   const { data, error } = await supabaseAdmin
     .from('cases')
-    .select('id, title, status, subject_type, subject_organization_id, proxy_organization_id, owner_user_id, created_at')
+    .select('id, title, status, subject_type, subject_organization_id, proxy_organization_id, owner_user_id, created_at, description_free, intake_qna')
     .or(filters.join(','))
     .order('created_at', { ascending: false })
     .limit(50)
@@ -61,6 +64,8 @@ export async function listMyCases(userId: string): Promise<MyCaseItem[]> {
   return rows.map((r) => ({
     id: r.id,
     title: r.title,
+    firstIndicator: r.intake_qna?.indicators?.[0] ?? null,
+    ownWords: r.description_free ? shortTitle(r.description_free) : null,
     status: r.status,
     subjectType: r.subject_type,
     subjectName: r.subject_organization_id

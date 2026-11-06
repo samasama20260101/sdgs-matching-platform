@@ -3,28 +3,30 @@
 // 困りごとを選ぶ(盤 12)。大項目ごとに開いて、近いものを3つまで。重い選択肢を選ぶと、その場で窓口を出す
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { indicatorMessageKey, MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
-import type { IntakeOption } from '@/lib/domain/intake'
+import { MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
+import type { IntakeOption, SubjectType } from '@/lib/domain/intake'
+import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 import { cx } from '@/components/app/ui'
 
 export function IndicatorPicker({
   options,
   selected,
   onChange,
-  translate,
+  subject,
 }: {
   options: IntakeOption[]
   selected: string[]
   onChange: (ids: string[]) => void
-  // 個人の選択肢は訳がある(messages/<言語>/sdgs.json)。会社・地域の選択肢は代表の表の日本語のまま
-  translate: boolean
+  // 選択肢の文言は主体ごとに訳がある(messages/<言語>/sdgs.json の indicator と orgIndicator)
+  subject: SubjectType
 }) {
   const t = useTranslations('consult.write')
   const tSdgs = useTranslations('sdgs')
+  const label = useIndicatorLabel()
   const categories = [...new Set(options.map((o) => o.category))]
   const [open, setOpen] = useState<number | null>(null)
   const full = selected.length >= MAX_INDICATOR_SELECTIONS
-  const textOf = (o: IntakeOption) => (translate ? tSdgs(`indicator.${indicatorMessageKey(o.id)}`) : o.text)
+  const textOf = (o: IntakeOption) => label(subject, o.id) ?? o.text
   const toggle = (id: string) => {
     if (selected.includes(id)) onChange(selected.filter((x) => x !== id))
     else if (!full) onChange([...selected, id])
