@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
+import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea } from '@/components/app/ui'
@@ -93,6 +94,7 @@ function Inner({ id }: { id: string }) {
   const tCard = useTranslations('support.card')
   const tSdgs = useTranslations('sdgs')
   const locale = useLocale()
+  const label = useIndicatorLabel()
   const face = useSearchParams().get('face') ?? ''
   const fetchDetail = useCallback(() => apiFetch<Detail>(`/api/support/cases/${id}?face=${encodeURIComponent(face)}`), [id, face])
   const { data, error: loadError, reload } = useLoad(fetchDetail)
@@ -126,7 +128,7 @@ function Inner({ id }: { id: string }) {
         <Heading level={2}>{c.title}</Heading>
         {c.areaGoals.length > 0 && <span className="text-[13px] font-bold text-ink-soft">{c.areaGoals.map((g) => tSdgs(`area.${c.subjectType}.${g}`)).join(' / ')}</span>}
         <span className="flex flex-wrap gap-1">
-          {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${i.text}`}</Chip>)}
+          {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${label(c.subjectType, i.code) ?? i.text}`}</Chip>)}
           {c.urgent && <Chip color="coral">{tCard('urgent')}</Chip>}
           {c.isMinor && <Chip color="lamp">{tCard('minor')}</Chip>}
           {c.regionCode && <Chip>{regionText(c, locale)}</Chip>}

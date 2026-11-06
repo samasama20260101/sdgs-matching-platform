@@ -3,7 +3,7 @@
 // 相談のホーム(盤 13)・申し出を選ぶ(盤 14)・一緒に進める(盤 15)・解決の確定とありがとう。
 // 画面は相談の「いま」を映す。決めるのは本人で、大きな行動は1画面に1つ(設計原則 1・2)
 import { Suspense, use, useCallback, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
@@ -17,6 +17,8 @@ import { Referrals } from '@/components/consult/Referrals'
 import { CrisisLinks } from '@/components/app/CrisisLinks'
 import { useSession } from '@/components/app/SessionProvider'
 import type { ConsulteeCaseView, ConsulteeOffer } from '@/lib/server/consulteeView'
+import { consulteeTitle } from '@/lib/domain/intake'
+import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 
 type Payload = { case: ConsulteeCaseView; canDecide: boolean }
 
@@ -119,6 +121,8 @@ function ResolvePanel({ caseId, onDone }: { caseId: string; onDone: () => Promis
 function CaseInner({ id }: { id: string }) {
   const t = useTranslations('consult.case')
   const tOffers = useTranslations('consult.offers')
+  const locale = useLocale()
+  const label = useIndicatorLabel()
   const { state: session } = useSession()
   const country = session.status === 'ready' ? session.me.person.country : null
   const params = useSearchParams()
@@ -154,12 +158,15 @@ function CaseInner({ id }: { id: string }) {
   const waiting = c.offers.filter((o) => o.status === 'PENDING')
   const chosen = c.offers.filter((o) => o.status === 'ACCEPTED')
   const full = c.acceptedCount >= c.maxSupporters
+  // 選んだものと題は画面の言語で出す(保存してあるのは日本語)
+  const chips = c.indicators.map((code, i) => label(c.subjectType, code) ?? c.indicatorTexts[i] ?? code)
+  const title = consulteeTitle({ locale, savedTitle: c.title, firstIndicatorLabel: c.indicators[0] ? label(c.subjectType, c.indicators[0]) : null, ownWords: c.description })
 
   return (
     <>
       <div className="flex flex-col gap-1 px-1">
         <span className="text-[12px] text-mist">{c.subjectName ? t('subjectOrg', { name: c.subjectName }) : t('subjectMine')}</span>
-        <Heading level={2}>{c.title}</Heading>
+        <Heading level={2}>{title}</Heading>
       </div>
       <Steps c={c} />
       {/* 緊急の印が付いた相談は、受付のあいだ、いますぐ話せる窓口を出しておく(行き止まりを作らない) */}
@@ -206,8 +213,8 @@ function CaseInner({ id }: { id: string }) {
 
       <Card className="flex flex-col gap-2 p-4">
         <SectionLabel>{t('whatYouWrote')}</SectionLabel>
-        {c.indicatorTexts.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">{c.indicatorTexts.map((text) => <Chip key={text} color="lamp">{text}</Chip>)}</div>
+        {chips.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">{chips.map((text) => <Chip key={text} color="lamp">{text}</Chip>)}</div>
         )}
         <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75]">{c.description}</p>
       </Card>

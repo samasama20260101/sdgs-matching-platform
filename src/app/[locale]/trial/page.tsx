@@ -183,7 +183,7 @@ export default function TrialPage() {
             {suggested === null ? <Lead>{tWrite('suggestLoading')}</Lead> : <SuggestedOptions ids={suggested} selected={selected} onToggle={toggle} textOf={textOf} />}
             {suggested !== null && suggested.length === 0 && <Lead>{tWrite('suggestNone')}</Lead>}
             {browseAll ? (
-              <IndicatorPicker options={options} selected={selected} onChange={setSelected} translate />
+              <IndicatorPicker options={options} selected={selected} onChange={setSelected} subject="PERSON" />
             ) : (
               suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="min-h-[44px] self-start text-[13.5px] font-bold text-night underline">{tWrite('browseAll')}</button>
             )}

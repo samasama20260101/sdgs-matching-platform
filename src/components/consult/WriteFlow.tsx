@@ -10,7 +10,8 @@ import { DESCRIPTION_MAX, EXTRA_MAX, optionsFor, type SubjectType } from '@/lib/
 import { CrisisLinks } from '@/components/app/CrisisLinks'
 import { Button, Card, ErrorNote, Heading, Lead, StepBar, TextArea, TextField, Tip } from '@/components/app/ui'
 import { IndicatorPicker, SuggestedOptions } from './IndicatorPicker'
-import { indicatorMessageKey, MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
+import { MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
+import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 
 // 重い言葉や緊急の選択肢に気づいたとき、その場で窓口を出す(体験ページ /trial でも使う)
 export function CrisisNotice({ country }: { country?: string | null }) {
@@ -38,7 +39,7 @@ export function WriteFlow({
   entryCode?: string | null
 }) {
   const t = useTranslations('consult.write')
-  const tSdgs = useTranslations('sdgs')
+  const label = useIndicatorLabel()
   const router = useRouter()
   const options = useMemo(() => optionsFor(subject), [subject])
   // 先に自分の言葉で書き、そのあとで近いものを選ぶ(画面の見直し 所見 5、11/5 岡本さん「推奨案で」)。
@@ -59,7 +60,7 @@ export function WriteFlow({
   const textOf = (id: string) => {
     const o = byId.get(id)
     if (!o) return id
-    return subject === 'PERSON' ? tSdgs(`indicator.${indicatorMessageKey(o.id)}`) : o.text
+    return label(subject, o.id) ?? o.text
   }
   const urgentPicked = selected.some((id) => byId.get(id)?.urgent)
   const urgentWords = detectUrgency(words)
@@ -149,7 +150,7 @@ export function WriteFlow({
           )}
           {suggested !== null && suggested.length === 0 && <Lead>{t('suggestNone')}</Lead>}
           {browseAll ? (
-            <IndicatorPicker options={options} selected={selected} onChange={setSelected} translate={subject === 'PERSON'} />
+            <IndicatorPicker options={options} selected={selected} onChange={setSelected} subject={subject} />
           ) : (
             suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="self-start min-h-[44px] text-[13.5px] font-bold text-night underline">{t('browseAll')}</button>
           )}
