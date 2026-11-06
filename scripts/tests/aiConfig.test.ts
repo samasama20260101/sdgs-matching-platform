@@ -8,7 +8,7 @@ assert.equal(resolveAiTarget('consultation', {}), null)
 
 // 今の本番: Gemini の鍵だけ → Gemini、モデルは今と同じ既定
 assert.deepEqual(resolveAiTarget('consultation', { GOOGLE_GEMINI_API_KEY: 'g' }), {
-  provider: 'gemini', model: 'gemini-2.5-flash', apiKey: 'g', baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+  provider: 'gemini', model: 'gemini-2.5-flash', apiKey: 'g', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', reasoningEffort: null,
 })
 assert.equal(resolveAiTarget('consultation', { GEMINI_API_KEY: 'g2' })?.apiKey, 'g2')
 
@@ -40,6 +40,14 @@ assert.equal(resolveAiTarget('consultation', { GOOGLE_GEMINI_API_KEY: 'g', AI_CO
 // 知らない提供元の名前は無視する。base URL は上書きでき、末尾の / を落とす
 assert.equal(resolveAiTarget('consultation', { GOOGLE_GEMINI_API_KEY: 'g', AI_PROVIDER: 'claude' })?.provider, 'gemini')
 assert.equal(resolveAiTarget('consultation', { OPENAI_API_KEY: 'o', AI_OPENAI_MODEL: 'm', AI_OPENAI_BASE_URL: 'https://proxy.example/v1/' })?.baseUrl, 'https://proxy.example/v1')
+
+// 考える量は提供元ごとに書いたときだけ。大文字でもよく、知らない値と Gemini には付けない
+const luna = { OPENAI_API_KEY: 'o', AI_OPENAI_MODEL: 'gpt-6-luna', AI_OPENAI_REASONING_EFFORT: 'Low', XAI_API_KEY: 'x', AI_XAI_MODEL: 'grok-4.20-0309-non-reasoning' }
+assert.equal(resolveAiTarget('consultation', luna)?.reasoningEffort, 'low')
+assert.equal(resolveAiTarget('translation', luna)?.provider, 'xai')
+assert.equal(resolveAiTarget('translation', luna)?.reasoningEffort, null)
+assert.equal(resolveAiTarget('consultation', { OPENAI_API_KEY: 'o', AI_OPENAI_MODEL: 'm', AI_OPENAI_REASONING_EFFORT: 'lowest' })?.reasoningEffort, null)
+assert.equal(resolveAiTarget('consultation', { GOOGLE_GEMINI_API_KEY: 'g', AI_GEMINI_REASONING_EFFORT: 'low' })?.reasoningEffort, null)
 
 // JSON の取り出し
 assert.deepEqual(parseJsonObject('{"a":1}'), { a: 1 })

@@ -5,6 +5,9 @@
 // モデル: `AI_<用途>_MODEL`(用途の提供元を指定したときだけ)→ `AI_<提供元>_MODEL`(例 AI_OPENAI_MODEL)。
 //   推測で既定値を置かない(Gemini だけ今の本番と同じ値を既定にする)。決まらなければ null を返し、
 //   呼び出し側は AI を使わない動き(デモの結果・下書きなし)に落とす。
+// 考える量: `AI_<提供元>_REASONING_EFFORT`(OpenAI・xAI だけ)。書かなければ送らず、各社の既定に任せる。
+//   考えてから答える型(gpt-6-luna など)は既定のままだと遅く、「近いもの」の 8 秒に間に合わないことがある。
+//   考えない型(grok-4.20-0309-non-reasoning など)には書かない(受け付けない型がある)。
 export type AiProvider = 'gemini' | 'openai' | 'xai'
 export type AiTask = 'consultation' | 'news' | 'translation'
 
@@ -13,11 +16,15 @@ export type AiTarget = {
   model: string
   apiKey: string
   baseUrl: string
+  // Chat Completions の reasoning_effort に渡す値。null なら送らない
+  reasoningEffort: string | null
 }
 
 type Env = Record<string, string | undefined>
 
 const PROVIDERS: readonly AiProvider[] = ['gemini', 'openai', 'xai']
+// OpenAI(none〜max)と xAI(low〜xhigh)が受け付ける値を合わせたもの。綴りの誤りはここで落とす
+const REASONING_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'
 const BASE_URLS: Record<AiProvider, string> = {
   gemini: 'https://generativelanguage.googleapis.com/v1beta',
@@ -62,5 +69,11 @@ export function resolveAiTarget(task: AiTask, env: Env): AiTarget | null {
   if (!model) return null
 
   const baseUrl = clean(env[`AI_${provider.toUpperCase()}_BASE_URL`]) || BASE_URLS[provider]
-  return { provider, model, apiKey, baseUrl: baseUrl.replace(/\/+$/, '') }
+  return { provider, model, apiKey, baseUrl: baseUrl.replace(/\/+$/, ''), reasoningEffort: reasoningEffortFor(provider, env) }
+}
+
+function reasoningEffortFor(provider: AiProvider, env: Env): string | null {
+  if (provider === 'gemini') return null
+  const v = clean(env[`AI_${provider.toUpperCase()}_REASONING_EFFORT`]).toLowerCase()
+  return (REASONING_EFFORTS as readonly string[]).includes(v) ? v : null
 }
