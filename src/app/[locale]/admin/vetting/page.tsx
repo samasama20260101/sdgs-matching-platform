@@ -56,21 +56,26 @@ function OrgCard({ org, onChanged, focused }: { org: Org; onChanged: () => Promi
   )
 }
 
-export default function VettingPage() {
-  const [status, setStatus] = useState<string>('APPLIED')
-  const fetchOrgs = useCallback(() => apiFetch<{ organizations: Org[]; counts: Record<string, number> }>(`/api/admin/orgs?status=${status}`).catch(() => null), [status])
-  const { data, reload } = useLoad(fetchOrgs)
-  // 運営への知らせ(Discord)のリンクは /admin/vetting#ORG-0001。読み込んだあとで、その団体の札まで送って枠で示す
+// 運営への知らせ(Discord)のリンクは /admin/vetting#ORG-0001。札が画面に出たあとで、その団体の札まで送って枠で示す。
+// 運営の画面はログインと2つ目の確認が済んでから中身を出すので、札を並べるこの部品の中で行う
+function OrgList({ organizations, onChanged }: { organizations: Org[]; onChanged: () => Promise<void> }) {
   const [focus, setFocus] = useState<string | null>(null)
   useEffect(() => {
     const hash = decodeURIComponent(window.location.hash.slice(1))
-    if (!hash || !data) return
+    if (!hash) return
     const el = document.getElementById(hash)
     if (!el) return
     el.scrollIntoView({ block: 'start' })
     const timer = window.setTimeout(() => setFocus(hash), 0)
     return () => window.clearTimeout(timer)
-  }, [data])
+  }, [organizations])
+  return organizations.map((o) => <OrgCard key={o.id} org={o} onChanged={onChanged} focused={focus === o.display_id} />)
+}
+
+export default function VettingPage() {
+  const [status, setStatus] = useState<string>('APPLIED')
+  const fetchOrgs = useCallback(() => apiFetch<{ organizations: Org[]; counts: Record<string, number> }>(`/api/admin/orgs?status=${status}`).catch(() => null), [status])
+  const { data, reload } = useLoad(fetchOrgs)
   return (
     <AdminShell title="審査">
       <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。</Lead>
@@ -82,7 +87,7 @@ export default function VettingPage() {
         ))}
       </div>
       {data?.organizations.length === 0 && <Lead>ありません。</Lead>}
-      {data?.organizations.map((o) => <OrgCard key={o.id} org={o} onChanged={reload} focused={focus === o.display_id} />)}
+      {data && <OrgList organizations={data.organizations} onChanged={reload} />}
     </AdminShell>
   )
 }
