@@ -103,13 +103,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!access || access.role !== 'CONSULTEE' || !access.canDecide) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!['OPEN', 'MATCHED'].includes(access.caseRow.status)) return NextResponse.json({ error: '受付が終わっています', code: 'NOT_ACTIVE' }, { status: 409 })
 
-  const { data: entry } = await supabaseAdmin.from('directory_entries').select('id, visibility').eq('id', parsed.data.entryId).maybeSingle()
+  const { data: entry } = await supabaseAdmin.from('directory_entries').select('id, visibility, name, phone').eq('id', parsed.data.entryId).maybeSingle()
   if (!entry || entry.visibility !== 'PUBLIC') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const { error } = await supabaseAdmin.from('case_referrals').upsert(
     { case_id: id, directory_entry_id: parsed.data.entryId, status: 'CONSENTED', consented_at: new Date().toISOString() },
     { onConflict: 'case_id,directory_entry_id' },
   )
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
-  await notifyOps({ kind: 'REFERRAL_CONSENT', displayId: access.caseRow.display_id }).catch(() => undefined)
+  await notifyOps({ kind: 'REFERRAL_CONSENT', displayId: access.caseRow.display_id, caseId: id, entryName: entry.name as string, entryPhone: (entry.phone as string | null) ?? null }).catch(() => undefined)
   return NextResponse.json({ ok: true })
 }

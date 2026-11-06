@@ -165,9 +165,18 @@ export async function POST(request: Request) {
   after(() => notifyOps({
     kind: 'NEW_CASE',
     displayId: created.display_id,
+    caseId: created.id,
     subjectType: input.subjectType,
+    subjectName: organization?.name ?? null,
     urgent: assessment.urgency === 'High',
     sensitive: assessment.isSensitive,
+    minor: assessment.isMinor,
+    indicators: indicatorIds,
+    entryChannel: entryCode ? 'SHOP_CODE' : 'DIRECT',
+    entryCode,
+    proxyName: null,
+    locale: person.locale ?? null,
+    country: person.region_country ?? 'JP',
   }).catch((e) => console.error('[api/cases] notify:', e)))
   after(() => summarizeNewCase(created.id).catch((e) => console.error('[api/cases] summarize:', e)))
 

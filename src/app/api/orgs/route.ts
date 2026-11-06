@@ -79,7 +79,20 @@ export async function POST(request: Request) {
     // 申し込みは運営に知らせ、面談の日を決める(11/5 の審査の流れ: 申し込み → 運営へ → 面談 → 承認)
     await recordSupporterConsent(auth.appUser.id).catch((e) => console.error('[api/orgs] consent', e))
     // 応答を待たせない(Discord が遅いと画面が待つため)
-    after(() => notifyOps({ kind: 'ORG_APPLICATION', organizationDisplayId: org.display_id }).catch(() => undefined))
+    after(async () => {
+      const { data: region } = input.regionCode
+        ? await supabaseAdmin.from('regions').select('name_local').eq('code', input.regionCode).maybeSingle()
+        : { data: null }
+      await notifyOps({
+        kind: 'ORG_APPLICATION',
+        organizationId: org.id,
+        organizationDisplayId: org.display_id,
+        name: input.name,
+        orgType: input.orgType,
+        country: input.country,
+        regionName: (region?.name_local as string | undefined) ?? null,
+      }).catch(() => undefined)
+    })
   }
   return NextResponse.json({ id: org.id, displayId: org.display_id })
 }
