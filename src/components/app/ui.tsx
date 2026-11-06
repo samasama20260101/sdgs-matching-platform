@@ -2,7 +2,8 @@
 
 // v2.0 の画面の部品(キャンバス盤 06 の見た目)。色・角・書体は globals.css のトークンの名前だけを使う。
 // 相談する側は生成りの地・丸い角、支える側と運営は白い地・小さめの角(tone で切り替える)。
-import { useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslations } from 'next-intl'
 
 export type Tone = 'consult' | 'support'
@@ -97,31 +98,100 @@ export function Chip({ children, color = 'steel', className }: { children: React
   return <span className={cx('inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-bold', styles[color], className)}>{children}</span>
 }
 
-// 説明文は常に出さず、i(仕組み)と !(注意)の裏に置く(盤 46 の決まり)
+// 説明文は常に出さず、i(仕組み)と !(注意)の裏に置く(盤 46 の決まり)。
+// 押すと(マウスなら乗せても)吹き出しで重ねて出す。画面の流れに差し込まないので、隣の見出しや並びを押し広げない(2026-11-06 岡本さん)。
+// 吹き出しは body に出し、ボタンの下(入らなければ上)に置く。ボタンが画面の右半分なら吹き出しの右端を、左半分なら左端をボタンにそろえる
+// (見出しの横の i が多いので、本文の段からはみ出さない)。画面の端から 16px は離す。外を押す・Esc で閉じる
+const TIP_GAP = 10
+const TIP_EDGE = 16
+// 吹き出しの端を、ボタンの端より少し外に出す(矢印が角の丸みにかからないように)
+const TIP_ALIGN = 8
+
 export function Tip({ kind = 'info', label, children }: { kind?: 'info' | 'warn'; label: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const open = pinned || hovered
   const id = useId()
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const bubbleRef = useRef<HTMLSpanElement>(null)
+
+  useLayoutEffect(() => {
+    const button = buttonRef.current
+    const bubble = bubbleRef.current
+    if (!open || !button || !bubble) return
+    const place = () => {
+      const r = button.getBoundingClientRect()
+      const width = document.documentElement.clientWidth
+      const w = bubble.offsetWidth
+      const h = bubble.offsetHeight
+      const center = r.left + r.width / 2
+      const aligned = center > width / 2 ? r.right + TIP_ALIGN - w : r.left - TIP_ALIGN
+      const left = Math.min(Math.max(aligned, TIP_EDGE), width - TIP_EDGE - w)
+      const below = r.bottom + TIP_GAP + h <= window.innerHeight - TIP_EDGE || r.top - TIP_GAP - h < TIP_EDGE
+      bubble.style.left = `${left}px`
+      bubble.style.top = `${below ? r.bottom + TIP_GAP : r.top - TIP_GAP - h}px`
+      bubble.style.setProperty('--tip-arrow', `${center - left}px`)
+      bubble.dataset.side = below ? 'bottom' : 'top'
+    }
+    place()
+    const outside = (e: PointerEvent) => {
+      if (!button.contains(e.target as Node) && !bubble.contains(e.target as Node)) {
+        setPinned(false)
+        setHovered(false)
+      }
+    }
+    const escape = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setPinned(false)
+      setHovered(false)
+      button.focus()
+    }
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    document.addEventListener('pointerdown', outside)
+    document.addEventListener('keydown', escape)
+    return () => {
+      window.removeEventListener('scroll', place, true)
+      window.removeEventListener('resize', place)
+      document.removeEventListener('pointerdown', outside)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [open])
+
   return (
-    <span className="inline-flex flex-col">
+    <>
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
-        aria-controls={id}
+        aria-controls={open ? id : undefined}
+        aria-describedby={open ? id : undefined}
         aria-label={label}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setPinned((v) => !v)}
+        onPointerEnter={(e) => e.pointerType === 'mouse' && setHovered(true)}
+        onPointerLeave={(e) => e.pointerType === 'mouse' && setHovered(false)}
         className={cx(
-          'inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[12px] font-bold',
+          // 見た目は 22px の丸、押せる範囲は 44px
+          "relative inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[12px] font-bold before:absolute before:-inset-[11px] before:content-['']",
           kind === 'warn' ? 'bg-coral-soft text-coral' : 'bg-steel text-night',
         )}
       >
         {kind === 'warn' ? '!' : 'i'}
       </button>
-      {open && (
-        <span id={id} role="note" className="mt-2 block rounded-tool bg-kinari-deep p-3 text-[12.5px] font-normal leading-[1.75] text-ink-soft">
-          {children}
-        </span>
+      {open && typeof document !== 'undefined' && createPortal(
+        <span
+          ref={bubbleRef}
+          id={id}
+          role="tooltip"
+          onClick={(e) => e.stopPropagation()}
+          className="group fixed left-0 top-0 z-50 block w-max max-w-[min(280px,calc(100vw-32px))] rounded-[10px] bg-night px-3.5 py-2.5 text-left text-[12.5px] font-normal leading-[1.7] text-white shadow-[0_8px_24px_rgba(15,39,65,0.22)]"
+        >
+          <span aria-hidden className="absolute left-[calc(var(--tip-arrow)-5px)] -top-[5px] h-2.5 w-2.5 rotate-45 rounded-[2px] bg-night group-data-[side=top]:-bottom-[5px] group-data-[side=top]:top-auto" />
+          <span className="relative block">{children}</span>
+        </span>,
+        document.body,
       )}
-    </span>
+    </>
   )
 }
 
