@@ -2,7 +2,7 @@
 // 1. 支え手の解決の報告から 14 日たった支援中の相談 → 解決。社会貢献の記録は手で確定したときと同じ関数で付ける
 //    (v1 の「自動で解決になった相談にはバッジが付かない」課題の手当て)
 // 2. 解決の報告がなく、最後の動きから 30 日たった支援中の相談 → 終了
-// 3. 24 時間申し出のない受付中の相談 → コーディネーターの一覧に回す印(escalated_at)を付け、運営に件数を知らせる
+// 3. 24 時間申し出のない受付中の相談 → コーディネーターの一覧に回す印(escalated_at)を付け、運営に件数と番号を知らせる
 // 4. AI の整理がまだの相談を整理する
 // 5. 回数の上限の古い行(2 日より前)を消す(v2_12)
 import { NextResponse } from 'next/server'
@@ -85,13 +85,13 @@ export async function GET(request: Request) {
   // 3. 申し出のない相談をコーディネーターの一覧に回す
   const { data: waiting, error: waitingError } = await supabaseAdmin
     .from('cases')
-    .select('id')
+    .select('id, display_id')
     .eq('status', 'OPEN')
     .is('escalated_at', null)
     .lt('created_at', cut.escalateBefore)
     .limit(500)
   if (waitingError) console.error('[cron] waiting fetch:', waitingError)
-  let escalated = 0
+  let escalated: { displayId: string; caseId: string }[] = []
   const waitingIds = (waiting ?? []).map((c) => c.id as string)
   if (waitingIds.length > 0) {
     const { data: withOffers } = await supabaseAdmin.from('offers').select('case_id').in('case_id', waitingIds).in('status', ['PENDING', 'INVITED', 'ACCEPTED'])
@@ -100,10 +100,13 @@ export async function GET(request: Request) {
     if (targets.length > 0) {
       const { error } = await supabaseAdmin.from('cases').update({ escalated_at: new Date().toISOString() }).in('id', targets)
       if (error) console.error('[cron] escalate:', error)
-      else escalated = targets.length
+      else {
+        const displayIds = new Map((waiting ?? []).map((c) => [c.id as string, c.display_id as string]))
+        escalated = targets.map((id) => ({ caseId: id, displayId: displayIds.get(id) ?? id }))
+      }
     }
   }
-  if (escalated > 0) await notifyOps({ kind: 'UNMATCHED', count: escalated }).catch(() => undefined)
+  if (escalated.length > 0) await notifyOps({ kind: 'UNMATCHED', cases: escalated }).catch(() => undefined)
 
   // 4. AI の整理が抜けた相談を拾い直す(届いた直後の after が Workers の 30 秒に間に合わなかったもの)。
   //    届いて 10 分より前・7 日以内の受付中の相談を、1 回に 10 件まで
@@ -130,6 +133,6 @@ export async function GET(request: Request) {
 
   await pruneRateLimitHits()
 
-  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated} summarized=${summarized}`)
-  return NextResponse.json({ resolved, closed, escalated, summarized })
+  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated.length} summarized=${summarized}`)
+  return NextResponse.json({ resolved, closed, escalated: escalated.length, summarized })
 }

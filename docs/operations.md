@@ -86,8 +86,8 @@
 | `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`)。Workers では `wrangler.jsonc` の vars に `gpt-6-luna`・`grok-4.20-0309-non-reasoning`(2026-11-06) |
 | `AI_OPENAI_REASONING_EFFORT`・`AI_XAI_REASONING_EFFORT` | 考えてから答える型のモデルに渡す考える量(`none`・`low`・`medium` など)。書かなければ送らず各社の既定(gpt-6-luna は medium で遅い)。考えない型のモデルには書かない |
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
-| `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせのうち相談のこと(新しい相談・つなぎ先の同意・申し出のない相談の件数)。Discord の「新着sos」の Webhook。中身は載せず、本番以外は先頭に `[Staging]` が付く。未設定なら送らない |
-| `DISCORD_OPS_APPLICATION_WEBHOOK_URL` | 団体の申し込みの知らせ。Discord の「サポーター申請」の Webhook。未設定なら `DISCORD_OPS_WEBHOOK_URL` に流す |
+| `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせのうち相談のこと(新しい相談・つなぎ先の同意・申し出のない相談)。Discord の「新着sos」の Webhook。番号・主体・印・分野・選んだもの・入口・言語・国と、運営の相談の画面(`/admin/cases/<id>`)へのリンクを載せる。本文・呼び名・都道府県より細かい地域は載せず、機微と18歳未満の相談は選んだものも載せない(`src/lib/server/opsNotifyFormat.ts`)。リンクの先頭は `APP_ORIGIN`。本番以外は先頭に `[Staging]` が付く。未設定なら送らない |
+| `DISCORD_OPS_APPLICATION_WEBHOOK_URL` | 団体の申し込みの知らせ(団体名・種類・地域と、審査の画面のその団体へのリンク `/admin/vetting#ORG-…`)。Discord の「サポーター申請」の Webhook。未設定なら `DISCORD_OPS_WEBHOOK_URL` に流す |
 | `RESEND_API_KEY` / `NOTIFY_FROM_EMAIL` | 利用者への知らせのメール(本人がオンにしたときだけ。件名と本文に中身を書かない)。未設定なら送らない |
 | `APP_ORIGIN` | 知らせのメールに書くアプリの URL(既定 https://app.samasama.site) |
 | `REQUIRE_MFA_FOR_SENSITIVE` | `false` にすると、団体のメンバーが機微な相談を見るときの2つ目の確認を外す(既定は要る) |

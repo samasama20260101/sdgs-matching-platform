@@ -68,7 +68,25 @@ export async function POST(request: Request) {
   const { error: hError } = await supabaseAdmin.from('case_handover_codes').insert({ case_id: created.id, code_hash: handover.hash, expires_at: handover.expiresAt, created_by_user_id: auth.userId })
   if (hError) console.error('[api/support/proxy] handover', hError)
   await supabaseAdmin.from('audit_logs').insert({ actor_user_id: auth.userId, organization_id: orgId, action: 'case.proxy_register', target_table: 'cases', target_id: created.id, metadata: { display_id: created.display_id } })
-  after(() => notifyOps({ kind: 'NEW_CASE', displayId: created.display_id, subjectType: 'PERSON', urgent: assessment.urgency === 'High', sensitive: assessment.isSensitive }).catch(() => undefined))
+  after(async () => {
+    const { data: proxyOrg } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).maybeSingle()
+    await notifyOps({
+      kind: 'NEW_CASE',
+      displayId: created.display_id,
+      caseId: created.id,
+      subjectType: 'PERSON',
+      subjectName: null,
+      urgent: assessment.urgency === 'High',
+      sensitive: assessment.isSensitive,
+      minor: assessment.isMinor,
+      indicators: indicatorIds,
+      entryChannel: 'PROXY',
+      entryCode: null,
+      proxyName: (proxyOrg?.name as string | undefined) ?? null,
+      locale: 'ja',
+      country: input.country,
+    }).catch(() => undefined)
+  })
   // 代理の相談も、本人の相談と同じく AI で整理する(題・要約・機微の引き上げ)
   after(() => summarizeNewCase(created.id).catch((e) => console.error('[api/support/proxy] summarize:', e)))
   // コードはここで1回だけ返す(DB にはハッシュしかない)
