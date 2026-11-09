@@ -8,6 +8,8 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { isCountryCode } from '@/lib/constants/countries'
 import { recordSupporterConsent } from '@/lib/server/consents'
 import { notifyOps } from '@/lib/server/opsNotify'
+import { canSupportNow } from '@/lib/faces'
+import { underSupporterAgeResponse } from '@/lib/server/supportAuth'
 
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'NATIONAL_AGENCY', 'OTHER_PUBLIC', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER'] as const
 
@@ -34,6 +36,8 @@ export async function POST(request: Request) {
   if (input.purpose === 'SUPPORT' && input.acceptSupporterTerms !== true) {
     return NextResponse.json({ error: '同意が必要です', code: 'CONSENT_REQUIRED' }, { status: 400 })
   }
+  // 会社・地域として相談するための登録(CONSULT)は、18歳未満でもできる
+  if (input.purpose === 'SUPPORT' && !(await canSupportNow(auth.appUser.id))) return underSupporterAgeResponse()
 
   // 同じ人が短い間に団体を作りすぎない(機械の登録を止める)
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

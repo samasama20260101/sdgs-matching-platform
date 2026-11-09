@@ -2,8 +2,10 @@
 // 本人が直したら、その日を新しい基準日にする。日付は 'YYYY-MM-DD'(暦の日。時刻と時差を持ち込まない)。
 
 export const ADULT_AGE = 18
-// 保護者の同意を原則にする年齢の上限(規約の決めてほしいこと A。数字で書く: 15歳以下)
-export const GUARDIAN_CONSENT_MAX_AGE = 15
+// この年齢より下は、保護者の同意を原則にする(規約 第2条6項。改正個人情報保護法の「16歳未満」に合わせる)
+export const GUARDIAN_CONSENT_UNDER_AGE = 16
+// 支える側(個人の支え手・団体の一員・コーディネーター)として活動できる年齢(2026-11-06 代表。どの国でも同じ)
+export const SUPPORTER_MIN_AGE = 18
 export const MAX_AGE = 130
 
 function parseDay(value: string): { y: number; m: number; d: number } | null {
@@ -33,7 +35,12 @@ export function isMinorAge(age: number | null): boolean {
 }
 
 export function needsGuardianConsent(age: number | null): boolean {
-  return age !== null && age <= GUARDIAN_CONSENT_MAX_AGE
+  return age !== null && age < GUARDIAN_CONSENT_UNDER_AGE
+}
+
+// 年齢が分からない人は止めない(isMinorAge と同じく、はじめの質問で必ず聞くので v1 から来た人だけが当たる)
+export function canSupportAtAge(age: number | null): boolean {
+  return age === null || age >= SUPPORTER_MIN_AGE
 }
 
 export function parseAgeInput(value: unknown): number | null {

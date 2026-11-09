@@ -119,6 +119,9 @@
     "title": "Become a supporter",
     "tipLabel": "Same account",
     "tip": "You become a supporter with the same account. Your own requests are never visible from the supporter side.",
+    "underAgeTitle": "You can become a supporter from age 18",
+    "underAgeBody": "The same rule applies in every country. You can still ask for help as usual.",
+    "underAgeFix": "If your age is wrong, you can correct it on the Me page",
     "tab": {
       "individual": "As an individual",
       "organization": "As an organization"
@@ -139,6 +142,7 @@
     "saveFailed": "Couldn't save",
     "termsTitle": "Rules for supporters and organizations (key points)",
     "terms": {
+      "age": "You can act as a supporter only if you are 18 or older",
       "purpose": "Use what people write and their nicknames only to support them, and never share them",
       "inApp": "Talk inside the app and don't ask for the person's contact details",
       "sensitive": "Requests about life or violence and from people under 18 go only to organizations we have interviewed",
@@ -256,6 +260,7 @@
   "invitations": {
     "title": "{name} has invited you",
     "lead": "If you accept, you can support requests as a member of this organization. You also agree to the rules for supporters and organizations.",
+    "underAge": "You can accept this as a supporter from age 18. You can still decline it.",
     "accept": "Accept",
     "decline": "Decline"
   },

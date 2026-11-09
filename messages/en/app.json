@@ -58,7 +58,7 @@
       },
       "providers": {
         "title": "Companies we use",
-        "body": "We use companies outside Japan, such as Cloudflare, Supabase and AI providers (Google, OpenAI, xAI). Before anything is sent to AI, we hide what looks like names and contact details."
+        "body": "We use companies outside Japan, such as Cloudflare, Supabase and AI providers (OpenAI, xAI). Before anything is sent to AI, we hide what looks like names and contact details."
       }
     },
     "terms": "Terms of use",
@@ -68,6 +68,10 @@
     "updatedTitle": "Our promises have changed",
     "updatedLead": "Please check what has changed before you continue.",
     "continue": "Agree and continue"
+  },
+  "guardian": {
+    "title": "If you are under 16",
+    "body": "Please talk to a parent or guardian and get their consent before using this service. If it would be dangerous for them to find out, we may accept your request without their consent, so please continue."
   },
   "profile": {
     "displayName": "Nickname",

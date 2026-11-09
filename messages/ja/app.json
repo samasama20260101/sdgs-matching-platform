@@ -58,7 +58,7 @@
       },
       "providers": {
         "title": "処理を任せる会社",
-        "body": "Cloudflare・Supabase と AI の会社(Google・OpenAI・xAI)など、海外の会社に処理を任せます。AI に渡す前に、名前や連絡先らしいところを伏せます。"
+        "body": "Cloudflare・Supabase と AI の会社(OpenAI・xAI)など、海外の会社に処理を任せます。AI に渡す前に、名前や連絡先らしいところを伏せます。"
       }
     },
     "terms": "利用規約",
@@ -68,6 +68,10 @@
     "updatedTitle": "約束の中身が変わりました",
     "updatedLead": "続けて使う前に、変わった点を確かめてください。",
     "continue": "同意して続ける"
+  },
+  "guardian": {
+    "title": "16歳未満の方へ",
+    "body": "保護者の方に話して、同意をもらってから使ってください。保護者の方に知られると危ないときは、同意がなくても相談を受けることがあります。そのまま進んでください。"
   },
   "profile": {
     "displayName": "呼び名",

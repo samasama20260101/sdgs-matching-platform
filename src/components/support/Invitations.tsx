@@ -4,14 +4,17 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
-import { useSession } from '@/components/app/SessionProvider'
+import { useReadyMe, useSession } from '@/components/app/SessionProvider'
 import { Button, Card, Lead } from '@/components/app/ui'
+import { canSupportAtAge } from '@/lib/domain/age'
 
 type Invitation = { id: string; role: string; organizationName: string; expiresAt: string }
 
 export function Invitations() {
   const t = useTranslations('support.invitations')
   const { refresh } = useSession()
+  const me = useReadyMe()
+  const allowed = !me || canSupportAtAge(me.person.age)
   const [items, setItems] = useState<Invitation[]>([])
   const load = () => apiFetch<{ invitations: Invitation[] }>('/api/me/invitations').then((d) => setItems(d.invitations)).catch(() => setItems([]))
   useEffect(() => { void load() }, [])
@@ -26,9 +29,9 @@ export function Invitations() {
       {items.map((i) => (
         <Card key={i.id} tone="support" className="flex flex-col gap-2 border-2 border-dawn p-4">
           <span className="text-[14.5px] font-bold">{t('title', { name: i.organizationName })}</span>
-          <Lead>{t('lead')}</Lead>
+          <Lead>{allowed ? t('lead') : t('underAge')}</Lead>
           <div className="flex gap-2">
-            <Button tone="support" variant="night" className="flex-1" onClick={() => void act(i.id, 'accept')}>{t('accept')}</Button>
+            {allowed && <Button tone="support" variant="night" className="flex-1" onClick={() => void act(i.id, 'accept')}>{t('accept')}</Button>}
             <Button tone="support" variant="outline" onClick={() => void act(i.id, 'decline')}>{t('decline')}</Button>
           </div>
         </Card>

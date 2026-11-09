@@ -49,6 +49,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - 作業の前後に `npm run lint -- --max-warnings 0`・`npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。画面で読み込むデータは `src/lib/client/useLoad.ts`、端末に覚える値は `src/lib/client/storedValue.ts` を使う(副作用の中で同期的に状態を変える書き方は lint が止める)。
 - **v2.0 の作業中(#72)。Staging の DB は 2026-11-05 から v2 の形**(`migrations/v2_0*.sql`)。dev の v1 の画面は v2 の画面に置き換わるまで Staging で動かないところがある。本番(main)は v1 の DB のまま。
 - **支える側から見える相談の決まりは `src/lib/domain/visibility.ts` だけで判定する。** API ごとに条件を書き直さない(個人の支え手に個人の相談を出さない・機微は2つ目の確認・自分の相談を出さない)。
+- **支える側として活動できるのは18歳以上**(2026-11-06 代表。どの国でも同じ)。判定は `src/lib/domain/age.ts` の `canSupportAtAge` だけ。支える側の API は `requireFace` を通し、相談にかかわる API は `caseAccess` を通す(どちらも年齢を見る)。`loadFaces` は会社・地域として相談するときにも使うので、年齢で絞らない。
 - **`contributions` は追記だけ。** UPDATE は DB が断る。直すときは CORRECTION の行を足す。消すのは退会のときだけ。
 - Cloudflare Workers への載せ替え中(v2.0、#72)。Vercel と Workers の両方で動く書き方にする: 環境の判定は `src/lib/deployEnv.ts`(`VERCEL_ENV` を直接見ない)、Workers で読めない Node のネイティブ部品(sharp など)を静的に import しない。**手元でビルドした Workers の成果物をデプロイしない**(OpenNext が `.env.local` の秘密キーを Worker のコードに焼き込む。`docs/operations.md` §2.1.1)。
 

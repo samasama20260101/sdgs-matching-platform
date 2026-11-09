@@ -5,7 +5,7 @@ import 'server-only'
 //   相談する側: 本人の相談の持ち主 / 会社・地域の相談の団体に今いるメンバー / 代理登録の団体(本人が引き継ぐまで)
 //   選ばれた支え手: 選ばれた(ACCEPTED)個人の支え手 / 選ばれた団体に今いるメンバー(抜けた日から読めない、盤 65)
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { loadFaces } from '@/lib/faces'
+import { canSupportNow, loadFaces } from '@/lib/faces'
 import { supporterCaseAccess, type SupporterFace } from '@/lib/domain/visibility'
 import { requireMfaForSensitive } from './mfaPolicy'
 
@@ -105,7 +105,8 @@ export async function resolveCaseAccess(userId: string, caseId: string, aal: 'aa
     (o.supporter_kind === 'INDIVIDUAL' && o.supporter_user_id === userId)
     || (o.supporter_kind === 'ORGANIZATION' && o.supporter_organization_id !== null && orgIds.has(o.supporter_organization_id)))
   if (!mine) return null
-  const faces = await loadFaces(userId)
+  const [faces, allowed] = await Promise.all([loadFaces(userId), canSupportNow(userId)])
+  if (!allowed) return null
   const face: SupporterFace | null = mine.supporter_kind === 'INDIVIDUAL'
     ? (faces.individual ? { kind: 'INDIVIDUAL', userId, profileActive: faces.individual.status === 'ACTIVE' } : null)
     : (() => {

@@ -15,8 +15,9 @@ import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip, Toggle } from '@/components/app/ui'
 import type { MePerson } from '@/lib/client/meTypes'
 import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAreas'
+import { canSupportAtAge } from '@/lib/domain/age'
 
-const SUPPORTER_POINTS = ['purpose', 'inApp', 'sensitive', 'realName', 'records', 'stop'] as const
+const SUPPORTER_POINTS = ['age', 'purpose', 'inApp', 'sensitive', 'realName', 'records', 'stop'] as const
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER_PUBLIC', 'OTHER'] as const
 const APPLICATION_ITEMS = ['activities', 'areas', 'targets', 'staff', 'safeguarding', 'website', 'howFound'] as const
 
@@ -274,25 +275,35 @@ function Join() {
             <Heading level={2}>{t('title')}</Heading>
             <Tip label={t('tipLabel')}>{t('tip')}</Tip>
           </div>
-          <div role="tablist" className="grid grid-cols-2 rounded-tool bg-steel p-1">
-            {(['individual', 'organization'] as const).map((k) => (
-              <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-tool text-[14px] font-bold', tab === k ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft')}>
-                {t(`tab.${k}`)}
-              </button>
-            ))}
-          </div>
-          {tab === 'individual' ? (
-            me.faces.individual || registered ? (
-              <div className="flex flex-col gap-3">
-                <Card tone="support" className="p-4"><Lead>{t('individualRegistered')}</Lead></Card>
-                {!me.faces.individual?.phoneVerified && <PhoneVerify />}
-                <Button tone="support" variant="night" onClick={() => router.push('/support')}>{t('toSupportHome')}</Button>
-              </div>
-            ) : (
-              <IndividualForm person={me.person} onDone={() => { setRegistered(true); void refresh() }} />
-            )
+          {!canSupportAtAge(me.person.age) ? (
+            <Card tone="support" className="flex flex-col gap-2 p-4">
+              <span className="text-[15px] font-bold">{t('underAgeTitle')}</span>
+              <Lead>{t('underAgeBody')}</Lead>
+              <Link href="/me" className="text-[13.5px] font-bold text-night">{t('underAgeFix')}</Link>
+            </Card>
           ) : (
-            <OrganizationForm person={me.person} />
+            <>
+            <div role="tablist" className="grid grid-cols-2 rounded-tool bg-steel p-1">
+              {(['individual', 'organization'] as const).map((k) => (
+                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-tool text-[14px] font-bold', tab === k ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft')}>
+                  {t(`tab.${k}`)}
+                </button>
+              ))}
+            </div>
+            {tab === 'individual' ? (
+              me.faces.individual || registered ? (
+                <div className="flex flex-col gap-3">
+                  <Card tone="support" className="p-4"><Lead>{t('individualRegistered')}</Lead></Card>
+                  {!me.faces.individual?.phoneVerified && <PhoneVerify />}
+                  <Button tone="support" variant="night" onClick={() => router.push('/support')}>{t('toSupportHome')}</Button>
+                </div>
+              ) : (
+                <IndividualForm person={me.person} onDone={() => { setRegistered(true); void refresh() }} />
+              )
+            ) : (
+              <OrganizationForm person={me.person} />
+            )}
+            </>
           )}
         </AppFrame>
       )}

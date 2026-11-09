@@ -7,6 +7,8 @@ import { useLocale, useTranslations } from 'next-intl'
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing'
 import { sortedCountries } from '@/lib/constants/countries'
 import { DISPLAY_NAME_MAX, CITY_MAX } from '@/lib/validation/person'
+import { needsGuardianConsent, parseAgeInput } from '@/lib/domain/age'
+import { GuardianConsentNote } from './GuardianConsentNote'
 import { TextField } from './ui'
 
 export type ProfileDraft = {
@@ -55,6 +57,8 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
   const regions = useRegions(draft.country)
   const errors = profileDraftErrors(draft)
   const set = (patch: Partial<ProfileDraft>) => onChange({ ...draft, ...patch })
+  // 打っている途中(「30」の「3」)で案内が出たり消えたりしないよう、欄を離れてから出す
+  const [ageFocused, setAgeFocused] = useState(false)
   return (
     <div className="flex flex-col gap-4">
       <TextField
@@ -76,7 +80,10 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
         onChange={(e) => set({ age: e.target.value.replace(/[^0-9]/g, '') })}
         error={showErrors && errors.age ? t('ageError') : null}
         className="max-w-[160px]"
+        onFocus={() => setAgeFocused(true)}
+        onBlur={() => setAgeFocused(false)}
       />
+      {!ageFocused && needsGuardianConsent(parseAgeInput(draft.age)) && <GuardianConsentNote />}
       <label className="flex flex-col gap-1.5">
         <span className="text-[13px] font-bold">{t('country')}</span>
         <select

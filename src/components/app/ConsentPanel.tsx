@@ -5,7 +5,9 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { apiFetch } from '@/lib/client/api'
-import { useSession } from './SessionProvider'
+import { needsGuardianConsent } from '@/lib/domain/age'
+import { GuardianConsentNote } from './GuardianConsentNote'
+import { useReadyMe, useSession } from './SessionProvider'
 import { Button, Card, ErrorNote, Heading, Lead, Screen } from './ui'
 
 export const CONSENT_POINTS = ['noPersonalInfo', 'whoSees', 'onlyChosen', 'records', 'roles', 'providers'] as const
@@ -47,6 +49,7 @@ export function ConsentCheckbox({ checked, onChange }: { checked: boolean; onCha
 export function ConsentPanel() {
   const t = useTranslations('app.consent')
   const { refresh } = useSession()
+  const me = useReadyMe()
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,6 +71,7 @@ export function ConsentPanel() {
         <Heading>{t('updatedTitle')}</Heading>
         <Lead>{t('updatedLead')}</Lead>
         <ConsentSummary />
+        {me && needsGuardianConsent(me.person.age) && <GuardianConsentNote />}
         <ConsentCheckbox checked={agreed} onChange={setAgreed} />
         <ErrorNote>{error}</ErrorNote>
         <Button variant="night" disabled={!agreed || busy} onClick={() => void submit()}>{t('continue')}</Button>

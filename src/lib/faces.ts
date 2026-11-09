@@ -3,6 +3,7 @@ import 'server-only'
 // 1人1アカウントの「支える側の顔」(盤 03): 団体の一員(複数可)と個人の支え手。
 // 相談する顔は全員が持つ。運営(ADMIN)は支える顔も相談する顔も持たない。
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { canSupportAtAge, currentAge, todayInTokyo } from '@/lib/domain/age'
 
 export type OrganizationFace = {
   kind: 'ORGANIZATION'
@@ -32,6 +33,17 @@ type MembershipRow = {
   role: string
   organization_id: string
   organizations: { id: string; name: string; org_type: string; vetting_status: string; status: string } | null
+}
+
+// 今の年齢で支える側として活動できるか。読めないときは止める側に倒す。
+// loadFaces は会社・地域として相談するときにも使うので、ここでは絞らない(18歳未満でも相談はできる)
+export async function canSupportNow(userId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.from('users').select('age_years, age_base_date').eq('id', userId).single()
+  if (error) {
+    console.error('[faces] age', error)
+    return false
+  }
+  return canSupportAtAge(currentAge(data.age_years as number | null, data.age_base_date as string | null, todayInTokyo()))
 }
 
 export async function loadFaces(userId: string): Promise<Faces> {
