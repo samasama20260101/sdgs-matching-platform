@@ -119,6 +119,9 @@
     "title": "Apoyar",
     "tipLabel": "La misma cuenta",
     "tip": "Pasas a apoyar con la misma cuenta. Tus propias consultas nunca se ven desde la parte de apoyar.",
+    "underAgeTitle": "Puedes apoyar a partir de los 18 años",
+    "underAgeBody": "La misma norma se aplica en todos los países. Puedes seguir haciendo consultas como siempre.",
+    "underAgeFix": "Si tu edad no es correcta, puedes cambiarla en la página Yo",
     "tab": {
       "individual": "Como persona",
       "organization": "Como organización"
@@ -139,6 +142,7 @@
     "saveFailed": "No se pudo guardar",
     "termsTitle": "Normas para personas y organizaciones que apoyan (resumen)",
     "terms": {
+      "age": "Solo pueden apoyar personas de 18 años o más",
       "purpose": "Usa lo que escriben y sus apodos solo para apoyar y no lo compartas nunca",
       "inApp": "Habla dentro de la app y no pidas los datos de contacto de la persona",
       "sensitive": "Las consultas sobre la vida o la violencia y las de menores de 18 años solo llegan a organizaciones que hemos entrevistado",
@@ -256,6 +260,7 @@
   "invitations": {
     "title": "{name} te ha invitado",
     "lead": "Si aceptas, podrás apoyar consultas como miembro de esta organización. También aceptas las normas para personas y organizaciones que apoyan.",
+    "underAge": "Puedes aceptarlo para apoyar a partir de los 18 años. También puedes rechazarlo.",
     "accept": "Aceptar",
     "decline": "Rechazar"
   },

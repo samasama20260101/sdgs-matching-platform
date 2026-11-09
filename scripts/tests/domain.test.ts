@@ -1,6 +1,6 @@
 // v2.0 の決まりの芯(年齢・スコア・機微・見える範囲・引き継ぎコード)。実行: npm run test:units
 import assert from 'node:assert/strict'
-import { currentAge, fullYearsBetween, isMinorAge, needsGuardianConsent, parseAgeInput, todayInTokyo } from '../../src/lib/domain/age'
+import { canSupportAtAge, currentAge, fullYearsBetween, isMinorAge, needsGuardianConsent, parseAgeInput, todayInTokyo } from '../../src/lib/domain/age'
 import { organizationScore, resolvedPoints, summarizeContributions } from '../../src/lib/domain/score'
 import { applyAiSensitivity, deriveSensitivity } from '../../src/lib/domain/sensitivity'
 import { canOffer, supporterCaseAccess, type CaseForVisibility, type SupporterFace } from '../../src/lib/domain/visibility'
@@ -23,6 +23,13 @@ assert.equal(isMinorAge(18), false)
 assert.equal(isMinorAge(null), false)
 assert.equal(needsGuardianConsent(15), true)
 assert.equal(needsGuardianConsent(16), false)
+assert.equal(needsGuardianConsent(0), true)
+assert.equal(needsGuardianConsent(null), false)
+// 支える側は18歳以上(どの国でも同じ)。年齢が分からない人(v1 から来た人)は止めない
+assert.equal(canSupportAtAge(17), false)
+assert.equal(canSupportAtAge(18), true)
+assert.equal(canSupportAtAge(0), false)
+assert.equal(canSupportAtAge(null), true)
 assert.equal(parseAgeInput('16'), 16)
 assert.equal(parseAgeInput(' 40 '), 40)
 assert.equal(parseAgeInput('16.5'), null)

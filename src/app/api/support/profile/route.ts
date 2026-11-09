@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { recordSupporterConsent } from '@/lib/server/consents'
+import { canSupportNow } from '@/lib/faces'
+import { underSupporterAgeResponse } from '@/lib/server/supportAuth'
 import { isCountryCode } from '@/lib/constants/countries'
 import { locales } from '@/i18n/routing'
 import { areaSubjectsForFace, sanitizeSkillAreas } from '@/lib/domain/supportAreas'
@@ -35,6 +37,7 @@ export async function PUT(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
   const p = parsed.data
+  if (!(await canSupportNow(auth.appUser.id))) return underSupporterAgeResponse()
   const { error } = await supabaseAdmin.from('supporter_profiles').upsert({
     user_id: auth.appUser.id,
     real_name: p.realName,

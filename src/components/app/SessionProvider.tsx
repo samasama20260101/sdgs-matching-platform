@@ -12,6 +12,7 @@ import { isAppLocale } from '@/i18n/routing'
 import { modeForPath, type AppMode } from '@/lib/client/appMode'
 import { LOCALE_RESTORED_KEY } from '@/lib/client/locale'
 import { useStoredValue } from '@/lib/client/storedValue'
+import { canSupportAtAge } from '@/lib/domain/age'
 
 export type Mode = AppMode
 
@@ -108,6 +109,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const canSupport = state.status === 'ready'
     && state.me.person.role === 'PERSON'
+    && canSupportAtAge(state.me.person.age)
     && (state.me.faces.organizations.length > 0 || state.me.faces.individual !== null)
 
   const setMode = useCallback((next: Mode) => storeMode(next), [storeMode])

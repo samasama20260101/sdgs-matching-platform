@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useReadyMe } from '@/components/app/SessionProvider'
 import { cx } from '@/components/app/ui'
 import { useStoredValue } from '@/lib/client/storedValue'
+import { canSupportAtAge } from '@/lib/domain/age'
 
 export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'ADMIN' | 'MEMBER'; organizationId?: string; coordinator?: boolean }
 
@@ -14,7 +15,8 @@ const STORAGE_KEY = 'samasama.face'
 export function useFace() {
   const me = useReadyMe()
   const options = useMemo<FaceOption[]>(() => {
-    if (!me) return []
+    // 18歳未満の人には立場を出さない(相談する側の団体は me.faces にそのまま残る)
+    if (!me || !canSupportAtAge(me.person.age)) return []
     const orgs = me.faces.organizations
       .filter((o) => !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus))
       .map((o) => ({ key: `org:${o.organizationId}`, label: o.organizationName, kind: 'ORGANIZATION' as const, approved: o.vettingStatus === 'APPROVED', role: o.role, organizationId: o.organizationId, coordinator: o.isCoordinator }))

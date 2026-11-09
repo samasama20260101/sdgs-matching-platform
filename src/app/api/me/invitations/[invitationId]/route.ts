@@ -5,6 +5,8 @@ import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { recordSupporterConsent } from '@/lib/server/consents'
+import { canSupportNow } from '@/lib/faces'
+import { underSupporterAgeResponse } from '@/lib/server/supportAuth'
 
 const schema = z.object({ action: z.enum(['accept', 'decline']), acceptSupporterTerms: z.boolean().optional() })
 
@@ -27,6 +29,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ inv
     return NextResponse.json({ ok: true })
   }
   if (parsed.data.acceptSupporterTerms !== true) return NextResponse.json({ error: '同意が必要です', code: 'CONSENT_REQUIRED' }, { status: 400 })
+  if (!(await canSupportNow(auth.appUser.id))) return underSupporterAgeResponse()
   const { error } = await supabaseAdmin.from('organization_memberships').insert({
     organization_id: inv.organization_id,
     user_id: auth.appUser.id,
