@@ -58,7 +58,7 @@
       },
       "providers": {
         "title": "Companies we use",
-        "body": "We use companies outside Japan, such as Cloudflare, Supabase and AI providers (Google, OpenAI, xAI). Before anything is sent to AI, we hide what looks like names and contact details."
+        "body": "We use companies outside Japan, such as Cloudflare, Supabase and AI providers (OpenAI, xAI). Before anything is sent to AI, we hide what looks like names and contact details."
       }
     },
     "terms": "Terms of use",

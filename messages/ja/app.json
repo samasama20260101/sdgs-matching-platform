@@ -58,7 +58,7 @@
       },
       "providers": {
         "title": "処理を任せる会社",
-        "body": "Cloudflare・Supabase と AI の会社(Google・OpenAI・xAI)など、海外の会社に処理を任せます。AI に渡す前に、名前や連絡先らしいところを伏せます。"
+        "body": "Cloudflare・Supabase と AI の会社(OpenAI・xAI)など、海外の会社に処理を任せます。AI に渡す前に、名前や連絡先らしいところを伏せます。"
       }
     },
     "terms": "利用規約",
