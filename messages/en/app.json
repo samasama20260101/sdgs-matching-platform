@@ -69,6 +69,10 @@
     "updatedLead": "Please check what has changed before you continue.",
     "continue": "Agree and continue"
   },
+  "guardian": {
+    "title": "If you are under 16",
+    "body": "Please talk to a parent or guardian and get their consent before using this service. If it would be dangerous for them to find out, we may accept your request without their consent, so please continue."
+  },
   "profile": {
     "displayName": "Nickname",
     "displayNameHint": "(doesn't have to be your real name)",

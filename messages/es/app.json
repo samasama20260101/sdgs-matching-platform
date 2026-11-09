@@ -69,6 +69,10 @@
     "updatedLead": "Revisa lo que ha cambiado antes de continuar.",
     "continue": "Aceptar y continuar"
   },
+  "guardian": {
+    "title": "Si tienes menos de 16 años",
+    "body": "Habla con tu madre, padre o tutor y pide su consentimiento antes de usar este servicio. Si sería peligroso que se enteren, podemos aceptar tu consulta sin su consentimiento, así que continúa."
+  },
   "profile": {
     "displayName": "Apodo",
     "displayNameHint": "(no tiene que ser tu nombre real)",
