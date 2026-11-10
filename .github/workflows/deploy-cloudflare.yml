@@ -5,7 +5,8 @@
 # 本番は、切り替えの日まで CF_PRODUCTION_DEPLOY を "true" にしない(それまで本番は Vercel)。
 # 要るもの:
 #   - リポジトリの Secret: CLOUDFLARE_API_TOKEN(samasama のアカウントの Workers を編集できるトークン)、DISCORD_DEPLOY_WEBHOOK_URL
-#   - Environment「staging」「production」の変数: NEXT_PUBLIC_SUPABASE_URL、NEXT_PUBLIC_SUPABASE_ANON_KEY、NEXT_PUBLIC_TURNSTILE_SITE_KEY
+#   - Environment「staging」「production」の変数: NEXT_PUBLIC_SUPABASE_URL、NEXT_PUBLIC_SUPABASE_ANON_KEY、NEXT_PUBLIC_TURNSTILE_SITE_KEY、
+#     NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED("true" で「Google で続ける」を出す。その環境の Supabase に Google の設定が要る)
 #     (どれも公開してよい値。ビルド時に画面へ焼き込まれるので、Worker の vars では変えられない)
 #   - アプリの秘密の値は Worker の Secret に入れる(wrangler secret put。このワークフローは触らない)
 name: Cloudflare デプロイ
@@ -43,6 +44,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+      NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED: ${{ vars.NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED }}
       # ビルド時にモジュールの読み込みで参照されるだけ。実行時は Worker の Secret が使われる
       SUPABASE_SERVICE_ROLE_KEY: build-time-placeholder
       NEXT_TELEMETRY_DISABLED: "1"

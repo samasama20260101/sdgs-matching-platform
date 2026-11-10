@@ -1,5 +1,5 @@
 # HANDOFF: v2.0 の実装中 — Staging で代表に確かめてもらう前
-更新: 2026-11-09(それまでの経緯は `git log -p HANDOFF.md` で見られる。v1 の申し送りは 2026-10-30 の版)
+更新: 2026-11-10(それまでの経緯は `git log -p HANDOFF.md` で見られる。v1 の申し送りは 2026-10-30 の版)
 
 ## ゴール(完成条件)
 v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反映できているかを確かめ、OK が出たら本番に出す(11/5 定例)。
@@ -18,8 +18,8 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 
 ## 止まっていること(人の操作が要る)
 1. **ログインのメールの送り主**: Supabase の標準の送信のままで、Supabase の org のメンバーのアドレスにしか届かない(代表に試してもらうなら、代表が org のメンバーであること)。本番は Resend(samasama のドメイン)を Auth の SMTP にする。Staging の site_url は Vercel のまま(コードで入るので困らない)
-2. **AI の鍵**: 代表が OpenAI(org samasama)と xAI の招待をくれた(2026-11-06)。鍵を作って `npx wrangler secret put OPENAI_API_KEY --env staging`・`XAI_API_KEY` で入れる。入るまで、相談の整理はデモの結果、「近いもの」(本番の画面と体験ページ)は文字の重なりになる。入ったら「近いもの」が 8 秒に収まるかを測り、`AI_OPENAI_REASONING_EFFORT`(今は `low`)を決める。両社とも `response_format: json_object` が通るかは公式に書いていないので、そこも確かめる
-3. **Google ログイン**: 代表が GCP のプロジェクト `samasama-app` を作り、岡本が招待を受けた(2026-11-09)。同意画面と OAuth クライアントはこれから。Staging の Auth はまだオフ(`NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED` もオフのまま)
+2. **AI の鍵**: 2026-11-09 に `OPENAI_API_KEY`・`XAI_API_KEY` を Workers の Staging の Secret に入れた(手元は `.env.workers-staging.local`)。両社とも指定のモデルと `response_format: json_object` が通り、体験ページの「近いもの」は AI で平均 3 秒ほど。費用の目安は 2 社合計で月 3 万円(代表)。OpenAI の支出の上限は「強制しない」設定で、自動の入金もオンなので、本番の前に止め方を代表と決める。本番の鍵は別に作る
+3. **Google ログイン**: Staging で使える(2026-11-10)。GCP のプロジェクト `samasama-app` の同意画面はテスト中で、入れるのはテストユーザー(岡本・代表)だけ。OAuth クライアント `samasama-app-staging` の設定は `ops/supabase-auth/staging`、シークレットは手元の `.env.workers-staging.local` の `GOOGLE_OAUTH_CLIENT_SECRET`(push のときに環境変数で渡す)。本番は、同意画面の公開(ブランディングの URL とサポートのメールを代表のものに)と本番用のクライアントを作ってから
 4. **ほかの鍵と費用**: SMS の会社(個人の支え手の電話番号の確認)、Resend(知らせのメール。Workers にはまだ入れていない)。どれも鍵がなければ黙って使わない作り。Workers Paid・GitHub の `CLOUDFLARE_API_TOKEN`・`CF_STAGING_DEPLOY=true` は 2026-11-05 にそろい、dev への push のたびに Workers の Staging に出る
 5. **規約とポリシーのリーガルチェック**: 11/9 版(代表の答えと改正個人情報保護法を反映。OneDrive の `700_岡本/v2.0_規約とポリシーの改定案_20261109/`)を代表へ送り、よろず支援拠点のリーガルチェックを頼んだ。チェックが済んだら、本文を `/terms`・`/privacy` と支える側の決まりの画面に入れ、`src/lib/validation/person.ts` の版を上げる(版を上げると、初めて入るときに同意し直しになる)
 

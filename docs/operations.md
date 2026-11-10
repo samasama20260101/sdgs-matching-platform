@@ -91,7 +91,7 @@
 | `RESEND_API_KEY` / `NOTIFY_FROM_EMAIL` | 利用者への知らせのメール(本人がオンにしたときだけ。件名と本文に中身を書かない)。未設定なら送らない |
 | `APP_ORIGIN` | 知らせのメールに書くアプリの URL(既定 https://app.samasama.site) |
 | `REQUIRE_MFA_FOR_SENSITIVE` | `false` にすると、団体のメンバーが機微な相談を見るときの2つ目の確認を外す(既定は要る) |
-| `NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED` | `true` で「Google で続ける」を出す(Supabase に Google の設定が要る) |
+| `NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED` | `true` で「Google で続ける」を出す(Supabase に Google の設定が要る)。Workers では GitHub の Environment の変数で渡す(Staging は 2026-11-10 から `true`、本番は未設定)。Google の設定は `ops/supabase-auth/staging` |
 | `DEV_PASSWORD` | Staging の入口パスワード。**本番には設定しない** |
 | `MAINTENANCE_MODE` / `MAINTENANCE_BYPASS_TOKEN` | メンテナンスモード(§6) |
 | `APP_ENV` / `VERCEL_ENV` | 動いている環境。Workers は `wrangler.jsonc` の vars `APP_ENV`、Vercel は自動の `VERCEL_ENV`。本番のときだけ 1 日の相談登録上限が効く(`src/lib/deployEnv.ts`) |

@@ -24,3 +24,12 @@ content_path = "./supabase/templates/login-code.html"
 [auth.email.template.confirmation]
 subject = "明日もsamasama のログインコード / Sign-in code"
 content_path = "./supabase/templates/login-code.html"
+
+[auth.external.google]
+# 「Google で続ける」(2026-11-10)。GCP のプロジェクト samasama-app の OAuth クライアント samasama-app-staging。
+# 同意画面はテスト中で、入れるのはテストユーザーに足した人だけ。クライアント ID は秘密ではないので直接書く。
+# シークレットは手元の .env.workers-staging.local の GOOGLE_OAUTH_CLIENT_SECRET を環境変数で渡して push する
+enabled = true
+client_id = "493145134511-fkfmfdr4pcpjgota0o1550h7pbvaihkm.apps.googleusercontent.com"
+secret = "env(GOOGLE_OAUTH_CLIENT_SECRET)"
+skip_nonce_check = false
