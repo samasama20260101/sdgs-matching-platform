@@ -13,7 +13,7 @@ import { regionLevelFor } from '@/lib/domain/serviceAreas'
 type Payload = {
   organization: { id: string; display_id: string; name: string; org_type: string; vetting_status: string; bio: string | null; contact_email: string | null; population: number | null }
   areas: Areas
-  myRole: 'OWNER' | 'ADMIN' | 'MEMBER'
+  myRole: 'OWNER' | 'MEMBER'
   members: { id: string; role: string; status: string; displayName: string; isMe: boolean }[]
   invitations: { id: string; email: string; role: string }[]
 }
@@ -162,7 +162,7 @@ function Org({ id }: { id: string }) {
   const fetchOrg = useCallback(() => apiFetch<Payload>(`/api/support/orgs/${id}`), [id])
   const { data, error: loadError, reload } = useLoad(fetchOrg)
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'MEMBER' | 'ADMIN'>('MEMBER')
+  const [role, setRole] = useState<'MEMBER' | 'OWNER'>('MEMBER')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const loadMessage = loadError ? t('notFound') : null
@@ -193,7 +193,6 @@ function Org({ id }: { id: string }) {
   if (!data) return <Spinner />
   const o = data.organization
   const canManage = data.myRole === 'OWNER'
-  const canInvite = data.myRole === 'OWNER' || data.myRole === 'ADMIN'
   return (
     <>
       <div className="flex flex-col gap-1">
@@ -211,7 +210,7 @@ function Org({ id }: { id: string }) {
               {canManage && !m.isMe ? (
                 <>
                   <select value={m.role} onChange={(e) => void change(m.id, { role: e.target.value })} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[13px]">
-                    {(['OWNER', 'ADMIN', 'MEMBER'] as const).map((r) => <option key={r} value={r}>{t(`role.${r}`)}</option>)}
+                    {(['OWNER', 'MEMBER'] as const).map((r) => <option key={r} value={r}>{t(`role.${r}`)}</option>)}
                   </select>
                   <Button tone="support" variant="quiet" className="min-h-[44px] text-[12.5px]" onClick={() => void change(m.id, { remove: true })}>{t('remove')}</Button>
                 </>
@@ -220,16 +219,21 @@ function Org({ id }: { id: string }) {
           </div>
         ))}
       </Card>
-      {canInvite && (
+      {canManage && (
         <Card tone="support" className="flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between"><SectionLabel>{t('invite')}</SectionLabel><Tip label={t('inviteTipLabel')}>{t('inviteTip')}</Tip></div>
           <TextField label={t('email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          {data.myRole === 'OWNER' && (
-            <select value={role} onChange={(e) => setRole(e.target.value === 'ADMIN' ? 'ADMIN' : 'MEMBER')} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[14px]">
+          {/* 管理とメンバーの違いは、選ぶところの i で出す(11/11 代表の Staging メモ 4) */}
+          <label className="flex flex-col gap-1.5">
+            <span className="flex items-center justify-between">
+              <span className="text-[13px] font-bold">{t('inviteRole')}</span>
+              <Tip label={t('rolesTipLabel')}>{t('rolesTip')}</Tip>
+            </span>
+            <select value={role} onChange={(e) => setRole(e.target.value === 'OWNER' ? 'OWNER' : 'MEMBER')} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[14px]">
               <option value="MEMBER">{t('role.MEMBER')}</option>
-              <option value="ADMIN">{t('role.ADMIN')}</option>
+              <option value="OWNER">{t('role.OWNER')}</option>
             </select>
-          )}
+          </label>
           <Button tone="support" variant="night" disabled={!email.trim()} onClick={() => void invite()}>{t('sendInvite')}</Button>
           {data.invitations.length > 0 && <span className="text-[12.5px] text-mist">{t('pendingInvites', { count: data.invitations.length })}</span>}
         </Card>

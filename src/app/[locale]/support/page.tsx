@@ -24,6 +24,8 @@ function Home() {
   // 顔の key(文字列)で読み直す。/api/me を読み直すたびに顔の中身が作り直されても、同じ顔なら読み直さない
   const faceKey = current?.key ?? null
   const coordinator = current?.coordinator === true
+  // 審査中の団体には相談が見えず、代理の登録もできない(visibility.ts・/api/support/proxy)
+  const pendingOrg = current?.kind === 'ORGANIZATION' && !current.approved
   useEffect(() => {
     if (!faceKey) return
     const face = encodeURIComponent(faceKey)
@@ -62,7 +64,7 @@ function Home() {
           </span>
         </div>
       )}
-      {current?.kind === 'ORGANIZATION' && !current.approved && <Card tone="support" className="p-4"><Lead>{t('appliedNote')}</Lead></Card>}
+      {pendingOrg && <Card tone="support" className="p-4"><Lead>{t('appliedNote')}</Lead></Card>}
       {turn.length > 0 && (
         <section className="flex flex-col gap-2">
           <SectionLabel>{t('yourTurn', { count: turn.length })}</SectionLabel>
@@ -93,7 +95,7 @@ function Home() {
           <SectionLabel>{t('forYou')}</SectionLabel>
           <Tip label={t('forYouTipLabel')}>{t('forYouTip')}</Tip>
         </div>
-        {fresh && fresh.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('noneForYou')}</p>}
+        {fresh && fresh.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{pendingOrg ? t('noneUntilApproved') : t('noneForYou')}</p>}
         {(fresh ?? []).map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ""} />)}
         <Link href="/support/find" className="px-1 text-[13.5px] font-bold text-night">{t('findMore')}</Link>
       </section>
@@ -104,7 +106,15 @@ function Home() {
       </Link>
       {current?.kind === 'ORGANIZATION' && (
         <div className="grid grid-cols-2 gap-2">
-          <Link href={`/support/proxy?face=${encodeURIComponent(current.key)}`} className="no-underline"><Card tone="support" className="p-3 text-center text-[13.5px] font-bold text-ink">{t('proxy')}</Card></Link>
+          {/* 代理の登録は承認された団体だけ(API も断る)。審査中は押せない形で出し、いつ使えるかを書く(11/11 代表の Staging メモ 3) */}
+          {pendingOrg ? (
+            <Card tone="support" aria-disabled className="flex flex-col gap-0.5 p-3 text-center opacity-60">
+              <span className="text-[13.5px] font-bold text-ink">{t('proxy')}</span>
+              <span className="text-[11.5px] text-ink-soft">{t('proxyAfterInterview')}</span>
+            </Card>
+          ) : (
+            <Link href={`/support/proxy?face=${encodeURIComponent(current.key)}`} className="no-underline"><Card tone="support" className="p-3 text-center text-[13.5px] font-bold text-ink">{t('proxy')}</Card></Link>
+          )}
           <Link href={`/support/org/${current.organizationId}`} className="no-underline"><Card tone="support" className="p-3 text-center text-[13.5px] font-bold text-ink">{t('orgPage')}</Card></Link>
         </div>
       )}

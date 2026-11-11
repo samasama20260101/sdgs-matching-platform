@@ -184,7 +184,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
 |---|---|
 | `users` | ログインする個人(ロール・表示番号・地域・停止など) |
 | `organizations` | サポーター団体(物理削除せず ARCHIVED にする) |
-| `organization_memberships` | 個人と団体の所属(OWNER / ADMIN / MEMBER、1 人 1 団体) |
+| `organization_memberships` | 個人と団体の所属(v2 は OWNER / MEMBER。ADMIN は v2_13 でなくした。v1 は 1 人 1 団体) |
 | `supporter_service_areas` | 団体の活動地域(全国と個別地域は混ぜられない) |
 | `cases` | 相談(選んだ選択肢・災害の情報・写真は `intake_qna`、AI の結果は `ai_sdg_suggestion`) |
 | `offers` | 申し出(承認順 `accepted_order`) |

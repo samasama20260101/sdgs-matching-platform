@@ -11,7 +11,7 @@ export type OrganizationFace = {
   organizationName: string
   orgType: string
   vettingStatus: string
-  role: 'OWNER' | 'ADMIN' | 'MEMBER'
+  role: 'OWNER' | 'MEMBER'
   membershipId: string
   isCoordinator: boolean
 }
@@ -77,7 +77,7 @@ export async function loadFaces(userId: string): Promise<Faces> {
   const organizations: OrganizationFace[] = rows.flatMap((m) => {
     const org = m.organizations
     if (!org || org.status === 'ARCHIVED') return []
-    const role: OrganizationFace['role'] = m.role === 'OWNER' || m.role === 'ADMIN' ? m.role : 'MEMBER'
+    const role: OrganizationFace['role'] = m.role === 'OWNER' ? 'OWNER' : 'MEMBER'
     return [{
       kind: 'ORGANIZATION' as const,
       organizationId: m.organization_id,

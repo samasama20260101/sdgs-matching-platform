@@ -6,7 +6,7 @@ import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { canInvite, myOrgRole } from '@/lib/server/orgAccess'
 
-const schema = z.object({ email: z.string().email().max(254).transform((v) => v.trim().toLowerCase()), role: z.enum(['ADMIN', 'MEMBER']) })
+const schema = z.object({ email: z.string().email().max(254).transform((v) => v.trim().toLowerCase()), role: z.enum(['OWNER', 'MEMBER']) })
 const INVITE_DAYS = 14
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +17,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'メールアドレスを確かめてください', code: 'INVALID' }, { status: 400 })
   const role = await myOrgRole(auth.appUser.id, id)
-  if (!role || !canInvite(role, parsed.data.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!role || !canInvite(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { error } = await supabaseAdmin.from('organization_invitations').insert({
     organization_id: id,
     email: parsed.data.email,

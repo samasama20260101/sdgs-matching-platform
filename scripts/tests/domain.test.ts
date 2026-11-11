@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { canSupportAtAge, currentAge, fullYearsBetween, isMinorAge, needsGuardianConsent, parseAgeInput, todayInTokyo } from '../../src/lib/domain/age'
 import { organizationScore, resolvedPoints, summarizeContributions } from '../../src/lib/domain/score'
 import { applyAiSensitivity, deriveSensitivity } from '../../src/lib/domain/sensitivity'
-import { canOffer, supporterCaseAccess, type CaseForVisibility, type SupporterFace } from '../../src/lib/domain/visibility'
+import { canOffer, offerBlock, supporterCaseAccess, type CaseForVisibility, type SupporterFace } from '../../src/lib/domain/visibility'
 import { formatHandoverCode, HANDOVER_ALPHABET, normalizeHandoverInput } from '../../src/lib/domain/handover'
 
 // ---- 年齢: 登録日の年齢を基準日から1年ごとに進める
@@ -114,6 +114,15 @@ assert.equal(canOffer(company, person, { alreadyOffered: false, phoneVerified: t
 assert.equal(canOffer(base, org, { alreadyOffered: true, requireMfaForSensitive: true }), false)
 assert.equal(canOffer({ ...base, status: 'RESOLVED' }, org, { alreadyOffered: false, requireMfaForSensitive: true }), false)
 assert.equal(canOffer({ ...base, is_sensitive: true }, org, { alreadyOffered: false, requireMfaForSensitive: true }), false)
+// 申し出られない理由(画面の案内の出し分け)
+assert.equal(offerBlock(company, person, { alreadyOffered: false, phoneVerified: false, requireMfaForSensitive: true }), 'PHONE_REQUIRED')
+assert.equal(offerBlock(company, person, { alreadyOffered: false, phoneVerified: true, requireMfaForSensitive: true }), null)
+assert.equal(offerBlock(base, org, { alreadyOffered: true, requireMfaForSensitive: true }), 'ALREADY_OFFERED')
+assert.equal(offerBlock({ ...base, status: 'RESOLVED' }, org, { alreadyOffered: false, requireMfaForSensitive: true }), 'CLOSED')
+assert.equal(offerBlock({ ...base, is_sensitive: true }, org, { alreadyOffered: false, requireMfaForSensitive: true }), 'MFA_REQUIRED')
+assert.equal(offerBlock(base, { ...org, organizationApproved: false }, { alreadyOffered: false, requireMfaForSensitive: true }), 'NOT_VISIBLE')
+// 個人の支え手に見えない相談(機微)は、電話番号より先に「見えない」を返す(電話番号を確かめても申し出られないため)
+assert.equal(offerBlock({ ...company, is_sensitive: true }, person, { alreadyOffered: false, phoneVerified: false, requireMfaForSensitive: true }), 'NOT_VISIBLE')
 
 // ---- 引き継ぎコード(10 字・XXXXX-XXXXX。240 以上のバイトは捨てて偏りを出さない)
 const code = formatHandoverCode(new Uint8Array([0, 1, 2, 3, 4, 250, 29, 99, 5, 6, 7]))

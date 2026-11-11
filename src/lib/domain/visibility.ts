@@ -50,11 +50,21 @@ export function supporterCaseAccess(
   return 'FULL'
 }
 
-// 申し出られるか(見えることに加えて、受付中・支援中で、まだ申し出ていない)
-export function canOffer(c: CaseForVisibility, face: SupporterFace, options: { alreadyOffered: boolean; phoneVerified?: boolean; requireMfaForSensitive: boolean }): boolean {
-  if (options.alreadyOffered) return false
-  if (!ACTIVE_STATUSES.has(c.status)) return false
+// 申し出られない理由。null なら申し出られる(見えることに加えて、受付中・支援中で、まだ申し出ていない)
+//   画面は理由ごとに案内を出す(「いまは申し出られません」だけでは、何をすればよいか分からない。11/11 代表の Staging メモ 6)
+export type OfferBlock = 'ALREADY_OFFERED' | 'CLOSED' | 'PHONE_REQUIRED' | 'MFA_REQUIRED' | 'NOT_VISIBLE'
+
+export function offerBlock(c: CaseForVisibility, face: SupporterFace, options: { alreadyOffered: boolean; phoneVerified?: boolean; requireMfaForSensitive: boolean }): OfferBlock | null {
+  if (options.alreadyOffered) return 'ALREADY_OFFERED'
+  if (!ACTIVE_STATUSES.has(c.status)) return 'CLOSED'
+  const access = supporterCaseAccess(c, face, { involved: false, requireMfaForSensitive: options.requireMfaForSensitive })
+  if (access === 'NONE') return 'NOT_VISIBLE'
+  if (access === 'LOCKED') return 'MFA_REQUIRED'
   // 個人の支え手は電話番号の確認が申し出の条件(10/30 決定 2)
-  if (face.kind === 'INDIVIDUAL' && !options.phoneVerified) return false
-  return supporterCaseAccess(c, face, { involved: false, requireMfaForSensitive: options.requireMfaForSensitive }) === 'FULL'
+  if (face.kind === 'INDIVIDUAL' && !options.phoneVerified) return 'PHONE_REQUIRED'
+  return null
+}
+
+export function canOffer(c: CaseForVisibility, face: SupporterFace, options: { alreadyOffered: boolean; phoneVerified?: boolean; requireMfaForSensitive: boolean }): boolean {
+  return offerBlock(c, face, options) === null
 }

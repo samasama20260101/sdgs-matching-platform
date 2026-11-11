@@ -4,6 +4,7 @@
 import { Suspense, use, useCallback, useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
+import { Link } from '@/i18n/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
 import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
@@ -46,6 +47,21 @@ function OfferForm({ caseId, face, onDone }: { caseId: string; face: string; onD
       <Button tone="support" variant="night" disabled={busy || !message.trim()} onClick={() => void send()}>{t('offer')}</Button>
     </Card>
   )
+}
+
+// 申し出られないときは、理由と次にすることを出す(「いまは申し出られません」だけでは分からない。11/11 代表の Staging メモ 6)
+function CannotOffer({ block }: { block: SupportCaseItem['offerBlock'] }) {
+  const t = useTranslations('support.case')
+  if (block === 'PHONE_REQUIRED') {
+    return (
+      <Card tone="support" className="flex flex-col gap-2 p-4">
+        <Lead>{t('cannotOfferPhone')}</Lead>
+        <Link href="/support/join" className="text-[14px] font-bold text-night">{t('verifyPhoneLink')}</Link>
+      </Card>
+    )
+  }
+  const message = block === 'CLOSED' ? t('cannotOfferClosed') : block === 'MFA_REQUIRED' ? t('cannotOfferMfa') : t('cannotOffer')
+  return <Card tone="support" className="p-4"><Lead>{message}</Lead></Card>
 }
 
 function InviteForm({ caseId, face }: { caseId: string; face: string }) {
@@ -155,7 +171,7 @@ function Inner({ id }: { id: string }) {
       )}
 
       {!mine || ['WITHDRAWN', 'DECLINED'].includes(mine.status) ? (
-        c.canOffer ? <OfferForm caseId={c.id} face={face} onDone={reload} /> : <Card tone="support" className="p-4"><Lead>{t('cannotOffer')}</Lead></Card>
+        c.canOffer ? <OfferForm caseId={c.id} face={face} onDone={reload} /> : <CannotOffer block={c.offerBlock} />
       ) : mine.status === 'PENDING' ? (
         <Card tone="support" className="flex flex-col gap-2 p-4">
           <span className="text-[14px] font-bold">{mine.invited ? t('waitingConsentInvite') : t('pending')}</span>
