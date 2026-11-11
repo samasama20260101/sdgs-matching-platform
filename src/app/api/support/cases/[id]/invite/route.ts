@@ -49,7 +49,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   after(async () => {
-    const { data: owners } = await supabaseAdmin.from('organization_memberships').select('user_id').eq('organization_id', target.id).eq('status', 'ACTIVE').in('role', ['OWNER', 'ADMIN'])
+    const { data: owners } = await supabaseAdmin.from('organization_memberships').select('user_id').eq('organization_id', target.id).eq('status', 'ACTIVE').eq('role', 'OWNER')
     await notifyUsers((owners ?? []).map((m) => m.user_id as string), 'INVITED').catch(() => undefined)
   })
   return NextResponse.json({ id: data.id })

@@ -279,13 +279,15 @@
     "me": "(tú)",
     "role": {
       "OWNER": "Responsable",
-      "ADMIN": "Puede añadir miembros",
-      "MEMBER": "Personal"
+      "MEMBER": "Miembro"
     },
     "remove": "Quitar",
     "invite": "Invitar a un miembro",
     "inviteTipLabel": "Cómo invitar",
     "inviteTip": "Invita con el correo propio de la persona (no el correo común del departamento). Si tiene cuenta, le llega la invitación; si no, aparecerá cuando se registre.",
+    "inviteRole": "Rol",
+    "rolesTipLabel": "Responsable y miembro",
+    "rolesTip": "Responsable: edita la presentación, el contacto y las zonas de la organización, e invita, quita o cambia el rol de los miembros. Miembro: ofrece apoyo y conversa en nombre de la organización. Los responsables también pueden apoyar consultas como los miembros.",
     "email": "Correo electrónico",
     "sendInvite": "Invitar",
     "invited": "Invitación enviada",

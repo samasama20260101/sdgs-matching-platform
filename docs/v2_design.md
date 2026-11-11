@@ -48,6 +48,7 @@
 | `v2_10_public_supporter_counts.sql` | 公開の団体一覧の「解決した相談」と「ありがとう」を DB の中で数える関数。service_role だけが呼べる |
 | `v2_11_set_organization_service_areas.sql` | 団体の活動地域を 1 回で入れ替える関数(全国か地域の一覧)。団体の画面の「活動地域を変える」から呼ぶ。service_role だけが呼べる |
 | `v2_12_rate_limits.sql` | AI を呼ぶ API の回数の上限を DB で数える表と関数(体験ページの近いもの・本番の近いもの)。古い行は毎日の自動処理が消す。service_role だけ |
+| `v2_13_two_organization_roles.sql` | 団体の中の役割を管理(OWNER)とメンバー(MEMBER)の2つにする。追加(ADMIN)の人と招待は OWNER に移し、移した人は audit_logs に残す(2026-11-11) |
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
 
 Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を取り込んだ(`scripts/import-directory-entries.mts`、データは directory-data の出力)。

@@ -7,7 +7,7 @@ import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { myOrgRole } from '@/lib/server/orgAccess'
 
-const schema = z.union([z.object({ role: z.enum(['OWNER', 'ADMIN', 'MEMBER']) }), z.object({ remove: z.literal(true) })])
+const schema = z.union([z.object({ role: z.enum(['OWNER', 'MEMBER']) }), z.object({ remove: z.literal(true) })])
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string; membershipId: string }> }) {
   const { id, membershipId } = await params

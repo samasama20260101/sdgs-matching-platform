@@ -279,13 +279,15 @@
     "me": "(you)",
     "role": {
       "OWNER": "Manager",
-      "ADMIN": "Can add members",
-      "MEMBER": "Staff"
+      "MEMBER": "Member"
     },
     "remove": "Remove",
     "invite": "Invite a member",
     "inviteTipLabel": "How to invite",
     "inviteTip": "Invite with the person's own email (not a shared department address). If they have an account the invitation reaches them; otherwise it appears when they sign up.",
+    "inviteRole": "Role",
+    "rolesTipLabel": "Manager and member",
+    "rolesTip": "Manager: edits the organization's profile, contact and areas, and invites, removes or changes the role of members. Member: makes offers and talks with people on behalf of the organization. Managers can support requests just like members.",
     "email": "Email address",
     "sendInvite": "Invite",
     "invited": "Invited",

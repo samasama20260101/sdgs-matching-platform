@@ -8,7 +8,7 @@ import { cx } from '@/components/app/ui'
 import { useStoredValue } from '@/lib/client/storedValue'
 import { canSupportAtAge } from '@/lib/domain/age'
 
-export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'ADMIN' | 'MEMBER'; organizationId?: string; coordinator?: boolean }
+export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'MEMBER'; organizationId?: string; coordinator?: boolean }
 
 const STORAGE_KEY = 'samasama.face'
 

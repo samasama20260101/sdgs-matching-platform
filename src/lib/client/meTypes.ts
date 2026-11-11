@@ -4,7 +4,7 @@ export type MeOrganizationFace = {
   organizationName: string
   orgType: string
   vettingStatus: string
-  role: 'OWNER' | 'ADMIN' | 'MEMBER'
+  role: 'OWNER' | 'MEMBER'
   isCoordinator: boolean
 }
 
