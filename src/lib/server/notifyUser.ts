@@ -6,6 +6,7 @@ import 'server-only'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { buildNoticeEmail } from './noticeEmail'
 import { mapInBatches } from '@/lib/concurrency'
+import { offerMemberUserId } from '@/lib/domain/caseMember'
 
 const NOTIFY_CONCURRENCY = 5
 
@@ -49,8 +50,8 @@ export async function consulteeUserIds(caseId: string): Promise<string[]> {
   return [data?.owner_user_id, data?.assignee_user_id].filter((v): v is string => Boolean(v))
 }
 
-// 選ばれた支え手(申し出を出した人)
+// 選ばれた支え手(団体は、その相談を受け持つメンバー。#118)
 export async function chosenSupporterUserIds(caseId: string): Promise<string[]> {
   const { data } = await supabaseAdmin.from('offers').select('created_by_user_id, supporter_user_id').eq('case_id', caseId).eq('status', 'ACCEPTED')
-  return (data ?? []).map((o) => (o.created_by_user_id as string | null) ?? (o.supporter_user_id as string))
+  return (data ?? []).map((o) => offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null })).filter((v): v is string => Boolean(v))
 }

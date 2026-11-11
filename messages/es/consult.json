@@ -35,7 +35,7 @@
   "org": {
     "titleCompany": "Consultar como empresa",
     "titleCommunity": "Consultar como comunidad",
-    "leadCompany": "La consulta pertenece a la empresa y otras personas de la empresa pueden verla. Sigue aunque cambie la persona responsable.",
+    "leadCompany": "La consulta pertenece a la empresa y otros miembros de la empresa pueden verla. Sigue aunque cambie el miembro que la lleva.",
     "leadCommunity": "La consulta pertenece a la sección del gobierno local o a la asociación de vecinos, y otras personas de la organización pueden verla. Quien te suceda puede continuarla.",
     "which": "¿En nombre de qué organización consultas?",
     "registerFirst": "Registrar una organización",

@@ -35,7 +35,7 @@
   "org": {
     "titleCompany": "Ask as a company",
     "titleCommunity": "Ask as a community",
-    "leadCompany": "The request belongs to the company and other members can see it. It continues even if the person in charge changes.",
+    "leadCompany": "The request belongs to the company and other members can see it. It continues even if the member handling it changes.",
     "leadCommunity": "The request belongs to the local government section or neighborhood group, and other members can see it. A successor can take over.",
     "which": "Which organization are you asking for?",
     "registerFirst": "Register an organization",
