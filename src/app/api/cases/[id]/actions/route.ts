@@ -8,6 +8,7 @@ import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { postSystemMessage } from '@/lib/server/systemMessages'
 import { sanitizeThanks } from '@/lib/domain/offers'
 import { summarizeResolvedCase } from '@/lib/server/caseKnowledge'
+import { offerMemberUserId } from '@/lib/domain/caseMember'
 
 const schema = z.object({
   action: z.enum(['cancel', 'confirmResolved', 'notYet']),
@@ -74,7 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .eq('status', 'ACCEPTED')
     const rows = (accepted ?? []).flatMap((o) => thanks.map((word) => ({
       case_id: id,
-      supporter_user_id: (o.created_by_user_id as string | null) ?? (o.supporter_user_id as string),
+      supporter_user_id: offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }),
       supporter_organization_id: o.supporter_organization_id as string | null,
       given_by_user_id: userId,
       badge_key: word,
@@ -82,7 +83,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (rows.length > 0) await supabaseAdmin.from('supporter_badges').insert(rows)
     // ありがとうは選んだ言葉の数によらず1回(支え手ごとに1行)
     const thanksRows = (accepted ?? []).map((o) => ({
-      user_id: (o.created_by_user_id as string | null) ?? (o.supporter_user_id as string),
+      user_id: offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }),
       organization_id: o.supporter_organization_id as string | null,
       case_id: id,
       kind: 'THANKS',

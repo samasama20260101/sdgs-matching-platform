@@ -10,7 +10,7 @@ import { useLoad } from '@/lib/client/useLoad'
 import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
-import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea } from '@/components/app/ui'
+import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea, Tip } from '@/components/app/ui'
 import { Thread } from '@/components/thread/Thread'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
 import { waitingLabel } from '@/lib/domain/schedule'
@@ -20,7 +20,17 @@ type Detail = {
   case: SupportCaseItem & { description: string; since: string | null; wish: string | null; supporterResolvedAt: string | null; createdAt: string }
   myOffer: { id: string; status: string; message: string; acceptedOrder: number | null; invited: boolean } | null
   isLead: boolean
+  member: CaseMember | null
   locked: boolean
+}
+
+type CaseMember = {
+  userId: string
+  displayName: string
+  isMe: boolean
+  active: boolean
+  canChange: boolean
+  candidates: { userId: string; displayName: string; isMe: boolean }[]
 }
 
 function OfferForm({ caseId, face, onDone }: { caseId: string; face: string; onDone: () => Promise<void> }) {
@@ -45,6 +55,54 @@ function OfferForm({ caseId, face, onDone }: { caseId: string; face: string; onD
       <TextArea label={t('offerMessage')} value={message} maxLength={1000} onChange={(e) => setMessage(e.target.value)} />
       <ErrorNote>{error}</ErrorNote>
       <Button tone="support" variant="night" disabled={busy || !message.trim()} onClick={() => void send()}>{t('offer')}</Button>
+    </Card>
+  )
+}
+
+// 団体の中で、この相談を受け持つメンバー(#118、11/11 代表の検討キャンバス 5)。管理の人と受け持つ本人が替えられる
+function MemberCard({ caseId, face, member, onDone }: { caseId: string; face: string; member: CaseMember; onDone: () => Promise<void> }) {
+  const t = useTranslations('support.case')
+  const [next, setNext] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const change = async () => {
+    setBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      await apiFetch(`/api/support/cases/${caseId}/member`, { method: 'PATCH', json: { face, memberUserId: next } })
+      setNext('')
+      setNotice(t('memberChanged'))
+      await onDone()
+    } catch (e) {
+      setError(e instanceof ApiError && e.code === 'CONFLICT' ? t('memberConflict') : t('memberChangeFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <Card tone="support" className="flex flex-col gap-3 p-4">
+      <div className="flex items-center justify-between">
+        <SectionLabel>{t('member')}</SectionLabel>
+        <Tip label={t('memberTipLabel')}>{t('memberTip')}</Tip>
+      </div>
+      <span className="text-[14.5px] font-bold">{member.displayName}{member.isMe ? ` ${t('memberMe')}` : ''}</span>
+      {!member.active && <Lead>{t('memberLeft')}</Lead>}
+      {member.canChange && member.candidates.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-bold">{t('memberChange')}</span>
+            <select value={next} onChange={(e) => setNext(e.target.value)} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[14px]">
+              <option value="">{t('memberChoose')}</option>
+              {member.candidates.map((c) => <option key={c.userId} value={c.userId}>{c.displayName}{c.isMe ? ` ${t('memberMe')}` : ''}</option>)}
+            </select>
+          </label>
+          <Button tone="support" variant="outline" disabled={busy || !next} onClick={() => void change()}>{t('memberChangeButton')}</Button>
+        </div>
+      )}
+      {notice && <span className="text-[13px] font-bold text-leaf-ink">{notice}</span>}
+      <ErrorNote>{error}</ErrorNote>
     </Card>
   )
 }
@@ -169,6 +227,8 @@ function Inner({ id }: { id: string }) {
           </div>
         </Card>
       )}
+
+      {data.member && <MemberCard caseId={c.id} face={face} member={data.member} onDone={reload} />}
 
       {!mine || ['WITHDRAWN', 'DECLINED'].includes(mine.status) ? (
         c.canOffer ? <OfferForm caseId={c.id} face={face} onDone={reload} /> : <CannotOffer block={c.offerBlock} />

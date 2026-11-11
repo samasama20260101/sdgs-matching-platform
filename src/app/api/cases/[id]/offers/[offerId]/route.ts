@@ -8,6 +8,7 @@ import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/domain/offers'
 import { postSystemMessage } from '@/lib/server/systemMessages'
 import { notifyUsers } from '@/lib/server/notifyUser'
+import { offerMemberUserId } from '@/lib/domain/caseMember'
 
 const schema = z.object({ action: z.enum(['accept', 'decline']) })
 
@@ -60,7 +61,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (accepted?.invited_by_offer_id) await postSystemMessage(id, auth.appUser.id, 'joined')
   after(async () => {
     const { data: o } = await supabaseAdmin.from('offers').select('created_by_user_id, supporter_user_id').eq('id', offerId).single()
-    await notifyUsers([(o?.created_by_user_id as string | null) ?? (o?.supporter_user_id as string)], 'CHOSEN').catch(() => undefined)
+    // 団体の申し出は、受け持つメンバーに知らせる(#118)
+    const to = o ? offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }) : null
+    if (to) await notifyUsers([to], 'CHOSEN').catch(() => undefined)
   })
   return NextResponse.json({ ok: true, acceptedOrder: r.accepted_order })
 }
