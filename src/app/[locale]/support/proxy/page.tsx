@@ -4,7 +4,7 @@
 import { Suspense, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
-import { apiFetch } from '@/lib/client/api'
+import { apiFetch, ApiError } from '@/lib/client/api'
 import { optionsFor } from '@/lib/domain/intake'
 import { Link } from '@/i18n/navigation'
 import { AppFrame } from '@/components/app/AppShell'
@@ -27,6 +27,8 @@ function Inner() {
   return (
     <RequireMe>
       {(me) => {
+        const myOrg = me.faces.organizations.find((o) => `org:${o.organizationId}` === face)
+        const pendingOrg = Boolean(myOrg && myOrg.vettingStatus !== 'APPROVED')
         const submit = async () => {
           if (!name.trim() || minor === null || !words.trim() || !consent) {
             setError(t('required'))
@@ -36,15 +38,23 @@ function Inner() {
           setError(null)
           try {
             setDone(await apiFetch('/api/support/proxy', { method: 'POST', json: { face, displayName: name, isMinor: minor, country: me.person.country, regionCode: me.person.regionCode, indicators: selected, words, consent: true } }))
-          } catch {
-            setError(t('failed'))
+          } catch (e) {
+            // 断られた理由が分かるときは、それを出す(「登録できませんでした」だけでは何をすればよいか分からない。11/11 代表の Staging メモ 3)
+            setError(e instanceof ApiError && e.code === 'NOT_ALLOWED' ? t('notApproved') : t('failed'))
           } finally {
             setBusy(false)
           }
         }
         return (
           <AppFrame tone="support">
-            {done ? (
+            {pendingOrg ? (
+              // 審査中の団体の顔で直接開いたときも、入力する前に使えないことを伝える
+              <Card tone="support" className="flex flex-col gap-3 p-5">
+                <Heading level={2}>{t('title')}</Heading>
+                <Lead>{t('notApproved')}</Lead>
+                <Link href="/support" className="text-[14px] font-bold text-night">{t('backHome')}</Link>
+              </Card>
+            ) : done ? (
               <Card tone="support" className="flex flex-col gap-3 p-5">
                 <span className="text-[16px] font-bold">{t('doneTitle', { name })}</span>
                 <div className="flex items-center gap-2">

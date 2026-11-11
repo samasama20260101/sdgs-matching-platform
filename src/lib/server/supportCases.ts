@@ -3,7 +3,7 @@ import 'server-only'
 // 支える側から見える相談(盤 20・22)。見える範囲は src/lib/domain/visibility.ts だけで決める。
 // 顔(立場)は「団体の一員として(どの団体か)」か「個人として」。URL の face=org:<id> / face=individual
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { canOffer, supporterCaseAccess, type CaseAccess as Access, type SupporterFace } from '@/lib/domain/visibility'
+import { offerBlock, supporterCaseAccess, type CaseAccess as Access, type OfferBlock, type SupporterFace } from '@/lib/domain/visibility'
 import { optionsFor } from '@/lib/domain/intake'
 import { caseAreaGoals, isAreaSubject, type AreaSubject } from '@/lib/domain/supportAreas'
 import { stripConsolation } from '@/lib/ai/prompts/caseSummary'
@@ -122,6 +122,8 @@ export type SupportCaseItem = {
   lastMessage?: LastMessage | null
   createdAt: string
   canOffer: boolean
+  // 申し出られない理由(画面の案内の出し分け)。申し出られるなら null
+  offerBlock: OfferBlock | null
 }
 
 function indicatorText(subject: CaseRow['subject_type'], code: string): string {
@@ -154,6 +156,7 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
     const access: Access = supporterCaseAccess(c, rf.face, { involved, requireMfaForSensitive: requireMfaForSensitive() })
     if (access === 'NONE') return []
     const locked = access === 'LOCKED'
+    const block = offerBlock(c, rf.face, { alreadyOffered: Boolean(mine && mine.status !== 'WITHDRAWN' && mine.status !== 'DECLINED'), phoneVerified: rf.phoneVerified, requireMfaForSensitive: requireMfaForSensitive() })
     return [{
       id: c.id,
       locked,
@@ -177,7 +180,8 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       createdAt: c.created_at,
       offersCount: locked ? 0 : caseOffers.filter((o) => ['PENDING', 'ACCEPTED'].includes(o.status)).length,
       myOfferStatus: mine?.status ?? null,
-      canOffer: canOffer(c, rf.face, { alreadyOffered: Boolean(mine && mine.status !== 'WITHDRAWN' && mine.status !== 'DECLINED'), phoneVerified: rf.phoneVerified, requireMfaForSensitive: requireMfaForSensitive() }),
+      canOffer: block === null,
+      offerBlock: block,
     }]
   })
 }
