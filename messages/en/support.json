@@ -188,9 +188,7 @@
     "contactEmailTipLabel": "How the contact email is used",
     "contactEmailTip": "For example a shared department address. Used only for notices such as new offers, never for signing in.",
     "application": {
-      "activities": "What do you do?",
       "areas": "Where do you work?",
-      "targets": "What problems and people can you support?",
       "staff": "How many people handle requests?",
       "safeguarding": "Do you have rules to protect children and vulnerable people? (describe if so)",
       "website": "Website or social media",
@@ -199,7 +197,7 @@
     "flowTitle": "How to become a supporting organization",
     "flow": {
       "apply": "Apply on this screen",
-      "interview": "Have an interview with samasama (about 30 minutes online)",
+      "interview": "Have an interview with samasama (about 60 minutes online)",
       "approved": "Once approved, you're listed and can make offers"
     },
     "apply": "Apply",
@@ -211,7 +209,48 @@
       "COMMUNITY": "For requests from communities"
     },
     "skillsNote": "Area names differ depending on who asked",
-    "skillsPicked": "{count} selected"
+    "skillsPicked": "{count} selected",
+    "checksTitle": "Six points we will talk about in the interview",
+    "checksTipLabel": "About the six points",
+    "checksTip": "These are the points samasama checks in the interview. Choose the answer closest to how you think now, and add a few words where you can. We will use what you write here in the interview. Choosing \"I'd like to talk about it\" does not by itself mean your application will be turned down.",
+    "checksNoteLabel": "Note",
+    "checksRequired": "Please answer all six points (missing: {numbers})",
+    "selfCheck": {
+      "yes": "This applies to us",
+      "discuss": "I'd like to talk about it"
+    },
+    "checks": {
+      "care": {
+        "statement": "We agree that people can care for strangers and people outside their family, even without being paid",
+        "note": "This does not mean working unpaid forever or making all support free.",
+        "prompt": "How do you think about supporting someone you have never met, who is not family, and from whom you get no thanks or reward? (optional)"
+      },
+      "imagine": {
+        "statement": "We have faced problems that were not our own fault, or we can imagine such situations from the point of view of the person in them",
+        "note": "You do not need to write about painful experiences. A situation you can picture, or an imagined one, is fine.",
+        "prompt": "How would you like to face people who are struggling for reasons they cannot change on their own? (optional)"
+      },
+      "consulteeFirst": {
+        "statement": "When our organization's interests and the better choice for the person asking for help conflict, we can put that person first",
+        "note": "This does not deny the income or salaries your work needs. We ask how you think when interests conflict.",
+        "prompt": "When the choice that brings income differs from the better choice for the person asking, how do you decide? (optional)"
+      },
+      "activity": {
+        "statement": "We can describe our current work in concrete terms, or explain in our own words whose difficulties we want to face from now on",
+        "note": "Organizations that are just getting started can apply too.",
+        "prompt": "Tell us about your current work. If you are just starting, tell us who you want to help, what you want to do, and why. (optional)"
+      },
+      "direct": {
+        "statement": "We are an organization that directly supports the people who have the problem",
+        "note": "If you do not work with people directly (for example grants, research, publicity or training for organizations), we will suggest other ways to take part in the interview.",
+        "prompt": "After you connect with the person asking for help, what will your organization do for them? Who will handle it? (optional)"
+      },
+      "barriers": {
+        "statement": "We care that barriers such as distance, organizational boundaries and language get in the way of support, and we want a society where support reaches across them",
+        "note": "You do not need to have overcome these barriers already.",
+        "prompt": "Tell us about barriers you feel in your work, and the support you would like to give if they disappeared. (optional)"
+      }
+    }
   },
   "orgType": {
     "NPO": "Nonprofit",

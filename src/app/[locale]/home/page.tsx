@@ -53,7 +53,7 @@ export default function HomePage() {
             <Lead>{t('lead')}</Lead>
           </div>
           {items && <YourTurn items={items} />}
-          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-lamp text-[16px] font-bold text-ink no-underline">
+          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-lamp text-[16px] font-bold tracking-[0.1em] text-ink no-underline">
             {t('write')}
           </Link>
           <div className="grid grid-cols-2 gap-2">

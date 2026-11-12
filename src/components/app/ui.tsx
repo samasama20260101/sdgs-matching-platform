@@ -70,7 +70,7 @@ export function Button({
     <button
       type="button"
       {...rest}
-      className={cx('inline-flex min-h-[48px] items-center justify-center gap-2 px-4 text-[15px] font-bold transition-colors disabled:cursor-not-allowed', radius, styles[variant], className)}
+      className={cx('inline-flex min-h-[48px] items-center justify-center gap-2 px-4 text-[15px] font-bold tracking-[0.1em] transition-colors disabled:cursor-not-allowed', radius, styles[variant], className)}
     >
       {children}
     </button>
@@ -211,7 +211,8 @@ export function TextField({ label, hint, error, className, ...rest }: InputHTMLA
   )
 }
 
-export function TextArea({ label, error, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: ReactNode; error?: string | null }) {
+// compact: 一言そえる欄のように、短く書く前提の欄(低めにする)
+export function TextArea({ label, error, compact = false, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: ReactNode; error?: string | null; compact?: boolean }) {
   const id = useId()
   return (
     <label htmlFor={id} className="flex flex-col gap-1.5">
@@ -220,7 +221,7 @@ export function TextArea({ label, error, ...rest }: TextareaHTMLAttributes<HTMLT
         id={id}
         {...rest}
         aria-invalid={error ? true : undefined}
-        className="min-h-[160px] rounded-tool border-[1.5px] border-line-strong bg-paper p-3 text-[16px] leading-[1.7] text-ink outline-none focus:border-night"
+        className={cx(compact ? 'min-h-[88px]' : 'min-h-[160px]', 'rounded-tool border-[1.5px] border-line-strong bg-paper p-3 text-[16px] leading-[1.7] text-ink outline-none focus:border-night')}
       />
       {error && <span className="text-[12.5px] text-coral">{error}</span>}
     </label>

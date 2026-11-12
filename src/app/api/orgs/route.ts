@@ -10,6 +10,7 @@ import { recordSupporterConsent } from '@/lib/server/consents'
 import { notifyOps } from '@/lib/server/opsNotify'
 import { canSupportNow } from '@/lib/faces'
 import { underSupporterAgeResponse } from '@/lib/server/supportAuth'
+import { missingChecks } from '@/lib/domain/supporterChecks'
 
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'NATIONAL_AGENCY', 'OTHER_PUBLIC', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER'] as const
 
@@ -35,6 +36,10 @@ export async function POST(request: Request) {
   const input = parsed.data
   if (input.purpose === 'SUPPORT' && input.acceptSupporterTerms !== true) {
     return NextResponse.json({ error: '同意が必要です', code: 'CONSENT_REQUIRED' }, { status: 400 })
+  }
+  // 支え手の団体の申し込みは、面談で確かめる6つの点の自己採点がそろっていること(11/12 定例)
+  if (input.purpose === 'SUPPORT' && missingChecks(input.application).length > 0) {
+    return NextResponse.json({ error: '6つの点をすべて選んでください', code: 'CHECKS_REQUIRED' }, { status: 400 })
   }
   // 会社・地域として相談するための登録(CONSULT)は、18歳未満でもできる
   if (input.purpose === 'SUPPORT' && !(await canSupportNow(auth.appUser.id))) return underSupporterAgeResponse()

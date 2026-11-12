@@ -18,15 +18,15 @@ const FONT_TIMEOUT_MS = 5_000
 
 // 種別チップの色(公開側の Chip と同じ v2 のトークンの色。globals.css の @theme)
 const CHIP_COLORS: Record<NewsCategory, { bg: string; fg: string }> = {
-  NOTICE:           { bg: '#EAEFF6', fg: '#37414D' },
-  MAINTENANCE:      { bg: '#FFEEB9', fg: '#14283F' },
-  SUPPORTER_JOINED: { bg: '#E6F5D2', fg: '#334800' },
-  INTERVIEW:        { bg: '#DDF2FE', fg: '#07465F' },
-  TOPIC:            { bg: '#FFFFFF', fg: '#37414D' },
+  NOTICE:           { bg: '#E6EEF6', fg: '#2C3A4D' },
+  MAINTENANCE:      { bg: '#C8F1F7', fg: '#081428' },
+  SUPPORTER_JOINED: { bg: '#DAF2EE', fg: '#075A51' },
+  INTERVIEW:        { bg: '#DDEFFC', fg: '#004A7C' },
+  TOPIC:            { bg: '#FFFFFF', fg: '#2C3A4D' },
 }
 
 // 画面のヘッダーと同じ印(しずくと灯。src/components/app/Mark.tsx)
-const DROP_SVG = `<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="18" fill="#173A5E"/><g transform="translate(10 10) scale(1.84)"><path d="M12 2.6c-.4 0-.7.2-.9.5C8.7 6.5 5.2 11.2 5.2 14.6c0 4 3 6.9 6.8 6.9s6.8-2.9 6.8-6.9c0-3.4-3.5-8.1-5.9-11.5-.2-.3-.5-.5-.9-.5Z" fill="#2BBFA4"/><circle cx="12" cy="15.4" r="2.9" fill="#FFD21F"/></g></svg>`
+const DROP_SVG = `<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="18" fill="#062F5E"/><g transform="translate(10 10) scale(1.84)"><path d="M12 2.6c-.4 0-.7.2-.9.5C8.7 6.5 5.2 11.2 5.2 14.6c0 4 3 6.9 6.8 6.9s6.8-2.9 6.8-6.9c0-3.4-3.5-8.1-5.9-11.5-.2-.3-.5-.5-.9-.5Z" fill="#2BBFA4"/><circle cx="12" cy="15.4" r="2.9" fill="#FFD21F"/></g></svg>`
 const DROP_SRC = `data:image/svg+xml;base64,${Buffer.from(DROP_SVG).toString('base64')}`
 
 // text に含まれる文字だけのフォントを取り寄せる。Google Fonts は User-Agent を付けないと TrueType を返す(画像描画は woff2 を読めない)
@@ -84,33 +84,33 @@ export async function GET(request: Request, { params }: Params) {
         style={{
           width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
           padding: '64px 80px', fontFamily: 'Noto Sans JP',
-          background: '#FAF6EC',
+          background: '#F2F7FA',
         }}
       >
         {/* 右上の淡い円(灯の色) */}
-        <div style={{ position: 'absolute', top: -120, right: -120, width: 360, height: 360, borderRadius: 9999, background: '#FFF7DE', display: 'flex' }} />
+        <div style={{ position: 'absolute', top: -120, right: -120, width: 360, height: 360, borderRadius: 9999, background: '#E6F8FB', display: 'flex' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- 画像生成の中なので next/image は使えない */}
           <img src={DROP_SRC} width={48} height={48} alt="" />
-          <div style={{ fontSize: 32, fontWeight: 500, color: '#173A5E', display: 'flex' }}>{SITE_NAME}</div>
-          <div style={{ fontSize: 28, fontWeight: 500, color: '#505C6C', marginLeft: 8, display: 'flex' }}>お知らせ</div>
+          <div style={{ fontSize: 32, fontWeight: 500, color: '#062F5E', display: 'flex' }}>{SITE_NAME}</div>
+          <div style={{ fontSize: 28, fontWeight: 500, color: '#4B5B6E', marginLeft: 8, display: 'flex' }}>お知らせ</div>
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ display: 'flex' }}>
-            <div style={{ fontSize: 26, fontWeight: 500, color: chip.fg, background: chip.bg, border: '2px solid #CFC5AE', borderRadius: 9999, padding: '6px 22px', display: 'flex' }}>
+            <div style={{ fontSize: 26, fontWeight: 500, color: chip.fg, background: chip.bg, border: '2px solid #AFC0D0', borderRadius: 9999, padding: '6px 22px', display: 'flex' }}>
               {label}
             </div>
           </div>
-          <div style={{ marginTop: 28, fontSize: title.length > 30 ? 52 : 64, fontWeight: 900, color: '#14283F', lineHeight: 1.35, display: 'flex' }}>
+          <div style={{ marginTop: 28, fontSize: title.length > 30 ? 52 : 64, fontWeight: 900, color: '#081428', lineHeight: 1.35, display: 'flex' }}>
             {title}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '2px solid #E8E0CC', paddingTop: 24 }}>
-          <div style={{ fontSize: 26, fontWeight: 500, color: '#505C6C', display: 'flex' }}>{date}</div>
-          <div style={{ fontSize: 24, fontWeight: 500, color: '#505C6C', display: 'flex' }}>{SITE_HOST}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '2px solid #D5E0EA', paddingTop: 24 }}>
+          <div style={{ fontSize: 26, fontWeight: 500, color: '#4B5B6E', display: 'flex' }}>{date}</div>
+          <div style={{ fontSize: 24, fontWeight: 500, color: '#4B5B6E', display: 'flex' }}>{SITE_HOST}</div>
         </div>
       </div>
     ),

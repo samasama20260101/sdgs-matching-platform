@@ -188,9 +188,7 @@
     "contactEmailTipLabel": "Para qué se usa el correo de contacto",
     "contactEmailTip": "Por ejemplo, el correo común de un departamento. Solo se usa para avisos como nuevos ofrecimientos, nunca para entrar.",
     "application": {
-      "activities": "¿Qué hacéis?",
       "areas": "¿Dónde trabajáis?",
-      "targets": "¿Qué problemas y personas podéis apoyar?",
       "staff": "¿Cuántas personas atienden consultas?",
       "safeguarding": "¿Tenéis normas para proteger a menores y personas vulnerables? (descríbelas si las hay)",
       "website": "Sitio web o redes sociales",
@@ -199,7 +197,7 @@
     "flowTitle": "Cómo ser una organización que apoya",
     "flow": {
       "apply": "Solicitarlo en esta pantalla",
-      "interview": "Tener una entrevista con samasama (unos 30 minutos en línea)",
+      "interview": "Tener una entrevista con samasama (unos 60 minutos en línea)",
       "approved": "Una vez aprobada, aparece en la lista y puede ofrecer apoyo"
     },
     "apply": "Enviar solicitud",
@@ -211,7 +209,48 @@
       "COMMUNITY": "En solicitudes de comunidades"
     },
     "skillsNote": "Los nombres de las áreas cambian según quién pide ayuda",
-    "skillsPicked": "{count} elegidos"
+    "skillsPicked": "{count} elegidos",
+    "checksTitle": "Seis puntos que veremos en la entrevista",
+    "checksTipLabel": "Sobre los seis puntos",
+    "checksTip": "Son los puntos que samasama comprueba en la entrevista. Elegid la respuesta más cercana a lo que pensáis ahora y añadid unas palabras donde podáis. En la entrevista hablaremos a partir de lo que escribáis aquí. Elegir «Queremos hablarlo» no hace por sí solo que se rechace la solicitud.",
+    "checksNoteLabel": "Nota",
+    "checksRequired": "Responded a los seis puntos (faltan: {numbers})",
+    "selfCheck": {
+      "yes": "Se aplica a nosotros",
+      "discuss": "Queremos hablarlo"
+    },
+    "checks": {
+      "care": {
+        "statement": "Compartimos la idea de que se puede cuidar a desconocidos y a personas que no son familia, aunque no se cobre por ello",
+        "note": "No significa trabajar sin cobrar para siempre ni que todo el apoyo tenga que ser gratuito.",
+        "prompt": "¿Qué pensáis de apoyar a alguien a quien no conocéis, que no es familia y de quien no recibís agradecimiento ni pago? (opcional)"
+      },
+      "imagine": {
+        "statement": "Hemos vivido problemas que no eran culpa nuestra, o podemos imaginar esas situaciones desde el lugar de quien las vive",
+        "note": "No hace falta escribir sobre experiencias dolorosas. Vale una situación que podáis imaginar o un caso supuesto.",
+        "prompt": "¿Cómo queréis acompañar a personas que lo pasan mal por circunstancias que no pueden cambiar por sí solas? (opcional)"
+      },
+      "consulteeFirst": {
+        "statement": "Cuando el interés de la organización y la mejor opción para quien pide ayuda chocan, podemos dar prioridad a esa persona",
+        "note": "No se niegan los ingresos ni los sueldos que necesita vuestra actividad. Preguntamos cómo pensáis cuando los intereses chocan.",
+        "prompt": "Cuando la opción que da ingresos y la mejor opción para quien pide ayuda son distintas, ¿cómo decidís? (opcional)"
+      },
+      "activity": {
+        "statement": "Podemos explicar con detalle lo que hacemos, o contar con nuestras palabras a quién y qué dificultades queremos atender a partir de ahora",
+        "note": "También pueden solicitarlo organizaciones que están empezando.",
+        "prompt": "Contadnos vuestra actividad. Si estáis empezando, a quién queréis ayudar, qué queréis hacer y por qué. (opcional)"
+      },
+      "direct": {
+        "statement": "Somos una organización que apoya directamente a las personas que tienen el problema",
+        "note": "Si no atendéis a las personas directamente (por ejemplo, subvenciones, investigación, difusión o formación para organizaciones), en la entrevista os propondremos otras formas de participar.",
+        "prompt": "Después de conectar con quien pide ayuda, ¿qué hará vuestra organización por esa persona? ¿Quién se encargará? (opcional)"
+      },
+      "barriers": {
+        "statement": "Nos importa que barreras como la distancia, los límites entre organizaciones o el idioma frenen el apoyo, y queremos una sociedad donde el apoyo llegue por encima de ellas",
+        "note": "No es necesario haber superado ya esas barreras.",
+        "prompt": "Contadnos qué barreras notáis en vuestra actividad y qué apoyo os gustaría dar si desaparecieran. (opcional)"
+      }
+    }
   },
   "orgType": {
     "NPO": "Entidad sin ánimo de lucro",
