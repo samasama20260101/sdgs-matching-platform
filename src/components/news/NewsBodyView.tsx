@@ -39,11 +39,11 @@ function linkify(text: string, keyPrefix: string): React.ReactNode[] {
 export function NewsBodyView({ body, renderLinkCard }: { body: string; renderLinkCard: (url: string, key: number) => React.ReactNode }) {
   const blocks = parseNewsBody(body)
   return (
-    <div className="flex flex-col gap-4 text-[15px] leading-[1.9] text-ink-soft">
+    <div className="flex flex-col gap-4 text-t15 leading-[1.9] text-ink-soft">
       {blocks.map((block, blockIndex) => {
         if (block.kind === 'heading') {
           return (
-            <h2 key={blockIndex} className="m-0 pt-3 font-heading text-[17px] font-bold leading-[1.5] text-ink">
+            <h2 key={blockIndex} className="m-0 pt-3 font-heading text-t17 font-bold leading-[1.5] text-ink">
               {block.text}
             </h2>
           )

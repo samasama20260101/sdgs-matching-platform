@@ -12,16 +12,16 @@ export function SupporterTileView({ data }: { data: SupporterTileData }) {
     <div className="flex flex-col gap-2.5 rounded-soft border border-line bg-paper p-4">
       <span className="flex flex-wrap items-center gap-1.5">
         {type && <Chip>{type}</Chip>}
-        <span className="text-[12px] text-mist">{joinedSinceJa(data.createdAt)}</span>
+        <span className="text-t12 text-mist">{joinedSinceJa(data.createdAt)}</span>
       </span>
-      <span className="wrap-anywhere font-heading text-[17px] font-bold leading-[1.5] text-ink">{data.name}</span>
-      <span className="flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-ink-soft">
+      <span className="wrap-anywhere font-heading text-t17 font-bold leading-[1.5] text-ink">{data.name}</span>
+      <span className="flex flex-wrap gap-x-3 gap-y-1 text-t12_5 text-ink-soft">
         {areas && <span>{areas}</span>}
         <span>解決 {data.resolvedCount}件</span>
         <span>ありがとう {data.badgeCount}</span>
       </span>
-      {bio && <p className="m-0 line-clamp-2 text-[13px] leading-[1.7] text-ink-soft">{bio}</p>}
-      <a href={`/supporters/${data.id}`} className="flex min-h-[44px] items-center justify-center rounded-[14px] bg-night px-4 text-[14px] font-bold text-white no-underline">
+      {bio && <p className="m-0 line-clamp-2 text-t13 leading-[1.7] text-ink-soft">{bio}</p>}
+      <a href={`/supporters/${data.id}`} className="flex min-h-[44px] items-center justify-center rounded-[14px] bg-night px-4 text-t14 font-bold text-white no-underline">
         この団体のページを見る
       </a>
     </div>

@@ -178,7 +178,7 @@ export default function PrivacyPage() {
             </p>
           </DocSection>
 
-          <div className="flex flex-col gap-0.5 border-t border-line pt-4 text-[12.5px] text-mist">
+          <div className="flex flex-col gap-0.5 border-t border-line pt-4 text-t12_5 text-mist">
             <span>制定日：2026年4月1日　／　最終更新日：{UPDATED}</span>
             <span>明日もsamasama 運営チーム</span>
           </div>

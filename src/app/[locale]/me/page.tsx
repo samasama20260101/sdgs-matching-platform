@@ -10,7 +10,9 @@ import { countryName } from '@/lib/constants/countries'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
-import { Button, Card, ErrorNote, Heading, SectionLabel, Tip, Toggle } from '@/components/app/ui'
+import { Button, Card, cx, ErrorNote, Heading, SectionLabel, Tip, Toggle } from '@/components/app/ui'
+import { useTextSize } from '@/lib/client/textSize'
+import { TEXT_SIZES } from '@/lib/domain/textSize'
 import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } from '@/components/app/ProfileFields'
 import type { MePerson } from '@/lib/client/meTypes'
 import { Invitations } from '@/components/support/Invitations'
@@ -78,16 +80,16 @@ function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Pro
   const place = [countryName(person.country, person.locale), person.city].filter(Boolean).join(' ')
   return (
     <Card className="flex items-center gap-3 p-4">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lamp-soft text-[18px] font-bold" aria-hidden>
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lamp-soft text-t18 font-bold" aria-hidden>
         {person.displayName.slice(0, 1)}
       </span>
       <span className="flex flex-1 flex-col gap-0.5">
-        <span className="text-[16px] font-bold">{person.displayName}</span>
-        <span className="text-[12.5px] text-mist">
+        <span className="text-t16 font-bold">{person.displayName}</span>
+        <span className="text-t12_5 text-mist">
           {place} ・ {isAppLocale(person.locale) ? localeLabels[person.locale] : person.locale} ・ {person.age === null ? t('ageUnknown') : t('ageYears', { age: person.age })}
         </span>
       </span>
-      <Button variant="outline" onClick={start} className="min-h-[40px] px-3 text-[13px]">{t('edit')}</Button>
+      <Button variant="outline" onClick={start} className="min-h-[40px] px-3 text-t13">{t('edit')}</Button>
     </Card>
   )
 }
@@ -113,16 +115,38 @@ function NotificationsCard() {
   return (
     <Card className="flex flex-col gap-1 p-4">
       <div className="flex items-center justify-between">
-        <span className="text-[15px] font-bold">{t('notifications')}</span>
+        <span className="text-t15 font-bold">{t('notifications')}</span>
         <Tip kind="warn" label={t('notificationsTipLabel')}>{t('notificationsTip')}</Tip>
       </div>
       <div className="flex min-h-[48px] items-center justify-between">
-        <span className="text-[14px] font-bold">{t('inApp')}</span>
-        <span className="text-[12px] text-mist">{t('alwaysOn')}</span>
+        <span className="text-t14 font-bold">{t('inApp')}</span>
+        <span className="text-t12 text-mist">{t('alwaysOn')}</span>
       </div>
       <Toggle checked={prefs?.email ?? false} disabled={!prefs} onChange={(v) => void update({ email: v })} label={t('email')} description={t('emailNote')} />
       {/* スマホへの通知は、使えるようになったら出す(準備中の行は出さない) */}
       <ErrorNote>{error}</ErrorNote>
+    </Card>
+  )
+}
+
+// 文字の大きさ(引き続き考えることの 19、11/12)。端末に覚え、相談する側と支える側のどちらの画面にも効く
+function TextSizeCard() {
+  const t = useTranslations('app.me')
+  const [size, choose] = useTextSize()
+  return (
+    <Card className="flex flex-col gap-3 p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-t15 font-bold">{t('textSize')}</span>
+        <Tip label={t('textSizeTipLabel')}>{t('textSizeTip')}</Tip>
+      </div>
+      <div role="radiogroup" aria-label={t('textSize')} className="grid grid-cols-2 gap-2">
+        {TEXT_SIZES.map((k) => (
+          <button key={k} type="button" role="radio" aria-checked={size === k} onClick={() => choose(k)} className={cx('flex min-h-[56px] flex-col items-center justify-center rounded-[14px] px-2 font-bold', size === k ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+            <span className={k === 'large' ? 'text-t18' : 'text-t15'} aria-hidden>あ</span>
+            <span className="text-t13">{t(`textSizes.${k}`)}</span>
+          </button>
+        ))}
+      </div>
     </Card>
   )
 }
@@ -150,19 +174,19 @@ function WithdrawCard() {
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
-        <span className="text-[15px] font-bold">{t('withdraw')}</span>
+        <span className="text-t15 font-bold">{t('withdraw')}</span>
         <Tip kind="warn" label={t('withdrawTipLabel')}>{t('withdrawTip')}</Tip>
       </div>
       {confirming ? (
         <>
-          <p className="m-0 text-[13px] leading-[1.7] text-ink-soft">{t('withdrawConfirm')}</p>
+          <p className="m-0 text-t13 leading-[1.7] text-ink-soft">{t('withdrawConfirm')}</p>
           <div className="flex gap-2">
             <Button variant="danger" disabled={busy} onClick={() => void withdraw()} className="flex-1">{t('withdrawYes')}</Button>
             <Button variant="outline" onClick={() => setConfirming(false)}>{t('cancel')}</Button>
           </div>
         </>
       ) : (
-        <button type="button" onClick={() => setConfirming(true)} className="self-start min-h-[44px] text-[13px] font-bold text-coral-ink underline">{t('withdraw')}</button>
+        <button type="button" onClick={() => setConfirming(true)} className="self-start min-h-[44px] text-t13 font-bold text-coral-ink underline">{t('withdraw')}</button>
       )}
       <ErrorNote>{error}</ErrorNote>
     </Card>
@@ -183,33 +207,34 @@ export default function MePage() {
           <Invitations />
           <ProfileCard person={me.person} onSaved={refresh} />
           <NotificationsCard />
+          <TextSizeCard />
 
           <Card className="flex flex-col gap-2 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-[15px] font-bold">{t('loginMethods')}</span>
+              <span className="text-t15 font-bold">{t('loginMethods')}</span>
               <Tip label={t('loginMethodsTipLabel')}>{t('loginMethodsTip')}</Tip>
             </div>
-            <div className="flex min-h-[44px] items-center justify-between text-[14px]">
-              <span>{t('emailCode')}</span>
-              <span className="text-[12.5px] text-mist">{me.email ?? '—'}</span>
+            <div className="flex min-h-[44px] items-center justify-between gap-3 text-t14">
+              <span className="shrink-0">{t('emailCode')}</span>
+              <span className="min-w-0 break-all text-right text-t12_5 text-mist">{me.email ?? '—'}</span>
             </div>
             {(GOOGLE_ENABLED || me.loginMethods.includes('google')) && (
-              <div className="flex min-h-[44px] items-center justify-between text-[14px]">
+              <div className="flex min-h-[44px] items-center justify-between text-t14">
                 <span>Google</span>
-                <span className="text-[12.5px] text-mist">{me.loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
+                <span className="text-t12_5 text-mist">{me.loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
               </div>
             )}
           </Card>
 
           {me.faces.organizations.length > 0 && (
             me.mfa.verified
-              ? <Card className="p-4"><span className="text-[14px] font-bold text-leaf">{tMfa('done')}</span></Card>
+              ? <Card className="p-4"><span className="text-t14 font-bold text-leaf">{tMfa('done')}</span></Card>
               : me.mfa.enrolled || mfaOpen
                 ? <MfaGate purpose="member" onVerified={refresh} />
                 : (
                   <Card className="flex flex-col gap-2 p-4">
-                    <span className="text-[15px] font-bold">{tMfa('card')}</span>
-                    <span className="text-[12.5px] text-mist">{tMfa('cardNote')}</span>
+                    <span className="text-t15 font-bold">{tMfa('card')}</span>
+                    <span className="text-t12_5 text-mist">{tMfa('cardNote')}</span>
                     {/* 押したときだけ登録を始める(開いただけで因子を作らない) */}
                     <Button variant="outline" onClick={() => setMfaOpen(true)}>{tMfa('title')}</Button>
                   </Card>
@@ -218,13 +243,13 @@ export default function MePage() {
 
           <Card className="p-4">
             {canSupport ? (
-              <Link href="/support" className="flex min-h-[48px] items-center justify-between text-[15px] font-bold text-night no-underline">
+              <Link href="/support" className="flex min-h-[48px] items-center justify-between text-t15 font-bold text-night no-underline">
                 {t('toSupport')}<span aria-hidden>›</span>
               </Link>
             ) : (
               <Link href="/support/join" className="flex min-h-[48px] flex-col justify-center text-night no-underline">
-                <span className="text-[15px] font-bold">{t('becomeSupporter')}</span>
-                <span className="text-[12px] text-mist">{t('becomeSupporterNote')}</span>
+                <span className="text-t15 font-bold">{t('becomeSupporter')}</span>
+                <span className="text-t12 text-mist">{t('becomeSupporterNote')}</span>
               </Link>
             )}
           </Card>

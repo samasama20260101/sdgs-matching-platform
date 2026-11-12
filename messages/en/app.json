@@ -212,7 +212,14 @@
     "becomeSupporter": "Become a supporter too",
     "becomeSupporterNote": "With the same account",
     "account": "Account",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "textSize": "Text size",
+    "textSizeTipLabel": "About text size",
+    "textSizeTip": "The text size on this device. It applies to both the asking and supporting screens. On another phone or computer, choose it again there.",
+    "textSizes": {
+      "normal": "Normal",
+      "large": "Large"
+    }
   },
   "contact": {
     "title": "Contact us",

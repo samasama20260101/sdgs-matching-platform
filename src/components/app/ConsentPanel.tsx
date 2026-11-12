@@ -19,15 +19,15 @@ export function ConsentSummary() {
       <ol className="m-0 flex list-none flex-col gap-3 p-0">
         {CONSENT_POINTS.map((key, i) => (
           <li key={key} className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-night text-[12px] font-bold text-lamp">{i + 1}</span>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-night text-t12 font-bold text-lamp">{i + 1}</span>
             <span className="flex flex-col gap-0.5">
-              <span className="text-[13.5px] font-bold">{t(`points.${key}.title`)}</span>
-              <span className="text-[12.5px] leading-[1.7] text-ink-soft">{t(`points.${key}.body`)}</span>
+              <span className="text-t13_5 font-bold">{t(`points.${key}.title`)}</span>
+              <span className="text-t12_5 leading-[1.7] text-ink-soft">{t(`points.${key}.body`)}</span>
             </span>
           </li>
         ))}
       </ol>
-      <p className="m-0 mt-3 text-[12.5px] text-mist">
+      <p className="m-0 mt-3 text-t12_5 text-mist">
         <Link href="/terms" className="text-night">{t('terms')}</Link>
         {' ・ '}
         <Link href="/privacy" className="text-night">{t('privacy')}</Link>
@@ -41,7 +41,7 @@ export function ConsentCheckbox({ checked, onChange }: { checked: boolean; onCha
   return (
     <label className="flex min-h-[48px] items-center gap-3 rounded-tool border-[1.5px] border-line-strong bg-paper px-3">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-night" />
-      <span className="text-[13.5px] font-bold">{t('agree')}</span>
+      <span className="text-t13_5 font-bold">{t('agree')}</span>
     </label>
   )
 }

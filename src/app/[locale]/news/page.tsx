@@ -48,7 +48,7 @@ export default async function NewsListPage({ params, searchParams }: PageProps) 
       <DocTitle title={t('listTitle')} note={t('listLead')} />
 
       {posts.length === 0 ? (
-        <Card className="px-4 py-8 text-center text-[13.5px] text-mist">{t('empty')}</Card>
+        <Card className="px-4 py-8 text-center text-t13_5 text-mist">{t('empty')}</Card>
       ) : (
         <div className="flex flex-col gap-6">
           {groupByYear(posts, locale).map((group) => (
@@ -59,11 +59,11 @@ export default async function NewsListPage({ params, searchParams }: PageProps) 
                   {group.posts.map((post) => (
                     <li key={post.id} className="border-t border-line first:border-t-0">
                       <Link href={`/news/${post.id}`} className="flex flex-col gap-1.5 px-4 py-3.5 text-ink no-underline hover:bg-kinari-deep">
-                        <span className="flex flex-wrap items-center gap-2 text-[12px] text-mist">
+                        <span className="flex flex-wrap items-center gap-2 text-t12 text-mist">
                           <time dateTime={post.published_at}>{formatNewsDate(post.published_at, locale)}</time>
                           <NewsCategoryChip category={post.category} label={t(`category.${post.category}`)} />
                         </span>
-                        <span className="text-[15px] font-bold leading-[1.6]">{post.title}</span>
+                        <span className="text-t15 font-bold leading-[1.6]">{post.title}</span>
                       </Link>
                     </li>
                   ))}
@@ -73,7 +73,7 @@ export default async function NewsListPage({ params, searchParams }: PageProps) 
           ))}
           {hasMore && (
             <Link href={`/news?show=${show + NEWS_LIST_MAX}`} scroll={false}
-              className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-[14px] font-bold text-ink no-underline">
+              className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold text-ink no-underline">
               {t('more', { count: NEWS_LIST_MAX })}
             </Link>
           )}

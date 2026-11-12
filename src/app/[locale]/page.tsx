@@ -38,7 +38,7 @@ function EntryInner() {
       <AppHeader />
       <main className="flex flex-col gap-3 pb-6">
         {shop && (
-          <span className="self-start rounded-full border border-line bg-paper px-3 py-1 text-[12px] text-ink-soft">{t('fromShop')}</span>
+          <span className="self-start rounded-full border border-line bg-paper px-3 py-1 text-t12 text-ink-soft">{t('fromShop')}</span>
         )}
         <div className="flex flex-col gap-2 px-1 pt-1">
           <Heading>{t.rich('title', { br: () => <br /> })}</Heading>
@@ -52,19 +52,19 @@ function EntryInner() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
             </span>
             <span className="flex flex-1 flex-col gap-0.5">
-              <span className="text-[16px] font-bold">{t('mine')}</span>
-              <span className="text-[12px] text-[#C9D6E6]">{t('mineNote')}</span>
+              <span className="text-t16 font-bold">{t('mine')}</span>
+              <span className="text-t12 text-[#C9D6E6]">{t('mineNote')}</span>
             </span>
             <Chevron />
           </Link>
           <div className="grid grid-cols-2 gap-2">
             <Link href={withShop('/consult/org?subject=COMPANY')} className="flex min-h-[60px] flex-col justify-center gap-0.5 rounded-[16px] border border-line bg-paper px-3.5 py-2.5 text-ink no-underline">
-              <span className="text-[14.5px] font-bold">{t('company')}</span>
-              <span className="text-[11.5px] text-mist">{t('companyNote')}</span>
+              <span className="text-t14_5 font-bold">{t('company')}</span>
+              <span className="text-t11_5 text-mist">{t('companyNote')}</span>
             </Link>
             <Link href={withShop('/consult/org?subject=COMMUNITY')} className="flex min-h-[60px] flex-col justify-center gap-0.5 rounded-[16px] border border-line bg-paper px-3.5 py-2.5 text-ink no-underline">
-              <span className="text-[14.5px] font-bold">{t('community')}</span>
-              <span className="text-[11.5px] text-mist">{t('communityNote')}</span>
+              <span className="text-t14_5 font-bold">{t('community')}</span>
+              <span className="text-t11_5 text-mist">{t('communityNote')}</span>
             </Link>
           </div>
         </nav>
@@ -72,16 +72,16 @@ function EntryInner() {
         <SectionLabel>{t('besides')}</SectionLabel>
         <div className="grid grid-cols-2 gap-2">
           <Link href="/support/join" className="flex min-h-[72px] flex-col justify-center gap-1 rounded-[16px] bg-dawn-soft px-3.5 py-3 text-dawn-ink no-underline">
-            <span className="text-[14.5px] font-bold">{t('becomeSupporter')}</span>
-            <span className="text-[11.5px] leading-[1.5]">{t('becomeSupporterNote')}</span>
+            <span className="text-t14_5 font-bold">{t('becomeSupporter')}</span>
+            <span className="text-t11_5 leading-[1.5]">{t('becomeSupporterNote')}</span>
           </Link>
           <Link href="/learn" className="flex min-h-[72px] flex-col justify-center gap-1 rounded-[16px] bg-leaf-soft px-3.5 py-3 text-leaf-ink no-underline">
-            <span className="text-[14.5px] font-bold">{t('learn')}</span>
-            <span className="text-[11.5px] leading-[1.5]">{t('learnNote')}</span>
+            <span className="text-t14_5 font-bold">{t('learn')}</span>
+            <span className="text-t11_5 leading-[1.5]">{t('learnNote')}</span>
           </Link>
         </div>
 
-        <Link href="/trial" className="flex min-h-[40px] items-center self-center text-[13px] text-night">{t('trial')}</Link>
+        <Link href="/trial" className="flex min-h-[40px] items-center self-center text-t13 text-night">{t('trial')}</Link>
 
         <CrisisLinks />
         <Footer />

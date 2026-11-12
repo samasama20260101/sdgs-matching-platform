@@ -9,5 +9,5 @@ export function JaOnlyNotice() {
   const locale = useLocale();
   const t = useTranslations('common');
   if (locale === 'ja') return null;
-  return <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-[13px] leading-[1.7] text-ink-soft">{t('jaOnlyNotice')}</p>;
+  return <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-t13 leading-[1.7] text-ink-soft">{t('jaOnlyNotice')}</p>;
 }

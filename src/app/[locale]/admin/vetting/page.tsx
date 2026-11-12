@@ -18,7 +18,7 @@ function SelfCheckAnswers({ application }: { application: Record<string, string>
   const t = useTranslations('support.join')
   if (!SUPPORTER_CHECKS.some((c) => application[choiceKey(c)] || application[noteKey(c)])) return null
   return (
-    <ol className="m-0 flex list-none flex-col gap-2 rounded-tool bg-steel-faint p-3 text-[12.5px]">
+    <ol className="m-0 flex list-none flex-col gap-2 rounded-tool bg-steel-faint p-3 text-t12_5">
       {SUPPORTER_CHECKS.map((c, i) => {
         const choice = application[choiceKey(c)]
         const note = application[noteKey(c)]
@@ -56,10 +56,10 @@ function OrgCard({ org, onChanged, focused }: { org: Org; onChanged: () => Promi
     <div id={org.display_id} className="scroll-mt-4">
       <Card tone="support" className={cx('flex flex-col gap-2 p-4', focused && 'ring-2 ring-night')}>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[15px] font-bold">{org.name}</span>
-          <Chip>{org.org_type}</Chip><Chip color="outline">{purpose}</Chip><span className="text-[12px] text-mist">{org.display_id}</span>
+          <span className="text-t15 font-bold">{org.name}</span>
+          <Chip>{org.org_type}</Chip><Chip color="outline">{purpose}</Chip><span className="text-t12 text-mist">{org.display_id}</span>
         </div>
-        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
+        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-t12_5">
           {org.contact_email && <><dt className="text-mist">連絡先</dt><dd className="m-0">{org.contact_email}</dd></>}
           {org.prefecture && <><dt className="text-mist">地域</dt><dd className="m-0">{org.prefecture}</dd></>}
           {org.population && <><dt className="text-mist">対象の人数</dt><dd className="m-0">{org.population.toLocaleString('ja')}</dd></>}
@@ -110,7 +110,7 @@ export default function VettingPage() {
       <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。</Lead>
       <div className="flex flex-wrap gap-1.5">
         {STATUSES.map(([k, label]) => (
-          <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-[12.5px] font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>
+          <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-t12_5 font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>
             {label} {data?.counts?.[k] ?? ''}
           </button>
         ))}

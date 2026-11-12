@@ -85,25 +85,25 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
       />
       {!ageFocused && needsGuardianConsent(parseAgeInput(draft.age)) && <GuardianConsentNote />}
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-bold">{t('country')}</span>
+        <span className="text-t13 font-bold">{t('country')}</span>
         <select
           value={draft.country}
           onChange={(e) => set({ country: e.target.value, regionCode: '' })}
-          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]"
+          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
           aria-invalid={showErrors && errors.country ? true : undefined}
         >
           <option value="">{t('choose')}</option>
           {countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
         </select>
-        {showErrors && errors.country && <span className="text-[12.5px] text-coral">{t('countryError')}</span>}
+        {showErrors && errors.country && <span className="text-t12_5 text-coral">{t('countryError')}</span>}
       </label>
       {regions.length > 0 && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-bold">{t('region')}<span className="ml-1 text-[11.5px] font-normal text-mist">{t('optional')}</span></span>
+          <span className="text-t13 font-bold">{t('region')}<span className="ml-1 text-t11_5 font-normal text-mist">{t('optional')}</span></span>
           <select
             value={draft.regionCode}
             onChange={(e) => set({ regionCode: e.target.value })}
-            className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]"
+            className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
           >
             <option value="">{t('choose')}</option>
             {regions.map((r) => <option key={r.code} value={r.code}>{uiLocale === 'ja' ? r.name_local : r.name_en}</option>)}
@@ -118,11 +118,11 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
         onChange={(e) => set({ city: e.target.value })}
       />
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-bold">{t('language')}</span>
+        <span className="text-t13 font-bold">{t('language')}</span>
         <select
           value={draft.locale}
           onChange={(e) => set({ locale: e.target.value as AppLocale })}
-          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]"
+          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
         >
           {locales.map((l) => <option key={l} value={l}>{localeLabels[l]}</option>)}
         </select>

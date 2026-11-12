@@ -36,7 +36,7 @@ export function IndicatorPicker({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 rounded-tool bg-kinari-deep p-3">
-        <span className="text-[12.5px] font-bold text-mist">{t('chosen', { count: selected.length, max: MAX_INDICATOR_SELECTIONS })}</span>
+        <span className="text-t12_5 font-bold text-mist">{t('chosen', { count: selected.length, max: MAX_INDICATOR_SELECTIONS })}</span>
         {selected.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {selected.map((id) => {
@@ -44,7 +44,7 @@ export function IndicatorPicker({
               if (!o) return null
               const text = textOf(o)
               return (
-                <button key={id} type="button" onClick={() => toggle(id)} aria-label={t('remove', { text })} className="flex items-center gap-1 rounded-full bg-lamp-soft px-3 py-1 text-[12.5px] font-bold">
+                <button key={id} type="button" onClick={() => toggle(id)} aria-label={t('remove', { text })} className="flex items-center gap-1 rounded-full bg-lamp-soft px-3 py-1 text-t12_5 font-bold">
                   {text.length > 16 ? `${text.slice(0, 16)}…` : text}<span aria-hidden>×</span>
                 </button>
               )
@@ -60,9 +60,9 @@ export function IndicatorPicker({
           return (
             <li key={cat} className="overflow-hidden rounded-[16px] border border-line bg-paper">
               <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : cat)} className="flex min-h-[52px] w-full items-center justify-between gap-2 px-4 text-left">
-                <span className="text-[15px] font-bold">{tSdgs(`category.${cat}`)}</span>
+                <span className="text-t15 font-bold">{tSdgs(`category.${cat}`)}</span>
                 <span className="flex items-center gap-2">
-                  {picked > 0 && <span className="rounded-full bg-night px-2 py-0.5 text-[11.5px] font-bold text-white">{t('pickedCount', { count: picked })}</span>}
+                  {picked > 0 && <span className="rounded-full bg-night px-2 py-0.5 text-t11_5 font-bold text-white">{t('pickedCount', { count: picked })}</span>}
                   <span aria-hidden className={cx('transition-transform', isOpen && 'rotate-180')}>⌄</span>
                 </span>
               </button>
@@ -79,12 +79,12 @@ export function IndicatorPicker({
                         disabled={disabled}
                         onClick={() => toggle(o.id)}
                         className={cx(
-                          'flex min-h-[48px] items-start gap-3 rounded-tool px-3 py-2.5 text-left text-[14px] leading-[1.6]',
+                          'flex min-h-[48px] items-start gap-3 rounded-tool px-3 py-2.5 text-left text-t14 leading-[1.6]',
                           on ? 'border-2 border-night bg-lamp-soft' : 'border border-line bg-paper',
                           disabled && 'bg-kinari-deep text-mist',
                         )}
                       >
-                        <span aria-hidden className={cx('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] text-[12px] text-white', on ? 'bg-night' : 'border-[1.5px] border-mist-light bg-paper')}>{on ? '✓' : ''}</span>
+                        <span aria-hidden className={cx('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] text-t12 text-white', on ? 'bg-night' : 'border-[1.5px] border-mist-light bg-paper')}>{on ? '✓' : ''}</span>
                         {textOf(o)}
                       </button>
                     )
@@ -124,7 +124,7 @@ export function SuggestedOptions({
               aria-pressed={on}
               disabled={!on && full}
               onClick={() => onToggle(id)}
-              className={cx('flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2 text-left text-[14.5px] leading-[1.6]', on ? 'border-night bg-lamp-soft font-bold' : 'border-line bg-paper disabled:text-mist')}
+              className={cx('flex min-h-[52px] w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2 text-left text-t14_5 leading-[1.6]', on ? 'border-night bg-lamp-soft font-bold' : 'border-line bg-paper disabled:text-mist')}
             >
               <span>{textOf(id)}</span>
               <span aria-hidden className="shrink-0">{on ? '✓' : '＋'}</span>

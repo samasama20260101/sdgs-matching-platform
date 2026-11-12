@@ -53,13 +53,13 @@ export default async function SupportersPage({ params }: PageProps) {
         {supporters ? <SupporterList supporters={supporters} /> : <ErrorNote>{t('loadFailed')}</ErrorNote>}
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-night px-4 text-[15px] font-bold tracking-[0.1em] text-white no-underline">
+          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.1em] text-white no-underline">
             {t('consultCta')}
           </Link>
           <div className="flex flex-col gap-2 rounded-[16px] bg-dawn-soft p-4 text-dawn-ink">
-            <span className="text-[14.5px] font-bold">{t('joinTitle')}</span>
-            <span className="text-[12.5px] leading-[1.7]">{t('joinBody')}</span>
-            <Link href="/support/join" className="flex min-h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-current px-3 text-[13.5px] font-bold text-dawn-ink no-underline">
+            <span className="text-t14_5 font-bold">{t('joinTitle')}</span>
+            <span className="text-t12_5 leading-[1.7]">{t('joinBody')}</span>
+            <Link href="/support/join" className="flex min-h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-current px-3 text-t13_5 font-bold text-dawn-ink no-underline">
               {t('joinCta')}
             </Link>
           </div>

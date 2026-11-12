@@ -82,7 +82,7 @@ export function MfaGate({ onVerified, purpose }: { onVerified: () => Promise<voi
           {/* QR は Supabase Auth が返す SVG の data URL */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={enrollment.qr} alt={t('qrAlt')} className="h-48 w-48 self-center rounded-tool border border-line bg-white p-2" />
-          <p className="m-0 break-all text-[12px] text-mist">{t('secret')}: <span className="font-mono">{enrollment.secret}</span></p>
+          <p className="m-0 break-all text-t12 text-mist">{t('secret')}: <span className="font-mono">{enrollment.secret}</span></p>
         </>
       ) : (
         <Lead>{t('verifyLead')}</Lead>

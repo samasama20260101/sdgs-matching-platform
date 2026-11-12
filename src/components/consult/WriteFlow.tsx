@@ -18,8 +18,8 @@ export function CrisisNotice({ country }: { country?: string | null }) {
   const t = useTranslations('consult.write')
   return (
     <div role="status" className="flex flex-col gap-2 rounded-[16px] bg-coral-soft p-4">
-      <span className="text-[15px] font-bold text-coral-ink">{t('crisisTitle')}</span>
-      <span className="text-[13px] leading-[1.7] text-ink-soft">{t('crisisBody')}</span>
+      <span className="text-t15 font-bold text-coral-ink">{t('crisisTitle')}</span>
+      <span className="text-t13 leading-[1.7] text-ink-soft">{t('crisisBody')}</span>
       <CrisisLinks country={country} />
     </div>
   )
@@ -119,8 +119,8 @@ export function WriteFlow({
       <StepBar label={step === 1 ? t('step1') : t('step2')} step={step} total={2} />
       {organizationName && (
         <Card className="flex items-center justify-between gap-2 p-3">
-          <span className="text-[13px] text-mist">{t('shownName')}</span>
-          <span className="text-[14px] font-bold">{organizationName}</span>
+          <span className="text-t13 text-mist">{t('shownName')}</span>
+          <span className="text-t14 font-bold">{organizationName}</span>
         </Card>
       )}
 
@@ -130,9 +130,9 @@ export function WriteFlow({
             <Heading level={2}>{subject === 'PERSON' ? t('wordsTitle') : t('wordsTitleOrg')}</Heading>
             <Tip label={t('wordsTipLabel')}>{t('wordsTip')}</Tip>
           </div>
-          <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-[12.5px] font-bold text-ink-soft">{t('noPersonalInfo')}</p>
+          <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-t12_5 font-bold text-ink-soft">{t('noPersonalInfo')}</p>
           <TextArea label={t('words')} value={words} maxLength={DESCRIPTION_MAX} onChange={(e) => setWords(e.target.value)} />
-          <span className="-mt-3 self-end text-[12px] text-mist">{t('charCount', { count: words.length })}</span>
+          <span className="-mt-3 self-end text-t12 text-mist">{t('charCount', { count: words.length })}</span>
           {urgentWords && <CrisisNotice country={country} />}
           <TextField label={t('since')} hint={t('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
           <TextField label={t('wish')} hint={t('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
@@ -152,12 +152,12 @@ export function WriteFlow({
           {browseAll ? (
             <IndicatorPicker options={options} selected={selected} onChange={setSelected} subject={subject} />
           ) : (
-            suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="self-start min-h-[44px] text-[13.5px] font-bold text-night underline">{t('browseAll')}</button>
+            suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="self-start min-h-[44px] text-t13_5 font-bold text-night underline">{t('browseAll')}</button>
           )}
-          <p className="m-0 text-[12.5px] text-mist">{t('noneIsOkSend')}</p>
+          <p className="m-0 text-t12_5 text-mist">{t('noneIsOkSend')}</p>
           <ErrorNote>{error}</ErrorNote>
           <Button variant="night" disabled={busy} onClick={() => void submit()}>{t('send')}</Button>
-          <button type="button" onClick={() => setStep(1)} className="self-start min-h-[44px] text-[13px] text-night underline">{t('backToWords')}</button>
+          <button type="button" onClick={() => setStep(1)} className="self-start min-h-[44px] text-t13 text-night underline">{t('backToWords')}</button>
         </>
       )}
     </div>

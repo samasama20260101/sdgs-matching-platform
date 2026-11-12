@@ -25,7 +25,7 @@ export default function TalkPage() {
       {() => (
         <AppFrame>
           <Heading level={2}>{t('title')}</Heading>
-          {items !== null && items.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('empty')}</p>}
+          {items !== null && items.length === 0 && <p className="m-0 px-1 text-t13 text-mist">{t('empty')}</p>}
           {(items ?? []).map((c) => (
             <TalkRow key={c.id} href={`/cases/${c.id}`} title={titleOf(c)} sub={c.subjectName} last={c.lastMessage} viewer="CONSULTEE" resolved={c.status === 'RESOLVED'} />
           ))}

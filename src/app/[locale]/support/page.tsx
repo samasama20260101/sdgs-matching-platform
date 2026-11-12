@@ -46,7 +46,7 @@ function Home() {
       <Invitations />
       <Card tone="support" className="flex flex-col gap-3 p-4">
         <Lead>{t('noFace')}</Lead>
-        <Link href="/support/join" className="text-[15px] font-bold text-night">{t('join')}</Link>
+        <Link href="/support/join" className="text-t15 font-bold text-night">{t('join')}</Link>
       </Card>
       </>
     )
@@ -95,13 +95,13 @@ function Home() {
           <SectionLabel>{t('forYou')}</SectionLabel>
           <Tip label={t('forYouTipLabel')}>{t('forYouTip')}</Tip>
         </div>
-        {fresh && fresh.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{pendingOrg ? t('noneUntilApproved') : t('noneForYou')}</p>}
+        {fresh && fresh.length === 0 && <p className="m-0 px-1 text-t13 text-mist">{pendingOrg ? t('noneUntilApproved') : t('noneForYou')}</p>}
         {(fresh ?? []).map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ""} />)}
-        <Link href="/support/find" className="px-1 text-[13.5px] font-bold text-night">{t('findMore')}</Link>
+        <Link href="/support/find" className="px-1 text-t13_5 font-bold text-night">{t('findMore')}</Link>
       </section>
       <Link href="/support/contributions" className="no-underline">
         <Card tone="support" className="flex items-center justify-between p-4 text-ink">
-          <span className="text-[14.5px] font-bold">{t('contributions')}</span><span aria-hidden>›</span>
+          <span className="text-t14_5 font-bold">{t('contributions')}</span><span aria-hidden>›</span>
         </Card>
       </Link>
       {current?.kind === 'ORGANIZATION' && (
@@ -109,13 +109,13 @@ function Home() {
           {/* 代理の登録は承認された団体だけ(API も断る)。審査中は押せない形で出し、いつ使えるかを書く(11/11 代表の Staging メモ 3) */}
           {pendingOrg ? (
             <Card tone="support" aria-disabled className="flex flex-col gap-0.5 p-3 text-center opacity-60">
-              <span className="text-[13.5px] font-bold text-ink">{t('proxy')}</span>
-              <span className="text-[11.5px] text-ink-soft">{t('proxyAfterInterview')}</span>
+              <span className="text-t13_5 font-bold text-ink">{t('proxy')}</span>
+              <span className="text-t11_5 text-ink-soft">{t('proxyAfterInterview')}</span>
             </Card>
           ) : (
-            <Link href={`/support/proxy?face=${encodeURIComponent(current.key)}`} className="no-underline"><Card tone="support" className="p-3 text-center text-[13.5px] font-bold text-ink">{t('proxy')}</Card></Link>
+            <Link href={`/support/proxy?face=${encodeURIComponent(current.key)}`} className="no-underline"><Card tone="support" className="p-3 text-center text-t13_5 font-bold text-ink">{t('proxy')}</Card></Link>
           )}
-          <Link href={`/support/org/${current.organizationId}`} className="no-underline"><Card tone="support" className="p-3 text-center text-[13.5px] font-bold text-ink">{t('orgPage')}</Card></Link>
+          <Link href={`/support/org/${current.organizationId}`} className="no-underline"><Card tone="support" className="p-3 text-center text-t13_5 font-bold text-ink">{t('orgPage')}</Card></Link>
         </div>
       )}
     </>

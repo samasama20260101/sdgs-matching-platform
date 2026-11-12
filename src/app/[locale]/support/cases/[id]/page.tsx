@@ -87,13 +87,13 @@ function MemberCard({ caseId, face, member, onDone }: { caseId: string; face: st
         <SectionLabel>{t('member')}</SectionLabel>
         <Tip label={t('memberTipLabel')}>{t('memberTip')}</Tip>
       </div>
-      <span className="text-[14.5px] font-bold">{member.displayName}{member.isMe ? ` ${t('memberMe')}` : ''}</span>
+      <span className="text-t14_5 font-bold">{member.displayName}{member.isMe ? ` ${t('memberMe')}` : ''}</span>
       {!member.active && <Lead>{t('memberLeft')}</Lead>}
       {member.canChange && member.candidates.length > 0 && (
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-bold">{t('memberChange')}</span>
-            <select value={next} onChange={(e) => setNext(e.target.value)} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[14px]">
+            <span className="text-t13 font-bold">{t('memberChange')}</span>
+            <select value={next} onChange={(e) => setNext(e.target.value)} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-t14">
               <option value="">{t('memberChoose')}</option>
               {member.candidates.map((c) => <option key={c.userId} value={c.userId}>{c.displayName}{c.isMe ? ` ${t('memberMe')}` : ''}</option>)}
             </select>
@@ -101,7 +101,7 @@ function MemberCard({ caseId, face, member, onDone }: { caseId: string; face: st
           <Button tone="support" variant="outline" disabled={busy || !next} onClick={() => void change()}>{t('memberChangeButton')}</Button>
         </div>
       )}
-      {notice && <span className="text-[13px] font-bold text-leaf-ink">{notice}</span>}
+      {notice && <span className="text-t13 font-bold text-leaf-ink">{notice}</span>}
       <ErrorNote>{error}</ErrorNote>
     </Card>
   )
@@ -114,7 +114,7 @@ function CannotOffer({ block }: { block: SupportCaseItem['offerBlock'] }) {
     return (
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <Lead>{t('cannotOfferPhone')}</Lead>
-        <Link href="/support/join" className="text-[14px] font-bold text-night">{t('verifyPhoneLink')}</Link>
+        <Link href="/support/join" className="text-t14 font-bold text-night">{t('verifyPhoneLink')}</Link>
       </Card>
     )
   }
@@ -148,14 +148,14 @@ function InviteForm({ caseId, face }: { caseId: string; face: string }) {
     <Card tone="support" className="flex flex-col gap-3 p-4">
       <Lead>{t('inviteLead')}</Lead>
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-bold">{t('inviteOrg')}</span>
-        <select value={orgId} onChange={(e) => setOrgId(e.target.value)} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]">
+        <span className="text-t13 font-bold">{t('inviteOrg')}</span>
+        <select value={orgId} onChange={(e) => setOrgId(e.target.value)} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
           <option value="">{t('inviteOrgHint')}</option>
           {orgs.map((o) => <option key={o.id} value={o.id}>{o.organization_name}</option>)}
         </select>
       </label>
       <TextArea label={t('inviteMessage')} value={message} maxLength={1000} onChange={(e) => setMessage(e.target.value)} />
-      {state === 'done' ? <span className="text-[13px] font-bold text-leaf">{t('invited')}</span> : (
+      {state === 'done' ? <span className="text-t13 font-bold text-leaf">{t('invited')}</span> : (
         <Button tone="support" variant="night" disabled={state === 'busy' || !orgId.trim() || !message.trim()} onClick={() => void send()}>{t('sendInvite')}</Button>
       )}
       {state === 'error' && <ErrorNote>{t('inviteFailed')}</ErrorNote>}
@@ -198,9 +198,9 @@ function Inner({ id }: { id: string }) {
   return (
     <>
       <div className="flex flex-col gap-1">
-        <span className="text-[12px] text-mist">{c.subjectName ?? (c.subjectType === 'PERSON' ? t('person') : '')}</span>
+        <span className="text-t12 text-mist">{c.subjectName ?? (c.subjectType === 'PERSON' ? t('person') : '')}</span>
         <Heading level={2}>{c.title}</Heading>
-        {c.areaGoals.length > 0 && <span className="text-[13px] font-bold text-ink-soft">{c.areaGoals.map((g) => tSdgs(`area.${c.subjectType}.${g}`)).join(' / ')}</span>}
+        {c.areaGoals.length > 0 && <span className="text-t13 font-bold text-ink-soft">{c.areaGoals.map((g) => tSdgs(`area.${c.subjectType}.${g}`)).join(' / ')}</span>}
         <span className="flex flex-wrap gap-1">
           {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${label(c.subjectType, i.code) ?? i.text}`}</Chip>)}
           {c.urgent && <Chip color="coral">{tCard('urgent')}</Chip>}
@@ -211,15 +211,15 @@ function Inner({ id }: { id: string }) {
       {c.summary && <Card tone="support" className="flex flex-col gap-1 p-4"><SectionLabel>{t('summary')}</SectionLabel><Lead>{c.summary}</Lead></Card>}
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <SectionLabel>{t('words')}</SectionLabel>
-        <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75]">{c.description}</p>
-        {c.since && <p className="m-0 text-[13px] text-ink-soft">{t('since')}: {c.since}</p>}
-        {c.wish && <p className="m-0 text-[13px] text-ink-soft">{t('wish')}: {c.wish}</p>}
-        <span className="text-[12px]"><WaitingText wait={waitingLabel(c.waitingHours)} /></span>
+        <p className="m-0 whitespace-pre-wrap text-t14 leading-[1.75]">{c.description}</p>
+        {c.since && <p className="m-0 text-t13 text-ink-soft">{t('since')}: {c.since}</p>}
+        {c.wish && <p className="m-0 text-t13 text-ink-soft">{t('wish')}: {c.wish}</p>}
+        <span className="text-t12"><WaitingText wait={waitingLabel(c.waitingHours)} /></span>
       </Card>
 
       {mine?.status === 'INVITED' && (
         <Card tone="support" className="flex flex-col gap-2 border-2 border-dawn p-4">
-          <span className="text-[14.5px] font-bold">{t('invitation')}</span>
+          <span className="text-t14_5 font-bold">{t('invitation')}</span>
           <Lead>{mine.message}</Lead>
           <div className="flex gap-2">
             <Button tone="support" variant="night" className="flex-1" onClick={() => void act(() => apiFetch(`/api/support/invitations/${mine.id}`, { method: 'POST', json: { face, action: 'accept' } }), 'failed')}>{t('acceptInvitation')}</Button>
@@ -234,7 +234,7 @@ function Inner({ id }: { id: string }) {
         c.canOffer ? <OfferForm caseId={c.id} face={face} onDone={reload} /> : <CannotOffer block={c.offerBlock} />
       ) : mine.status === 'PENDING' ? (
         <Card tone="support" className="flex flex-col gap-2 p-4">
-          <span className="text-[14px] font-bold">{mine.invited ? t('waitingConsentInvite') : t('pending')}</span>
+          <span className="text-t14 font-bold">{mine.invited ? t('waitingConsentInvite') : t('pending')}</span>
           <Lead>{mine.message}</Lead>
           <Button tone="support" variant="outline" onClick={() => void act(() => apiFetch(`/api/support/cases/${c.id}/offer`, { method: 'DELETE', json: { face } }), 'failed')}>{t('withdraw')}</Button>
         </Card>
@@ -259,7 +259,7 @@ function Inner({ id }: { id: string }) {
                   <Button tone="support" variant="outline" onClick={() => setWithdrawing(false)}>{t('back')}</Button>
                 </div>
               </Card>
-            ) : <Button tone="support" variant="quiet" className="self-start text-[13px]" onClick={() => setWithdrawing(true)}>{t('withdrawMatched')}</Button>
+            ) : <Button tone="support" variant="quiet" className="self-start text-t13" onClick={() => setWithdrawing(true)}>{t('withdrawMatched')}</Button>
           )}
         </section>
       )}

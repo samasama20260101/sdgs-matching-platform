@@ -18,9 +18,9 @@ export function LinkCardView({ preview }: { preview: LinkPreview }) {
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1 px-4 py-3">
-        <span className="line-clamp-2 break-all text-[14px] font-bold leading-[1.5] text-ink">{title}</span>
-        {preview.description && <span className="line-clamp-2 text-[12.5px] leading-[1.6] text-ink-soft">{preview.description}</span>}
-        <span className="mt-1 flex items-center gap-1 text-[11.5px] text-mist">
+        <span className="line-clamp-2 break-all text-t14 font-bold leading-[1.5] text-ink">{title}</span>
+        {preview.description && <span className="line-clamp-2 text-t12_5 leading-[1.6] text-ink-soft">{preview.description}</span>}
+        <span className="mt-1 flex items-center gap-1 text-t11_5 text-mist">
           <span>{preview.siteName ? `${preview.siteName} · ${preview.hostname}` : preview.hostname}</span>
           <span aria-hidden="true">↗</span>
         </span>

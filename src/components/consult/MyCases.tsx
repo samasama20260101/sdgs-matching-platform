@@ -35,14 +35,14 @@ export function useMyCaseTitle(): (item: MyCaseItem) => string {
 export function MyCases({ items }: { items: MyCaseItem[] }) {
   const t = useTranslations('app.home')
   const titleOf = useMyCaseTitle()
-  if (items.length === 0) return <p className="m-0 px-1 text-[13px] text-mist">{t('noCases')}</p>
+  if (items.length === 0) return <p className="m-0 px-1 text-t13 text-mist">{t('noCases')}</p>
   return (
     <section className="flex flex-col gap-2">
       <SectionLabel>{t('myCases')}</SectionLabel>
       {items.map((c) => (
         <Link key={c.id} href={`/cases/${c.id}`} className="no-underline">
           <Card className="flex flex-col gap-1.5 p-3.5 text-ink">
-            <span className="text-[14.5px] font-bold">{titleOf(c)}</span>
+            <span className="text-t14_5 font-bold">{titleOf(c)}</span>
             <span className="flex flex-wrap items-center gap-1.5">
               <Chip color={c.status === 'RESOLVED' ? 'leaf' : c.status === 'MATCHED' ? 'dawn' : c.status === 'OPEN' ? 'lamp' : 'steel'}>{t(`status.${c.status}`)}</Chip>
               {c.isProxy && <Chip color="dawn">{t('proxy')}</Chip>}

@@ -52,19 +52,19 @@ function Inner() {
               <Card tone="support" className="flex flex-col gap-3 p-5">
                 <Heading level={2}>{t('title')}</Heading>
                 <Lead>{t('notApproved')}</Lead>
-                <Link href="/support" className="text-[14px] font-bold text-night">{t('backHome')}</Link>
+                <Link href="/support" className="text-t14 font-bold text-night">{t('backHome')}</Link>
               </Card>
             ) : done ? (
               <Card tone="support" className="flex flex-col gap-3 p-5">
-                <span className="text-[16px] font-bold">{t('doneTitle', { name })}</span>
+                <span className="text-t16 font-bold">{t('doneTitle', { name })}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-bold">{t('code')}</span>
+                  <span className="text-t13 font-bold">{t('code')}</span>
                   <Tip label={t('codeTipLabel')}>{t('codeTip')}</Tip>
                 </div>
-                <span className="font-mono text-[32px] font-bold tracking-[0.2em]">{done.code}</span>
+                <span className="font-mono text-t32 font-bold tracking-[0.2em]">{done.code}</span>
                 <Lead>{t('handOnPaper', { date: done.expiresAt.slice(0, 10) })}</Lead>
                 <Button tone="support" variant="outline" onClick={() => window.print()}>{t('print')}</Button>
-                <Link href={`/cases/${done.id}`} className="text-[14px] font-bold text-night">{t('openCase')}</Link>
+                <Link href={`/cases/${done.id}`} className="text-t14 font-bold text-night">{t('openCase')}</Link>
               </Card>
             ) : (
               <>
@@ -75,10 +75,10 @@ function Inner() {
                 <Card tone="support" className="flex flex-col gap-4 p-4">
                   <TextField label={t('name')} hint={t('nameHint')} value={name} maxLength={20} onChange={(e) => setName(e.target.value)} />
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[13px] font-bold">{t('minor')}</span>
+                    <span className="text-t13 font-bold">{t('minor')}</span>
                     <div className="flex gap-2">
                       {[true, false].map((v) => (
-                        <button key={String(v)} type="button" aria-pressed={minor === v} onClick={() => setMinor(v)} className={cx('min-h-[44px] flex-1 rounded-tool text-[14px] font-bold', minor === v ? 'border-2 border-night bg-lamp-soft' : 'border border-line-strong bg-paper')}>
+                        <button key={String(v)} type="button" aria-pressed={minor === v} onClick={() => setMinor(v)} className={cx('min-h-[44px] flex-1 rounded-tool text-t14 font-bold', minor === v ? 'border-2 border-night bg-lamp-soft' : 'border border-line-strong bg-paper')}>
                           {v ? t('yes') : t('no')}
                         </button>
                       ))}
@@ -86,11 +86,11 @@ function Inner() {
                   </div>
                 </Card>
                 <IndicatorPicker options={optionsFor('PERSON')} selected={selected} onChange={setSelected} subject="PERSON" />
-                <p className="m-0 px-1 text-[12.5px] text-mist">{t('noneIsOk')}</p>
+                <p className="m-0 px-1 text-t12_5 text-mist">{t('noneIsOk')}</p>
                 <TextArea label={t('words')} value={words} maxLength={2000} onChange={(e) => setWords(e.target.value)} />
                 <label className="flex min-h-[52px] items-center gap-3 rounded-tool border-[1.5px] border-line-strong bg-paper px-3">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="h-5 w-5 accent-night" />
-                  <span className="text-[13.5px] font-bold">{t('consent')}</span>
+                  <span className="text-t13_5 font-bold">{t('consent')}</span>
                 </label>
                 <ErrorNote>{error}</ErrorNote>
                 <Button tone="support" variant="night" disabled={busy || !consent} onClick={() => void submit()}>{t('submit')}</Button>

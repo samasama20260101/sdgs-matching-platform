@@ -36,7 +36,7 @@ export default function DevLoginPage() {
       <main className="mx-auto flex min-h-dvh w-full max-w-[400px] flex-col justify-center gap-4 px-4 py-10">
         <span className="flex items-center gap-2.5">
           <Mark />
-          <span className="font-heading text-[16px] font-bold">明日もsamasama</span>
+          <span className="font-heading text-t16 font-bold">明日もsamasama</span>
         </span>
         <Card tone="support" className="p-5">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

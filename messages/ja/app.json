@@ -10,7 +10,7 @@
       "support": "支える"
     },
     "login": "ログイン",
-    "crisisNow": "いますぐ話したい"
+    "crisisNow": "いますぐ<wbr></wbr>話したい"
   },
   "tabs": {
     "label": "画面の切り替え",
@@ -212,7 +212,14 @@
     "becomeSupporter": "支える側にもなる",
     "becomeSupporterNote": "同じアカウントのまま",
     "account": "アカウント",
-    "signOut": "ログアウトする"
+    "signOut": "ログアウトする",
+    "textSize": "文字の大きさ",
+    "textSizeTipLabel": "文字の大きさについて",
+    "textSizeTip": "この端末で見るときの文字の大きさです。相談する画面と支える画面のどちらにも効きます。別のスマホやパソコンでは、そちらで選び直してください。",
+    "textSizes": {
+      "normal": "ふつう",
+      "large": "大きい"
+    }
   },
   "contact": {
     "title": "お問い合わせ",

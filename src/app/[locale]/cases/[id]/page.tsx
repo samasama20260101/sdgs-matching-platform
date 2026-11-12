@@ -32,7 +32,7 @@ function Steps({ c }: { c: ConsulteeCaseView }) {
       {labels.map((key, i) => (
         <li key={key} className="flex flex-1 flex-col items-center gap-1">
           <span className={cx('h-1.5 w-full rounded-full', i <= stage ? 'bg-night' : 'bg-line')} />
-          <span className={cx('text-[11px]', i === stage ? 'font-bold text-ink' : 'text-mist')} aria-current={i === stage ? 'step' : undefined}>{t(`steps.${key}`)}</span>
+          <span className={cx('text-t11', i === stage ? 'font-bold text-ink' : 'text-mist')} aria-current={i === stage ? 'step' : undefined}>{t(`steps.${key}`)}</span>
         </li>
       ))}
     </ol>
@@ -50,11 +50,11 @@ function OfferCard({ offer, canChoose, full, onAct }: { offer: ConsulteeOffer; c
   return (
     <Card className={cx('flex flex-col gap-3 p-4', chosen && 'border-2 border-night')}>
       <div className="flex items-center gap-3">
-        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center text-[16px] font-bold', offer.kind === 'ORGANIZATION' ? 'rounded-[12px] bg-night text-lamp' : 'rounded-full bg-dawn-soft text-dawn-ink')} aria-hidden>
+        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center text-t16 font-bold', offer.kind === 'ORGANIZATION' ? 'rounded-[12px] bg-night text-lamp' : 'rounded-full bg-dawn-soft text-dawn-ink')} aria-hidden>
           {offer.name.slice(0, 1)}
         </span>
         <span className="flex flex-1 flex-col gap-1">
-          <span className="text-[15px] font-bold">{offer.kind === 'INDIVIDUAL' ? t('individualName', { name: offer.name }) : offer.name}</span>
+          <span className="text-t15 font-bold">{offer.kind === 'INDIVIDUAL' ? t('individualName', { name: offer.name }) : offer.name}</span>
           <span className="flex flex-wrap gap-1">
             <Chip color={offer.kind === 'ORGANIZATION' ? 'steel' : 'dawn'}>{offer.kind === 'ORGANIZATION' ? t('organization') : t('individual')}</Chip>
             {offer.approved && <Chip color="leaf">{t('interviewed')}</Chip>}
@@ -64,10 +64,10 @@ function OfferCard({ offer, canChoose, full, onAct }: { offer: ConsulteeOffer; c
           </span>
         </span>
       </div>
-      {offer.invitedByName && <p className="m-0 text-[12.5px] text-dawn-ink">{t('invitedBy', { name: offer.invitedByName })}</p>}
-      <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75] text-ink-soft">{offer.message}</p>
+      {offer.invitedByName && <p className="m-0 text-t12_5 text-dawn-ink">{t('invitedBy', { name: offer.invitedByName })}</p>}
+      <p className="m-0 whitespace-pre-wrap text-t14 leading-[1.75] text-ink-soft">{offer.message}</p>
       {chosen ? (
-        <span className="text-[13px] font-bold text-dawn">{offer.acceptedOrder === 1 ? t('chosenLead') : t('chosenTogether')}</span>
+        <span className="text-t13 font-bold text-dawn">{offer.acceptedOrder === 1 ? t('chosenLead') : t('chosenTogether')}</span>
       ) : canChoose ? (
         <div className="flex gap-2">
           <Button variant="lamp" disabled={busy || full} onClick={() => void act('accept')} className="flex-1">{offer.invitedByName ? t('agreeInvite') : t('choose')}</Button>
@@ -98,14 +98,14 @@ function ResolvePanel({ caseId, onDone }: { caseId: string; onDone: () => Promis
   }
   return (
     <Card className="flex flex-col gap-3 border-2 border-lamp p-4">
-      <span className="text-[16px] font-bold">{t('title')}</span>
+      <span className="text-t16 font-bold">{t('title')}</span>
       <Lead>{t('lead')}</Lead>
       <SectionLabel>{t('thanks')}</SectionLabel>
       <div className="flex flex-wrap gap-1.5">
         {THANKS_WORDS.map((w) => {
           const on = words.includes(w)
           return (
-            <button key={w} type="button" aria-pressed={on} onClick={() => setWords(on ? words.filter((x) => x !== w) : [...words, w])} className={cx('min-h-[40px] rounded-full px-3 text-[13px] font-bold', on ? 'bg-lamp text-ink' : 'border border-line-strong bg-paper text-ink-soft')}>
+            <button key={w} type="button" aria-pressed={on} onClick={() => setWords(on ? words.filter((x) => x !== w) : [...words, w])} className={cx('min-h-[40px] rounded-full px-3 text-t13 font-bold', on ? 'bg-lamp text-ink' : 'border border-line-strong bg-paper text-ink-soft')}>
               {tBadge(w)}
             </button>
           )
@@ -165,7 +165,7 @@ function CaseInner({ id }: { id: string }) {
   return (
     <>
       <div className="flex flex-col gap-1 px-1">
-        <span className="text-[12px] text-mist">{c.subjectName ? t('subjectOrg', { name: c.subjectName }) : t('subjectMine')}</span>
+        <span className="text-t12 text-mist">{c.subjectName ? t('subjectOrg', { name: c.subjectName }) : t('subjectMine')}</span>
         <Heading level={2}>{title}</Heading>
       </div>
       <Steps c={c} />
@@ -175,7 +175,7 @@ function CaseInner({ id }: { id: string }) {
       {params.get('sent') === '1' && c.status === 'OPEN' && (
         <Card className="flex flex-col gap-1 bg-lamp-faint p-4">
           <div className="flex items-center justify-between">
-            <span className="text-[15px] font-bold">{t('delivered')}</span>
+            <span className="text-t15 font-bold">{t('delivered')}</span>
             <Tip label={t('deliveredTipLabel')}>{c.isMinor ? t('deliveredTipMinor') : t('deliveredTip')}</Tip>
           </div>
           <Lead>{t('deliveredLead')}</Lead>
@@ -185,15 +185,15 @@ function CaseInner({ id }: { id: string }) {
       {/* いまの段階で次にすること(画面の見直し 所見 6) */}
       {c.status === 'OPEN' && waiting.length === 0 && params.get('sent') !== '1' && <Lead>{t('nextOpen')}</Lead>}
       {c.status === 'MATCHED' && c.supporterResolvedAt && data.canDecide && <ResolvePanel caseId={c.id} onDone={reload} />}
-      {c.status === 'RESOLVED' && <Card className="bg-leaf-soft p-4"><span className="text-[15px] font-bold text-leaf-ink">{t('resolved')}</span></Card>}
+      {c.status === 'RESOLVED' && <Card className="bg-leaf-soft p-4"><span className="text-t15 font-bold text-leaf-ink">{t('resolved')}</span></Card>}
 
       {waiting.length > 0 && open && (
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[15px] font-bold">{tOffers('arrived', { count: waiting.length })}</span>
+            <span className="text-t15 font-bold">{tOffers('arrived', { count: waiting.length })}</span>
             <Tip label={tOffers('tipLabel')}>{tOffers('tip')}</Tip>
           </div>
-          <span className="px-1 text-[12.5px] text-mist">{tOffers('upTo', { max: c.maxSupporters, count: c.acceptedCount })}</span>
+          <span className="px-1 text-t12_5 text-mist">{tOffers('upTo', { max: c.maxSupporters, count: c.acceptedCount })}</span>
           {waiting.map((o) => <OfferCard key={o.id} offer={o} canChoose={data.canDecide} full={full} onAct={(a) => actOnOffer(o.id, a)} />)}
         </section>
       )}
@@ -216,10 +216,10 @@ function CaseInner({ id }: { id: string }) {
         {chips.length > 0 && (
           <div className="flex flex-wrap gap-1.5">{chips.map((text) => <Chip key={text} color="lamp">{text}</Chip>)}</div>
         )}
-        <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75]">{c.description}</p>
+        <p className="m-0 whitespace-pre-wrap text-t14 leading-[1.75]">{c.description}</p>
       </Card>
 
-      {c.status === 'OPEN' && <Link href="/me" className="px-1 text-[13px] text-night">{t('notifyMe')}</Link>}
+      {c.status === 'OPEN' && <Link href="/me" className="px-1 text-t13 text-night">{t('notifyMe')}</Link>}
 
       {open && data.canDecide && (
         cancelOpen ? (
@@ -231,7 +231,7 @@ function CaseInner({ id }: { id: string }) {
             </div>
           </Card>
         ) : (
-          <button type="button" onClick={() => setCancelOpen(true)} className="self-start min-h-[44px] px-1 text-[12.5px] text-mist underline">{c.status === 'MATCHED' ? t('cancelMatched') : t('cancel')}</button>
+          <button type="button" onClick={() => setCancelOpen(true)} className="self-start min-h-[44px] px-1 text-t12_5 text-mist underline">{c.status === 'MATCHED' ? t('cancelMatched') : t('cancel')}</button>
         )
       )}
       <ErrorNote>{error ?? loadMessage}</ErrorNote>

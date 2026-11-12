@@ -12,7 +12,7 @@ export default function StatsPage() {
   const [s, setS] = useState<Stats | null>(null)
   useEffect(() => { apiFetch<Stats>('/api/admin/stats').then(setS).catch(() => setS(null)) }, [])
   const tile = (label: string, value: string) => (
-    <Card tone="support" className="flex flex-col gap-1 p-4"><span className="text-[12px] text-mist">{label}</span><span className="text-[24px] font-bold">{value}</span></Card>
+    <Card tone="support" className="flex flex-col gap-1 p-4"><span className="text-t12 text-mist">{label}</span><span className="text-t24 font-bold">{value}</span></Card>
   )
   return (
     <AdminShell title="分析">
@@ -27,7 +27,7 @@ export default function StatsPage() {
           <Card tone="support" className="flex flex-col gap-1 p-4">
             <SectionLabel>待っている相談の多い指標(営業とつなぎ先集めの優先順位に)</SectionLabel>
             {s.waitingByIndicator.length === 0 && <Lead>ありません。</Lead>}
-            {s.waitingByIndicator.map(([code, n]) => <div key={code} className="flex justify-between text-[13.5px]"><span>{code}</span><span className="font-bold">{n}</span></div>)}
+            {s.waitingByIndicator.map(([code, n]) => <div key={code} className="flex justify-between text-t13_5"><span>{code}</span><span className="font-bold">{n}</span></div>)}
           </Card>
         </>
       )}

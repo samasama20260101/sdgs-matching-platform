@@ -22,7 +22,7 @@ export default function SummariesPage() {
       {items?.length === 0 && <Lead>まだありません。</Lead>}
       {items?.map((s) => (
         <Card key={s.case_id} tone="support" className="flex flex-col gap-2 p-4">
-          <div className="flex items-center gap-2"><span className="text-[12px] text-mist">{s.cases?.display_id} ・ {s.created_at.slice(0, 10)}</span>{s.is_model_case && <Chip color="lamp">モデルケース</Chip>}</div>
+          <div className="flex items-center gap-2"><span className="text-t12 text-mist">{s.cases?.display_id} ・ {s.created_at.slice(0, 10)}</span>{s.is_model_case && <Chip color="lamp">モデルケース</Chip>}</div>
           <SectionLabel>内容</SectionLabel><Lead>{s.content}</Lead>
           <SectionLabel>取った手立て</SectionLabel><Lead>{s.actions}</Lead>
           <SectionLabel>その後</SectionLabel><Lead>{s.aftermath}</Lead>

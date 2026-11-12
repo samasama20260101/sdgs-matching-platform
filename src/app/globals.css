@@ -37,6 +37,36 @@
   --font-heading: var(--font-v2-heading), 'Hiragino Mincho ProN', 'Noto Serif', serif;
 }
 
+/* 文字の大きさ(引き続き考えることの 19、11/12 定例)。画面は text-t13 のように、px の数字の名前で書く。
+   「わたし」で「大きい」を選ぶと <html data-text-size="large"> になり、文字だけが 1.2 倍になる(余白・幅・ボタンの高さは変えない)。
+   inline にして、倍率は使う要素の側で読む(<html> に置いた --text-scale が下の要素に受け継がれる) */
+@theme inline {
+  --text-t10_5: calc(10.5px * var(--text-scale, 1));
+  --text-t11: calc(11px * var(--text-scale, 1));
+  --text-t11_5: calc(11.5px * var(--text-scale, 1));
+  --text-t12: calc(12px * var(--text-scale, 1));
+  --text-t12_5: calc(12.5px * var(--text-scale, 1));
+  --text-t13: calc(13px * var(--text-scale, 1));
+  --text-t13_5: calc(13.5px * var(--text-scale, 1));
+  --text-t14: calc(14px * var(--text-scale, 1));
+  --text-t14_5: calc(14.5px * var(--text-scale, 1));
+  --text-t15: calc(15px * var(--text-scale, 1));
+  --text-t16: calc(16px * var(--text-scale, 1));
+  --text-t17: calc(17px * var(--text-scale, 1));
+  --text-t18: calc(18px * var(--text-scale, 1));
+  --text-t20: calc(20px * var(--text-scale, 1));
+  --text-t24: calc(24px * var(--text-scale, 1));
+  --text-t28: calc(28px * var(--text-scale, 1));
+  --text-t32: calc(32px * var(--text-scale, 1));
+}
+
+:root {
+  --text-scale: 1;
+}
+:root[data-text-size="large"] {
+  --text-scale: 1.2;
+}
+
 @theme inline {
   --font-sans: var(--font-body);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;

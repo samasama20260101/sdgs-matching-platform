@@ -25,10 +25,10 @@ function ToolCards() {
           <Link key={tool.href} href={tool.href} className="no-underline">
             <Card tone="support" className="flex flex-col gap-1 p-4 text-ink">
               <span className="flex items-center justify-between gap-2">
-                <span className="text-[15px] font-bold">{tool.title}</span>
-                {n > 0 && <span className="rounded-full bg-coral px-2.5 py-0.5 text-[12px] font-bold text-white">待ち {n}件</span>}
+                <span className="text-t15 font-bold">{tool.title}</span>
+                {n > 0 && <span className="rounded-full bg-coral px-2.5 py-0.5 text-t12 font-bold text-white">待ち {n}件</span>}
               </span>
-              <span className="text-[12.5px] text-mist">{tool.note}</span>
+              <span className="text-t12_5 text-mist">{tool.note}</span>
             </Card>
           </Link>
         )
@@ -46,7 +46,7 @@ export default function AdminHomePage() {
           <div className="flex flex-col gap-4 py-6">
             <div className="flex items-center justify-between">
               <Heading level={2}>明日もsamasama ／ 運営</Heading>
-              <Button tone="support" variant="outline" className="min-h-[40px] text-[13px]" onClick={() => void signOut()}>ログアウト</Button>
+              <Button tone="support" variant="outline" className="min-h-[40px] text-t13" onClick={() => void signOut()}>ログアウト</Button>
             </div>
             {!me.mfa.verified ? (
               <MfaGate onVerified={refresh} purpose="admin" />

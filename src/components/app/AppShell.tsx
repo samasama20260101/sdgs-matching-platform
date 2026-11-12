@@ -21,7 +21,7 @@ function ModeSwitch() {
     router.push(next === 'support' ? '/support' : '/home')
   }
   return (
-    <div role="tablist" aria-label={t('modeLabel')} className="flex rounded-full bg-steel p-0.5 text-[12.5px] font-bold">
+    <div role="tablist" aria-label={t('modeLabel')} className="flex rounded-full bg-steel p-0.5 text-t12_5 font-bold">
       {(['consult', 'support'] as const).map((m) => (
         <button
           key={m}
@@ -29,7 +29,7 @@ function ModeSwitch() {
           role="tab"
           aria-selected={mode === m}
           onClick={() => pick(m)}
-          className={cx('min-h-[36px] whitespace-nowrap rounded-full px-3', mode === m ? 'bg-night text-white' : 'text-ink-soft')}
+          className={cx('min-h-[36px] whitespace-nowrap rounded-full px-2.5', mode === m ? 'bg-night text-white' : 'text-ink-soft')}
         >
           {t(`mode.${m}`)}
         </button>
@@ -49,18 +49,18 @@ export function AppHeader() {
   return (
     <>
       <header className="flex h-14 items-center justify-between gap-2">
-        <Link href={state.status === 'ready' ? '/home' : '/'} className="flex items-center gap-2.5 text-ink no-underline">
+        <Link href={state.status === 'ready' ? '/home' : '/'} className="flex shrink-0 items-center gap-2.5 text-ink no-underline">
           <Mark />
           {/* 切り替えが出る人は、スマホの幅では名前を印だけにする(390px で名前と切り替えが折り返す) */}
-          <span className={cx('whitespace-nowrap font-heading text-[16px] font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
+          <span className={cx('whitespace-nowrap font-heading text-t16 font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 items-center gap-1">
           {canSupport && <ModeSwitch />}
           {state.status === 'anonymous' && (
             <>
               <LanguageSwitcher />
               {pathname !== '/start' && (
-                <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-[13px] font-bold text-night no-underline">
+                <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-t13 font-bold text-night no-underline">
                   {t('login')}
                 </Link>
               )}
@@ -71,9 +71,10 @@ export function AppHeader() {
               type="button"
               aria-expanded={crisisOpen}
               onClick={() => setCrisisOpen((v) => !v)}
-              className="flex min-h-[44px] items-center whitespace-nowrap rounded-full px-2.5 text-[13px] font-bold text-coral-ink"
+              // 文字を大きくした細いスマホでは、横にはみ出さずに2行に折り返す。折り返すのは文言の <wbr> の位置だけ(break-keep)
+              className="flex min-h-[44px] min-w-0 shrink items-center rounded-full px-2.5 text-center text-t13 font-bold leading-tight break-keep text-coral-ink"
             >
-              {t('crisisNow')}
+              {t.rich('crisisNow', { wbr: () => <wbr /> })}
             </button>
           )}
         </div>
@@ -112,7 +113,7 @@ export function BottomTabs() {
             <Link
               href={tab.href}
               aria-current={active(tab.href) ? 'page' : undefined}
-              className={cx('flex min-h-[56px] flex-col items-center justify-center text-[12px] font-bold no-underline', active(tab.href) ? 'text-night' : 'text-mist')}
+              className={cx('flex min-h-[56px] flex-col items-center justify-center text-t12 font-bold no-underline', active(tab.href) ? 'text-night' : 'text-mist')}
             >
               <span className={cx('mb-1 h-1 w-6 rounded-full', active(tab.href) ? 'bg-lamp' : 'bg-transparent')} aria-hidden />
               {t(tab.key)}

@@ -41,10 +41,10 @@ export default function StoryPage() {
   return (
     <DocShell jaOnly>
       <section className="flex flex-col gap-4 rounded-soft bg-night px-5 py-8 text-white">
-        <h1 className="m-0 font-heading text-[28px] font-bold leading-[1.6]">
+        <h1 className="m-0 font-heading text-t28 font-bold leading-[1.6]">
           ひとりで抱えないで。<br />誰かが、きっといる。
         </h1>
-        <p className="m-0 text-[14px] leading-[1.9] text-white/85">
+        <p className="m-0 text-t14 leading-[1.9] text-white/85">
           社会の隅で、声を上げられずにいる人たちがいる。<br />
           私たちはその声を、必要な人へ届けたかった。
         </p>
@@ -56,13 +56,13 @@ export default function StoryPage() {
           {WHY.map((p) => <p key={p}>{p}</p>)}
         </DocProse>
         <Card className="flex flex-col gap-2 bg-kinari-deep p-4">
-          <p className="m-0 font-heading text-[15px] leading-[1.9] text-ink">
+          <p className="m-0 font-heading text-t15 leading-[1.9] text-ink">
             支援を受けることは、恥でも弱さでもない。人は誰かに支えられながら生きている——それが当たり前の社会をつくりたい。
           </p>
         </Card>
         <Card className="flex flex-col gap-1.5 bg-lamp-faint p-4">
-          <span className="text-[15px] font-bold text-ink">SDGsは、私たちの羅針盤。</span>
-          <p className="m-0 text-[13.5px] leading-[1.85] text-ink-soft">
+          <span className="text-t15 font-bold text-ink">SDGsは、私たちの羅針盤。</span>
+          <p className="m-0 text-t13_5 leading-[1.85] text-ink-soft">
             相談する人はSDGsを知らなくていい。ただ「困っている」と言えばいい。私たちがその内容をSDGsの視点で分類し、合う支え手へつなぐ。SDGsは強要するものではなく、支援の精度を上げるための<strong className="text-ink">内側の地図</strong>です。
           </p>
         </Card>
@@ -74,8 +74,8 @@ export default function StoryPage() {
         <div className="grid gap-2 sm:grid-cols-2">
           {MARK_MEANINGS.map((m) => (
             <Card key={m.title} className="flex flex-col gap-1.5 p-4">
-              <span className="text-[14.5px] font-bold text-ink">{m.title}</span>
-              <p className="m-0 text-[13px] leading-[1.8] text-ink-soft">{m.body}</p>
+              <span className="text-t14_5 font-bold text-ink">{m.title}</span>
+              <p className="m-0 text-t13 leading-[1.8] text-ink-soft">{m.body}</p>
             </Card>
           ))}
         </div>
@@ -87,17 +87,17 @@ export default function StoryPage() {
           {VALUES.map((v) => (
             <Card key={v.n} className="flex flex-col gap-1.5 p-4">
               <span className="flex items-baseline gap-2">
-                <span className="font-heading text-[13px] font-bold text-mist">{v.n}</span>
-                <span className="text-[14.5px] font-bold text-ink">{v.title}</span>
+                <span className="font-heading text-t13 font-bold text-mist">{v.n}</span>
+                <span className="text-t14_5 font-bold text-ink">{v.title}</span>
               </span>
-              <p className="m-0 text-[13px] leading-[1.8] text-ink-soft">{v.body}</p>
+              <p className="m-0 text-t13 leading-[1.8] text-ink-soft">{v.body}</p>
             </Card>
           ))}
         </div>
       </section>
 
       <section className="flex flex-col items-center gap-4 rounded-soft bg-night px-5 py-8 text-center text-white">
-        <p className="m-0 font-heading text-[15px] leading-[2.4] text-white/90">
+        <p className="m-0 font-heading text-t15 leading-[2.4] text-white/90">
           ひとりで抱えきれない問題に向き合うとき、<br />
           答えがわからないままでは、<br />
           <strong className="text-lamp">明日が来ることが困難だと思う人</strong>が<br />
@@ -110,7 +110,7 @@ export default function StoryPage() {
           それでは、また明日も、<strong className="text-lamp">samasama</strong>。
         </p>
         <Mark size={32} />
-        <span className="text-[11.5px] text-white/60">明日もsamasama 開発チーム — 2026</span>
+        <span className="text-t11_5 text-white/60">明日もsamasama 開発チーム — 2026</span>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -119,9 +119,9 @@ export default function StoryPage() {
         <dl className="m-0 grid grid-cols-2 gap-2">
           {GLOBAL.map((s) => (
             <div key={s.num} className="flex flex-col gap-0.5 rounded-soft border border-line bg-paper p-4">
-              <dd className="m-0 font-heading text-[24px] font-bold leading-none text-night">{s.num}</dd>
-              <dt className="mt-1.5 text-[12.5px] font-bold text-ink">{s.label}</dt>
-              <span className="text-[11px] text-mist">{s.src}</span>
+              <dd className="m-0 font-heading text-t24 font-bold leading-none text-night">{s.num}</dd>
+              <dt className="mt-1.5 text-t12_5 font-bold text-ink">{s.label}</dt>
+              <span className="text-t11 text-mist">{s.src}</span>
             </div>
           ))}
         </dl>
@@ -130,10 +130,10 @@ export default function StoryPage() {
       <section className="flex flex-col gap-3 rounded-[16px] bg-kinari-deep p-4">
         <Heading level={2}>一歩、踏み出してみませんか。</Heading>
         <Lead>相談は無料です。本名を出さずに、呼び名で相談できます。書いた相談を見た支え手から申し出が届き、話す相手はあなたが選びます。</Lead>
-        <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-[15px] font-bold tracking-[0.1em] text-white no-underline">
+        <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.1em] text-white no-underline">
           無料で相談する
         </Link>
-        <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-[14px] font-bold text-ink no-underline">
+        <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold text-ink no-underline">
           支え手と団体を見る
         </Link>
       </section>

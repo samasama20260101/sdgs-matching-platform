@@ -89,7 +89,7 @@ export function LanguageSwitcher() {
                 lang={option}
                 aria-current={option === locale ? 'true' : undefined}
                 onClick={() => handleChange(option)}
-                className="flex min-h-[44px] w-full items-center justify-between gap-3 px-4 text-left text-[14px] text-ink hover:bg-steel focus-visible:bg-steel focus-visible:outline-none"
+                className="flex min-h-[44px] w-full items-center justify-between gap-3 px-4 text-left text-t14 text-ink hover:bg-steel focus-visible:bg-steel focus-visible:outline-none"
               >
                 <span className={option === locale ? 'font-bold' : undefined}>{localeLabels[option]}</span>
                 {option === locale && <Check className="h-4 w-4 text-night" aria-hidden="true" />}
