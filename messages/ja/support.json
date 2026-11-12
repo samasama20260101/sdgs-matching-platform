@@ -300,11 +300,7 @@
   "contrib": {
     "title": "わたしの社会貢献",
     "resolvedCount": "これまでに {count}件の相談の解決に関わりました",
-    "score": "スコア",
     "thanks": "ありがとう",
-    "howCalculated": "計算のしかた",
-    "formulaLabel": "スコアの計算のしかた",
-    "formula": "スコア = 解決した相談に付いた指標の数 × 対象の人数。個人の相談は1人、会社や地域の相談は登録した人数で数えます。指標は運営が確かめて決めたものだけ、ありがとうはスコアに足さず別に数えます。数えるのは、相談した人が「解決した」と確定した支えだけで、申し出の数や返信の速さでは増えません。指標は SDGs のグローバル指標をもとにしていますが、この数え方は samasama が独自に決めたもので、国連などが定めたり認めたりしたものではありません。",
     "byIndicator": "解決に関わった指標",
     "records": "記録",
     "keepLabel": "記録の残り方",
@@ -313,7 +309,15 @@
     "thanksArrived": "相談した人からありがとうが届いた",
     "resolvedRecord": "{count, plural, =0 {相談が解決した} other {相談が解決した(確かめた指標 #)}}",
     "asMemberOf": "{name} の一員として",
-    "asIndividual": "個人として"
+    "asIndividual": "個人として",
+    "mLabel": "解決に関わった相談",
+    "unit": "件",
+    "growth": "この30日で +{month}件 ・ この1年で +{year}件",
+    "howCountedLabel": "数え方",
+    "howCounted": "相談した人が「解決した」と確定した相談を、一つずつ数えます。会社や地域の相談も1件です。人数を掛けたり、申し出の数や返信の速さで増やしたりはしません。指標は運営が確かめて決めたものだけを数え、ありがとうは別に数えます。指標は SDGs のグローバル指標をもとにしていますが、この数え方は samasama が独自に決めたもので、国連などが定めたり認めたりしたものではありません。",
+    "worldHint": "指標を押すと、世界の中での数を見られます",
+    "perIndicator": "{count}件",
+    "loadFailed": "読み込めませんでした。時間をおいて開き直してください"
   },
   "invitations": {
     "title": "{name} から招待が届いています",
@@ -368,5 +372,42 @@
     "areasNeedOne": "地域を1つ以上選んでください",
     "areasCancel": "やめる",
     "areasNone": "まだ決めていません"
+  },
+  "world": {
+    "back": "わたしの社会貢献",
+    "title": "世界の中で見る",
+    "aboutLabel": "この図の見方",
+    "about": "「起こりうる最大」は、その課題が世界で最大限に広がったときの数(個人の課題なら世界の人口)、「いま困っている人」は、今の世界でその課題を抱えている人の数、「明日もsamasama で解決」は、明日もsamasama を通して解決した相談の数です。目標はゼロ(その課題が世界からなくなった状態)。図の円の大きさは数の比ではありません。",
+    "diagramLabel": "起こりうる最大の中に、いま困っている人、その中に明日もsamasama で解決した相談がある図",
+    "insideOutTitle": "解決を、世界の大きさまで積み上げる",
+    "insideOut": "ひとつずつの解決を重ね、明日もsamasama で届く範囲を広げていく(インサイドアウト)",
+    "outsideInTitle": "困りごとを、世界からなくす",
+    "outsideIn": "世界の側から見て、その課題そのものをゼロに近づけていく(アウトサイドイン)",
+    "people": "{value}人",
+    "cases": "{count}件",
+    "growth": "この30日で +{month}件 ・ この1年で +{year}件",
+    "mine": "あなたが関わったのは {count}件",
+    "footnote": "起こりうる最大といま困っている人は国連などの統計の値、明日もsamasama で解決した相談は、解決を一つずつ積み上げた数です。推計ではなく、解決の積み上げで見せます。数え方は samasama が独自に決めたもので、国連などが定めたり認めたりしたものではありません。",
+    "loadFailed": "読み込めませんでした。時間をおいて開き直してください",
+    "possibleRing": "起こりうる最大",
+    "facingRing": "いま困っている人",
+    "facingUnknownRing": "まだ数えられていない",
+    "resolvedRing1": "明日も",
+    "resolvedRing2": "samasama で",
+    "resolvedRing3": "解決",
+    "possibleTitle": "起こりうる最大(世界の人口)",
+    "possibleNote": "{year}年 ・ {source} ・ {full}人",
+    "facingTitle": "いま困っている人",
+    "facingNote": {
+      "count": "{year}年 ・ {source}(国連 SDG データベース) ・ {full}人",
+      "share": "{year}年 ・ {source}(国連 SDG データベース)の割合に、同じ年の世界の人口を掛けた数 ・ {full}人",
+      "lacking": "{year}年 ・ {source}(国連 SDG データベース)の「行き届いている人の割合」から出した、行き届いていない人の数 ・ {full}人"
+    },
+    "facingUnknown": "まだ数えられていない",
+    "facingUnknownNote": "国連などの公表値で、この課題を抱える人の数がまだ見つかっていません。見つかったら足します。",
+    "resolvedTitle": "明日もsamasama で解決した相談",
+    "goalTitle": "目標",
+    "goalValue": "ゼロ",
+    "goalNote": "この課題が世界からなくなった状態。SDGs の目標は「半分に減らす」などですが、明日もsamasama はゼロを目指します。"
   }
 }

@@ -1,7 +1,7 @@
 // v2.0 の決まりの芯(年齢・スコア・機微・見える範囲・引き継ぎコード)。実行: npm run test:units
 import assert from 'node:assert/strict'
 import { canSupportAtAge, currentAge, fullYearsBetween, isMinorAge, needsGuardianConsent, parseAgeInput, todayInTokyo } from '../../src/lib/domain/age'
-import { organizationScore, resolvedPoints, summarizeContributions } from '../../src/lib/domain/score'
+import { growthSince, summarizeContributions, resolvedForIndicator } from '../../src/lib/domain/score'
 import { applyAiSensitivity, deriveSensitivity } from '../../src/lib/domain/sensitivity'
 import { canOffer, offerBlock, supporterCaseAccess, type CaseForVisibility, type SupporterFace } from '../../src/lib/domain/visibility'
 import { formatHandoverCode, HANDOVER_ALPHABET, normalizeHandoverInput } from '../../src/lib/domain/handover'
@@ -39,32 +39,38 @@ assert.equal(parseAgeInput(''), null)
 assert.equal(todayInTokyo(new Date('2026-11-05T15:30:00Z')), '2026-11-06') // UTC 15:30 は JST の翌日
 assert.equal(todayInTokyo(new Date('2026-11-05T14:59:00Z')), '2026-11-05')
 
-// ---- スコア: 解決した相談に付いた指標の数 × 対象の人数。ありがとうは別に数える
-assert.equal(resolvedPoints(3, 1), 3)
-assert.equal(resolvedPoints(2, 120000), 240000)
-assert.equal(resolvedPoints(0, 5), 0)
-assert.equal(resolvedPoints(2, 0), 2) // 人数は最低 1
-// 新しい順に渡す。c1 は解決のときに指標 2 つ、あとで運営が 1 つ外した(訂正 -1、最新の指標は 1.3.1 だけ)
+// ---- 社会貢献の記録(11/12): 解決した相談の数で数える。人口は掛けない。ありがとうは別に数える
+const now = new Date('2026-11-12T00:00:00Z')
+// 新しい順に渡す。c1 は解決のときに指標 2 つ、あとで運営が 1 つ外した(最新の指標は 1.3.1 だけ)
 const summary = summarizeContributions([
-  { kind: 'CORRECTION', indicator_codes: ['1.3.1'], population: 1, points: -1, case_id: 'c1' },
-  { kind: 'THANKS', indicator_codes: [], population: 1, points: 0, case_id: 'c2' },
-  { kind: 'THANKS', indicator_codes: [], population: 1, points: 0, case_id: 'c1' },
-  { kind: 'RESOLVED', indicator_codes: ['1.3.1'], population: 300, points: 300, case_id: 'c2' },
-  { kind: 'RESOLVED', indicator_codes: ['1.3.1', '4.4.1'], population: 1, points: 2, case_id: 'c1' },
-])
-assert.equal(summary.score, 301)
+  { kind: 'CORRECTION', indicator_codes: ['1.3.1'], case_id: 'c1', created_at: '2026-11-10T00:00:00Z' },
+  { kind: 'THANKS', indicator_codes: [], case_id: 'c2', created_at: '2026-11-09T00:00:00Z' },
+  { kind: 'THANKS', indicator_codes: [], case_id: 'c1', created_at: '2026-11-08T00:00:00Z' },
+  { kind: 'RESOLVED', indicator_codes: ['1.3.1'], case_id: 'c2', created_at: '2026-11-01T00:00:00Z' },
+  { kind: 'RESOLVED', indicator_codes: ['1.3.1', '4.4.1'], case_id: 'c1', created_at: '2026-03-01T00:00:00Z' },
+], now)
 assert.equal(summary.resolvedCases, 2)
 assert.equal(summary.thanks, 2)
 assert.deepEqual(summary.byIndicator, { '1.3.1': 2 })
-// 解決のときは指標が未確定(0 点)で、あとで確定した(訂正 +2)
+assert.deepEqual(summary.growth, { month: 1, year: 2 }) // c2 はこの30日、c1 は8か月前
+// 解決のときは指標が未確定で、あとで確定・入れ替えた(点は同じでも、最新の訂正の指標で数える)
 const later = summarizeContributions([
-  { kind: 'CORRECTION', indicator_codes: ['1.3.1', '11.1.1'], population: 1, points: 1, case_id: 'c3' },
-  { kind: 'CORRECTION', indicator_codes: ['1.3.1'], population: 1, points: 1, case_id: 'c3' },
-  { kind: 'RESOLVED', indicator_codes: [], population: 1, points: 0, case_id: 'c3' },
-])
-assert.equal(later.score, 2)
+  { kind: 'CORRECTION', indicator_codes: ['1.3.1', '11.1.1'], case_id: 'c3', created_at: '2026-11-11T00:00:00Z' },
+  { kind: 'CORRECTION', indicator_codes: ['1.3.1'], case_id: 'c3', created_at: '2026-11-10T00:00:00Z' },
+  { kind: 'RESOLVED', indicator_codes: [], case_id: 'c3', created_at: '2025-01-01T00:00:00Z' },
+], now)
 assert.deepEqual(later.byIndicator, { '1.3.1': 1, '11.1.1': 1 })
-assert.equal(organizationScore([summary, { score: 9, resolvedCases: 1, thanks: 0, byIndicator: {} }]), 310)
+assert.deepEqual(later.growth, { month: 0, year: 0 })
+// 訂正だけで解決の行がない相談は数えない
+assert.equal(summarizeContributions([{ kind: 'CORRECTION', indicator_codes: ['1.3.1'], case_id: 'c9', created_at: '2026-11-10T00:00:00Z' }], now).resolvedCases, 0)
+// 明日もsamasama 全体の数: 同じ相談は1回だけ(複数の団体で解決しても)。解決の時刻がないものは数に入れ、増えた数には入れない
+assert.deepEqual(resolvedForIndicator([
+  { case_id: 'a', resolved_at: '2026-11-01T00:00:00Z' },
+  { case_id: 'a', resolved_at: '2026-11-01T00:00:00Z' },
+  { case_id: 'b', resolved_at: '2025-12-01T00:00:00Z' },
+  { case_id: 'c', resolved_at: null },
+], now), { count: 3, growth: { month: 1, year: 2 } })
+assert.deepEqual(growthSince([Date.parse('2026-12-01T00:00:00Z')], now), { month: 0, year: 0 }) // 未来の時刻は数えない
 
 // ---- 機微: 指標の印・18歳未満・AI は上げるだけ
 const urgent = new Set(['3.4.2', '16.1.1'])

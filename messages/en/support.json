@@ -300,11 +300,7 @@
   "contrib": {
     "title": "My contributions",
     "resolvedCount": "You've helped solve {count} requests",
-    "score": "Score",
     "thanks": "Thanks",
-    "howCalculated": "How it's calculated",
-    "formulaLabel": "How the score is calculated",
-    "formula": "Score = number of indicators on solved requests × number of people affected. Requests from individuals count as 1 person; company and community requests use the registered number of people. Only indicators confirmed by the samasama team count, and thanks are counted separately. Only support confirmed as solved by the person asking counts — not the number of offers or reply speed. The indicators are based on the SDG global indicators, but this way of counting was set by samasama on its own and is not defined or endorsed by the United Nations or others.",
     "byIndicator": "Indicators you helped with",
     "records": "Records",
     "keepLabel": "How records are kept",
@@ -313,7 +309,15 @@
     "thanksArrived": "Thanks from the person who asked",
     "resolvedRecord": "{count, plural, =0 {A request was solved} one {A request was solved (# confirmed indicator)} other {A request was solved (# confirmed indicators)}}",
     "asMemberOf": "As a member of {name}",
-    "asIndividual": "As an individual"
+    "asIndividual": "As an individual",
+    "mLabel": "Requests you helped resolve",
+    "unit": "",
+    "growth": "+{month} in the last 30 days ・ +{year} in the last year",
+    "howCountedLabel": "How we count",
+    "howCounted": "We count each request that the person confirmed as resolved, one by one. A company or community request also counts as one. We don't multiply by the number of people, and offers or quick replies don't add to it. Only indicators confirmed by samasama are counted, and thank-yous are counted separately. The indicators are based on the SDG global indicators, but this way of counting is samasama's own and is not set or endorsed by the United Nations or anyone else.",
+    "worldHint": "Tap an indicator to see it in the context of the world",
+    "perIndicator": "{count}",
+    "loadFailed": "Couldn't load. Please try again later"
   },
   "invitations": {
     "title": "{name} has invited you",
@@ -368,5 +372,42 @@
     "areasNeedOne": "Choose at least one area",
     "areasCancel": "Cancel",
     "areasNone": "Not set yet"
+  },
+  "world": {
+    "back": "My contributions",
+    "title": "See it in the world",
+    "aboutLabel": "How to read this diagram",
+    "about": "\"Most it could reach\" is the number if the problem spread as far as it could in the world (for a personal problem, the world population). \"Facing it now\" is the number of people facing the problem in the world today. \"Resolved through samasama\" is the number of requests resolved through samasama. The goal is zero, where the problem no longer exists. The circles are not drawn to scale.",
+    "diagramLabel": "A diagram with the people facing it now inside the most it could reach, and the requests resolved through samasama inside that",
+    "insideOutTitle": "Build up resolutions to the size of the world",
+    "insideOut": "Add resolutions one by one, widening what samasama can reach (inside-out)",
+    "outsideInTitle": "Make the problem disappear from the world",
+    "outsideIn": "From the world's side, bring the problem itself closer to zero (outside-in)",
+    "people": "{value} people",
+    "cases": "{count}",
+    "growth": "+{month} in the last 30 days ・ +{year} in the last year",
+    "mine": "You helped with {count}",
+    "footnote": "\"Most it could reach\" and \"facing it now\" are statistics from the UN and others; \"resolved through samasama\" is the number of resolutions added up one by one. We show it as resolutions added up, not as an estimate. This way of counting is samasama's own and is not set or endorsed by the United Nations or anyone else.",
+    "loadFailed": "Couldn't load. Please try again later",
+    "possibleRing": "Most it could reach",
+    "facingRing": "Facing it now",
+    "facingUnknownRing": "not yet counted",
+    "resolvedRing1": "Resolved",
+    "resolvedRing2": "through",
+    "resolvedRing3": "samasama",
+    "possibleTitle": "Most it could reach (world population)",
+    "possibleNote": "{year} ・ {source} ・ {full} people",
+    "facingTitle": "People facing it now",
+    "facingNote": {
+      "count": "{year} ・ {source} (UN SDG database) ・ {full} people",
+      "share": "{year} ・ the share from {source} (UN SDG database) multiplied by the world population of the same year ・ {full} people",
+      "lacking": "{year} ・ people without access, worked out from the share with access from {source} (UN SDG database) ・ {full} people"
+    },
+    "facingUnknown": "Not yet counted",
+    "facingUnknownNote": "We haven't yet found a published figure for the number of people facing this problem. We'll add it when we do.",
+    "resolvedTitle": "Requests resolved through samasama",
+    "goalTitle": "Goal",
+    "goalValue": "Zero",
+    "goalNote": "The problem no longer exists in the world. The SDG targets say things like \"halve it\", but samasama aims for zero."
   }
 }
