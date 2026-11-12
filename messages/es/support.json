@@ -300,11 +300,7 @@
   "contrib": {
     "title": "Mis contribuciones",
     "resolvedCount": "Has ayudado a resolver {count} consultas",
-    "score": "Puntuación",
     "thanks": "Agradecimientos",
-    "howCalculated": "Cómo se calcula",
-    "formulaLabel": "Cómo se calcula la puntuación",
-    "formula": "Puntuación = número de indicadores de las consultas resueltas × número de personas afectadas. Las consultas de personas cuentan como 1; las de empresas y comunidades usan el número de personas registrado. Solo cuentan los indicadores confirmados por el equipo de samasama, y los agradecimientos se cuentan aparte. Solo cuenta el apoyo que la persona que consultó confirmó como resuelto, no el número de ofrecimientos ni la rapidez de respuesta. Los indicadores se basan en los indicadores mundiales de los ODS, pero esta forma de contar la decidió samasama por su cuenta y no la han definido ni aprobado las Naciones Unidas ni otros.",
     "byIndicator": "Indicadores en los que ayudaste",
     "records": "Registros",
     "keepLabel": "Cómo se guardan los registros",
@@ -313,7 +309,15 @@
     "thanksArrived": "Agradecimiento de la persona que consultó",
     "resolvedRecord": "{count, plural, =0 {Se resolvió una consulta} one {Se resolvió una consulta (# indicador confirmado)} other {Se resolvió una consulta (# indicadores confirmados)}}",
     "asMemberOf": "Como miembro de {name}",
-    "asIndividual": "A título individual"
+    "asIndividual": "A título individual",
+    "mLabel": "Consultas que ayudaste a resolver",
+    "unit": "",
+    "growth": "+{month} en los últimos 30 días ・ +{year} en el último año",
+    "howCountedLabel": "Cómo contamos",
+    "howCounted": "Contamos una a una las consultas que la persona confirmó como resueltas (m). Una consulta de una empresa o de una comunidad también cuenta como una. No multiplicamos por el número de personas, y las ofertas o las respuestas rápidas no la aumentan. Solo cuentan los indicadores confirmados por samasama, y los agradecimientos se cuentan aparte. Los indicadores se basan en los indicadores globales de los ODS, pero esta forma de contar es propia de samasama y no la ha establecido ni avalado las Naciones Unidas ni nadie más.",
+    "worldHint": "Toca un indicador para verlo en el contexto del mundo",
+    "perIndicator": "{count}",
+    "loadFailed": "No se pudo cargar. Inténtalo de nuevo más tarde"
   },
   "invitations": {
     "title": "{name} te ha invitado",
@@ -368,5 +372,40 @@
     "areasNeedOne": "Elijan al menos una zona",
     "areasCancel": "Cancelar",
     "areasNone": "Aún sin definir"
+  },
+  "world": {
+    "back": "Mi contribución",
+    "title": "Verlo en el mundo",
+    "aboutLabel": "Cómo leer este gráfico",
+    "about": "z es el número si el problema se extendiera al máximo en el mundo (para un problema personal, la población mundial), n es el número de personas que enfrentan el problema hoy en el mundo, m es el número de consultas resueltas a través de samasama y 0 es el estado en que el problema ya no existe. Los círculos no están a escala.",
+    "diagramLabel": "Un gráfico con n dentro de z y m dentro de n",
+    "zShort": "En su máxima extensión",
+    "nShort": "El mundo hoy",
+    "nUnknownShort": "Aún sin contar",
+    "mShort": "Resueltas",
+    "insideOutTitle": "Acercar m a z",
+    "insideOut": "(de dentro hacia fuera) Sumar resoluciones una a una, hasta que lo que alcanza samasama sea tan grande como el mundo",
+    "outsideInTitle": "Llevar z a 0",
+    "outsideIn": "(de fuera hacia dentro) Desde el lado del mundo, hacer desaparecer el propio problema",
+    "zTitle": "z En su máxima extensión (población mundial)",
+    "people": "{value} personas",
+    "zNote": "{year} ・ {source} ・ {full} personas",
+    "nTitle": "n Personas que enfrentan este problema hoy",
+    "nNote": {
+      "count": "{year} ・ {source} (base de datos de los ODS de la ONU) ・ {full} personas",
+      "share": "{year} ・ la proporción de {source} (base de datos de los ODS de la ONU) multiplicada por la población mundial del mismo año ・ {full} personas",
+      "lacking": "{year} ・ personas sin acceso, calculadas a partir de la proporción con acceso de {source} (base de datos de los ODS de la ONU) ・ {full} personas"
+    },
+    "nUnknown": "Aún sin contar",
+    "nUnknownNote": "Todavía no hemos encontrado una cifra publicada del número de personas que enfrentan este problema. La añadiremos cuando la encontremos.",
+    "mTitle": "m Consultas resueltas a través de samasama",
+    "cases": "{count}",
+    "growth": "+{month} en los últimos 30 días ・ +{year} en el último año",
+    "mine": "Tú ayudaste en {count}",
+    "zeroTitle": "0 El objetivo",
+    "zeroValue": "El problema ya no existe en el mundo",
+    "zeroNote": "Las metas de los ODS dicen cosas como «reducirlo a la mitad», pero samasama apunta a 0.",
+    "footnote": "n y z son estadísticas de la ONU y otros; m es el número de consultas resueltas a través de samasama, sumadas una a una. Lo mostramos como resoluciones sumadas, no como una estimación. Esta forma de contar es propia de samasama y no la ha establecido ni avalado las Naciones Unidas ni nadie más.",
+    "loadFailed": "No se pudo cargar. Inténtalo de nuevo más tarde"
   }
 }

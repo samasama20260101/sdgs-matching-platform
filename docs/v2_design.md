@@ -23,7 +23,7 @@
 | 自分の相談・自分の団体が相談した相談は、支える側に出さない | 同上 |
 | 支え手は1件の相談に3者まで。最初に選ばれた1者が中心。中心は相談者の同意を得てほかの支え手を招ける | `accept_sos_offer`(DB)・`MAX_SUPPORTERS_PER_CASE` |
 | 個人の支え手が申し出るには電話番号の確認(SMS)が要る | `src/lib/domain/visibility.ts` の `canOffer` |
-| スコア = Σ(解決した相談に付いた、運営が確定した指標の数 × 対象の人数)。個人の相談は 1、会社・地域の相談は団体が登録した人数。「ありがとう」は別に数える | `src/lib/domain/score.ts` |
+| 社会貢献の記録は m(解決した相談の数。人口は掛けない)と指標ごとの数で見せ、「ありがとう」は別に数える。指標ごとに「世界の中で見る」で z(世界の人口)・n(国連の公表値から作った今の数。ない指標は出さない)・m・0 を並べる(11/12 定例。11/5 の「指標の数 × 人口」のスコアは見せない。`contributions.points` は残る) | `src/lib/domain/score.ts`・`src/lib/domain/worldCount.ts`・`src/lib/constants/worldCountSources.ts`(n の系列の対応表)・`scripts/fetch-world-counts.ts` |
 | 社会貢献の記録は人に付き、その時の所属を残す。追記だけ(書き換えは DB が断る)。退会したときだけその人の行をすべて消す | `contributions` の trigger |
 | 代理登録の引き継ぎコードは読み違えやすい字を使わず、DB にはハッシュだけを置く。30 日・使い切り・5 回失敗で使えなくする | `src/lib/domain/handover.ts` |
 | 知らせのメールには、件名にも本文にも相談の中身を書かない | 通知の送り口 |
