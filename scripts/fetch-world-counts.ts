@@ -1,4 +1,4 @@
-// 世界の数(n と z)を取り直して src/lib/constants/worldCounts.generated.ts に書き出す。
+// 世界の数(いま困っている人・世界の人口)を取り直して src/lib/constants/worldCounts.generated.ts に書き出す。
 // 実行: npx tsx scripts/fetch-world-counts.ts(国連 SDG API と世界銀行の API。鍵は要らない)
 // 国連の値は年に数回更新される。取り直したら差分を見て、急に変わった値は元の資料で確かめてからコミットする。
 import { writeFileSync } from 'node:fs'

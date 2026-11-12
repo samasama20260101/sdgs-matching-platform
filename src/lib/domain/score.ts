@@ -1,12 +1,13 @@
 // 社会貢献の記録の見せ方(11/12 定例で決定。引き続き考えることの 3)。
-//   m = 明日もsamasama を通して解決した相談の数(相談した主体の数。人口は掛けない)
-//   n = 今の世界で、その課題を抱えている数(国連などの公表値。src/lib/constants/worldCounts.generated.ts)
-//   z = その課題が世界で最大限に広がったときの数(個人の課題なら世界の人口)
-//   0 = 目標(その課題が世界からなくなった状態)
-// 個人の記録は、関わった相談の数(m)をいちばん大きく出し、指標ごとの数と「ありがとう」の数を別に見せる。
+// 画面では指標ごとに次の4つを並べる(代表の案では z・n・m・0 と書いていたもの。画面では記号を使わない)。
+//   起こりうる最大       その課題が世界で最大限に広がったときの数(個人の課題なら世界の人口)          … z
+//   いま困っている人     今の世界でその課題を抱えている人(国連などの公表値。worldCounts.generated.ts) … n
+//   明日もsamasama で解決 明日もsamasama を通して解決した相談の数(人口は掛けない)                     … m
+//   目標                 ゼロ(その課題が世界からなくなった状態)                                       … 0
+// 個人の記録は、関わった解決した相談の数をいちばん大きく出し、指標ごとの数と「ありがとう」の数を別に見せる。
 // 11/5 の「指標の数 × 人口」のスコアは見せない(DB の contributions.points は残るが、画面では使わない)。
 // 指標は運営が確定したものだけを数える。相談したこと・申し出の数・返信の速さは数えない。
-// 複数の団体・人で解決した相談は、世界全体の m では1回だけ数え、関わった人にはそれぞれ1件の参加として残る。
+// 複数の団体・人で解決した相談は、世界全体の数では1回だけ数え、関わった人にはそれぞれ1件の参加として残る。
 
 export type ContributionKind = 'RESOLVED' | 'THANKS' | 'CORRECTION'
 
@@ -18,7 +19,7 @@ export type ContributionRow = {
 }
 
 export type RecordSummary = {
-  resolvedCases: number                 // 関わった相談の数(m)
+  resolvedCases: number                 // 関わった、解決した相談の数
   thanks: number                        // ありがとうの数(m には足さない)
   byIndicator: Record<string, number>   // 指標ごとの、関わった相談の数
   growth: { month: number; year: number } // この30日・この365日に解決した相談の数
@@ -63,12 +64,12 @@ export function growthSince(resolvedTimes: number[], now: Date): { month: number
   return { month, year }
 }
 
-// 世界全体の m: その指標が確定した、解決済みの相談の数(相談ごとに1回だけ)
-export function worldIndicatorM(rows: { case_id: string; resolved_at: string | null }[], now: Date): { m: number; growth: { month: number; year: number } } {
+// 明日もsamasama 全体で、その指標が確定した解決済みの相談の数(相談ごとに1回だけ)
+export function resolvedForIndicator(rows: { case_id: string; resolved_at: string | null }[], now: Date): { count: number; growth: { month: number; year: number } } {
   const times = new Map<string, number>()
   for (const row of rows) {
     if (times.has(row.case_id)) continue
     times.set(row.case_id, row.resolved_at ? Date.parse(row.resolved_at) : Number.NaN)
   }
-  return { m: times.size, growth: growthSince([...times.values()], now) }
+  return { count: times.size, growth: growthSince([...times.values()], now) }
 }

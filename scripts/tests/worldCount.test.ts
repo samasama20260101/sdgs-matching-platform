@@ -1,4 +1,4 @@
-// 世界の数(n)の読み替え。実行: npm run test:units
+// 世界の数(いま困っている人)の読み替え。実行: npm run test:units
 import assert from 'node:assert/strict'
 import { toPeople, unitMultiplier } from '../../src/lib/domain/worldCount'
 import { WORLD_COUNTS, WORLD_POPULATION } from '../../src/lib/constants/worldCounts.generated'
@@ -24,12 +24,12 @@ assert.equal(toPeople('share', 120, 'PERCENT', 8_000_000_000), null)
 assert.equal(toPeople('count', -1, 'NUMBER', 1), null)
 assert.equal(toPeople('count', Number.NaN, 'NUMBER', 1), null)
 
-// 作った値の形: 世界の人口は 70 億〜100 億、n は z を超えない、載せた指標はすべて対応表にある
+// 作った値の形: 世界の人口は 70 億〜100 億、いま困っている人は世界の人口を超えない、載せた指標はすべて対応表にある
 assert.ok(WORLD_POPULATION.value > 7e9 && WORLD_POPULATION.value < 1e10)
 for (const [code, n] of Object.entries(WORLD_COUNTS)) {
   assert.ok(WORLD_COUNT_SOURCES[code], `${code} が対応表にない`)
   assert.equal(n.series, WORLD_COUNT_SOURCES[code].series, code)
-  assert.ok(n.value >= 0 && n.value <= WORLD_POPULATION.value, `${code} の n が範囲外`)
+  assert.ok(n.value >= 0 && n.value <= WORLD_POPULATION.value, `${code} の数が範囲外`)
   assert.ok(n.year >= 2000 && n.year <= 2100, `${code} の年`)
 }
 

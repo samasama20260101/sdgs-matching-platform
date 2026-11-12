@@ -1,12 +1,12 @@
-// 指標を世界の中で見る(11/12 定例。引き続き考えることの 3)。
-//   m = 明日もsamasama で、その指標が確定した解決済みの相談の数(同じ相談は1回だけ)。あなたが関わった数も返す
-//   n = 国連の公表値から作った、今の世界でその課題を抱えている人の数(まだない指標は null)
-//   z = 世界の人口(個人の課題が世界で最大限に広がったときの数)
+// 指標を世界の中で見る(11/12 定例。引き続き考えることの 3。数の意味は src/lib/domain/score.ts の冒頭)。
+//   resolved = 明日もsamasama で、その指標が確定した解決済みの相談の数(同じ相談は1回だけ)。mine はあなたが関わった数
+//   facing   = 国連の公表値から作った、いま困っている人の数(まだない指標は null)
+//   possible = 起こりうる最大(世界の人口)
 // 相談の中身・だれが解決したかは返さない(数だけ)
 import { NextResponse } from 'next/server'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { summarizeContributions, worldIndicatorM, type ContributionRow } from '@/lib/domain/score'
+import { summarizeContributions, resolvedForIndicator, type ContributionRow } from '@/lib/domain/score'
 import { WORLD_COUNTS, WORLD_POPULATION } from '@/lib/constants/worldCounts.generated'
 
 const CODE = /^\d{1,2}\.[0-9a-z]{1,2}\.\d{1,2}$/
@@ -37,9 +37,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   const now = new Date()
   return NextResponse.json({
     code,
-    world: worldIndicatorM(resolved, now),
+    resolved: resolvedForIndicator(resolved, now),
     mine: summarizeContributions((mine ?? []) as ContributionRow[], now).byIndicator[code] ?? 0,
-    n: WORLD_COUNTS[code] ?? null,
-    z: WORLD_POPULATION,
+    facing: WORLD_COUNTS[code] ?? null,
+    possible: WORLD_POPULATION,
   })
 }

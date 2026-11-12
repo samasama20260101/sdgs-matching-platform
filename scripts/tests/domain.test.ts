@@ -1,7 +1,7 @@
 // v2.0 の決まりの芯(年齢・スコア・機微・見える範囲・引き継ぎコード)。実行: npm run test:units
 import assert from 'node:assert/strict'
 import { canSupportAtAge, currentAge, fullYearsBetween, isMinorAge, needsGuardianConsent, parseAgeInput, todayInTokyo } from '../../src/lib/domain/age'
-import { growthSince, summarizeContributions, worldIndicatorM } from '../../src/lib/domain/score'
+import { growthSince, summarizeContributions, resolvedForIndicator } from '../../src/lib/domain/score'
 import { applyAiSensitivity, deriveSensitivity } from '../../src/lib/domain/sensitivity'
 import { canOffer, offerBlock, supporterCaseAccess, type CaseForVisibility, type SupporterFace } from '../../src/lib/domain/visibility'
 import { formatHandoverCode, HANDOVER_ALPHABET, normalizeHandoverInput } from '../../src/lib/domain/handover'
@@ -39,7 +39,7 @@ assert.equal(parseAgeInput(''), null)
 assert.equal(todayInTokyo(new Date('2026-11-05T15:30:00Z')), '2026-11-06') // UTC 15:30 は JST の翌日
 assert.equal(todayInTokyo(new Date('2026-11-05T14:59:00Z')), '2026-11-05')
 
-// ---- 社会貢献の記録(11/12): m = 解決した相談の数。人口は掛けない。ありがとうは別に数える
+// ---- 社会貢献の記録(11/12): 解決した相談の数で数える。人口は掛けない。ありがとうは別に数える
 const now = new Date('2026-11-12T00:00:00Z')
 // 新しい順に渡す。c1 は解決のときに指標 2 つ、あとで運営が 1 つ外した(最新の指標は 1.3.1 だけ)
 const summary = summarizeContributions([
@@ -63,13 +63,13 @@ assert.deepEqual(later.byIndicator, { '1.3.1': 1, '11.1.1': 1 })
 assert.deepEqual(later.growth, { month: 0, year: 0 })
 // 訂正だけで解決の行がない相談は数えない
 assert.equal(summarizeContributions([{ kind: 'CORRECTION', indicator_codes: ['1.3.1'], case_id: 'c9', created_at: '2026-11-10T00:00:00Z' }], now).resolvedCases, 0)
-// 世界全体の m: 同じ相談は1回だけ(複数の団体で解決しても)。解決の時刻がないものは m に数え、増えた数には数えない
-assert.deepEqual(worldIndicatorM([
+// 明日もsamasama 全体の数: 同じ相談は1回だけ(複数の団体で解決しても)。解決の時刻がないものは数に入れ、増えた数には入れない
+assert.deepEqual(resolvedForIndicator([
   { case_id: 'a', resolved_at: '2026-11-01T00:00:00Z' },
   { case_id: 'a', resolved_at: '2026-11-01T00:00:00Z' },
   { case_id: 'b', resolved_at: '2025-12-01T00:00:00Z' },
   { case_id: 'c', resolved_at: null },
-], now), { m: 3, growth: { month: 1, year: 2 } })
+], now), { count: 3, growth: { month: 1, year: 2 } })
 assert.deepEqual(growthSince([Date.parse('2026-12-01T00:00:00Z')], now), { month: 0, year: 0 }) // 未来の時刻は数えない
 
 // ---- 機微: 指標の印・18歳未満・AI は上げるだけ
