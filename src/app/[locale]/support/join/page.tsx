@@ -3,6 +3,7 @@
 // 支え手になる(盤 21)。同じアカウントのまま支える側になる。あなたの相談は、支える側からは見えない。
 // 個人: 本名・得意なこと・遠隔で可・言語、電話番号の確認(申し出るのに必要)
 // 団体: 申し込み → 運営が面談 → 承認されると一覧に載る(11/5 の審査の流れ。2段階に分けない)
+//   申し込みでは、面談で確かめる6つの点を自己採点してもらう(11/12。面談前の自己採点はこれ1回)
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase/client'
@@ -16,10 +17,11 @@ import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip, T
 import type { MePerson } from '@/lib/client/meTypes'
 import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAreas'
 import { canSupportAtAge } from '@/lib/domain/age'
+import { SELF_CHECKS, SUPPORTER_CHECKS, checkAnswers, missingChecks, type SelfCheck, type SupporterCheck } from '@/lib/domain/supporterChecks'
 
 const SUPPORTER_POINTS = ['age', 'purpose', 'inApp', 'sensitive', 'realName', 'records', 'stop'] as const
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER_PUBLIC', 'OTHER'] as const
-const APPLICATION_ITEMS = ['activities', 'areas', 'targets', 'staff', 'safeguarding', 'website', 'howFound'] as const
+const APPLICATION_ITEMS = ['areas', 'staff', 'safeguarding', 'website', 'howFound'] as const
 
 function SupporterTerms({ agreed, onChange }: { agreed: boolean; onChange: (v: boolean) => void }) {
   const t = useTranslations('support.join')
@@ -183,6 +185,42 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
   )
 }
 
+function SelfChecks({ choices, notes, onChoice, onNote }: {
+  choices: Partial<Record<SupporterCheck, SelfCheck>>
+  notes: Partial<Record<SupporterCheck, string>>
+  onChoice: (check: SupporterCheck, value: SelfCheck) => void
+  onNote: (check: SupporterCheck, value: string) => void
+}) {
+  const t = useTranslations('support.join')
+  return (
+    <Card tone="support" className="flex flex-col gap-4 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[14.5px] font-bold">{t('checksTitle')}</span>
+        <Tip label={t('checksTipLabel')}>{t('checksTip')}</Tip>
+      </div>
+      <ol className="m-0 flex list-none flex-col gap-5 p-0">
+        {SUPPORTER_CHECKS.map((check, i) => (
+          <li key={check} className="flex flex-col gap-2 border-t border-line pt-4 first:border-t-0 first:pt-0">
+            <div className="flex items-start gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-night text-[12px] font-bold text-lamp" aria-hidden>{i + 1}</span>
+              <span className="flex-1 text-[14px] font-bold leading-[1.7]">{t(`checks.${check}.statement`)}</span>
+              <Tip label={t('checksNoteLabel')}>{t(`checks.${check}.note`)}</Tip>
+            </div>
+            <div role="radiogroup" aria-label={t(`checks.${check}.statement`)} className="grid grid-cols-2 gap-2">
+              {SELF_CHECKS.map((v) => (
+                <button key={v} type="button" role="radio" aria-checked={choices[check] === v} onClick={() => onChoice(check, v)} className={cx('min-h-[44px] rounded-tool px-2 text-[13.5px] font-bold', choices[check] === v ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+                  {t(`selfCheck.${v}`)}
+                </button>
+              ))}
+            </div>
+            <TextArea compact label={t(`checks.${check}.prompt`)} value={notes[check] ?? ''} maxLength={2000} rows={2} onChange={(e) => onNote(check, e.target.value)} />
+          </li>
+        ))}
+      </ol>
+    </Card>
+  )
+}
+
 function OrganizationForm({ person }: { person: MePerson }) {
   const t = useTranslations('support.join')
   const tType = useTranslations('support.orgType')
@@ -190,14 +228,18 @@ function OrganizationForm({ person }: { person: MePerson }) {
   const [orgType, setOrgType] = useState<(typeof ORG_TYPES)[number]>('NPO')
   const [contactEmail, setContactEmail] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [choices, setChoices] = useState<Partial<Record<SupporterCheck, SelfCheck>>>({})
+  const [notes, setNotes] = useState<Partial<Record<SupporterCheck, string>>>({})
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { refresh } = useSession()
   const submit = async () => {
-    if (!name.trim() || !agreed) {
-      setError(!name.trim() ? t('orgNameRequired') : t('agreeRequired'))
+    const checks = checkAnswers(choices, notes)
+    const missing = missingChecks(checks)
+    if (!name.trim() || missing.length > 0 || !agreed) {
+      setError(!name.trim() ? t('orgNameRequired') : missing.length > 0 ? t('checksRequired', { numbers: missing.map((c) => SUPPORTER_CHECKS.indexOf(c) + 1).join('・') }) : t('agreeRequired'))
       return
     }
     setBusy(true)
@@ -212,7 +254,7 @@ function OrganizationForm({ person }: { person: MePerson }) {
           country: person.country,
           regionCode: person.regionCode,
           contactEmail: contactEmail.trim() || null,
-          application: Object.fromEntries(Object.entries(answers).filter(([, v]) => v.trim())),
+          application: { ...Object.fromEntries(Object.entries(answers).filter(([, v]) => v.trim())), ...checks },
           acceptSupporterTerms: true,
         },
       })
@@ -250,6 +292,9 @@ function OrganizationForm({ person }: { person: MePerson }) {
           </select>
         </label>
         <TextField label={<span className="inline-flex items-center gap-2">{t('contactEmail')} <Tip label={t('contactEmailTipLabel')}>{t('contactEmailTip')}</Tip></span>} type="email" value={contactEmail} maxLength={254} onChange={(e) => setContactEmail(e.target.value)} />
+      </Card>
+      <SelfChecks choices={choices} notes={notes} onChoice={(c, v) => setChoices({ ...choices, [c]: v })} onNote={(c, v) => setNotes({ ...notes, [c]: v })} />
+      <Card tone="support" className="flex flex-col gap-4 p-4">
         {APPLICATION_ITEMS.map((k) => (
           <TextArea key={k} label={t(`application.${k}`)} value={answers[k] ?? ''} maxLength={2000} rows={3} onChange={(e) => setAnswers({ ...answers, [k]: e.target.value })} />
         ))}
