@@ -2,8 +2,8 @@
 import createIntlMiddleware from 'next-intl/middleware'
 import { NextRequest, NextResponse } from 'next/server'
 import { routing, stripLocalePrefix } from './i18n/routing'
+import { isStaticFilePath } from './lib/domain/staticFile'
 
-const PUBLIC_FILE_PATTERN = /\.(.*)$/
 const handleI18nRouting = createIntlMiddleware(routing)
 
 function isMaintenanceEnabled() {
@@ -23,7 +23,7 @@ function isMaintenanceAllowedPath(pathname: string) {
         || pathname.startsWith('/api/health')
         || pathname.startsWith('/_next/')
         || pathname === '/favicon.ico'
-        || PUBLIC_FILE_PATTERN.test(pathname)
+        || isStaticFilePath(pathname)
 }
 
 export async function proxy(request: NextRequest) {
@@ -71,8 +71,10 @@ export async function proxy(request: NextRequest) {
     return handleI18nRouting(request)
 }
 
+// 静的ファイルは拡張子で除外する(一覧は src/lib/domain/staticFile.ts と同じ)。
+// 「.」を含むパスをまとめて除外すると、指標の番号が入る /support/contributions/4.3.1 が 404 になる(#123)。
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:ico|png|svg|webmanifest|jpg|jpeg|gif|webp|avif|txt|xml|js|css|map|woff|woff2|ttf|otf)$).*)',
     ],
 }
