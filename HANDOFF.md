@@ -20,13 +20,13 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 1. **ログインのメールの送り主**: Supabase の標準の送信のままで、Supabase の org のメンバーのアドレスにしか届かない(代表に試してもらうなら、代表が org のメンバーであること)。本番は Resend(samasama のドメイン)を Auth の SMTP にする。Staging の site_url は Vercel のまま(コードで入るので困らない)
 2. **AI の鍵**: 2026-11-09 に `OPENAI_API_KEY`・`XAI_API_KEY` を Workers の Staging の Secret に入れた(手元は `.env.workers-staging.local`)。両社とも指定のモデルと `response_format: json_object` が通り、体験ページの「近いもの」は AI で平均 3 秒ほど。費用の目安は 2 社合計で月 3 万円(代表)。OpenAI の支出の上限は「強制しない」設定で、自動の入金もオンなので、本番の前に止め方を代表と決める。本番の鍵は別に作る
 3. **Google ログイン**: Staging で使える(2026-11-10)。GCP のプロジェクト `samasama-app` の同意画面はテスト中で、入れるのはテストユーザー(岡本・代表)だけ。OAuth クライアント `samasama-app-staging` の設定は `ops/supabase-auth/staging`、シークレットは手元の `.env.workers-staging.local` の `GOOGLE_OAUTH_CLIENT_SECRET`(push のときに環境変数で渡す)。本番は、同意画面の公開(ブランディングの URL とサポートのメールを代表のものに)と本番用のクライアントを作ってから
-4. **ほかの鍵と費用**: SMS の会社(個人の支え手の電話番号の確認)、Resend(知らせのメール。Workers にはまだ入れていない)。どれも鍵がなければ黙って使わない作り。Workers Paid・GitHub の `CLOUDFLARE_API_TOKEN`・`CF_STAGING_DEPLOY=true` は 2026-11-05 にそろい、dev への push のたびに Workers の Staging に出る
+4. **ほかの鍵と費用**: SMS は Twilio Verify(2026-11-12 定例で決定。代表のアカウント「My First Twilio Account」に岡本が Administrator で入り、Verify の Service「明日もsamasama」を作った)。2026-11-13 に Staging の Supabase Auth へ入れた(`ops/supabase-auth/staging` の `auth.sms`、SID と Auth Token は手元の `.env.workers-staging.local` の `TWILIO_*`)。送信先の国は Twilio のアカウント全体の設定で、SMS は日本だけ許可(音声は初期値のまま。Service に音声のチャネルはない)。海外の番号に送るときは Twilio の Geo Permissions で国を足す。本番の Auth にはまだ入れていない。Resend(知らせのメール。Workers にはまだ入れていない)。どれも鍵がなければ黙って使わない作り。Workers Paid・GitHub の `CLOUDFLARE_API_TOKEN`・`CF_STAGING_DEPLOY=true` は 2026-11-05 にそろい、dev への push のたびに Workers の Staging に出る
 5. **規約とポリシーのリーガルチェック**: 11/9 版(代表の答えと改正個人情報保護法を反映。OneDrive の `700_岡本/v2.0_規約とポリシーの改定案_20261109/`)を代表へ送り、よろず支援拠点のリーガルチェックを頼んだ。チェックが済んだら、本文を `/terms`・`/privacy` と支える側の決まりの画面に入れ、`src/lib/validation/person.ts` の版を上げる(版を上げると、初めて入るときに同意し直しになる)
 
 ## 本番に出すまで
 1. 代表の Staging での確認(相談する・支える・運営の3つの顔)
    - 運営は、相談する・支えるとは別のアカウントで入る(v1 と同じ。役割 ADMIN のアカウントは支える側の画面を使えない)。本番は v1 の運営アカウントが ADMIN のまま残り、初めて入るときに認証アプリを登録する。Staging には代表の運営アカウントがまだない(2026-11-11。v1 で使っていたメールを代表に確認中)
-   - 個人の支え手は電話番号の確認(SMS)が済むまで申し出られない。SMS の会社は未契約(2026-11-11 に SMS を入れる方向と決め、候補と費用を代表に出す)
+   - 個人の支え手は電話番号の確認(SMS)が済むまで申し出られない。SMS は Twilio Verify を Staging に入れた(2026-11-13。日本の番号だけ届く)
 2. 規約とポリシーのリーガルチェック → 本文を画面に入れる。前もっての告知期間は置かず、公開の日に施行し、今の利用者には初めて入るときに同意をもらい直す(2026-11-05 岡本さん。10/30 の「2週間前に告知」は取りやめ)
 3. 本番の DB を v1 の形のまま読み取りで確かめる → `migrations/v2_01〜14` を本番に流す(直前に内容を出して確認をもらう。v2_13 は v1 で「ADMIN」にした団体のメンバーを OWNER に移すので、件数も出す)
    - 本番の Auth の設定(6 けたのコードのメール・戻り先・送り主)も入れる。今は `ops/supabase-auth/staging` しかないので、本番の分を作ってから(権限は 2026-11-06 にそろった。本番に流すのは直前に確認をもらう)

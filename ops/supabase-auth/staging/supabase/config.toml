@@ -33,3 +33,19 @@ enabled = true
 client_id = "493145134511-fkfmfdr4pcpjgota0o1550h7pbvaihkm.apps.googleusercontent.com"
 secret = "env(GOOGLE_OAUTH_CLIENT_SECRET)"
 skip_nonce_check = false
+
+[auth.sms]
+# 個人の支え手の電話番号の確認(2026-11-12 定例で Twilio に決定)。画面は updateUser({ phone }) → verifyOtp(type=phone_change)。
+# コードは Twilio Verify が作って送る(6 けた。文面の名前は Verify の Service の Friendly name「明日もsamasama」)。
+# enabled は電話の入口そのものの有効化で、切ると電話番号の確認も動かない
+enabled = true
+enable_confirmations = true
+
+[auth.sms.twilio_verify]
+# Twilio のアカウント「My First Twilio Account」(代表が作成、岡本は Administrator)の Verify の Service「明日もsamasama」。
+# リポは公開で、GitHub の push 保護が Account SID を止めるので、SID も Auth Token も手元の .env.workers-staging.local から環境変数で渡して push する
+# (TWILIO_ACCOUNT_SID・TWILIO_VERIFY_SERVICE_SID・TWILIO_AUTH_TOKEN)
+enabled = true
+account_sid = "env(TWILIO_ACCOUNT_SID)"
+message_service_sid = "env(TWILIO_VERIFY_SERVICE_SID)"
+auth_token = "env(TWILIO_AUTH_TOKEN)"
