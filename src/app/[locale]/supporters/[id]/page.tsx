@@ -124,7 +124,7 @@ export default async function SupporterPage({ params }: PageProps) {
         <div className="flex flex-col gap-2 rounded-[16px] bg-kinari-deep p-4">
           <span className="text-[14.5px] font-bold">{t('ctaTitle')}</span>
           <Lead>{t('ctaBody')}</Lead>
-          <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-[15px] font-bold text-white no-underline">
+          <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-[15px] font-bold tracking-[0.1em] text-white no-underline">
             {t('ctaConsult')}
           </Link>
         </div>
