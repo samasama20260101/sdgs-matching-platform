@@ -40,7 +40,7 @@ export function ConsentCheckbox({ checked, onChange }: { checked: boolean; onCha
   const t = useTranslations('app.consent')
   return (
     <label className="flex min-h-[48px] items-center gap-3 rounded-tool border-[1.5px] border-line-strong bg-paper px-3">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-[#173A5E]" />
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-night" />
       <span className="text-[13.5px] font-bold">{t('agree')}</span>
     </label>
   )

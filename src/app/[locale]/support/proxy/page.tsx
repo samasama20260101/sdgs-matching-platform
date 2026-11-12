@@ -89,7 +89,7 @@ function Inner() {
                 <p className="m-0 px-1 text-[12.5px] text-mist">{t('noneIsOk')}</p>
                 <TextArea label={t('words')} value={words} maxLength={2000} onChange={(e) => setWords(e.target.value)} />
                 <label className="flex min-h-[52px] items-center gap-3 rounded-tool border-[1.5px] border-line-strong bg-paper px-3">
-                  <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="h-5 w-5 accent-[#173A5E]" />
+                  <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="h-5 w-5 accent-night" />
                   <span className="text-[13.5px] font-bold">{t('consent')}</span>
                 </label>
                 <ErrorNote>{error}</ErrorNote>

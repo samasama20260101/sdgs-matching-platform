@@ -31,7 +31,7 @@ function SupporterTerms({ agreed, onChange }: { agreed: boolean; onChange: (v: b
       </ol>
       <Link href="/terms" className="text-[12.5px] text-night">{t('termsLink')}</Link>
       <label className="flex min-h-[48px] items-center gap-3">
-        <input type="checkbox" checked={agreed} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-[#173A5E]" />
+        <input type="checkbox" checked={agreed} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-night" />
         <span className="text-[13.5px] font-bold">{t('agree')}</span>
       </label>
     </Card>
@@ -167,7 +167,7 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
           <div className="flex flex-wrap gap-3">
             {locales.map((l) => (
               <label key={l} className="flex min-h-[40px] items-center gap-2 text-[14px]">
-                <input type="checkbox" checked={languages.includes(l)} onChange={(e) => setLanguages(e.target.checked ? [...languages, l] : languages.filter((x) => x !== l))} className="h-5 w-5 accent-[#173A5E]" />
+                <input type="checkbox" checked={languages.includes(l)} onChange={(e) => setLanguages(e.target.checked ? [...languages, l] : languages.filter((x) => x !== l))} className="h-5 w-5 accent-night" />
                 {localeLabels[l]}
               </label>
             ))}

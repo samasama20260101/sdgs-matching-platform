@@ -1,34 +1,34 @@
 @import "tailwindcss";
 
-/* v2.0 の見た目(配色A「ミモザの灯」・仮。#72)。色・角・書体は名前で持ち、画面は名前だけを使う。
-   配色を本決まりにするときは、この塊だけを直せば全画面が変わる(キャンバス盤 06)。 */
+/* v2.0 の見た目(配色B「深い海」。ナミアの絵から取った色、11/12 定例で決定。#72)。色・角・書体は名前で持ち、画面は名前だけを使う。
+   配色を変えるときは、この塊だけを直せば全画面が変わる(引き続き考えることのキャンバス盤 F)。 */
 @theme {
-  --color-night: #173A5E;       /* 夜: 主ボタンと見出しの面。白文字で 11.6:1 */
-  --color-night-deep: #0F2741;
-  --color-night-soft: #224A73;
-  --color-lamp: #FFD21F;        /* 灯: いま押すべきもの・あなたの番。文字は墨で載せる */
-  --color-lamp-soft: #FFEEB9;   /* 灯の淡: 選んだもの・現在地の印 */
-  --color-lamp-faint: #FFF7DE;
-  --color-kinari: #FAF6EC;      /* 生成り: 相談する側の地 */
-  --color-kinari-deep: #F5F0E3;
+  --color-night: #062F5E;       /* 夜: 主ボタンと見出しの面。白文字で 13.3:1 */
+  --color-night-deep: #041F40;
+  --color-night-soft: #14497F;
+  --color-lamp: #30CCE4;        /* 灯: いま押すべきもの・あなたの番(ナミアの水色)。文字は墨で載せる(9.5:1)。夜の上の文字にも使える(6.9:1) */
+  --color-lamp-soft: #C8F1F7;   /* 灯の淡: 選んだもの・現在地の印 */
+  --color-lamp-faint: #E6F8FB;
+  --color-kinari: #F2F7FA;      /* 地: 相談する側の地(名前は 10 月案の「生成り」のまま) */
+  --color-kinari-deep: #E4EDF3;
   --color-paper: #FFFFFF;
-  --color-line: #E8E0CC;        /* 線: 区切りと枠 */
-  --color-line-strong: #CFC5AE;
-  --color-ink: #14283F;         /* 墨: 本文の文字 */
-  --color-ink-soft: #37414D;
-  --color-mist: #505C6C;        /* 夜霧: 補足の文字(生成りの上で 6.3:1) */
-  --color-mist-light: #8191A5;
-  --color-dawn: #2D7EA2;        /* 夜明け: 進んでいる */
-  --color-dawn-ink: #07465F;
-  --color-dawn-soft: #DDF2FE;
-  --color-leaf: #4A6600;        /* 若葉: 解決した */
-  --color-leaf-ink: #334800;
-  --color-leaf-soft: #E6F5D2;
+  --color-line: #D5E0EA;        /* 線: 区切りと枠 */
+  --color-line-strong: #AFC0D0;
+  --color-ink: #081428;         /* 墨: 本文の文字 */
+  --color-ink-soft: #2C3A4D;
+  --color-mist: #4B5B6E;        /* 夜霧: 補足の文字(地の上で 6.4:1) */
+  --color-mist-light: #7E90A6;
+  --color-dawn: #0078C8;        /* 夜明け: 進んでいる(ナミアのからだの青) */
+  --color-dawn-ink: #004A7C;
+  --color-dawn-soft: #DDEFFC;
+  --color-leaf: #0B7F72;        /* 若葉: 解決した */
+  --color-leaf-ink: #075A51;
+  --color-leaf-soft: #DAF2EE;
   --color-coral: #9E2D18;       /* 珊瑚: 緊急。相談する側では窓口の案内にだけ使う */
   --color-coral-ink: #751906;
   --color-coral-soft: #FEE9E5;
-  --color-steel: #EAEFF6;       /* 支える側・団体・運営の淡い面 */
-  --color-steel-faint: #F4F7FB;
+  --color-steel: #E6EEF6;       /* 支える側・団体・運営の淡い面 */
+  --color-steel-faint: #F3F7FB;
 
   --radius-soft: 20px;          /* 相談する側の丸い角(20〜24px) */
   --radius-tool: 12px;          /* 支える側の小さめの角(10〜12px) */
