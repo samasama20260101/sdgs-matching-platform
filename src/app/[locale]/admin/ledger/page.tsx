@@ -17,15 +17,15 @@ export default function LedgerPage() {
     <AdminShell title="指標の台帳">
       <Lead>相談フォームの選択肢と、緊急・機微の印です。機微の印は運営に確かめてもらう前の案です(src/lib/domain/sensitivity.ts)。</Lead>
       <div className="flex gap-1.5">
-        {SETS.map(([k, label, list]) => <button key={k} type="button" onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-full px-3 text-[12.5px] font-bold', tab === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label} {list.length}</button>)}
+        {SETS.map(([k, label, list]) => <button key={k} type="button" onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-full px-3 text-t12_5 font-bold', tab === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label} {list.length}</button>)}
       </div>
       <Card tone="support" className="flex flex-col p-2">
         {set[2].map((o) => {
           const urgent = 'urgent' in o && o.urgent
           const sensitive = urgent || EXTRA_SENSITIVE_INDICATORS.includes(o.id)
           return (
-            <div key={o.id} className="flex items-start gap-2 border-t border-line px-2 py-2 text-[13px] first:border-t-0">
-              <span className="w-14 shrink-0 font-mono text-[12px] text-mist">{o.id}</span>
+            <div key={o.id} className="flex items-start gap-2 border-t border-line px-2 py-2 text-t13 first:border-t-0">
+              <span className="w-14 shrink-0 font-mono text-t12 text-mist">{o.id}</span>
               <span className="flex-1">{o.text}</span>
               {urgent && <Chip color="coral">緊急</Chip>}
               {sensitive && <Chip>機微</Chip>}

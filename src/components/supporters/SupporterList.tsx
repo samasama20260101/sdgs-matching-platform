@@ -33,12 +33,12 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
   const filtered = type ? items.filter((s) => s.type === type) : items
   const areaName = (a: SupporterCardData['areas'][number]) => (locale === 'ja' ? a.name_local : a.name_en)
 
-  if (supporters.length === 0) return <p className="m-0 px-1 text-[13.5px] text-mist">{t('emptyAll')}</p>
+  if (supporters.length === 0) return <p className="m-0 px-1 text-t13_5 text-mist">{t('emptyAll')}</p>
 
   return (
     <div className="flex flex-col gap-3">
       {matched.size > 0 && (
-        <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-[12.5px] font-bold text-ink-soft">{t('regionFirst', { count: matched.size })}</p>
+        <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-t12_5 font-bold text-ink-soft">{t('regionFirst', { count: matched.size })}</p>
       )}
       <div role="group" aria-label={t('filterLabel')} className="flex flex-wrap gap-1.5">
         {[null, ...TYPES].map((key) => (
@@ -47,7 +47,7 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
             type="button"
             aria-pressed={type === key}
             onClick={() => { setType(key); setShown(PAGE) }}
-            className={cx('min-h-[40px] whitespace-nowrap rounded-full border px-3.5 text-[13px] font-bold', type === key ? 'border-night bg-night text-white' : 'border-line bg-paper text-ink-soft')}
+            className={cx('min-h-[40px] whitespace-nowrap rounded-full border px-3.5 text-t13 font-bold', type === key ? 'border-night bg-night text-white' : 'border-line bg-paper text-ink-soft')}
           >
             {key ? tType(key) : t('filterAll')}
           </button>
@@ -55,7 +55,7 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
       </div>
 
       {filtered.length === 0 ? (
-        <p className="m-0 px-1 text-[13.5px] text-mist">{t('empty')}</p>
+        <p className="m-0 px-1 text-t13_5 text-mist">{t('empty')}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {filtered.slice(0, shown).map((s) => {
@@ -64,15 +64,15 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
             return (
               <li key={s.id}>
                 <Link href={`/supporters/${s.id}`} className={cx('flex flex-col gap-1.5 rounded-soft border bg-paper p-4 text-ink no-underline', matched.has(s) ? 'border-night' : 'border-line')}>
-                  <span className="line-clamp-2 wrap-anywhere text-[15px] font-bold leading-[1.5]" title={s.name}>{s.name}</span>
+                  <span className="line-clamp-2 wrap-anywhere text-t15 font-bold leading-[1.5]" title={s.name}>{s.name}</span>
                   <span className="flex flex-wrap items-center gap-1.5">
                     <Chip>{tType(s.type)}</Chip>
                     {matched.has(s) && <Chip color="lamp">{t('regionChip')}</Chip>}
                   </span>
                   {areas.length > 0 && (
-                    <span className="text-[12.5px] text-ink-soft">{areas.join(' · ')}{more > 0 && ` ${t('othersSuffix', { count: more })}`}</span>
+                    <span className="text-t12_5 text-ink-soft">{areas.join(' · ')}{more > 0 && ` ${t('othersSuffix', { count: more })}`}</span>
                   )}
-                  <span className="flex gap-3 border-t border-line pt-2 text-[12px] text-mist">
+                  <span className="flex gap-3 border-t border-line pt-2 text-t12 text-mist">
                     <span>{t('resolved', { count: s.resolvedCount })}</span>
                     <span>{t('thanks', { count: s.thanksCount })}</span>
                   </span>
@@ -83,7 +83,7 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
         </ul>
       )}
       {filtered.length > shown && (
-        <button type="button" onClick={() => setShown((n) => n + PAGE)} className="min-h-[44px] self-center text-[13.5px] font-bold text-night underline">
+        <button type="button" onClick={() => setShown((n) => n + PAGE)} className="min-h-[44px] self-center text-t13_5 font-bold text-night underline">
           {t('showMore', { count: filtered.length - shown })}
         </button>
       )}

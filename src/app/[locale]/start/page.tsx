@@ -91,10 +91,10 @@ function LoginStep() {
       {GOOGLE_ENABLED && !sentTo && (
         <>
           <Button variant="outline" onClick={() => void google()}>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-steel text-[12px] font-bold" aria-hidden>G</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-steel text-t12 font-bold" aria-hidden>G</span>
             {t('google')}
           </Button>
-          <div className="flex items-center gap-3 text-[12px] text-mist" aria-hidden>
+          <div className="flex items-center gap-3 text-t12 text-mist" aria-hidden>
             <span className="h-px flex-1 bg-line" />{t('or')}<span className="h-px flex-1 bg-line" />
           </div>
         </>
@@ -103,11 +103,11 @@ function LoginStep() {
         <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void sendCode() }}>
           <TextField label={t('email')} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Button type="submit" variant="night" disabled={busy}>{t('sendCode')}</Button>
-          <p className="m-0 text-[12.5px] leading-[1.7] text-mist">{t('sendCodeNote')}</p>
+          <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('sendCodeNote')}</p>
         </form>
       ) : (
         <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void verify() }}>
-          <p className="m-0 text-[13.5px] leading-[1.7] text-ink-soft">{t('sentTo', { email: sentTo })}</p>
+          <p className="m-0 text-t13_5 leading-[1.7] text-ink-soft">{t('sentTo', { email: sentTo })}</p>
           <TextField
             label={t('code')}
             inputMode="numeric"
@@ -119,7 +119,7 @@ function LoginStep() {
             className="max-w-[220px]"
           />
           <Button type="submit" variant="night" disabled={busy}>{t('verify')}</Button>
-          <p className="m-0 text-[12.5px] leading-[1.7] text-mist">{t('linkAlsoWorks')}</p>
+          <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('linkAlsoWorks')}</p>
           <div className="flex flex-wrap gap-2">
             <Button variant="quiet" disabled={cooldown > 0 || busy} onClick={() => void sendCode()}>
               {cooldown > 0 ? t('resendIn', { seconds: cooldown }) : t('resend')}

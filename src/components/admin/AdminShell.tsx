@@ -28,7 +28,7 @@ export function AdminShell({ title, wide = false, canLeave, children }: { title:
       {(me) => (
         <Screen tone="support" wide={wide}>
           <div className="flex flex-col gap-4 py-6">
-            <nav className="flex flex-wrap gap-1.5 text-[12.5px]">
+            <nav className="flex flex-wrap gap-1.5 text-t12_5">
               <Link href="/admin" onClick={guard} className="font-bold text-night">運営</Link>
               {ADMIN_TOOLS.map((t) => (
                 <Link key={t.href} href={t.href} onClick={guard} className={cx('rounded-full px-2.5 py-1 no-underline', pathname.startsWith(t.href) ? 'bg-night text-white' : 'bg-paper text-ink-soft')}>{t.title}</Link>

@@ -28,7 +28,7 @@ export function Invitations() {
     <section className="flex flex-col gap-2">
       {items.map((i) => (
         <Card key={i.id} tone="support" className="flex flex-col gap-2 border-2 border-dawn p-4">
-          <span className="text-[14.5px] font-bold">{t('title', { name: i.organizationName })}</span>
+          <span className="text-t14_5 font-bold">{t('title', { name: i.organizationName })}</span>
           <Lead>{allowed ? t('lead') : t('underAge')}</Lead>
           <div className="flex gap-2">
             {allowed && <Button tone="support" variant="night" className="flex-1" onClick={() => void act(i.id, 'accept')}>{t('accept')}</Button>}

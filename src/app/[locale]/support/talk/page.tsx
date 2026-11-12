@@ -25,7 +25,7 @@ function Talk() {
     <>
       <FacePicker options={options} current={current} onChoose={choose} />
       <Heading level={2}>{t('title')}</Heading>
-      {items && items.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('empty')}</p>}
+      {items && items.length === 0 && <p className="m-0 px-1 text-t13 text-mist">{t('empty')}</p>}
       {(items ?? []).map((c) => (
         <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={c.title ?? ''} sub={c.subjectName} last={c.lastMessage} viewer="SUPPORTER" resolved={c.status === 'RESOLVED'} />
       ))}

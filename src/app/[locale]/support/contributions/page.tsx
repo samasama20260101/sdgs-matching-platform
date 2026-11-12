@@ -25,18 +25,18 @@ function Contributions() {
     <>
       <Heading level={2}>{t('title')}</Heading>
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        <span className="text-[15px]">{t('resolvedCount', { count: s.resolvedCases })}</span>
+        <span className="text-t15">{t('resolvedCount', { count: s.resolvedCases })}</span>
         <div className="flex items-end gap-6">
-          <span className="flex flex-col"><span className="text-[12px] text-mist">{t('score')}</span><span className="text-[32px] font-bold leading-none">{s.score.toLocaleString(locale)}</span></span>
-          <span className="flex flex-col"><span className="text-[12px] text-mist">{t('thanks')}</span><span className="text-[24px] font-bold leading-none">{s.thanks}</span></span>
+          <span className="flex flex-col"><span className="text-t12 text-mist">{t('score')}</span><span className="text-t32 font-bold leading-none">{s.score.toLocaleString(locale)}</span></span>
+          <span className="flex flex-col"><span className="text-t12 text-mist">{t('thanks')}</span><span className="text-t24 font-bold leading-none">{s.thanks}</span></span>
         </div>
-        <div className="flex items-center gap-2 text-[12.5px] text-mist">{t('howCalculated')}<Tip label={t('formulaLabel')}>{t('formula')}</Tip></div>
+        <div className="flex items-center gap-2 text-t12_5 text-mist">{t('howCalculated')}<Tip label={t('formulaLabel')}>{t('formula')}</Tip></div>
       </Card>
       {Object.keys(s.byIndicator).length > 0 && (
         <Card tone="support" className="flex flex-col gap-2 p-4">
           <SectionLabel>{t('byIndicator')}</SectionLabel>
           {Object.entries(s.byIndicator).map(([code, n]) => (
-            <div key={code} className="flex items-center justify-between gap-2 text-[13.5px]">
+            <div key={code} className="flex items-center justify-between gap-2 text-t13_5">
               <span><Chip color="night">{code}</Chip> {label(code)}</span><span className="font-bold">×{n}</span>
             </div>
           ))}
@@ -47,9 +47,9 @@ function Contributions() {
         {data.records.length === 0 && <Lead>{t('noRecords')}</Lead>}
         {data.records.map((r, i) => (
           <div key={i} className="flex flex-col gap-0.5 border-t border-line pt-2 first:border-t-0 first:pt-0">
-            <span className="text-[12px] text-mist">{r.at.slice(0, 10)}</span>
-            <span className="text-[13.5px] font-bold">{r.kind === 'THANKS' ? t('thanksArrived') : t('resolvedRecord', { count: r.indicators.length })}</span>
-            <span className="text-[12px] text-ink-soft">{r.organization ? t('asMemberOf', { name: r.organization }) : t('asIndividual')}</span>
+            <span className="text-t12 text-mist">{r.at.slice(0, 10)}</span>
+            <span className="text-t13_5 font-bold">{r.kind === 'THANKS' ? t('thanksArrived') : t('resolvedRecord', { count: r.indicators.length })}</span>
+            <span className="text-t12 text-ink-soft">{r.organization ? t('asMemberOf', { name: r.organization }) : t('asIndividual')}</span>
           </div>
         ))}
       </Card>

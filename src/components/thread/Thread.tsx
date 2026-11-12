@@ -105,27 +105,27 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
       {foreign && (
         <div className="flex justify-end">
           {messages.some((m) => m.translation) ? (
-            <Button tone={tone} variant="quiet" onClick={() => setShowTranslation((v) => !v)} className="min-h-[36px] text-[13px]">
+            <Button tone={tone} variant="quiet" onClick={() => setShowTranslation((v) => !v)} className="min-h-[36px] text-t13">
               {showTranslation ? t('showOriginal') : t('showTranslation')}
             </Button>
           ) : (
-            <Button tone={tone} variant="quiet" disabled={translating} onClick={() => void translate()} className="min-h-[36px] text-[13px]">{t('translate')}</Button>
+            <Button tone={tone} variant="quiet" disabled={translating} onClick={() => void translate()} className="min-h-[36px] text-t13">{t('translate')}</Button>
           )}
         </div>
       )}
-      {messages.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('empty')}</p>}
+      {messages.length === 0 && <p className="m-0 px-1 text-t13 text-mist">{t('empty')}</p>}
       <ol className="m-0 flex list-none flex-col gap-2 p-0">
         {messages.map((m) => m.kind === 'SYSTEM' ? (
-          <li key={m.id} className="self-center rounded-full bg-steel px-3 py-1 text-[12px] text-ink-soft">
+          <li key={m.id} className="self-center rounded-full bg-steel px-3 py-1 text-t12 text-ink-soft">
             {m.system ? t(systemKey(m.system.key, tone)) : ''}
           </li>
         ) : (
           <li key={m.id} className={cx('flex max-w-[85%] flex-col gap-1', m.mine ? 'self-end items-end' : 'self-start')}>
-            {!m.mine && <span className="text-[11.5px] font-bold text-mist">{m.senderLabel}</span>}
-            <span className={cx('whitespace-pre-wrap break-words rounded-[16px] px-3.5 py-2.5 text-[14px] leading-[1.7]', m.mine ? 'bg-night text-white' : 'border border-line bg-paper text-ink')}>
+            {!m.mine && <span className="text-t11_5 font-bold text-mist">{m.senderLabel}</span>}
+            <span className={cx('whitespace-pre-wrap break-words rounded-[16px] px-3.5 py-2.5 text-t14 leading-[1.7]', m.mine ? 'bg-night text-white' : 'border border-line bg-paper text-ink')}>
               {showTranslation && m.translation && !m.mine ? m.translation : m.content}
             </span>
-            {showTranslation && m.translation && !m.mine && <span className="text-[11px] text-mist">{t('translated')}</span>}
+            {showTranslation && m.translation && !m.mine && <span className="text-t11 text-mist">{t('translated')}</span>}
           </li>
         ))}
       </ol>
@@ -141,12 +141,12 @@ export function Thread({ caseId, tone = 'consult' }: { caseId: string; tone?: 'c
             rows={2}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t('message')}
-            className="min-h-[48px] flex-1 resize-none rounded-tool px-2 py-2 text-[16px] outline-none"
+            className="min-h-[48px] flex-1 resize-none rounded-tool px-2 py-2 text-t16 outline-none"
           />
-          <Button tone={tone} variant="night" disabled={busy || !draft.trim()} onClick={() => void send()} className="min-h-[44px] px-4 text-[14px]">{t('send')}</Button>
+          <Button tone={tone} variant="night" disabled={busy || !draft.trim()} onClick={() => void send()} className="min-h-[44px] px-4 text-t14">{t('send')}</Button>
         </div>
       ) : (
-        <p className="m-0 px-1 text-[12.5px] text-mist">{t('closed')}</p>
+        <p className="m-0 px-1 text-t12_5 text-mist">{t('closed')}</p>
       )}
     </section>
   )

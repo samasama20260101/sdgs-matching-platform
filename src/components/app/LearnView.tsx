@@ -11,13 +11,13 @@ export function LearnView({ title, news }: { title: string; news: { id: string; 
   return (
     <AppFrame>
       <Heading level={2}>{title}</Heading>
-      <span className="px-1 text-[12.5px] font-bold text-mist">{t('news')}</span>
-      {news.length === 0 && <p className="m-0 px-1 text-[13px] text-mist">{t('noNews')}</p>}
+      <span className="px-1 text-t12_5 font-bold text-mist">{t('news')}</span>
+      {news.length === 0 && <p className="m-0 px-1 text-t13 text-mist">{t('noNews')}</p>}
       {news.map((n) => (
         <Link key={n.id} href={`/news/${n.id}`} className="no-underline">
           <Card className="flex flex-col gap-1 p-3.5 text-ink">
-            <span className="text-[12px] text-mist">{n.publishedAt?.slice(0, 10)}</span>
-            <span className="text-[14.5px] font-bold">{n.title}</span>
+            <span className="text-t12 text-mist">{n.publishedAt?.slice(0, 10)}</span>
+            <span className="text-t14_5 font-bold">{n.title}</span>
           </Card>
         </Link>
       ))}

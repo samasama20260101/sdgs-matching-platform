@@ -69,10 +69,10 @@ export default function ContactPage() {
       <Lead>{t('lead')}</Lead>
       {doneId ? (
         <Card className="flex flex-col gap-3 p-5">
-          <span className="text-[16px] font-bold">{t('doneTitle')}</span>
+          <span className="text-t16 font-bold">{t('doneTitle')}</span>
           <Lead>{t('doneBody')}</Lead>
-          <span className="text-[13px]">{t('receipt')} <strong className="font-mono">{doneId}</strong></span>
-          <Link href={loggedIn ? '/home' : '/'} className="text-[14px] font-bold text-night">{t('back')}</Link>
+          <span className="text-t13">{t('receipt')} <strong className="font-mono">{doneId}</strong></span>
+          <Link href={loggedIn ? '/home' : '/'} className="text-t14 font-bold text-night">{t('back')}</Link>
         </Card>
       ) : (
         <Card className="flex flex-col gap-4 p-4">
@@ -84,15 +84,15 @@ export default function ContactPage() {
             </>
           )}
           <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-bold">{t('category')}</span>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]">
+            <span className="text-t13 font-bold">{t('category')}</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
               <option value="">{t('choose')}</option>
               {categories.map((c) => <option key={c.id} value={c.ja}>{t(`categories.${c.id}`)}</option>)}
             </select>
           </label>
           <TextArea label={t('message')} value={message} maxLength={MESSAGE_MAX} onChange={(e) => setMessage(e.target.value)} />
-          <span className="self-end text-[12px] text-mist">{message.length} / {MESSAGE_MAX}</span>
-          {loggedIn && <p className="m-0 text-[12.5px] text-mist">{t('loggedInNote')}</p>}
+          <span className="self-end text-t12 text-mist">{message.length} / {MESSAGE_MAX}</span>
+          {loggedIn && <p className="m-0 text-t12_5 text-mist">{t('loggedInNote')}</p>}
           <ErrorNote>{error}</ErrorNote>
           <Button variant="night" disabled={busy} onClick={() => void submit()}>{t('submit')}</Button>
         </Card>

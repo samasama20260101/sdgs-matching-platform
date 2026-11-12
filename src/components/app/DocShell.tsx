@@ -25,14 +25,14 @@ export function DocTitle({ title, note }: { title: ReactNode; note?: ReactNode }
   return (
     <div className="flex flex-col gap-1.5 px-1 pt-1">
       <Heading>{title}</Heading>
-      {note && <span className="text-[12.5px] text-mist">{note}</span>}
+      {note && <span className="text-t12_5 text-mist">{note}</span>}
     </div>
   )
 }
 
 // 規約などの本文。箇条書きには点を付け、入れ子の箇条書きは少し下げる
 const PROSE = [
-  'flex flex-col gap-3 text-[14px] leading-[1.9] text-ink-soft',
+  'flex flex-col gap-3 text-t14 leading-[1.9] text-ink-soft',
   '[&_ul]:m-0 [&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1.5 [&_ul]:pl-5 [&_ul]:marker:text-mist-light',
   '[&_ol]:m-0 [&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1.5 [&_ol]:pl-5',
   '[&_li_ul]:mt-1.5 [&_p]:m-0 [&_strong]:font-bold [&_strong]:text-ink',
@@ -42,7 +42,7 @@ const PROSE = [
 export function DocSection({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3 border-t border-line pt-4">
-      <Heading level={2} className="text-[16px]">{title}</Heading>
+      <Heading level={2} className="text-t16">{title}</Heading>
       <div className={PROSE}>{children}</div>
     </section>
   )
@@ -51,7 +51,7 @@ export function DocSection({ title, children }: { title: ReactNode; children: Re
 export function DocSubSection({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[14px] font-bold text-ink">{label}</span>
+      <span className="text-t14 font-bold text-ink">{label}</span>
       <div className="pl-3">{children}</div>
     </div>
   )

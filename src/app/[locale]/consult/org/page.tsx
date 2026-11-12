@@ -52,14 +52,14 @@ function RegisterOrg({ subject, country, regionCode, onDone }: { subject: Subjec
   return (
     <Card className="flex flex-col gap-4 p-4">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[15px] font-bold">{t('registerTitle')}</span>
+        <span className="text-t15 font-bold">{t('registerTitle')}</span>
         <Tip label={t('registerTipLabel')}>{t('registerTip')}</Tip>
       </div>
       <TextField label={subject === 'COMPANY' ? t('companyName') : t('communityName')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
       {subject === 'COMMUNITY' && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-bold">{t('communityType')}</span>
-          <select value={orgType} onChange={(e) => setOrgType(e.target.value)} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]">
+          <span className="text-t13 font-bold">{t('communityType')}</span>
+          <select value={orgType} onChange={(e) => setOrgType(e.target.value)} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
             <option value="MUNICIPALITY">{t('municipality')}</option>
             <option value="COMMUNITY">{t('communityGroup')}</option>
           </select>
@@ -132,10 +132,10 @@ function OrgChooser({ subject, candidates, onPick, registering, setRegistering, 
       <Lead>{subject === 'COMPANY' ? t('leadCompany') : t('leadCommunity')}</Lead>
       {sorted.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="px-1 text-[12.5px] font-bold text-mist">{t('which')}</span>
+          <span className="px-1 text-t12_5 font-bold text-mist">{t('which')}</span>
           {sorted.map((o) => (
             <button key={o.organizationId} type="button" onClick={() => onPick(o)} className="flex min-h-[56px] items-center justify-between rounded-[16px] border border-line bg-paper px-4 text-left">
-              <span className="text-[15px] font-bold">{o.organizationName}</span>
+              <span className="text-t15 font-bold">{o.organizationName}</span>
               <span aria-hidden>›</span>
             </button>
           ))}

@@ -15,8 +15,8 @@ export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }
   if (item.locked) {
     return (
       <Card tone="support" className="flex flex-col gap-1 p-3.5">
-        <span className="text-[14px] font-bold text-mist">{t('locked')}</span>
-        <span className="text-[12px] text-mist">{t('lockedNote')}</span>
+        <span className="text-t14 font-bold text-mist">{t('locked')}</span>
+        <span className="text-t12 text-mist">{t('lockedNote')}</span>
       </Card>
     )
   }
@@ -24,12 +24,12 @@ export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }
   return (
     <Link href={`/support/cases/${item.id}?face=${encodeURIComponent(face)}`} className="no-underline">
       <Card tone="support" className="flex flex-col gap-2 p-3.5 text-ink">
-        <span className="text-[14.5px] font-bold leading-[1.5]">{item.title}</span>
+        <span className="text-t14_5 font-bold leading-[1.5]">{item.title}</span>
         <span className="flex flex-wrap gap-1">
           {/* 大項目はゴールの番号と、相談した人の種類ごとの名前で出す(支える側には SDGs を前に出す)。
               指標の番号は札に出さず、相談の詳細で中身と一緒に出す(画面の見直し 所見 3) */}
           {item.areaGoals.map((g) => (
-            <span key={g} className="inline-flex items-center gap-1 rounded-full bg-night px-2 py-0.5 text-[11.5px] font-bold text-white">
+            <span key={g} className="inline-flex items-center gap-1 rounded-full bg-night px-2 py-0.5 text-t11_5 font-bold text-white">
               <span aria-hidden className="opacity-80">{g}</span>{tSdgs(`area.${item.subjectType}.${g}`)}
             </span>
           ))}
@@ -40,7 +40,7 @@ export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }
           {item.regionCode && <Chip>{regionText(item, locale)}</Chip>}
           {item.language !== 'ja' && <Chip>{t('language', { lang: item.language })}</Chip>}
         </span>
-        <span className="flex items-center justify-between text-[12px]">
+        <span className="flex items-center justify-between text-t12">
           <WaitingText wait={wait} />
           <span className="text-mist">{item.myOfferStatus ? t(`mine.${item.myOfferStatus}`) : t('offers', { count: item.offersCount })}</span>
         </span>

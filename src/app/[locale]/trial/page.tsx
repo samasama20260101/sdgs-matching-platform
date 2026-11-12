@@ -48,7 +48,7 @@ function SpanText({ text, spans, masked }: { text: string; spans: PiiSpan[]; mas
     cursor = s.end
   })
   if (cursor < text.length) parts.push(<span key="tail">{text.slice(cursor)}</span>)
-  return <p className="m-0 whitespace-pre-wrap break-words text-[14px] leading-[1.9] text-ink">{parts}</p>
+  return <p className="m-0 whitespace-pre-wrap break-words text-t14 leading-[1.9] text-ink">{parts}</p>
 }
 
 // 「本番ではこのあと」の 1 段。下に画面の表示例(架空の内容)を置く
@@ -56,14 +56,14 @@ function NextStep({ number, title, description, exampleTag, children }: { number
   return (
     <li className="flex flex-col gap-2">
       <div className="flex items-start gap-2.5">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-night text-[13px] font-bold text-white" aria-hidden>{number}</span>
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-night text-t13 font-bold text-white" aria-hidden>{number}</span>
         <div className="flex flex-col gap-0.5 pt-0.5">
-          <span className="text-[14.5px] font-bold">{title}</span>
-          <span className="text-[12.5px] leading-[1.7] text-ink-soft">{description}</span>
+          <span className="text-t14_5 font-bold">{title}</span>
+          <span className="text-t12_5 leading-[1.7] text-ink-soft">{description}</span>
         </div>
       </div>
       <Card className="relative p-3.5">
-        <span className="absolute -top-2 right-3 rounded-full border border-line bg-kinari px-2 py-px text-[10.5px] text-mist">{exampleTag}</span>
+        <span className="absolute -top-2 right-3 rounded-full border border-line bg-kinari px-2 py-px text-t10_5 text-mist">{exampleTag}</span>
         {children}
       </Card>
     </li>
@@ -71,7 +71,7 @@ function NextStep({ number, title, description, exampleTag, children }: { number
 }
 
 function GuardTerm({ children }: { children: ReactNode }) {
-  return <span className="ml-1.5 inline-block whitespace-nowrap rounded border border-line-strong bg-paper px-1.5 py-px align-middle text-[10.5px] font-bold text-night">{children}</span>
+  return <span className="ml-1.5 inline-block whitespace-nowrap rounded border border-line-strong bg-paper px-1.5 py-px align-middle text-t10_5 font-bold text-night">{children}</span>
 }
 
 type Result = { body: string; chosen: string[] }
@@ -154,7 +154,7 @@ export default function TrialPage() {
           <Heading>{result ? t('resultTitle') : t('title')}</Heading>
           {!result && <Lead>{t('subtitle')}</Lead>}
         </div>
-        <p className="m-0 rounded-tool bg-leaf-soft px-3 py-2 text-[12.5px] font-bold leading-[1.7] text-leaf-ink">{t('safe')}</p>
+        <p className="m-0 rounded-tool bg-leaf-soft px-3 py-2 text-t12_5 font-bold leading-[1.7] text-leaf-ink">{t('safe')}</p>
 
         {result ? (
           <ResultView result={result} textOf={textOf} onRetry={retry} />
@@ -164,10 +164,10 @@ export default function TrialPage() {
             <Heading level={2}>{tWrite('wordsTitle')}</Heading>
             <div className="flex flex-col gap-1.5">
               <Button variant="outline" className="self-start" onClick={fillSample}>{t('fillSample')}</Button>
-              <span className="px-1 text-[12px] leading-[1.6] text-mist">{t('sampleNote')}</span>
+              <span className="px-1 text-t12 leading-[1.6] text-mist">{t('sampleNote')}</span>
             </div>
             <TextArea label={tWrite('words')} value={words} maxLength={DESCRIPTION_MAX} onChange={(e) => setWords(e.target.value)} />
-            <span className="-mt-3 self-end text-[12px] text-mist">{tWrite('charCount', { count: words.length })}</span>
+            <span className="-mt-3 self-end text-t12 text-mist">{tWrite('charCount', { count: words.length })}</span>
             {urgent && <CrisisNotice />}
             <TextField label={tWrite('since')} hint={tWrite('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
             <TextField label={tWrite('wish')} hint={tWrite('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
@@ -178,18 +178,18 @@ export default function TrialPage() {
             <StepBar label={tWrite('step2')} step={2} total={2} />
             <Heading level={2}>{tWrite('suggestTitle')}</Heading>
             <Lead>{tWrite('suggestLead')}</Lead>
-            {suggested !== null && suggestSource === 'overlap' && <p className="m-0 rounded-tool bg-kinari-deep px-3 py-2 text-[12.5px] leading-[1.7] text-ink-soft">{t('overlapNote')}</p>}
+            {suggested !== null && suggestSource === 'overlap' && <p className="m-0 rounded-tool bg-kinari-deep px-3 py-2 text-t12_5 leading-[1.7] text-ink-soft">{t('overlapNote')}</p>}
             {urgent && <CrisisNotice />}
             {suggested === null ? <Lead>{tWrite('suggestLoading')}</Lead> : <SuggestedOptions ids={suggested} selected={selected} onToggle={toggle} textOf={textOf} />}
             {suggested !== null && suggested.length === 0 && <Lead>{tWrite('suggestNone')}</Lead>}
             {browseAll ? (
               <IndicatorPicker options={options} selected={selected} onChange={setSelected} subject="PERSON" />
             ) : (
-              suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="min-h-[44px] self-start text-[13.5px] font-bold text-night underline">{tWrite('browseAll')}</button>
+              suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="min-h-[44px] self-start text-t13_5 font-bold text-night underline">{tWrite('browseAll')}</button>
             )}
-            <p className="m-0 text-[12.5px] text-mist">{t('noneIsOk')}</p>
+            <p className="m-0 text-t12_5 text-mist">{t('noneIsOk')}</p>
             <Button variant="night" onClick={showResult}>{t('submit')}</Button>
-            <button type="button" onClick={() => setStep(1)} className="min-h-[44px] self-start text-[13px] text-night underline">{tWrite('backToWords')}</button>
+            <button type="button" onClick={() => setStep(1)} className="min-h-[44px] self-start text-t13 text-night underline">{tWrite('backToWords')}</button>
           </>
         )}
 
@@ -219,44 +219,44 @@ function ResultView({ result, textOf, onRetry }: { result: Result; textOf: (id: 
             {result.chosen.map((id) => <Chip key={id} color="lamp">{textOf(id)}</Chip>)}
           </div>
         ) : (
-          <span className="px-1 text-[13px] text-mist">{t('chosenNone')}</span>
+          <span className="px-1 text-t13 text-mist">{t('chosenNone')}</span>
         )}
       </Card>
 
       <Card className="flex flex-col gap-2 p-4">
         <Heading level={3}>{t('beforeTitle')}</Heading>
-        <span className="text-[12px] text-mist">{t('beforeNote')}</span>
+        <span className="text-t12 text-mist">{t('beforeNote')}</span>
         <SpanText text={result.body} spans={spans} masked={false} />
         <div className="mt-1 flex flex-col gap-0.5 rounded-tool bg-steel-faint p-3">
-          <span className="text-[13px] font-bold">{t('readerTitle')}</span>
-          <span className="text-[12.5px] leading-[1.7] text-ink-soft">{t('readerBody')}</span>
+          <span className="text-t13 font-bold">{t('readerTitle')}</span>
+          <span className="text-t12_5 leading-[1.7] text-ink-soft">{t('readerBody')}</span>
         </div>
       </Card>
 
       <Card className="flex flex-col gap-2 border-night p-4">
         <Heading level={3}>{t('afterTitle')}</Heading>
-        <span className="text-[12px] text-mist">{t('afterNote')}</span>
+        <span className="text-t12 text-mist">{t('afterNote')}</span>
         <SpanText text={result.body} spans={spans} masked />
         <div className="flex flex-wrap items-center gap-1.5 border-t border-line pt-3">
-          <span className="text-[12.5px] font-bold text-ink-soft">{spans.length > 0 ? t('foundCount', { count: spans.length }) : t('foundNone')}</span>
+          <span className="text-t12_5 font-bold text-ink-soft">{spans.length > 0 ? t('foundCount', { count: spans.length }) : t('foundNone')}</span>
           {[...counts.entries()].map(([cat, n]) => (
-            <span key={cat} className={`rounded-full border px-2 py-0.5 text-[11.5px] ${CATEGORY_CLASSES[cat]}`}>{t(`categories.${cat}`)} × {n}</span>
+            <span key={cat} className={`rounded-full border px-2 py-0.5 text-t11_5 ${CATEGORY_CLASSES[cat]}`}>{t(`categories.${cat}`)} × {n}</span>
           ))}
         </div>
-        <span className="text-[12px] leading-[1.7] text-mist">{t('aiNote')}</span>
+        <span className="text-t12 leading-[1.7] text-mist">{t('aiNote')}</span>
       </Card>
 
       <div role="note" className="flex flex-col gap-1 rounded-[16px] bg-coral-soft p-4">
-        <span className="text-[14px] font-bold text-coral-ink">{t('limitTitle')}</span>
-        <span className="text-[12.5px] leading-[1.75] text-ink-soft">{t('limitBody')}</span>
+        <span className="text-t14 font-bold text-coral-ink">{t('limitTitle')}</span>
+        <span className="text-t12_5 leading-[1.75] text-ink-soft">{t('limitBody')}</span>
       </div>
 
       <Card className="flex flex-col gap-2 p-4">
         <Heading level={3}>{t('guardTitle')}</Heading>
-        <p className="m-0 text-[12.5px] leading-[1.75] text-ink-soft">{t('guardLead')}<GuardTerm>{t('guardLeadTerm')}</GuardTerm></p>
+        <p className="m-0 text-t12_5 leading-[1.75] text-ink-soft">{t('guardLead')}<GuardTerm>{t('guardLeadTerm')}</GuardTerm></p>
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {(['guard1', 'guard2', 'guard3', 'guard4'] as const).map((key) => (
-            <li key={key} className="flex gap-2 text-[12.5px] leading-[1.75] text-ink-soft">
+            <li key={key} className="flex gap-2 text-t12_5 leading-[1.75] text-ink-soft">
               <span aria-hidden className="text-night">✓</span>
               <span>{t(key)}<GuardTerm>{t(`${key}Term`)}</GuardTerm></span>
             </li>
@@ -266,45 +266,45 @@ function ResultView({ result, textOf, onRetry }: { result: Result; textOf: (id: 
 
       <div className="flex flex-col gap-1 px-1 pt-2">
         <Heading level={2}>{t('nextTitle')}</Heading>
-        <span className="text-[12px] text-mist">{t('nextLead')}</span>
+        <span className="text-t12 text-mist">{t('nextLead')}</span>
       </div>
       <ol className="m-0 flex list-none flex-col gap-5 p-0">
         <NextStep number={1} title={t('next1Title')} description={t('next1')} exampleTag={t('exampleTag')}>
-          <span className="block text-[14.5px] font-bold">{t('mockCaseTitle')}</span>
+          <span className="block text-t14_5 font-bold">{t('mockCaseTitle')}</span>
           <div className="mt-2 flex flex-wrap gap-1">
             {MOCK_GOALS.map((goal) => <Chip key={goal}>{goal} {tSdgs(`category.${goal}`)}</Chip>)}
           </div>
-          <p className="m-0 mt-2 text-[12.5px] leading-[1.75] text-ink-soft">{t('mockSummary')}</p>
+          <p className="m-0 mt-2 text-t12_5 leading-[1.75] text-ink-soft">{t('mockSummary')}</p>
         </NextStep>
 
         <NextStep number={2} title={t('next2Title')} description={t('next2')} exampleTag={t('exampleTag')}>
           <div className="flex flex-col gap-1">
-            <span className="text-[14.5px] font-bold">{t('mockOrgName')}</span>
+            <span className="text-t14_5 font-bold">{t('mockOrgName')}</span>
             <Chip color="leaf" className="self-start">{tOffers('interviewed')}</Chip>
-            <span className="mt-1 text-[12.5px] leading-[1.75] text-ink-soft">{t('mockOfferMessage')}</span>
+            <span className="mt-1 text-t12_5 leading-[1.75] text-ink-soft">{t('mockOfferMessage')}</span>
           </div>
           <div className="mt-3 flex gap-2" aria-hidden>
-            <span className="flex min-h-[40px] flex-1 items-center justify-center rounded-[14px] bg-night px-3 text-[13px] font-bold text-white">{tOffers('choose')}</span>
-            <span className="flex min-h-[40px] flex-1 items-center justify-center rounded-[14px] border-[1.5px] border-line-strong px-3 text-[13px] font-bold text-ink-soft">{tOffers('pass')}</span>
+            <span className="flex min-h-[40px] flex-1 items-center justify-center rounded-[14px] bg-night px-3 text-t13 font-bold text-white">{tOffers('choose')}</span>
+            <span className="flex min-h-[40px] flex-1 items-center justify-center rounded-[14px] border-[1.5px] border-line-strong px-3 text-t13 font-bold text-ink-soft">{tOffers('pass')}</span>
           </div>
         </NextStep>
 
         <NextStep number={3} title={t('next3Title')} description={t('next3')} exampleTag={t('exampleTag')}>
           <div className="flex flex-col gap-2">
-            <p className="m-0 mr-8 rounded-[16px] rounded-tl-[4px] bg-steel-faint px-3 py-2 text-[12.5px] leading-[1.7]">{t('mockChatSupporter')}</p>
-            <p className="m-0 ml-8 rounded-[16px] rounded-tr-[4px] bg-night px-3 py-2 text-[12.5px] leading-[1.7] text-white">{t('mockChatUser')}</p>
+            <p className="m-0 mr-8 rounded-[16px] rounded-tl-[4px] bg-steel-faint px-3 py-2 text-t12_5 leading-[1.7]">{t('mockChatSupporter')}</p>
+            <p className="m-0 ml-8 rounded-[16px] rounded-tr-[4px] bg-night px-3 py-2 text-t12_5 leading-[1.7] text-white">{t('mockChatUser')}</p>
           </div>
         </NextStep>
       </ol>
 
       <div className="grid gap-2 pt-2 sm:grid-cols-2">
         <Link href="/consult/new" className="flex min-h-[64px] flex-col justify-center gap-0.5 rounded-[16px] bg-night px-4 py-2.5 text-white no-underline">
-          <span className="text-[12px] text-[#C9D6E6]">{t('ctaConsultTitle')}</span>
-          <span className="text-[15px] font-bold">{t('ctaConsult')}</span>
+          <span className="text-t12 text-[#C9D6E6]">{t('ctaConsultTitle')}</span>
+          <span className="text-t15 font-bold">{t('ctaConsult')}</span>
         </Link>
         <Link href="/support/join" className="flex min-h-[64px] flex-col justify-center gap-0.5 rounded-[16px] bg-dawn-soft px-4 py-2.5 text-dawn-ink no-underline">
-          <span className="text-[12px]">{t('ctaSupportTitle')}</span>
-          <span className="text-[15px] font-bold">{t('ctaSupport')}</span>
+          <span className="text-t12">{t('ctaSupportTitle')}</span>
+          <span className="text-t15 font-bold">{t('ctaSupport')}</span>
         </Link>
       </div>
       <Button variant="outline" onClick={onRetry}>{t('retry')}</Button>

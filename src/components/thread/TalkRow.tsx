@@ -23,11 +23,11 @@ export function TalkRow({ href, title, sub, last, viewer, resolved }: { href: st
     <Link href={href} className="no-underline">
       <Card className="flex flex-col gap-1 p-3.5 text-ink">
         <span className="flex items-start justify-between gap-2">
-          <span className="text-[14.5px] font-bold leading-[1.5]">{title}</span>
-          {last && <span className="shrink-0 pt-0.5 text-[12px] text-mist">{shortTime(last.at, locale)}</span>}
+          <span className="text-t14_5 font-bold leading-[1.5]">{title}</span>
+          {last && <span className="shrink-0 pt-0.5 text-t12 text-mist">{shortTime(last.at, locale)}</span>}
         </span>
-        {sub && <span className="text-[12px] text-mist">{sub}</span>}
-        <span className={turn === 'mine' && !resolved ? 'line-clamp-2 text-[13px] font-bold text-ink' : 'line-clamp-2 text-[13px] text-ink-soft'}>
+        {sub && <span className="text-t12 text-mist">{sub}</span>}
+        <span className={turn === 'mine' && !resolved ? 'line-clamp-2 text-t13 font-bold text-ink' : 'line-clamp-2 text-t13 text-ink-soft'}>
           {last ? `${who}: ${last.preview}` : t('noMessages')}
         </span>
         {(turn === 'mine' || resolved) && (

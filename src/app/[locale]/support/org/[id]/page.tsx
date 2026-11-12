@@ -71,7 +71,7 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
   }
   const choice = (on: boolean, label: string, onClick: () => void) => (
     <button type="button" role="radio" aria-checked={on} onClick={onClick}
-      className={cx('min-h-[44px] flex-1 rounded-tool px-3 text-[13.5px] font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+      className={cx('min-h-[44px] flex-1 rounded-tool px-3 text-t13_5 font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
       {label}
     </button>
   )
@@ -83,9 +83,9 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
           <div className="flex flex-wrap gap-1.5">
             {areas.nationwide ? <Chip color="leaf">{t('areasNationwide')}</Chip>
               : areas.regionCodes.length > 0 ? areas.regionCodes.map((c) => <Chip key={c} color="outline">{nameOf(c)}</Chip>)
-                : <span className="text-[13px] text-mist">{t('areasNone')}</span>}
+                : <span className="text-t13 text-mist">{t('areasNone')}</span>}
           </div>
-          {!areas.registered && areas.regionCodes.length > 0 && <span className="text-[12px] text-mist">{t('areasFromApplication')}</span>}
+          {!areas.registered && areas.regionCodes.length > 0 && <span className="text-t12 text-mist">{t('areasFromApplication')}</span>}
           {canEdit && <Button tone="support" variant="outline" onClick={startEdit}>{t('areasEdit')}</Button>}
         </>
       ) : (
@@ -99,13 +99,13 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
               <div className="flex flex-wrap gap-1.5">
                 {(regions ?? []).map((r) => (
                   <button key={r.code} type="button" aria-pressed={picked.has(r.code)} onClick={() => toggle(r.code)}
-                    className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', picked.has(r.code) ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+                    className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', picked.has(r.code) ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
                     {locale === 'ja' ? r.name_local : r.name_en}
                   </button>
                 ))}
                 {!regions && <Spinner />}
               </div>
-              <span className={cx('text-[12.5px]', needOne ? 'text-coral' : 'text-mist')}>{needOne ? t('areasNeedOne') : t('areasPicked', { count: picked.size })}</span>
+              <span className={cx('text-t12_5', needOne ? 'text-coral' : 'text-mist')}>{needOne ? t('areasNeedOne') : t('areasPicked', { count: picked.size })}</span>
             </>
           )}
           <div className="flex gap-2">
@@ -114,7 +114,7 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
           </div>
         </>
       )}
-      {message && <span className="text-[12.5px] font-bold text-ink-soft">{message}</span>}
+      {message && <span className="text-t12_5 font-bold text-ink-soft">{message}</span>}
     </Card>
   )
 }
@@ -151,7 +151,7 @@ function Profile({ id, o, onSaved }: { id: string; o: Payload['organization']; o
       <TextField label={t('contactEmail')} hint={t('contactEmailHint')} type="email" value={contactEmail} maxLength={254} onChange={(e) => setContactEmail(e.target.value)} />
       <TextField label={t('population')} hint={t('populationHint')} inputMode="numeric" value={population} onChange={(e) => setPopulation(e.target.value.replace(/[^0-9]/g, ''))} />
       <Button tone="support" variant="night" disabled={busy} onClick={() => void save()}>{t('save')}</Button>
-      {message && <span className="text-[12.5px] font-bold text-ink-soft">{message}</span>}
+      {message && <span className="text-t12_5 font-bold text-ink-soft">{message}</span>}
     </Card>
   )
 }
@@ -205,14 +205,14 @@ function Org({ id }: { id: string }) {
         <div className="flex items-center justify-between"><SectionLabel>{t('members')}</SectionLabel><Tip label={t('membersTipLabel')}>{t('membersTip')}</Tip></div>
         {data.members.map((m) => (
           <div key={m.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2 first:border-t-0 first:pt-0">
-            <span className="text-[14px]">{m.displayName}{m.isMe ? ` ${t('me')}` : ''}</span>
+            <span className="text-t14">{m.displayName}{m.isMe ? ` ${t('me')}` : ''}</span>
             <span className="flex items-center gap-2">
               {canManage && !m.isMe ? (
                 <>
-                  <select value={m.role} onChange={(e) => void change(m.id, { role: e.target.value })} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[13px]">
+                  <select value={m.role} onChange={(e) => void change(m.id, { role: e.target.value })} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-t13">
                     {(['OWNER', 'MEMBER'] as const).map((r) => <option key={r} value={r}>{t(`role.${r}`)}</option>)}
                   </select>
-                  <Button tone="support" variant="quiet" className="min-h-[44px] text-[12.5px]" onClick={() => void change(m.id, { remove: true })}>{t('remove')}</Button>
+                  <Button tone="support" variant="quiet" className="min-h-[44px] text-t12_5" onClick={() => void change(m.id, { remove: true })}>{t('remove')}</Button>
                 </>
               ) : <Chip>{t(`role.${m.role}`)}</Chip>}
             </span>
@@ -226,21 +226,21 @@ function Org({ id }: { id: string }) {
           {/* 管理とメンバーの違いは、選ぶところの i で出す(11/11 代表の Staging メモ 4) */}
           <label className="flex flex-col gap-1.5">
             <span className="flex items-center justify-between">
-              <span className="text-[13px] font-bold">{t('inviteRole')}</span>
+              <span className="text-t13 font-bold">{t('inviteRole')}</span>
               <Tip label={t('rolesTipLabel')}>{t('rolesTip')}</Tip>
             </span>
-            <select value={role} onChange={(e) => setRole(e.target.value === 'OWNER' ? 'OWNER' : 'MEMBER')} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-[14px]">
+            <select value={role} onChange={(e) => setRole(e.target.value === 'OWNER' ? 'OWNER' : 'MEMBER')} className="min-h-[44px] rounded-tool border border-line-strong bg-paper px-2 text-t14">
               <option value="MEMBER">{t('role.MEMBER')}</option>
               <option value="OWNER">{t('role.OWNER')}</option>
             </select>
           </label>
           <Button tone="support" variant="night" disabled={!email.trim()} onClick={() => void invite()}>{t('sendInvite')}</Button>
-          {data.invitations.length > 0 && <span className="text-[12.5px] text-mist">{t('pendingInvites', { count: data.invitations.length })}</span>}
+          {data.invitations.length > 0 && <span className="text-t12_5 text-mist">{t('pendingInvites', { count: data.invitations.length })}</span>}
         </Card>
       )}
-      {notice && <Card tone="support" className="bg-leaf-soft p-3"><span className="text-[13px] font-bold text-leaf-ink">{notice}</span></Card>}
+      {notice && <Card tone="support" className="bg-leaf-soft p-3"><span className="text-t13 font-bold text-leaf-ink">{notice}</span></Card>}
       <ErrorNote>{error ?? loadMessage}</ErrorNote>
-      <span className="px-1 text-[11.5px] text-mist">{t('displayId', { id: o.display_id })}</span>
+      <span className="px-1 text-t11_5 text-mist">{t('displayId', { id: o.display_id })}</span>
     </>
   )
 }

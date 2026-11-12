@@ -212,7 +212,14 @@
     "becomeSupporter": "Apoyar también",
     "becomeSupporterNote": "Con la misma cuenta",
     "account": "Cuenta",
-    "signOut": "Salir"
+    "signOut": "Salir",
+    "textSize": "Tamaño del texto",
+    "textSizeTipLabel": "Sobre el tamaño del texto",
+    "textSizeTip": "El tamaño del texto en este dispositivo. Se aplica tanto a las pantallas para pedir ayuda como a las de apoyo. En otro móvil u ordenador, elígelo de nuevo allí.",
+    "textSizes": {
+      "normal": "Normal",
+      "large": "Grande"
+    }
   },
   "contact": {
     "title": "Contacto",

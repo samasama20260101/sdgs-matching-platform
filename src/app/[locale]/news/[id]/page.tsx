@@ -68,10 +68,10 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
   return (
     <DocShell jaOnly>
-      <Link href="/news" className="flex min-h-[40px] items-center self-start text-[13px] text-night">{t('backToList')}</Link>
+      <Link href="/news" className="flex min-h-[40px] items-center self-start text-t13 text-night">{t('backToList')}</Link>
       <article className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 px-1">
-          <span className="flex flex-wrap items-center gap-2 text-[12px] text-mist">
+          <span className="flex flex-wrap items-center gap-2 text-t12 text-mist">
             <time dateTime={post.published_at}>{formatNewsDate(post.published_at, locale)}</time>
             <NewsCategoryChip category={post.category} label={t(`category.${post.category}`)} />
           </span>
@@ -88,12 +88,12 @@ export default async function NewsArticlePage({ params }: PageProps) {
               href={post.external_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-[16px] bg-night px-4 text-[15px] font-bold tracking-[0.1em] text-white no-underline"
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.1em] text-white no-underline"
             >
               {t('external')} <span aria-hidden="true">↗</span>
             </a>
             {/* 飛び先のドメインを添えて、どこへ行くのか分かるようにする(見知らぬサイトへ突然飛ばさない) */}
-            <span className="px-1 text-[12px] text-mist">{t('externalHost', { host: hostnameOf(post.external_url) })}</span>
+            <span className="px-1 text-t12 text-mist">{t('externalHost', { host: hostnameOf(post.external_url) })}</span>
           </div>
         )}
       </article>

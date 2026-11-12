@@ -13,7 +13,7 @@ export function Footer() {
     { href: '/privacy', key: 'privacy' },
   ] as const
   return (
-    <footer className="mt-8 flex flex-col gap-3 border-t border-line pt-4 text-[12.5px] text-mist">
+    <footer className="mt-8 flex flex-col gap-3 border-t border-line pt-4 text-t12_5 text-mist">
       <nav className="flex flex-wrap gap-x-4 gap-y-2">
         {links.map((l) => <Link key={l.key} href={l.href} className="text-mist">{t(l.key)}</Link>)}
         <a href="https://www.samasama.site" className="text-mist" rel="noopener">{t('company')}</a>

@@ -81,8 +81,8 @@ function Inner({ id }: { id: string }) {
   return (
     <>
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        <span className="text-[12px] text-mist">{c.displayId} ・ {jst(c.createdAt)} に届いた</span>
-        <span className="text-[16px] font-bold leading-[1.5]">{c.title}</span>
+        <span className="text-t12 text-mist">{c.displayId} ・ {jst(c.createdAt)} に届いた</span>
+        <span className="text-t16 font-bold leading-[1.5]">{c.title}</span>
         <span className="flex flex-wrap gap-1.5">
           <Chip color="night">{STATUS[c.status] ?? c.status}</Chip>
           <Chip>{SUBJECT[c.subjectType]}{c.subjectName ? `「${c.subjectName}」` : ''}</Chip>
@@ -91,7 +91,7 @@ function Inner({ id }: { id: string }) {
           {c.isMinor && <Chip color="lamp">18歳未満</Chip>}
           {c.escalatedAt && <Chip color="outline">24時間申し出なし({jst(c.escalatedAt)})</Chip>}
         </span>
-        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13px]">
+        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-t13">
           <Row label="分野">{c.areas.join(' / ')}</Row>
           <Row label="入口">{entryText(c)}</Row>
           <Row label="言語">{(c.locale && LOCALE[c.locale]) ?? c.locale ?? '—'}</Row>
@@ -104,7 +104,7 @@ function Inner({ id }: { id: string }) {
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <SectionLabel>選んだもの・指標の候補</SectionLabel>
         {c.indicators.length === 0 && <Lead>ありません(自分の言葉だけで届いた相談)。</Lead>}
-        <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[13px]">
+        <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-t13">
           {c.indicators.map((i) => (
             <li key={`${i.source}${i.code}`} className="flex flex-wrap items-center gap-1.5">
               <Chip color={i.source === 'SELF' ? 'night' : 'outline'}>{SOURCE[i.source] ?? i.source}</Chip>
@@ -113,7 +113,7 @@ function Inner({ id }: { id: string }) {
             </li>
           ))}
         </ul>
-        <Link href="/admin/indicators" className="text-[13px] text-night">指標の仕分けへ</Link>
+        <Link href="/admin/indicators" className="text-t13 text-night">指標の仕分けへ</Link>
       </Card>
 
       <Card tone="support" className="flex flex-col gap-2 p-4">
@@ -124,9 +124,9 @@ function Inner({ id }: { id: string }) {
           </>
         )}
         <SectionLabel>書いた内容</SectionLabel>
-        <p className="m-0 whitespace-pre-wrap text-[14px] leading-[1.75]">{c.description}</p>
+        <p className="m-0 whitespace-pre-wrap text-t14 leading-[1.75]">{c.description}</p>
         {(c.since || c.wish) && (
-          <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13px]">
+          <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-t13">
             {c.since && <Row label="いつから">{c.since}</Row>}
             {c.wish && <Row label="どうしたいか">{c.wish}</Row>}
           </dl>
@@ -136,7 +136,7 @@ function Inner({ id }: { id: string }) {
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <SectionLabel>申し出({data.offers.length})</SectionLabel>
         {data.offers.length === 0 && <Lead>まだありません。</Lead>}
-        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[13px]">
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-t13">
           {data.offers.map((o) => (
             <li key={o.id}>
               {o.name}({o.kind === 'ORGANIZATION' ? '団体' : '個人'}) ・ {OFFER_STATUS[o.status] ?? o.status}{o.acceptedOrder === 1 ? ' ・ 中心' : ''} ・ {jst(o.createdAt)}
@@ -148,7 +148,7 @@ function Inner({ id }: { id: string }) {
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <SectionLabel>つなぎ先(本人が「運営から伝えてよい」を選んだ窓口)</SectionLabel>
         {data.referrals.length === 0 && <Lead>ありません。</Lead>}
-        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[13px]">
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-t13">
           {data.referrals.map((r, i) => (
             <li key={i}>
               {r.name}{r.phone ? `(${r.phone})` : ''} ・ {REFERRAL_STATUS[r.status] ?? r.status} ・ {jst(r.consentedAt)}

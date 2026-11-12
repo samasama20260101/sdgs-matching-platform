@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { isAppLocale, locales, type SupportedLocale } from "@/i18n/routing";
 import "../globals.css";
 import { SessionProvider } from "@/components/app/SessionProvider";
+import { textSizeBootScript } from "@/lib/domain/textSize";
 
 // OGP用のロケール表記（BCP47 → Open Graph形式）。非公開ロケール分も保持しておく。
 const OG_LOCALES: Record<SupportedLocale, string> = {
@@ -96,7 +97,11 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={fontClassesFor(locale)}>
+    // suppressHydrationWarning: 文字の大きさの属性は、描画の前に <head> のスクリプトが <html> に付ける(サーバーの HTML にはない)
+    <html lang={locale} className={fontClassesFor(locale)} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: textSizeBootScript() }} />
+      </head>
       <body className="antialiased font-body">
         <NextIntlClientProvider messages={messages}>
           <SessionProvider>{children}</SessionProvider>

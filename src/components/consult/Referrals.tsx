@@ -42,20 +42,20 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
   if (!data || (data.local.length === 0 && data.national.length === 0)) return null
   // 札は名前と、できること(電話する・サイトを見る・運営から伝えてもらう)を1行に並べるだけにする。
   // 出典は札ごとに出さず、一覧の下に1回だけまとめる(PDL1.0・CC BY の表記の義務は一覧の単位で満たす)
-  const action = 'inline-flex min-h-[44px] items-center text-[13px] font-bold text-night no-underline'
+  const action = 'inline-flex min-h-[44px] items-center text-t13 font-bold text-night no-underline'
   const render = (e: Entry) => (
     <Card key={e.id} className="flex flex-col gap-1 px-3.5 pb-1 pt-3">
       <span className="flex items-start justify-between gap-2">
-        <span className="text-[14.5px] font-bold leading-[1.5]">{e.name}</span>
+        <span className="text-t14_5 font-bold leading-[1.5]">{e.name}</span>
         <Chip>{e.kind === 'PUBLIC_WINDOW' || e.kind === 'NATIONAL_HOTLINE' ? t('public') : t('organization')}</Chip>
       </span>
-      {e.hours && <span className="text-[12.5px] text-mist">{e.hours}</span>}
+      {e.hours && <span className="text-t12_5 text-mist">{e.hours}</span>}
       <span className="flex flex-wrap items-center gap-x-4">
         {e.phone && <a href={`tel:${e.phone}`} className={action}>{t('call')}</a>}
         {e.website && <a href={e.website} target="_blank" rel="noopener noreferrer" className={action}>{t('website')}</a>}
         {canDecide && e.kind !== 'NATIONAL_HOTLINE' && (
           agreed.has(e.id)
-            ? <span className="inline-flex min-h-[44px] items-center text-[12.5px] font-bold text-leaf">{t('agreed')}</span>
+            ? <span className="inline-flex min-h-[44px] items-center text-t12_5 font-bold text-leaf">{t('agreed')}</span>
             : <button type="button" disabled={busyId === e.id} onClick={() => void consent(e.id)} className={`${action} disabled:text-mist`}>{t('okToShare')}</button>
         )}
       </span>
@@ -66,11 +66,11 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between px-1">
-        <span className="text-[15px] font-bold">{t('title')}</span>
+        <span className="text-t15 font-bold">{t('title')}</span>
         <Tip label={t('tipLabel')}>{t('tip')}</Tip>
       </div>
       {entries.map(render)}
-      <p className="m-0 px-1 text-[11px] leading-[1.6] text-mist">
+      <p className="m-0 px-1 text-t11 leading-[1.6] text-mist">
         {sources.map((e, i) => (
           <span key={e.id}>
             {i > 0 && ' ／ '}

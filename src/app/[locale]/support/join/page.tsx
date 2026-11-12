@@ -27,14 +27,14 @@ function SupporterTerms({ agreed, onChange }: { agreed: boolean; onChange: (v: b
   const t = useTranslations('support.join')
   return (
     <Card tone="support" className="flex flex-col gap-3 p-4">
-      <span className="text-[14.5px] font-bold">{t('termsTitle')}</span>
-      <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5 text-[13px] leading-[1.7] text-ink-soft">
+      <span className="text-t14_5 font-bold">{t('termsTitle')}</span>
+      <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5 text-t13 leading-[1.7] text-ink-soft">
         {SUPPORTER_POINTS.map((k) => <li key={k}>{t(`terms.${k}`)}</li>)}
       </ol>
-      <Link href="/terms" className="text-[12.5px] text-night">{t('termsLink')}</Link>
+      <Link href="/terms" className="text-t12_5 text-night">{t('termsLink')}</Link>
       <label className="flex min-h-[48px] items-center gap-3">
         <input type="checkbox" checked={agreed} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-night" />
-        <span className="text-[13.5px] font-bold">{t('agree')}</span>
+        <span className="text-t13_5 font-bold">{t('agree')}</span>
       </label>
     </Card>
   )
@@ -82,7 +82,7 @@ function PhoneVerify() {
   return (
     <Card tone="support" className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[14.5px] font-bold">{t('phoneTitle')}</span>
+        <span className="text-t14_5 font-bold">{t('phoneTitle')}</span>
         <Tip kind="warn" label={t('phoneTipLabel')}>{t('phoneTip')}</Tip>
       </div>
       {!sent ? (
@@ -138,13 +138,13 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
         <TextField label={<span className="inline-flex items-center gap-2">{t('realName')} <Tip label={t('realNameTipLabel')}>{t('realNameTip')}</Tip></span>} value={realName} maxLength={100} autoComplete="name" onChange={(e) => setRealName(e.target.value)} />
         {/* 得意なことは相談した人の種類ごとに選ぶ(大項目の名前が種類で違う。個人の支え手は会社と地域の相談だけ) */}
         <div className="flex flex-col gap-2">
-          <span className="inline-flex items-center gap-2 text-[13px] font-bold">{t('skills')} <Tip label={t('skills')}>{t('skillsNote')}</Tip></span>
+          <span className="inline-flex items-center gap-2 text-t13 font-bold">{t('skills')} <Tip label={t('skills')}>{t('skillsNote')}</Tip></span>
           {/* 種類ごとに折りたたむ(30 の札が縦に並ぶと長い。画面の見直し 所見 16)。選んだ数を見出しに出す */}
           {areaSubjectsForFace('INDIVIDUAL').map((subject) => (
             <details key={subject} className="group rounded-tool border border-line bg-paper px-3">
-              <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-2 text-[13.5px] font-bold">
+              <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-2 text-t13_5 font-bold">
                 <span>{t(`skillsFor.${subject}`)}</span>
-                <span className="flex items-center gap-2 text-[12px] font-normal text-mist">
+                <span className="flex items-center gap-2 text-t12 font-normal text-mist">
                   {t('skillsPicked', { count: skills.filter((k) => k.startsWith(`${subject}:`)).length })}
                   <span aria-hidden className="group-open:rotate-180">⌄</span>
                 </span>
@@ -154,7 +154,7 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
                   const key = areaKey(subject, g)
                   const on = skills.includes(key)
                   return (
-                    <button key={key} type="button" aria-pressed={on} onClick={() => setSkills(on ? skills.filter((x) => x !== key) : [...skills, key])} className={cx('min-h-[36px] rounded-full px-3 text-[12.5px] font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+                    <button key={key} type="button" aria-pressed={on} onClick={() => setSkills(on ? skills.filter((x) => x !== key) : [...skills, key])} className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
                       {tSdgs(`area.${subject}.${g}`)}
                     </button>
                   )
@@ -165,10 +165,10 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
         </div>
         <Toggle checked={remote} onChange={setRemote} label={t('remote')} description={t('remoteNote')} />
         <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-bold">{t('languages')}</span>
+          <span className="text-t13 font-bold">{t('languages')}</span>
           <div className="flex flex-wrap gap-3">
             {locales.map((l) => (
-              <label key={l} className="flex min-h-[40px] items-center gap-2 text-[14px]">
+              <label key={l} className="flex min-h-[40px] items-center gap-2 text-t14">
                 <input type="checkbox" checked={languages.includes(l)} onChange={(e) => setLanguages(e.target.checked ? [...languages, l] : languages.filter((x) => x !== l))} className="h-5 w-5 accent-night" />
                 {localeLabels[l]}
               </label>
@@ -195,20 +195,20 @@ function SelfChecks({ choices, notes, onChoice, onNote }: {
   return (
     <Card tone="support" className="flex flex-col gap-4 p-4">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[14.5px] font-bold">{t('checksTitle')}</span>
+        <span className="text-t14_5 font-bold">{t('checksTitle')}</span>
         <Tip label={t('checksTipLabel')}>{t('checksTip')}</Tip>
       </div>
       <ol className="m-0 flex list-none flex-col gap-5 p-0">
         {SUPPORTER_CHECKS.map((check, i) => (
           <li key={check} className="flex flex-col gap-2 border-t border-line pt-4 first:border-t-0 first:pt-0">
             <div className="flex items-start gap-2">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-night text-[12px] font-bold text-lamp" aria-hidden>{i + 1}</span>
-              <span className="flex-1 text-[14px] font-bold leading-[1.7]">{t(`checks.${check}.statement`)}</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-night text-t12 font-bold text-lamp" aria-hidden>{i + 1}</span>
+              <span className="flex-1 text-t14 font-bold leading-[1.7]">{t(`checks.${check}.statement`)}</span>
               <Tip label={t('checksNoteLabel')}>{t(`checks.${check}.note`)}</Tip>
             </div>
             <div role="radiogroup" aria-label={t(`checks.${check}.statement`)} className="grid grid-cols-2 gap-2">
               {SELF_CHECKS.map((v) => (
-                <button key={v} type="button" role="radio" aria-checked={choices[check] === v} onClick={() => onChoice(check, v)} className={cx('min-h-[44px] rounded-tool px-2 text-[13.5px] font-bold', choices[check] === v ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+                <button key={v} type="button" role="radio" aria-checked={choices[check] === v} onClick={() => onChoice(check, v)} className={cx('min-h-[44px] rounded-tool px-2 text-t13_5 font-bold', choices[check] === v ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
                   {t(`selfCheck.${v}`)}
                 </button>
               ))}
@@ -269,25 +269,25 @@ function OrganizationForm({ person }: { person: MePerson }) {
   if (done) {
     return (
       <Card tone="support" className="flex flex-col gap-2 p-5">
-        <span className="text-[16px] font-bold">{t('appliedTitle')}</span>
+        <span className="text-t16 font-bold">{t('appliedTitle')}</span>
         <Lead>{t('appliedBody')}</Lead>
-        <Link href="/support" className="text-[14px] font-bold text-night">{t('toSupportHome')}</Link>
+        <Link href="/support" className="text-t14 font-bold text-night">{t('toSupportHome')}</Link>
       </Card>
     )
   }
   return (
     <div className="flex flex-col gap-4">
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        <span className="text-[14.5px] font-bold">{t('flowTitle')}</span>
-        <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-[13px] leading-[1.7] text-ink-soft">
+        <span className="text-t14_5 font-bold">{t('flowTitle')}</span>
+        <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-t13 leading-[1.7] text-ink-soft">
           <li>{t('flow.apply')}</li><li>{t('flow.interview')}</li><li>{t('flow.approved')}</li>
         </ol>
       </Card>
       <Card tone="support" className="flex flex-col gap-4 p-4">
         <TextField label={t('orgName')} hint={t('orgNameHint')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
         <label className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-bold">{t('orgType')}</span>
-          <select value={orgType} onChange={(e) => setOrgType(ORG_TYPES.find((x) => x === e.target.value) ?? 'OTHER')} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]">
+          <span className="text-t13 font-bold">{t('orgType')}</span>
+          <select value={orgType} onChange={(e) => setOrgType(ORG_TYPES.find((x) => x === e.target.value) ?? 'OTHER')} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
             {ORG_TYPES.map((o) => <option key={o} value={o}>{tType(o)}</option>)}
           </select>
         </label>
@@ -322,15 +322,15 @@ function Join() {
           </div>
           {!canSupportAtAge(me.person.age) ? (
             <Card tone="support" className="flex flex-col gap-2 p-4">
-              <span className="text-[15px] font-bold">{t('underAgeTitle')}</span>
+              <span className="text-t15 font-bold">{t('underAgeTitle')}</span>
               <Lead>{t('underAgeBody')}</Lead>
-              <Link href="/me" className="text-[13.5px] font-bold text-night">{t('underAgeFix')}</Link>
+              <Link href="/me" className="text-t13_5 font-bold text-night">{t('underAgeFix')}</Link>
             </Card>
           ) : (
             <>
             <div role="tablist" className="grid grid-cols-2 rounded-tool bg-steel p-1">
               {(['individual', 'organization'] as const).map((k) => (
-                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-tool text-[14px] font-bold', tab === k ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft')}>
+                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-tool text-t14 font-bold', tab === k ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft')}>
                   {t(`tab.${k}`)}
                 </button>
               ))}

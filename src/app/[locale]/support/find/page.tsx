@@ -82,7 +82,7 @@ function Find() {
     return (
       <Card tone="support" className="flex flex-col gap-3 p-4">
         <Lead>{tHome('noFace')}</Lead>
-        <Link href="/support/join" className="text-[15px] font-bold text-night">{tHome('join')}</Link>
+        <Link href="/support/join" className="text-t15 font-bold text-night">{tHome('join')}</Link>
       </Card>
     )
   }
@@ -105,8 +105,8 @@ function Find() {
           className="flex min-h-[48px] items-center justify-between gap-3 text-left"
         >
           <span className="flex min-w-0 flex-col">
-            <span className="text-[13px] font-bold">{t('filters')}</span>
-            <span className="truncate text-[12.5px] text-ink-soft">{filterSummary}</span>
+            <span className="text-t13 font-bold">{t('filters')}</span>
+            <span className="truncate text-t12_5 text-ink-soft">{filterSummary}</span>
           </span>
           <span aria-hidden className={filtersOpen ? 'rotate-180 text-mist' : 'text-mist'}>⌄</span>
         </button>
@@ -114,34 +114,34 @@ function Find() {
           <div id="find-filters" className="flex flex-col gap-3 border-t border-line pb-3 pt-3">
             {/* 大項目は選ぶ形にする(札を並べるとスマホで何段にも折り返し、横に流すと右端が切れて見えるため。AGENTS.md) */}
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-bold">{t('subject')}</span>
+        <span className="text-t13 font-bold">{t('subject')}</span>
         <select
           value={subject ?? ''}
           onChange={(e) => { setSubject(subjects.find((x) => x === e.target.value) ?? null); setCategory(null) }}
-          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px]"
+          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
         >
           <option value="">{t('subjectAll')}</option>
           {subjects.map((s) => <option key={s} value={s}>{t(`subject${s}`)}</option>)}
         </select>
       </label>
       <label className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-bold">{t('category')}</span>
+        <span className="text-t13 font-bold">{t('category')}</span>
         <select
           value={category ?? ''}
           disabled={!subject}
           onChange={(e) => setCategory(e.target.value ? Number(e.target.value) : null)}
-          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-[16px] disabled:text-mist"
+          className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16 disabled:text-mist"
         >
           <option value="">{t('all')}</option>
           {subject && AREA_GOALS[subject].map((g) => <option key={g} value={g}>{tSdgs(`area.${subject}.${g}`)}</option>)}
         </select>
-        {!subject && <span className="text-[12px] text-mist">{t('categoryNeedsSubject')}</span>}
+        {!subject && <span className="text-t12 text-mist">{t('categoryNeedsSubject')}</span>}
       </label>
             <div className="flex flex-col">
         <Toggle checked={remote} onChange={setRemote} label={t('remote')} description={t('remoteNote')} />
-        <label className="flex min-h-[48px] items-center justify-between gap-3 text-[14px] font-bold">
+        <label className="flex min-h-[48px] items-center justify-between gap-3 text-t14 font-bold">
           {t('involvement')}
-          <select value={involvement} onChange={(e) => setInvolvement(e.target.value === 'mine' ? 'mine' : e.target.value === 'all' ? 'all' : 'notOffered')} className="min-h-[40px] rounded-tool border border-line-strong bg-paper px-2 text-[14px] font-normal">
+          <select value={involvement} onChange={(e) => setInvolvement(e.target.value === 'mine' ? 'mine' : e.target.value === 'all' ? 'all' : 'notOffered')} className="min-h-[40px] rounded-tool border border-line-strong bg-paper px-2 text-t14 font-normal">
             <option value="notOffered">{t('notOffered')}</option>
             <option value="mine">{t('mine')}</option>
             <option value="all">{t('everything')}</option>
@@ -153,7 +153,7 @@ function Find() {
       </Card>
       {lockedCount > 0 && <Card tone="support" className="bg-lamp-faint p-3"><Lead>{t('locked', { count: lockedCount })}</Lead></Card>}
       {error && <Lead>{error}</Lead>}
-      {items && <span className="px-1 text-[12.5px] text-mist">{t('count', { count: items.length })}</span>}
+      {items && <span className="px-1 text-t12_5 text-mist">{t('count', { count: items.length })}</span>}
       {(items ?? []).map((c) => <CaseCard key={c.id} item={c} face={current?.key ?? ''} />)}
       {hasMore && items && (
         <Button tone="support" variant="outline" disabled={loadingMore} onClick={() => void more()}>{loadingMore ? t('loadingMore') : t('loadMore')}</Button>

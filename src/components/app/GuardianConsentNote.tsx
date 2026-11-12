@@ -7,8 +7,8 @@ export function GuardianConsentNote() {
   const t = useTranslations('app.guardian')
   return (
     <div role="note" className="flex flex-col gap-1 rounded-tool bg-lamp-faint p-4">
-      <span className="text-[13.5px] font-bold">{t('title')}</span>
-      <span className="text-[12.5px] leading-[1.7] text-ink-soft">{t('body')}</span>
+      <span className="text-t13_5 font-bold">{t('title')}</span>
+      <span className="text-t12_5 leading-[1.7] text-ink-soft">{t('body')}</span>
     </div>
   )
 }
