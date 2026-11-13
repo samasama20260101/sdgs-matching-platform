@@ -115,7 +115,8 @@
     "cancelFailed": "No se pudo cancelar",
     "nextOpen": "Esperando ofertas de apoyo. Mientras tanto, también puedes contactar con los servicios cercanos de abajo.",
     "togetherDone": "Apoyos que trabajaron contigo",
-    "cancelMatched": "Terminar esta consulta"
+    "cancelMatched": "Terminar esta consulta",
+    "thanksSent": "Has dado las gracias."
   },
   "offers": {
     "arrived": "Llegaron {count} ofrecimientos",
@@ -144,7 +145,10 @@
     "thanks": "Dar las gracias (elige las que quieras)",
     "confirm": "Confirmar que está resuelto",
     "notYet": "Todavía no está resuelto",
-    "failed": "Algo salió mal. Inténtalo de nuevo."
+    "failed": "Algo salió mal. Inténtalo de nuevo.",
+    "thanksLaterTitle": "Puedes dar las gracias a quienes te apoyaron",
+    "thanksLaterLead": "Elige las palabras que encajen (las que quieras). Les llegarán a quienes te apoyaron.",
+    "thanksSend": "Dar las gracias"
   },
   "referrals": {
     "title": "Mientras esperas: servicios cercanos",

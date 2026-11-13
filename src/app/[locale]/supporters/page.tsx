@@ -53,7 +53,7 @@ export default async function SupportersPage({ params }: PageProps) {
         {supporters ? <SupporterList supporters={supporters} /> : <ErrorNote>{t('loadFailed')}</ErrorNote>}
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.1em] text-white no-underline">
+          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.2em] text-white no-underline">
             {t('consultCta')}
           </Link>
           <div className="flex flex-col gap-2 rounded-[16px] bg-dawn-soft p-4 text-dawn-ink">

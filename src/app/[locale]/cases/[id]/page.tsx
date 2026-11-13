@@ -80,7 +80,6 @@ function OfferCard({ offer, canChoose, full, onAct }: { offer: ConsulteeOffer; c
 
 function ResolvePanel({ caseId, onDone }: { caseId: string; onDone: () => Promise<void> }) {
   const t = useTranslations('consult.resolve')
-  const tBadge = useTranslations('sdgs.badge')
   const [words, setWords] = useState<ThanksWord[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,20 +100,56 @@ function ResolvePanel({ caseId, onDone }: { caseId: string; onDone: () => Promis
       <span className="text-t16 font-bold">{t('title')}</span>
       <Lead>{t('lead')}</Lead>
       <SectionLabel>{t('thanks')}</SectionLabel>
-      <div className="flex flex-wrap gap-1.5">
-        {THANKS_WORDS.map((w) => {
-          const on = words.includes(w)
-          return (
-            <button key={w} type="button" aria-pressed={on} onClick={() => setWords(on ? words.filter((x) => x !== w) : [...words, w])} className={cx('min-h-[40px] rounded-full px-3 text-t13 font-bold', on ? 'bg-lamp text-ink' : 'border border-line-strong bg-paper text-ink-soft')}>
-              {tBadge(w)}
-            </button>
-          )
-        })}
-      </div>
+      <ThanksWords words={words} onChange={setWords} />
       <ErrorNote>{error}</ErrorNote>
       <Button variant="night" disabled={busy} onClick={() => void act('confirmResolved')}>{t('confirm')}</Button>
       <Button variant="outline" disabled={busy} onClick={() => void act('notYet')}>{t('notYet')}</Button>
     </Card>
+  )
+}
+
+// 解決のあと、まだありがとうを贈っていないときに出す(確定のときに選ばなかった人のため)
+function ThanksPanel({ caseId, onDone }: { caseId: string; onDone: () => Promise<void> }) {
+  const t = useTranslations('consult.resolve')
+  const [words, setWords] = useState<ThanksWord[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const send = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/cases/${caseId}/actions`, { method: 'POST', json: { action: 'thanks', thanks: words } })
+      await onDone()
+    } catch {
+      setError(t('failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <Card className="flex flex-col gap-3 border-2 border-lamp p-4">
+      <span className="text-t16 font-bold">{t('thanksLaterTitle')}</span>
+      <Lead>{t('thanksLaterLead')}</Lead>
+      <ThanksWords words={words} onChange={setWords} />
+      <ErrorNote>{error}</ErrorNote>
+      <Button variant="night" disabled={busy || words.length === 0} onClick={() => void send()}>{t('thanksSend')}</Button>
+    </Card>
+  )
+}
+
+function ThanksWords({ words, onChange }: { words: ThanksWord[]; onChange: (next: ThanksWord[]) => void }) {
+  const tBadge = useTranslations('sdgs.badge')
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {THANKS_WORDS.map((w) => {
+        const on = words.includes(w)
+        return (
+          <button key={w} type="button" aria-pressed={on} onClick={() => onChange(on ? words.filter((x) => x !== w) : [...words, w])} className={cx('min-h-[40px] rounded-full px-3 text-t13 font-bold', on ? 'bg-lamp text-ink' : 'border border-line-strong bg-paper text-ink-soft')}>
+            {tBadge(w)}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -186,6 +221,8 @@ function CaseInner({ id }: { id: string }) {
       {c.status === 'OPEN' && waiting.length === 0 && params.get('sent') !== '1' && <Lead>{t('nextOpen')}</Lead>}
       {c.status === 'MATCHED' && c.supporterResolvedAt && data.canDecide && <ResolvePanel caseId={c.id} onDone={reload} />}
       {c.status === 'RESOLVED' && <Card className="bg-leaf-soft p-4"><span className="text-t15 font-bold text-leaf-ink">{t('resolved')}</span></Card>}
+      {c.status === 'RESOLVED' && !c.thanked && data.canDecide && chosen.length > 0 && <ThanksPanel caseId={c.id} onDone={reload} />}
+      {c.status === 'RESOLVED' && c.thanked && <Lead>{t('thanksSent')}</Lead>}
 
       {waiting.length > 0 && open && (
         <section className="flex flex-col gap-2">

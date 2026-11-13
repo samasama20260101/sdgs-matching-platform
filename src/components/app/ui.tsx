@@ -70,7 +70,7 @@ export function Button({
     <button
       type="button"
       {...rest}
-      className={cx('inline-flex min-h-[48px] items-center justify-center gap-2 px-4 text-t15 font-bold tracking-[0.1em] transition-colors disabled:cursor-not-allowed', radius, styles[variant], className)}
+      className={cx('inline-flex min-h-[48px] items-center justify-center gap-2 px-4 text-t15 font-bold tracking-[0.2em] transition-colors disabled:cursor-not-allowed', radius, styles[variant], className)}
     >
       {children}
     </button>
