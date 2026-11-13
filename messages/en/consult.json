@@ -115,7 +115,8 @@
     "cancelFailed": "Couldn't cancel",
     "nextOpen": "Waiting for offers from supporters. Meanwhile, you can also contact the services nearby below.",
     "togetherDone": "Supporters who worked with you",
-    "cancelMatched": "End this request"
+    "cancelMatched": "End this request",
+    "thanksSent": "You sent your thanks."
   },
   "offers": {
     "arrived": "{count} offers have arrived",
@@ -144,7 +145,10 @@
     "thanks": "Send thanks (choose any)",
     "confirm": "Confirm it is solved",
     "notYet": "Not solved yet",
-    "failed": "Something went wrong. Please try again."
+    "failed": "Something went wrong. Please try again.",
+    "thanksLaterTitle": "You can send thanks to your supporters",
+    "thanksLaterLead": "Choose the words that fit (any number). They will be sent to your supporters.",
+    "thanksSend": "Send thanks"
   },
   "referrals": {
     "title": "While you wait: services nearby",

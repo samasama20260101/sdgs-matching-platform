@@ -130,7 +130,7 @@ export default function StoryPage() {
       <section className="flex flex-col gap-3 rounded-[16px] bg-kinari-deep p-4">
         <Heading level={2}>一歩、踏み出してみませんか。</Heading>
         <Lead>相談は無料です。本名を出さずに、呼び名で相談できます。書いた相談を見た支え手から申し出が届き、話す相手はあなたが選びます。</Lead>
-        <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.1em] text-white no-underline">
+        <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.2em] text-white no-underline">
           無料で相談する
         </Link>
         <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold text-ink no-underline">

@@ -115,7 +115,8 @@
     "cancelFailed": "取り消せませんでした",
     "nextOpen": "支え手からの申し出を待っています。待つあいだに、下の近くの窓口にも相談できます。",
     "togetherDone": "一緒に進めた支え手",
-    "cancelMatched": "相談を終える"
+    "cancelMatched": "相談を終える",
+    "thanksSent": "ありがとうを贈りました。"
   },
   "offers": {
     "arrived": "{count}つの申し出が届きました",
@@ -144,7 +145,10 @@
     "thanks": "ありがとうを贈る(いくつでも)",
     "confirm": "解決を確定する",
     "notYet": "まだ解決していない",
-    "failed": "うまくいきませんでした。もう一度お試しください。"
+    "failed": "うまくいきませんでした。もう一度お試しください。",
+    "thanksLaterTitle": "支え手にありがとうを贈れます",
+    "thanksLaterLead": "合う言葉を選んでください(いくつでも)。選んだ言葉は支え手に届きます。",
+    "thanksSend": "ありがとうを贈る"
   },
   "referrals": {
     "title": "待つあいだに、近くの窓口",

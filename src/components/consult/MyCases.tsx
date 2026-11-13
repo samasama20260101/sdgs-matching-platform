@@ -44,10 +44,13 @@ export function MyCases({ items }: { items: MyCaseItem[] }) {
           <Card className="flex flex-col gap-1.5 p-3.5 text-ink">
             <span className="text-t14_5 font-bold">{titleOf(c)}</span>
             <span className="flex flex-wrap items-center gap-1.5">
-              <Chip color={c.status === 'RESOLVED' ? 'leaf' : c.status === 'MATCHED' ? 'dawn' : c.status === 'OPEN' ? 'lamp' : 'steel'}>{t(`status.${c.status}`)}</Chip>
+              {/* 申し出が届いたら「待っています」を出さない(届いた件数に替える) */}
+              {c.status === 'OPEN' && c.pendingOffers > 0
+                ? <Chip color="night">{t('turnOffers', { count: c.pendingOffers })}</Chip>
+                : <Chip color={c.status === 'RESOLVED' ? 'leaf' : c.status === 'MATCHED' ? 'dawn' : c.status === 'OPEN' ? 'lamp' : 'steel'}>{t(`status.${c.status}`)}</Chip>}
               {c.isProxy && <Chip color="dawn">{t('proxy')}</Chip>}
               {c.subjectName && <Chip>{c.subjectName}</Chip>}
-              {c.pendingOffers > 0 && <Chip color="night">{t('newOffers', { count: c.pendingOffers })}</Chip>}
+              {c.status !== 'OPEN' && c.pendingOffers > 0 && <Chip color="night">{t('newOffers', { count: c.pendingOffers })}</Chip>}
               {c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine' && <Chip color="night">{t('replyArrived')}</Chip>}
             </span>
           </Card>

@@ -1,4 +1,4 @@
-// 相談する側の操作: 取り消す / 解決を確定する(ありがとうを贈る) / まだ解決していないと返す
+// 相談する側の操作: 取り消す / 解決を確定する(ありがとうを贈る) / まだ解決していないと返す / 解決のあとでありがとうを贈る
 import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -6,17 +6,44 @@ import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { resolveCaseAccess } from '@/lib/server/caseAccess'
 import { postSystemMessage } from '@/lib/server/systemMessages'
-import { sanitizeThanks } from '@/lib/domain/offers'
+import { sanitizeThanks, type ThanksWord } from '@/lib/domain/offers'
 import { summarizeResolvedCase } from '@/lib/server/caseKnowledge'
 import { offerMemberUserId } from '@/lib/domain/caseMember'
 
 const schema = z.object({
-  action: z.enum(['cancel', 'confirmResolved', 'notYet']),
+  action: z.enum(['cancel', 'confirmResolved', 'notYet', 'thanks']),
   thanks: z.array(z.string()).optional(),
 })
 
 function fail(status: number, error: string, code?: string) {
   return NextResponse.json(code ? { error, code } : { error }, { status })
+}
+
+// 選ばれた支え手(3 者まで)に、ありがとうの言葉と記録を付ける
+async function giveThanks(caseId: string, userId: string, thanks: ThanksWord[]) {
+  if (thanks.length === 0) return
+  const { data: accepted } = await supabaseAdmin
+    .from('offers')
+    .select('supporter_kind, supporter_user_id, supporter_organization_id, created_by_user_id')
+    .eq('case_id', caseId)
+    .eq('status', 'ACCEPTED')
+  const rows = (accepted ?? []).flatMap((o) => thanks.map((word) => ({
+    case_id: caseId,
+    supporter_user_id: offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }),
+    supporter_organization_id: o.supporter_organization_id as string | null,
+    given_by_user_id: userId,
+    badge_key: word,
+  })))
+  if (rows.length > 0) await supabaseAdmin.from('supporter_badges').insert(rows)
+  // ありがとうは選んだ言葉の数によらず1回(支え手ごとに1行)
+  const thanksRows = (accepted ?? []).map((o) => ({
+    user_id: offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }),
+    organization_id: o.supporter_organization_id as string | null,
+    case_id: caseId,
+    kind: 'THANKS',
+    points: 0,
+  }))
+  if (thanksRows.length > 0) await supabaseAdmin.from('contributions').insert(thanksRows)
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +77,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true })
   }
 
+  // 解決のあとでありがとうを贈る: 確定のときに選ばなかった人が、あとから1回だけ贈れる
+  if (parsed.data.action === 'thanks') {
+    if (c.status !== 'RESOLVED') return fail(409, 'まだ解決していません', 'NOT_RESOLVED')
+    const thanks = sanitizeThanks(parsed.data.thanks)
+    if (thanks.length === 0) return fail(400, '入力を確かめてください', 'INVALID')
+    const { count, error } = await supabaseAdmin.from('supporter_badges').select('id', { count: 'exact', head: true }).eq('case_id', id)
+    if (error) return fail(500, 'サーバーエラーが発生しました')
+    if ((count ?? 0) > 0) return fail(409, 'もうありがとうを贈っています', 'ALREADY')
+    await giveThanks(id, userId, thanks)
+    return NextResponse.json({ ok: true })
+  }
+
   // 解決を確定する: 支え手が解決を報告してから(相談した人が確定したものだけを社会貢献に数える)
   if (c.status !== 'MATCHED' || !c.supporter_resolved_at) return fail(409, '解決の報告がありません', 'NO_REPORT')
   const now = new Date().toISOString()
@@ -66,31 +105,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { error: recordError } = await supabaseAdmin.rpc('record_case_resolution', { p_case_id: id })
   if (recordError) console.error('[api/cases/actions] record:', recordError)
 
-  const thanks = sanitizeThanks(parsed.data.thanks)
-  if (thanks.length > 0) {
-    const { data: accepted } = await supabaseAdmin
-      .from('offers')
-      .select('supporter_kind, supporter_user_id, supporter_organization_id, created_by_user_id')
-      .eq('case_id', id)
-      .eq('status', 'ACCEPTED')
-    const rows = (accepted ?? []).flatMap((o) => thanks.map((word) => ({
-      case_id: id,
-      supporter_user_id: offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }),
-      supporter_organization_id: o.supporter_organization_id as string | null,
-      given_by_user_id: userId,
-      badge_key: word,
-    })))
-    if (rows.length > 0) await supabaseAdmin.from('supporter_badges').insert(rows)
-    // ありがとうは選んだ言葉の数によらず1回(支え手ごとに1行)
-    const thanksRows = (accepted ?? []).map((o) => ({
-      user_id: offerMemberUserId({ supporter_user_id: o.supporter_user_id as string | null, created_by_user_id: o.created_by_user_id as string | null }),
-      organization_id: o.supporter_organization_id as string | null,
-      case_id: id,
-      kind: 'THANKS',
-      points: 0,
-    }))
-    if (thanksRows.length > 0) await supabaseAdmin.from('contributions').insert(thanksRows)
-  }
+  await giveThanks(id, userId, sanitizeThanks(parsed.data.thanks))
 
   await postSystemMessage(id, userId, 'resolvedConfirmed')
   after(() => summarizeResolvedCase(id).catch((e) => console.error('[api/cases/actions] knowledge:', e)))
