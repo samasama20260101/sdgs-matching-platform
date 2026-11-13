@@ -13,7 +13,7 @@ export default async function SupporterNotFound() {
       <main className="flex flex-col gap-3 pb-6 pt-2">
         <Heading>{t('notFoundTitle')}</Heading>
         <Lead>{t('notFoundLead')}</Lead>
-        <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold text-ink no-underline">
+        <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold btn-track text-ink no-underline">
           {t('backToList')}
         </Link>
         <Footer />

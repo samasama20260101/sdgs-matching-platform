@@ -85,3 +85,11 @@
     color: var(--color-ink);
   }
 }
+
+/* ボタンの字間: 日本語は 2割(11/12 代表の決定)。英語とスペイン語は語が長く、同じ幅だと小さなボタンが 4 行に折り返すので広げない */
+@utility btn-track {
+  letter-spacing: 0.02em;
+  &:lang(ja) {
+    letter-spacing: 0.2em;
+  }
+}
