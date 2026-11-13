@@ -10,6 +10,7 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { Card, Chip, Heading, Lead, SectionLabel, Tip } from '@/components/app/ui'
 import { CaseCard } from '@/components/support/CaseCard'
 import { FacePicker, useFace } from '@/components/support/useFace'
+import { useSupportCaseTitle } from '@/components/support/caseText'
 import { Invitations } from '@/components/support/Invitations'
 import { TalkRow } from '@/components/thread/TalkRow'
 import { sortTalks, talkTurn } from '@/lib/domain/talk'
@@ -17,6 +18,7 @@ import type { SupportCaseItem } from '@/lib/server/supportCases'
 
 function Home() {
   const t = useTranslations('support.home')
+  const titleOf = useSupportCaseTitle()
   const { options, current, choose } = useFace()
   const [involved, setInvolved] = useState<SupportCaseItem[] | null>(null)
   const [fresh, setFresh] = useState<SupportCaseItem[] | null>(null)
@@ -69,7 +71,7 @@ function Home() {
         <section className="flex flex-col gap-2">
           <SectionLabel>{t('yourTurn', { count: turn.length })}</SectionLabel>
           {turn.map((c) => (
-            <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={c.title ?? ''} sub={c.myOfferStatus === 'INVITED' ? t('invitedToCase') : c.subjectName} last={c.lastMessage} viewer="SUPPORTER" />
+            <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={titleOf(c)} sub={c.myOfferStatus === 'INVITED' ? t('invitedToCase') : c.subjectName} last={c.lastMessage} viewer="SUPPORTER" />
           ))}
         </section>
       )}
@@ -77,7 +79,7 @@ function Home() {
         <section className="flex flex-col gap-2">
           <SectionLabel>{t('involved')}</SectionLabel>
           {others.map((c) => (
-            <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={c.title ?? ''} sub={c.subjectName} last={c.lastMessage} viewer="SUPPORTER" resolved={c.status === 'RESOLVED'} />
+            <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={titleOf(c)} sub={c.subjectName} last={c.lastMessage} viewer="SUPPORTER" resolved={c.status === 'RESOLVED'} />
           ))}
         </section>
       )}

@@ -5,12 +5,12 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { Card, Chip, SectionLabel } from '@/components/app/ui'
 import { talkTurn, type LastMessage } from '@/lib/domain/talk'
-import { consulteeTitle } from '@/lib/domain/intake'
+import { caseTitle } from '@/lib/domain/intake'
 import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 
 export type MyCaseItem = {
   id: string
-  // 保存してある題(日本語)。画面には言語に合わせた題を出す(consulteeTitle)
+  // 保存してある題(日本語)。画面には言語に合わせた題を出す(caseTitle)
   title: string
   firstIndicator: string | null
   // 本人の言葉の書き出し(40 字まで)
@@ -29,7 +29,7 @@ export type MyCaseItem = {
 export function useMyCaseTitle(): (item: MyCaseItem) => string {
   const locale = useLocale()
   const label = useIndicatorLabel()
-  return (c) => consulteeTitle({ locale, savedTitle: c.title, firstIndicatorLabel: c.firstIndicator ? label(c.subjectType, c.firstIndicator) : null, ownWords: c.ownWords })
+  return (c) => caseTitle({ locale, savedTitle: c.title, firstIndicatorLabel: c.firstIndicator ? label(c.subjectType, c.firstIndicator) : null, ownWords: c.ownWords })
 }
 
 export function MyCases({ items }: { items: MyCaseItem[] }) {

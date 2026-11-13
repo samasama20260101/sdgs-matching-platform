@@ -99,9 +99,10 @@ export function indicatorLabelKey(subject: SubjectType, id: string): string | nu
   return null
 }
 
-// 相談した側の画面に出す題。保存してある題(仮の題も AI の題も)は支え手が読む日本語なので、
-// 日本語の画面ではそのまま、ほかの言語では「選んだ1つ目の訳」か「本人の言葉の書き出し」にする(2026-11-06 代表の Staging での指摘)
-export function consulteeTitle(input: { locale: string; savedTitle: string; firstIndicatorLabel: string | null; ownWords: string | null }): string {
+// 画面に出す相談の題。保存してある題(仮の題も AI の題も)は日本語なので、
+// 日本語の画面ではそのまま、ほかの言語では「選んだ1つ目の訳」か「本人の言葉の書き出し」にする(2026-11-06 代表の Staging での指摘)。
+// 支える側は ownWords を渡さない(本人の言葉は訳ではないので、選んだものがなければ保存してある題のまま)
+export function caseTitle(input: { locale: string; savedTitle: string; firstIndicatorLabel: string | null; ownWords: string | null }): string {
   if (input.locale === 'ja') return input.savedTitle
   return input.firstIndicatorLabel ?? (input.ownWords ? shortTitle(input.ownWords) : input.savedTitle)
 }

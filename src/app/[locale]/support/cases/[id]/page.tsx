@@ -14,7 +14,7 @@ import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, Te
 import { Thread } from '@/components/thread/Thread'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
 import { waitingLabel } from '@/lib/domain/schedule'
-import { regionText, WaitingText } from '@/components/support/caseText'
+import { regionText, useSupportCaseTitle, WaitingText } from '@/components/support/caseText'
 
 type Detail = {
   case: SupportCaseItem & { description: string; since: string | null; wish: string | null; supporterResolvedAt: string | null; createdAt: string }
@@ -169,6 +169,7 @@ function Inner({ id }: { id: string }) {
   const tSdgs = useTranslations('sdgs')
   const locale = useLocale()
   const label = useIndicatorLabel()
+  const titleOf = useSupportCaseTitle()
   const face = useSearchParams().get('face') ?? ''
   const fetchDetail = useCallback(() => apiFetch<Detail>(`/api/support/cases/${id}?face=${encodeURIComponent(face)}`), [id, face])
   const { data, error: loadError, reload } = useLoad(fetchDetail)
@@ -199,7 +200,7 @@ function Inner({ id }: { id: string }) {
     <>
       <div className="flex flex-col gap-1">
         <span className="text-t12 text-mist">{c.subjectName ?? (c.subjectType === 'PERSON' ? t('person') : '')}</span>
-        <Heading level={2}>{c.title}</Heading>
+        <Heading level={2}>{titleOf(c)}</Heading>
         {c.areaGoals.length > 0 && <span className="text-t13 font-bold text-ink-soft">{c.areaGoals.map((g) => tSdgs(`area.${c.subjectType}.${g}`)).join(' / ')}</span>}
         <span className="flex flex-wrap gap-1">
           {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${label(c.subjectType, i.code) ?? i.text}`}</Chip>)}

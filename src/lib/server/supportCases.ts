@@ -100,6 +100,8 @@ export type SupportCaseItem = {
   id: string
   locked: boolean
   title: string | null
+  // 相談した人が選んだ1つ目の選択肢。日本語以外の画面で、題をその訳に替えるために使う(caseTitle)
+  firstIndicator: string | null
   summary: string | null
   status: CaseRow['status']
   subjectType: CaseRow['subject_type']
@@ -161,6 +163,7 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       id: c.id,
       locked,
       title: locked ? null : c.title,
+      firstIndicator: locked ? null : c.intake_qna?.indicators?.[0] ?? null,
       // v1 の頃に作った要約には、相談した人に向けた共感の文が入っているので、表示のときに除く(画面の見直し 所見 4)
       summary: locked || !c.ai_sdg_suggestion?.summary ? null : stripConsolation(c.ai_sdg_suggestion.summary),
       status: c.status,

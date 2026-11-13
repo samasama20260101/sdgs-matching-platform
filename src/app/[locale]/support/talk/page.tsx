@@ -10,10 +10,12 @@ import { Heading } from '@/components/app/ui'
 import { TalkRow } from '@/components/thread/TalkRow'
 import { sortTalks } from '@/lib/domain/talk'
 import { FacePicker, useFace } from '@/components/support/useFace'
+import { useSupportCaseTitle } from '@/components/support/caseText'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
 
 function Talk() {
   const t = useTranslations('support.talk')
+  const titleOf = useSupportCaseTitle()
   const { options, current, choose } = useFace()
   const [items, setItems] = useState<SupportCaseItem[] | null>(null)
   const faceKey = current?.key ?? null
@@ -27,7 +29,7 @@ function Talk() {
       <Heading level={2}>{t('title')}</Heading>
       {items && items.length === 0 && <p className="m-0 px-1 text-t13 text-mist">{t('empty')}</p>}
       {(items ?? []).map((c) => (
-        <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={c.title ?? ''} sub={c.subjectName} last={c.lastMessage} viewer="SUPPORTER" resolved={c.status === 'RESOLVED'} />
+        <TalkRow key={c.id} href={`/support/cases/${c.id}?face=${encodeURIComponent(current?.key ?? '')}`} title={titleOf(c)} sub={c.subjectName} last={c.lastMessage} viewer="SUPPORTER" resolved={c.status === 'RESOLVED'} />
       ))}
     </>
   )
