@@ -145,7 +145,7 @@ assert.throws(() => formatHandoverCode(new Uint8Array(20).fill(255))) // 使え�
 console.log('domain: ok')
 
 // ---- 相談の受付
-import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBodyForAi, consulteeTitle, indicatorLabelKey, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
+import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBodyForAi, caseTitle, indicatorLabelKey, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
   assert.equal(optionsFor('PERSON').length, 115)
   assert.ok(optionsFor('COMPANY').length > 0 && optionsFor('COMMUNITY').length > 0)
   // 主体の選択肢にない番号・重複は落とし、3つで切る
@@ -185,11 +185,11 @@ import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBo
   assert.equal(indicatorLabelKey('NATION', optionsFor('NATION')[0].id), null)
   // 相談した側の題: 日本語の画面は保存した題、ほかの言語は選んだ1つ目の訳か、本人の言葉の書き出し
   const titleInput = { savedTitle: '危険な地域に住んでいる', firstIndicatorLabel: 'I live in a dangerous area', ownWords: 'Help us' }
-  assert.equal(consulteeTitle({ ...titleInput, locale: 'ja' }), '危険な地域に住んでいる')
-  assert.equal(consulteeTitle({ ...titleInput, locale: 'en' }), 'I live in a dangerous area')
-  assert.equal(consulteeTitle({ ...titleInput, locale: 'es', firstIndicatorLabel: null }), 'Help us')
-  assert.equal(consulteeTitle({ ...titleInput, locale: 'en', firstIndicatorLabel: null, ownWords: 'a'.repeat(50) }).length, 41)
-  assert.equal(consulteeTitle({ ...titleInput, locale: 'en', firstIndicatorLabel: null, ownWords: null }), '危険な地域に住んでいる')
+  assert.equal(caseTitle({ ...titleInput, locale: 'ja' }), '危険な地域に住んでいる')
+  assert.equal(caseTitle({ ...titleInput, locale: 'en' }), 'I live in a dangerous area')
+  assert.equal(caseTitle({ ...titleInput, locale: 'es', firstIndicatorLabel: null }), 'Help us')
+  assert.equal(caseTitle({ ...titleInput, locale: 'en', firstIndicatorLabel: null, ownWords: 'a'.repeat(50) }).length, 41)
+  assert.equal(caseTitle({ ...titleInput, locale: 'en', firstIndicatorLabel: null, ownWords: null }), '危険な地域に住んでいる')
   // AI に渡す相談文の並び(本文 → いつから → どうしたいか)。空の欄は行ごと省く
   assert.equal(caseBodyForAi({ description: ' 家賃が払えない ', since: '3か月前', wish: ' 住み続けたい ' }), '家賃が払えない\nいつから: 3か月前\nどうしたいか: 住み続けたい')
   assert.equal(caseBodyForAi({ description: '家賃が払えない', since: '  ', wish: null }), '家賃が払えない')

@@ -17,7 +17,7 @@ import { Referrals } from '@/components/consult/Referrals'
 import { CrisisLinks } from '@/components/app/CrisisLinks'
 import { useSession } from '@/components/app/SessionProvider'
 import type { ConsulteeCaseView, ConsulteeOffer } from '@/lib/server/consulteeView'
-import { consulteeTitle } from '@/lib/domain/intake'
+import { caseTitle } from '@/lib/domain/intake'
 import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
 
 type Payload = { case: ConsulteeCaseView; canDecide: boolean }
@@ -195,7 +195,7 @@ function CaseInner({ id }: { id: string }) {
   const full = c.acceptedCount >= c.maxSupporters
   // 選んだものと題は画面の言語で出す(保存してあるのは日本語)
   const chips = c.indicators.map((code, i) => label(c.subjectType, code) ?? c.indicatorTexts[i] ?? code)
-  const title = consulteeTitle({ locale, savedTitle: c.title, firstIndicatorLabel: c.indicators[0] ? label(c.subjectType, c.indicators[0]) : null, ownWords: c.description })
+  const title = caseTitle({ locale, savedTitle: c.title, firstIndicatorLabel: c.indicators[0] ? label(c.subjectType, c.indicators[0]) : null, ownWords: c.description })
 
   return (
     <>

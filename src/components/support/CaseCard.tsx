@@ -6,12 +6,13 @@ import { Link } from '@/i18n/navigation'
 import { Card, Chip } from '@/components/app/ui'
 import type { SupportCaseItem } from '@/lib/server/supportCases'
 import { waitingLabel } from '@/lib/domain/schedule'
-import { regionText, WaitingText } from './caseText'
+import { regionText, useSupportCaseTitle, WaitingText } from './caseText'
 
 export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }) {
   const t = useTranslations('support.card')
   const tSdgs = useTranslations('sdgs')
   const locale = useLocale()
+  const titleOf = useSupportCaseTitle()
   if (item.locked) {
     return (
       <Card tone="support" className="flex flex-col gap-1 p-3.5">
@@ -24,7 +25,7 @@ export function CaseCard({ item, face }: { item: SupportCaseItem; face: string }
   return (
     <Link href={`/support/cases/${item.id}?face=${encodeURIComponent(face)}`} className="no-underline">
       <Card tone="support" className="flex flex-col gap-2 p-3.5 text-ink">
-        <span className="text-t14_5 font-bold leading-[1.5]">{item.title}</span>
+        <span className="text-t14_5 font-bold leading-[1.5]">{titleOf(item)}</span>
         <span className="flex flex-wrap gap-1">
           {/* 大項目はゴールの番号と、相談した人の種類ごとの名前で出す(支える側には SDGs を前に出す)。
               指標の番号は札に出さず、相談の詳細で中身と一緒に出す(画面の見直し 所見 3) */}
