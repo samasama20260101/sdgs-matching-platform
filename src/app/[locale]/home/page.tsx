@@ -53,12 +53,12 @@ export default function HomePage() {
             <Lead>{t('lead')}</Lead>
           </div>
           {items && <YourTurn items={items} />}
-          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-lamp text-t16 font-bold tracking-[0.2em] text-ink no-underline">
+          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-lamp text-t16 font-bold btn-track text-ink no-underline">
             {t('write')}
           </Link>
           <div className="grid grid-cols-2 gap-2">
-            <Link href="/consult/org?subject=COMPANY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold tracking-[0.2em] text-ink no-underline">{t('asCompany')}</Link>
-            <Link href="/consult/org?subject=COMMUNITY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold tracking-[0.2em] text-ink no-underline">{t('asCommunity')}</Link>
+            <Link href="/consult/org?subject=COMPANY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold btn-track text-ink no-underline">{t('asCompany')}</Link>
+            <Link href="/consult/org?subject=COMMUNITY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold btn-track text-ink no-underline">{t('asCommunity')}</Link>
           </div>
           {items && <MyCases items={items} />}
         </AppFrame>

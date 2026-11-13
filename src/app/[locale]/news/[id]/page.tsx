@@ -88,7 +88,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
               href={post.external_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.2em] text-white no-underline"
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-[16px] bg-night px-4 text-t15 font-bold btn-track text-white no-underline"
             >
               {t('external')} <span aria-hidden="true">↗</span>
             </a>

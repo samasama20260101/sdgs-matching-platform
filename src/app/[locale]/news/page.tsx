@@ -73,7 +73,7 @@ export default async function NewsListPage({ params, searchParams }: PageProps) 
           ))}
           {hasMore && (
             <Link href={`/news?show=${show + NEWS_LIST_MAX}`} scroll={false}
-              className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold tracking-[0.2em] text-ink no-underline">
+              className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold btn-track text-ink no-underline">
               {t('more', { count: NEWS_LIST_MAX })}
             </Link>
           )}
