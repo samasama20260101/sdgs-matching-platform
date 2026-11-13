@@ -59,7 +59,7 @@ export default async function SupportersPage({ params }: PageProps) {
           <div className="flex flex-col gap-2 rounded-[16px] bg-dawn-soft p-4 text-dawn-ink">
             <span className="text-t14_5 font-bold">{t('joinTitle')}</span>
             <span className="text-t12_5 leading-[1.7]">{t('joinBody')}</span>
-            <Link href="/support/join" className="flex min-h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-current px-3 text-t13_5 font-bold text-dawn-ink no-underline">
+            <Link href="/support/join" className="flex min-h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-current px-3 text-t13_5 font-bold tracking-[0.2em] text-dawn-ink no-underline">
               {t('joinCta')}
             </Link>
           </div>

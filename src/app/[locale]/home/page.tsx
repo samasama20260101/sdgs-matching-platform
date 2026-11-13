@@ -57,8 +57,8 @@ export default function HomePage() {
             {t('write')}
           </Link>
           <div className="grid grid-cols-2 gap-2">
-            <Link href="/consult/org?subject=COMPANY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold text-ink no-underline">{t('asCompany')}</Link>
-            <Link href="/consult/org?subject=COMMUNITY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold text-ink no-underline">{t('asCommunity')}</Link>
+            <Link href="/consult/org?subject=COMPANY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold tracking-[0.2em] text-ink no-underline">{t('asCompany')}</Link>
+            <Link href="/consult/org?subject=COMMUNITY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold tracking-[0.2em] text-ink no-underline">{t('asCommunity')}</Link>
           </div>
           {items && <MyCases items={items} />}
         </AppFrame>

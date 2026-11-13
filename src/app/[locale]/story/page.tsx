@@ -133,7 +133,7 @@ export default function StoryPage() {
         <Link href="/consult/new" className="flex min-h-[52px] items-center justify-center rounded-[16px] bg-night px-4 text-t15 font-bold tracking-[0.2em] text-white no-underline">
           無料で相談する
         </Link>
-        <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold text-ink no-underline">
+        <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold tracking-[0.2em] text-ink no-underline">
           支え手と団体を見る
         </Link>
       </section>
