@@ -22,7 +22,7 @@ const RESEND_SECONDS = 60
 
 
 
-function LoginStep() {
+function LoginStep({ next }: { next: string }) {
   const t = useTranslations('app.start')
   const locale = useLocale()
   const [email, setEmail] = useState('')
@@ -38,7 +38,9 @@ function LoginStep() {
     return () => window.clearTimeout(timer)
   }, [cooldown])
 
-  const callbackUrl = () => `${window.location.origin}${withLocalePath(locale, '/auth/callback')}`
+  // Google とメールのリンクは別のページ(/auth/callback)に戻るので、戻り先をクエリで持たせる
+  // (持たせないと、会社として相談する → ログイン のあと、相談の画面でなくホームに着く)
+  const callbackUrl = () => `${window.location.origin}${withLocalePath(locale, '/auth/callback')}?next=${encodeURIComponent(next)}`
 
   const sendCode = async () => {
     const address = email.trim()
@@ -78,7 +80,12 @@ function LoginStep() {
 
   const google = async () => {
     setError(null)
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl() } })
+    // ログアウトしてもブラウザの Google のログインは残るので、毎回アカウントを選ぶ画面を出す
+    // (出さないと前の Google アカウントで自動的に入り、別のアカウントに替えられない)
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: callbackUrl(), queryParams: { prompt: 'select_account' } },
+    })
     if (oauthError) setError(t('sendFailed'))
   }
 
@@ -202,7 +209,7 @@ function StartInner() {
         ) : state.status === 'needsOnboarding' ? (
           <ProfileStep onDone={() => router.replace(next)} />
         ) : (
-          <LoginStep />
+          <LoginStep next={next} />
         )}
       </div>
     </Screen>

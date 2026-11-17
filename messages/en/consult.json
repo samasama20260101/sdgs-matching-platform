@@ -21,8 +21,6 @@
     "sendFailed": "We couldn't send it. Please try again.",
     "activeLimit": "You can have up to 3 open requests. Cancel or close one first.",
     "dailyLimit": "You've sent many requests in a short time. Please wait a little.",
-    "shownName": "Name shown",
-    "wordsTitleOrg": "What is your organization struggling with?",
     "nextToPick": "Next: pick what is close",
     "suggestTitle": "If any of these fit, pick them",
     "suggestLead": "Based on what you wrote, these look close. You can pick up to 3.",
@@ -30,15 +28,19 @@
     "suggestNone": "We could not find close matches. You can also look below.",
     "browseAll": "Look through other problems",
     "noneIsOkSend": "If nothing fits, you can send without picking.",
-    "backToWords": "Edit what you wrote"
+    "backToWords": "Edit what you wrote",
+    "step1Org": "1 / 3 Write in your own words",
+    "step2Org": "2 / 3 Pick what is close",
+    "step3Org": "3 / 3 Choose who is asking",
+    "wordsTitleCompany": "What is your company struggling with?",
+    "wordsTitleCommunity": "What is your community struggling with?",
+    "nextToOrg": "Next: choose who is asking",
+    "backToPick": "Edit what you picked"
   },
   "org": {
-    "titleCompany": "Ask as a company",
-    "titleCommunity": "Ask as a community",
     "leadCompany": "The request belongs to the company and other members can see it. It continues even if the member handling it changes.",
     "leadCommunity": "The request belongs to the local government section or neighborhood group, and other members can see it. A successor can take over.",
     "which": "Which organization are you asking for?",
-    "registerFirst": "Register an organization",
     "registerAnother": "Register another organization",
     "registerTitle": "Register an organization",
     "registerTipLabel": "How registering works",
@@ -53,9 +55,11 @@
     "populationHint": "(roughly; used for contribution records)",
     "corporateNumber": "Corporate number (13 digits)",
     "optional": "(optional)",
-    "register": "Register",
     "nameRequired": "Please enter a name",
-    "registerFailed": "We couldn't register it. Please try again."
+    "registerFailed": "We couldn't register it. Please try again.",
+    "whichCompany": "Which company is sending this request?",
+    "whichCommunity": "Which organization is sending this request?",
+    "registerAndSend": "Register and send my request"
   },
   "thread": {
     "label": "Messages",

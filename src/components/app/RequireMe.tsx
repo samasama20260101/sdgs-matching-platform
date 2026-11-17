@@ -7,6 +7,7 @@ import { useRouter, usePathname } from '@/i18n/navigation'
 import { useSession, useReadyMe } from './SessionProvider'
 import { Button, Lead, Screen, Spinner } from './ui'
 import { ConsentPanel } from './ConsentPanel'
+import { loginPathFor } from '@/lib/domain/safeNext'
 
 type ReadyMe = NonNullable<ReturnType<typeof useReadyMe>>
 
@@ -19,7 +20,8 @@ export function RequireMe({ children, admin = false }: { children: (me: ReadyMe)
   const isAdmin = state.status === 'ready' && state.me.person.role === 'ADMIN'
   useEffect(() => {
     if (state.status === 'anonymous' || state.status === 'needsOnboarding') {
-      router.replace(`/start?next=${encodeURIComponent(pathname)}`)
+      // usePathname はクエリを含まないので、location から足す(?subject=COMMUNITY が落ちると会社の入口に戻ってしまう)
+      router.replace(loginPathFor(pathname, window.location.search))
     } else if (isAdmin && !admin) {
       // 運営は相談する顔と支える顔を持たない
       router.replace('/admin')

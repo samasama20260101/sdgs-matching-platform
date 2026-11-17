@@ -1,7 +1,7 @@
 'use client'
 
-// 会社・地域として相談する(盤 16・05b・05c)。どの団体として相談するかを選び、なければその場で登録する。
-// 相談した団体として団体の名前が出る。担当者の呼び名は出ない
+// 会社・地域として相談する(盤 16・05b・05c)。先に相談を書き、届けるときにどの団体として届けるかを選ぶ(なければその場で登録する)。
+// 団体の登録を先に求めない(2026-11-17 岡本さん)。相談した団体として団体の名前が出る。担当者の呼び名は出ない
 import { Suspense, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
@@ -14,7 +14,7 @@ import { Button, Card, ErrorNote, Heading, Lead, TextField, Tip } from '@/compon
 import { WriteFlow } from '@/components/consult/WriteFlow'
 import type { MeOrganizationFace } from '@/lib/client/meTypes'
 
-function RegisterOrg({ subject, country, regionCode, onDone }: { subject: SubjectType; country: string; regionCode: string | null; onDone: () => Promise<void> }) {
+function RegisterOrg({ subject, country, regionCode, sending, onDone }: { subject: SubjectType; sending: boolean; country: string; regionCode: string | null; onDone: (organizationId: string) => Promise<void> }) {
   const t = useTranslations('consult.org')
   const [name, setName] = useState('')
   const [orgType, setOrgType] = useState(subject === 'COMPANY' ? 'COMPANY' : 'MUNICIPALITY')
@@ -29,8 +29,9 @@ function RegisterOrg({ subject, country, regionCode, onDone }: { subject: Subjec
     }
     setBusy(true)
     setError(null)
+    let created: { id: string }
     try {
-      await apiFetch('/api/orgs', {
+      created = await apiFetch<{ id: string }>('/api/orgs', {
         method: 'POST',
         json: {
           name,
@@ -42,12 +43,14 @@ function RegisterOrg({ subject, country, regionCode, onDone }: { subject: Subjec
           corporateNumber: corporateNumber || null,
         },
       })
-      await onDone()
     } catch {
       setError(t('registerFailed'))
-    } finally {
       setBusy(false)
+      return
     }
+    setBusy(false)
+    // 登録できたら、そのまま相談を届ける
+    await onDone(created.id)
   }
   return (
     <Card className="flex flex-col gap-4 p-4">
@@ -77,37 +80,38 @@ function RegisterOrg({ subject, country, regionCode, onDone }: { subject: Subjec
         <TextField label={t('corporateNumber')} hint={t('optional')} inputMode="numeric" maxLength={13} value={corporateNumber} onChange={(e) => setCorporateNumber(e.target.value.replace(/[^0-9]/g, ''))} />
       )}
       <ErrorNote>{error}</ErrorNote>
-      <Button variant="night" disabled={busy} onClick={() => void submit()}>{t('register')}</Button>
+      <Button variant="night" disabled={busy || sending} onClick={() => void submit()}>{t('registerAndSend')}</Button>
     </Card>
   )
 }
 
 function Inner() {
-  const t = useTranslations('consult.org')
   const params = useSearchParams()
   const subject: SubjectType = params.get('subject') === 'COMMUNITY' ? 'COMMUNITY' : 'COMPANY'
   const { refresh } = useSession()
-  const [picked, setPicked] = useState<MeOrganizationFace | null>(null)
-  const [registering, setRegistering] = useState(false)
   return (
     <RequireMe>
       {(me) => {
         const candidates = me.faces.organizations.filter((o) => canConsultAs(subject, o.orgType) && !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus))
         return (
           <AppFrame tabs={false}>
-            {picked ? (
-              <WriteFlow subject={subject} organizationId={picked.organizationId} organizationName={picked.organizationName} country={me.person.country} entryCode={params.get('shop')} />
-            ) : (
-              <OrgChooser
-                subject={subject}
-                candidates={candidates}
-                onPick={setPicked}
-                registering={registering}
-                setRegistering={setRegistering}
-                register={<RegisterOrg subject={subject} country={me.person.country} regionCode={me.person.regionCode} onDone={async () => { await refresh(); setRegistering(false) }} />}
-                title={subject === 'COMPANY' ? t('titleCompany') : t('titleCommunity')}
-              />
-            )}
+            <WriteFlow
+              subject={subject}
+              country={me.person.country}
+              entryCode={params.get('shop')}
+              organizationStep={({ send, busy }) => (
+                <OrgStep
+                  subject={subject}
+                  candidates={candidates}
+                  send={send}
+                  busy={busy}
+                  renderRegister={(onRegistered) => (
+                    <RegisterOrg subject={subject} country={me.person.country} regionCode={me.person.regionCode} sending={busy} onDone={onRegistered} />
+                  )}
+                  refresh={refresh}
+                />
+              )}
+            />
           </AppFrame>
         )
       }}
@@ -115,34 +119,57 @@ function Inner() {
   )
 }
 
-function OrgChooser({ subject, candidates, onPick, registering, setRegistering, register, title }: {
+// 届ける団体を選ぶ。所属している団体があれば選んで届け、なければ登録してそのまま届ける
+function OrgStep({ subject, candidates, send, busy, renderRegister, refresh }: {
   subject: SubjectType
   candidates: MeOrganizationFace[]
-  onPick: (o: MeOrganizationFace) => void
-  registering: boolean
-  setRegistering: (v: boolean) => void
-  register: React.ReactNode
-  title: string
+  send: (organizationId: string) => Promise<boolean>
+  busy: boolean
+  renderRegister: (onRegistered: (organizationId: string) => Promise<void>) => React.ReactNode
+  refresh: () => Promise<void>
 }) {
   const t = useTranslations('consult.org')
+  const tWrite = useTranslations('consult.write')
   const sorted = useMemo(() => [...candidates].sort((a, b) => a.organizationName.localeCompare(b.organizationName)), [candidates])
+  const [picked, setPicked] = useState<string | null>(sorted.length === 1 ? sorted[0].organizationId : null)
+  const [registering, setRegistering] = useState(sorted.length === 0)
+  const onRegistered = async (organizationId: string) => {
+    const sent = await send(organizationId)
+    if (sent) return
+    // 届けられなかったとき(上限など)は、登録した団体を一覧に出して選んだ状態にしておく
+    await refresh()
+    setPicked(organizationId)
+    setRegistering(false)
+  }
   return (
     <div className="flex flex-col gap-4">
-      <Heading level={2}>{title}</Heading>
+      <Heading level={2}>{subject === 'COMPANY' ? t('whichCompany') : t('whichCommunity')}</Heading>
       <Lead>{subject === 'COMPANY' ? t('leadCompany') : t('leadCommunity')}</Lead>
       {sorted.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <span className="px-1 text-t12_5 font-bold text-mist">{t('which')}</span>
-          {sorted.map((o) => (
-            <button key={o.organizationId} type="button" onClick={() => onPick(o)} className="flex min-h-[56px] items-center justify-between rounded-[16px] border border-line bg-paper px-4 text-left">
-              <span className="text-t15 font-bold">{o.organizationName}</span>
-              <span aria-hidden>›</span>
-            </button>
-          ))}
+        <div role="radiogroup" aria-label={t('which')} className="flex flex-col gap-2">
+          {sorted.map((o) => {
+            const on = picked === o.organizationId && !registering
+            return (
+              <button
+                key={o.organizationId}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => { setPicked(o.organizationId); setRegistering(false) }}
+                className={`flex min-h-[56px] items-center justify-between rounded-[16px] border px-4 text-left ${on ? 'border-night bg-lamp-faint' : 'border-line bg-paper'}`}
+              >
+                <span className="text-t15 font-bold">{o.organizationName}</span>
+                <span aria-hidden className={`h-5 w-5 rounded-full border-2 ${on ? 'border-night bg-night' : 'border-line-strong'}`} />
+              </button>
+            )
+          })}
         </div>
       )}
-      {registering ? register : (
-        <Button variant="outline" onClick={() => setRegistering(true)}>{sorted.length > 0 ? t('registerAnother') : t('registerFirst')}</Button>
+      {registering ? renderRegister(onRegistered) : (
+        <>
+          <Button variant="night" disabled={busy || !picked} onClick={() => { if (picked) void send(picked) }}>{tWrite('send')}</Button>
+          <Button variant="outline" onClick={() => setRegistering(true)}>{t('registerAnother')}</Button>
+        </>
       )}
     </div>
   )
