@@ -39,6 +39,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。** 大項目と緊急度は AI に決めさせない。
 - **AI は `src/lib/ai/client.ts` の `generateJson` だけから呼ぶ。** 提供元の SDK を直接 import しない(提供元とモデルは `src/lib/ai/config.ts` が環境変数から決める)。
 - **体験ページ `/trial` が呼ぶのは「近いもの」の API(`/api/public/trial/suggest`)だけ。** 相談の保存・届け出はしない。AI に渡す前に伏せる・何も保存しない・回数の上限(DB の `hit_rate_limit`、10 分に 10 回・1 日 300 回)を外さない(2026-11-06 代表。それまでは API・DB・AI を呼ばない作りだった)。
+- **相談は先に書き、届けるときにログインする**(2026-11-17 岡本さん。会社・地域の団体の登録も届けるときに求める)。`/consult/new`・`/consult/org` は `OptionalMe` で包み、ログイン前の「近いもの」は体験ページと同じ公開の API を使う。書いた内容はログインの往復のあいだ端末の sessionStorage に預ける(`src/lib/domain/consultDraft.ts`。サーバーに送らない・届けたら消す)。相談を届ける API(`/api/cases`)は今までどおりログインが要る。
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
 - 画面の言語は ja・en・es(v2.0、11/5 定例。中国語は入れない)。相談する側と支える側の画面は 3 言語、運営の画面は日本語だけ。文言は `messages/<言語>/app|consult|support.json` に足し、`npm run check:i18n` で 3 言語のキーをそろえる。

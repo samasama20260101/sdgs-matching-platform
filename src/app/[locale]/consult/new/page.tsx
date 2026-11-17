@@ -1,22 +1,22 @@
 'use client'
 
-// 相談を書く(個人。盤 12・12b)
+// 相談を書く(個人。盤 12・12b)。ログインしていなくても書け、届けるときにログインする(2026-11-17 岡本さん)
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppFrame } from '@/components/app/AppShell'
-import { RequireMe } from '@/components/app/RequireMe'
+import { OptionalMe } from '@/components/app/RequireMe'
 import { WriteFlow } from '@/components/consult/WriteFlow'
 
 function Inner() {
   const params = useSearchParams()
   return (
-    <RequireMe>
+    <OptionalMe>
       {(me) => (
         <AppFrame tabs={false}>
-          <WriteFlow subject="PERSON" country={me.person.country} entryCode={params.get('shop')} />
+          <WriteFlow subject="PERSON" country={me?.person.country ?? null} entryCode={params.get('shop')} signedIn={me !== null} />
         </AppFrame>
       )}
-    </RequireMe>
+    </OptionalMe>
   )
 }
 
