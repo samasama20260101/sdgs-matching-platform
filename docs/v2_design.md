@@ -51,6 +51,8 @@
 | `v2_11_set_organization_service_areas.sql` | 団体の活動地域を 1 回で入れ替える関数(全国か地域の一覧)。団体の画面の「活動地域を変える」から呼ぶ。service_role だけが呼べる |
 | `v2_12_rate_limits.sql` | AI を呼ぶ API の回数の上限を DB で数える表と関数(体験ページの近いもの・本番の近いもの)。古い行は毎日の自動処理が消す。service_role だけ |
 | `v2_13_two_organization_roles.sql` | 団体の中の役割を管理(OWNER)とメンバー(MEMBER)の2つにする。追加(ADMIN)の人と招待は OWNER に移し、移した人は audit_logs に残す(2026-11-11) |
+| `v2_14_resolution_codes_change.sql` | 指標を入れ替えたときも訂正の行を足す(社会貢献の記録、2026-11-12) |
+| `v2_15_consult_organizations_not_vetted.sql` | 審査の状態に「支え手の申し込み前」(NOT_APPLIED)を足し、相談のための団体を審査から外す。相談のための団体は NOT_APPLIED か停止だけ、支え手の団体は NOT_APPLIED にならない決まりを DB に置く。戻した団体は audit_logs に残す(2026-11-17、#131) |
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
 
 Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を取り込んだ(`scripts/import-directory-entries.mts`、データは directory-data の出力)。
@@ -62,6 +64,9 @@ Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を�
 
 申し込みフォーム(簡単な情報と10項目)→ 運営へのメール → 面談(運営のチェックリスト)→ 承認(管理画面)→ 一覧に載る。2段階に分けない。公開情報との照合は必須にしない。
 `organizations.vetting_status`: APPLIED → INTERVIEW → APPROVED(または REJECTED / SUSPENDED)。
+
+**相談のための団体は審査しない**(2026-11-17 代表了承、#131)。会社・地域として相談するために登録した団体(`application.purpose = CONSULT`)は、支え手の決まりへの同意も6つの自己採点もしていないので、審査の列に並べず(`NOT_APPLIED`)、支える側の顔・招く団体・公開の一覧に出さない。相談するのに承認は要らない。運営ができるのは止める・止めるのを解くことだけで、団体として相談できないのは止めた団体だけ(見送りは支え手の申し込みを断ったという意味で、相談は止めない)。
+その団体で支えるときは、管理の人が「支え手になる」の画面で今の団体を選んで申し込む(`/api/orgs/[id]/supporter-application`)。同意と6つの自己採点をすると用途が SUPPORT になって審査の列に並び、承認で「運営と面談済み」が付く。決まりは `src/lib/domain/orgVetting.ts`、DB の決まりは `v2_15`。
 
 ## 5. まだ決まっていないこと
 

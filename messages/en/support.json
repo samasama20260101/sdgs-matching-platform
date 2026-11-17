@@ -250,7 +250,12 @@
         "note": "You do not need to have overcome these barriers already.",
         "prompt": "Tell us about barriers you feel in your work, and the support you would like to give if they disappeared. (optional)"
       }
-    }
+    },
+    "orgChoiceTitle": "Which organization are you applying for?",
+    "orgChoiceTipLabel": "Organizations registered to ask for help",
+    "orgChoiceTip": "An organization you registered to ask for help as a company or community can also apply here. Once approved after an interview with the samasama team, it can make offers and appears in the list of organizations.",
+    "orgChoiceExisting": "Apply as {name}",
+    "orgChoiceNew": "Register a new organization and apply"
   },
   "orgType": {
     "NPO": "Nonprofit",
@@ -266,6 +271,7 @@
     "OTHER": "Other"
   },
   "vetting": {
+    "NOT_APPLIED": "Not applied as a supporter",
     "APPLIED": "Applied",
     "INTERVIEW": "Scheduling interview",
     "APPROVED": "Interviewed by samasama",

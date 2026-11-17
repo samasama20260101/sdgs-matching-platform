@@ -110,7 +110,8 @@ export async function resolveCaseAccess(userId: string, caseId: string, aal: 'aa
   const face: SupporterFace | null = mine.supporter_kind === 'INDIVIDUAL'
     ? (faces.individual ? { kind: 'INDIVIDUAL', userId, profileActive: faces.individual.status === 'ACTIVE' } : null)
     : (() => {
-        const org = faces.organizations.find((o) => o.organizationId === mine.supporter_organization_id)
+        // 相談のための団体は支え手として相談を開けない(#131)
+        const org = faces.organizations.find((o) => o.organizationId === mine.supporter_organization_id && o.supporter)
         return org
           ? { kind: 'ORGANIZATION' as const, userId, organizationId: org.organizationId, organizationApproved: org.vettingStatus === 'APPROVED', membershipActive: true, mfaVerified: aal === 'aal2' }
           : null

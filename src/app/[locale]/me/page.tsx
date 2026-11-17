@@ -226,7 +226,8 @@ export default function MePage() {
             )}
           </Card>
 
-          {me.faces.organizations.length > 0 && (
+          {/* 2つ目の確認は支え手の団体のメンバーが機微な相談を見るためのもの。相談のための団体だけの人には出さない(#131) */}
+          {me.faces.organizations.some((o) => o.supporter) && (
             me.mfa.verified
               ? <Card className="p-4"><span className="text-t14 font-bold text-leaf">{tMfa('done')}</span></Card>
               : me.mfa.enrolled || mfaOpen

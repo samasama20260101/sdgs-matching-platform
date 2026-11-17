@@ -4,7 +4,7 @@ import 'server-only'
 // 審査の絞り込みが札だけ抜けて、審査前や見送りの団体の名前と紹介文をお知らせに出せた)。
 // 載せるのは、運営が承認した(APPROVED)・止めていない(ACTIVE)・支え手として登録した団体だけ
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { isSupporterPurpose, publicSupporterType, type PublicSupporterType } from '@/lib/domain/publicSupporter'
+import { isListedSupporter, publicSupporterType, type PublicSupporterType } from '@/lib/domain/publicSupporter'
 import { effectiveServiceAreas } from '@/lib/domain/serviceAreas'
 
 export type PublicArea = { region_code: string; country: string; name_local: string; name_en: string }
@@ -21,19 +21,20 @@ export type PublicSupporter = {
   areas: PublicArea[]
 }
 
-type OrgRow = { id: string; name: string; supporter_type: string | null; org_type: string | null; bio: string | null; social_links: unknown; created_at: string; application: unknown; prefecture: string | null; region_country: string | null }
+type OrgRow = { id: string; name: string; supporter_type: string | null; org_type: string | null; bio: string | null; social_links: unknown; created_at: string; application: unknown; prefecture: string | null; region_country: string | null; vetting_status: string; status: string }
 
 export async function listPublicSupporters(opts: { ids?: string[]; limit?: number } = {}): Promise<PublicSupporter[]> {
   let q = supabaseAdmin
     .from('organizations')
-    .select('id, name, supporter_type, org_type, bio, social_links, created_at, application, prefecture, region_country')
+    .select('id, name, supporter_type, org_type, bio, social_links, created_at, application, prefecture, region_country, vetting_status, status')
     .eq('status', 'ACTIVE')
     .eq('vetting_status', 'APPROVED')
     .order('created_at', { ascending: false })
   if (opts.ids) q = q.in('id', opts.ids)
   const { data, error } = await q.limit(opts.limit ?? 100)
   if (error) throw error
-  const orgs = ((data ?? []) as OrgRow[]).filter((o) => isSupporterPurpose(o.application))
+  // 載せる決まりは共同支援に招く API と同じ(isListedSupporter)。問い合わせの絞り込みは件数を減らすため
+  const orgs = ((data ?? []) as OrgRow[]).filter(isListedSupporter)
   if (orgs.length === 0) return []
   const ids = orgs.map((o) => o.id)
 

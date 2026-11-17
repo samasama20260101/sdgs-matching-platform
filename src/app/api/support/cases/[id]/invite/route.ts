@@ -1,5 +1,5 @@
 // 支える｜共同支援に招く(中心の支え手だけ、盤 15・22)。招かれた団体が受けると、相談した人に「提案」として届き、
-// 相談した人が同意すると加わる。招けるのは運営が承認した団体だけ(個人の相談に個人の支え手は招けない)
+// 相談した人が同意すると加わる。招けるのは公開の団体一覧に載る団体だけ(運営が承認した支え手の団体。相談のための団体は招けない、#131)
 import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { isUuid } from '@/lib/api/validation'
@@ -8,6 +8,7 @@ import { requireFace } from '@/lib/server/supportAuth'
 import { loadSupportCase } from '@/lib/server/supportCases'
 import { MAX_SUPPORTERS_PER_CASE, OFFER_MESSAGE_MAX } from '@/lib/domain/offers'
 import { notifyUsers } from '@/lib/server/notifyUser'
+import { isListedSupporter } from '@/lib/domain/publicSupporter'
 
 const schema = z.object({
   face: z.string(),
@@ -30,8 +31,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { count: accepted } = await supabaseAdmin.from('offers').select('id', { count: 'exact', head: true }).eq('case_id', id).eq('status', 'ACCEPTED')
   if ((accepted ?? 0) >= MAX_SUPPORTERS_PER_CASE) return NextResponse.json({ error: '支え手は3者までです', code: 'MAX_REACHED' }, { status: 409 })
-  const { data: target } = await supabaseAdmin.from('organizations').select('id, vetting_status, status').eq('id', body.data.targetOrganizationId).maybeSingle()
-  if (!target || target.vetting_status !== 'APPROVED' || target.status !== 'ACTIVE') return NextResponse.json({ error: '招けない団体です', code: 'NOT_APPROVED' }, { status: 400 })
+  const { data: target } = await supabaseAdmin.from('organizations').select('id, vetting_status, status, application').eq('id', body.data.targetOrganizationId).maybeSingle()
+  if (!target || !isListedSupporter(target)) return NextResponse.json({ error: '招けない団体です', code: 'NOT_APPROVED' }, { status: 400 })
 
   const { data, error } = await supabaseAdmin.from('offers').insert({
     case_id: id,

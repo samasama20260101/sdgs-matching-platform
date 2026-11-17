@@ -1,9 +1,11 @@
-// 運営｜審査(盤 51): 団体の申し込みの一覧。?status=APPLIED|INTERVIEW|APPROVED|REJECTED|SUSPENDED
+// 運営｜審査(盤 51): 団体の申し込みの一覧。?status=APPLIED|INTERVIEW|APPROVED|REJECTED|SUSPENDED|NOT_APPLIED
+// NOT_APPLIED は相談のための団体(審査に並べない、#131)。止めるために一覧で引けるようにしておく
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { VETTING_STATUSES } from '@/lib/domain/orgVetting'
 
-const STATUSES = ['APPLIED', 'INTERVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED']
+const STATUSES: readonly string[] = VETTING_STATUSES
 
 export async function GET(request: Request) {
   const auth = await requireAdmin(request)

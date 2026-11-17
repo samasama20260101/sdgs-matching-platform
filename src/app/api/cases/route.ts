@@ -15,6 +15,7 @@ import {
   sanitizeEntryCode,
   sanitizeSelection,
 } from '@/lib/domain/intake'
+import { canConsultAsOrganization } from '@/lib/domain/orgVetting'
 import { isProductionDeployment } from '@/lib/deployEnv'
 import { summarizeNewCase } from '@/lib/server/caseAi'
 import { notifyOps } from '@/lib/server/opsNotify'
@@ -77,7 +78,8 @@ export async function POST(request: Request) {
       .eq('id', face.organizationId)
       .single()
     if (orgError) return serverError('org', orgError)
-    if (!canConsultAs(input.subjectType, org.org_type) || ['REJECTED', 'SUSPENDED'].includes(org.vetting_status)) {
+    // 団体として相談できないのは運営が止めた団体だけ(相談のための団体には審査がない、#131)
+    if (!canConsultAs(input.subjectType, org.org_type) || !canConsultAsOrganization(org.vetting_status)) {
       return NextResponse.json({ error: 'この団体では相談できません', code: 'ORG_NOT_ALLOWED' }, { status: 400 })
     }
     organization = org

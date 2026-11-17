@@ -6,6 +6,10 @@ export type MeOrganizationFace = {
   vettingStatus: string
   role: 'OWNER' | 'MEMBER'
   isCoordinator: boolean
+  // 支え手の団体か(#131)。相談のための団体は支える側の顔にしない
+  supporter: boolean
+  // この団体で支え手の申し込みができるか(相談のための団体の管理の人)
+  canApplySupporter: boolean
 }
 
 export type MePerson = {

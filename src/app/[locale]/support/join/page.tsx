@@ -4,6 +4,7 @@
 // 個人: 本名・得意なこと・遠隔で可・言語、電話番号の確認(申し出るのに必要)
 // 団体: 申し込み → 運営が面談 → 承認されると一覧に載る(11/5 の審査の流れ。2段階に分けない)
 //   申し込みでは、面談で確かめる6つの点を自己採点してもらう(11/12。面談前の自己採点はこれ1回)
+//   会社・地域として相談するために登録した団体(相談のための団体)の管理の人は、その団体のまま申し込める(#131)
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase/client'
@@ -14,7 +15,7 @@ import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip, Toggle } from '@/components/app/ui'
-import type { MePerson } from '@/lib/client/meTypes'
+import type { MeOrganizationFace, MePerson, MeResponse } from '@/lib/client/meTypes'
 import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAreas'
 import { canSupportAtAge } from '@/lib/domain/age'
 import { SELF_CHECKS, SUPPORTER_CHECKS, checkAnswers, missingChecks, type SelfCheck, type SupporterCheck } from '@/lib/domain/supporterChecks'
@@ -221,9 +222,35 @@ function SelfChecks({ choices, notes, onChoice, onNote }: {
   )
 }
 
-function OrganizationForm({ person }: { person: MePerson }) {
+// どの団体で申し込むか。相談のための団体の管理の人にだけ出す(#131)
+function OrgChoice({ candidates, target, onChange }: { candidates: MeOrganizationFace[]; target: string; onChange: (target: string) => void }) {
+  const t = useTranslations('support.join')
+  const options = [...candidates.map((o) => ({ key: o.organizationId, label: t('orgChoiceExisting', { name: o.organizationName }) })), { key: NEW_ORG, label: t('orgChoiceNew') }]
+  return (
+    <Card tone="support" className="flex flex-col gap-3 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-t14_5 font-bold">{t('orgChoiceTitle')}</span>
+        <Tip label={t('orgChoiceTipLabel')}>{t('orgChoiceTip')}</Tip>
+      </div>
+      <div role="radiogroup" aria-label={t('orgChoiceTitle')} className="flex flex-col gap-2">
+        {options.map((o) => (
+          <button key={o.key} type="button" role="radio" aria-checked={target === o.key} onClick={() => onChange(o.key)} className={cx('min-h-[48px] rounded-tool px-3 text-left text-t14 font-bold', target === o.key ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+const NEW_ORG = 'new'
+
+function OrganizationForm({ person, candidates }: { person: MePerson; candidates: MeOrganizationFace[] }) {
   const t = useTranslations('support.join')
   const tType = useTranslations('support.orgType')
+  // 相談のための団体があれば、その団体で申し込むのを先に出す
+  const [target, setTarget] = useState<string>(candidates[0]?.organizationId ?? NEW_ORG)
+  const existing = candidates.find((o) => o.organizationId === target) ?? null
   const [name, setName] = useState('')
   const [orgType, setOrgType] = useState<(typeof ORG_TYPES)[number]>('NPO')
   const [contactEmail, setContactEmail] = useState('')
@@ -238,26 +265,36 @@ function OrganizationForm({ person }: { person: MePerson }) {
   const submit = async () => {
     const checks = checkAnswers(choices, notes)
     const missing = missingChecks(checks)
-    if (!name.trim() || missing.length > 0 || !agreed) {
-      setError(!name.trim() ? t('orgNameRequired') : missing.length > 0 ? t('checksRequired', { numbers: missing.map((c) => SUPPORTER_CHECKS.indexOf(c) + 1).join('・') }) : t('agreeRequired'))
+    const nameMissing = !existing && !name.trim()
+    if (nameMissing || missing.length > 0 || !agreed) {
+      setError(nameMissing ? t('orgNameRequired') : missing.length > 0 ? t('checksRequired', { numbers: missing.map((c) => SUPPORTER_CHECKS.indexOf(c) + 1).join('・') }) : t('agreeRequired'))
       return
     }
     setBusy(true)
     setError(null)
+    const application = { ...Object.fromEntries(Object.entries(answers).filter(([, v]) => v.trim())), ...checks }
     try {
-      await apiFetch('/api/orgs', {
-        method: 'POST',
-        json: {
-          name,
-          orgType,
-          purpose: 'SUPPORT',
-          country: person.country,
-          regionCode: person.regionCode,
-          contactEmail: contactEmail.trim() || null,
-          application: { ...Object.fromEntries(Object.entries(answers).filter(([, v]) => v.trim())), ...checks },
-          acceptSupporterTerms: true,
-        },
-      })
+      if (existing) {
+        // 相談のための団体のまま、支え手の申し込みをする
+        await apiFetch(`/api/orgs/${existing.organizationId}/supporter-application`, {
+          method: 'POST',
+          json: { contactEmail: contactEmail.trim() || null, application, acceptSupporterTerms: true },
+        })
+      } else {
+        await apiFetch('/api/orgs', {
+          method: 'POST',
+          json: {
+            name,
+            orgType,
+            purpose: 'SUPPORT',
+            country: person.country,
+            regionCode: person.regionCode,
+            contactEmail: contactEmail.trim() || null,
+            application,
+            acceptSupporterTerms: true,
+          },
+        })
+      }
       await refresh()
       setDone(true)
     } catch {
@@ -283,14 +320,19 @@ function OrganizationForm({ person }: { person: MePerson }) {
           <li>{t('flow.apply')}</li><li>{t('flow.interview')}</li><li>{t('flow.approved')}</li>
         </ol>
       </Card>
+      {candidates.length > 0 && <OrgChoice candidates={candidates} target={target} onChange={setTarget} />}
       <Card tone="support" className="flex flex-col gap-4 p-4">
-        <TextField label={t('orgName')} hint={t('orgNameHint')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
-        <label className="flex flex-col gap-1.5">
-          <span className="text-t13 font-bold">{t('orgType')}</span>
-          <select value={orgType} onChange={(e) => setOrgType(ORG_TYPES.find((x) => x === e.target.value) ?? 'OTHER')} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
-            {ORG_TYPES.map((o) => <option key={o} value={o}>{tType(o)}</option>)}
-          </select>
-        </label>
+        {!existing && (
+          <>
+            <TextField label={t('orgName')} hint={t('orgNameHint')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
+            <label className="flex flex-col gap-1.5">
+              <span className="text-t13 font-bold">{t('orgType')}</span>
+              <select value={orgType} onChange={(e) => setOrgType(ORG_TYPES.find((x) => x === e.target.value) ?? 'OTHER')} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
+                {ORG_TYPES.map((o) => <option key={o} value={o}>{tType(o)}</option>)}
+              </select>
+            </label>
+          </>
+        )}
         <TextField label={<span className="inline-flex items-center gap-2">{t('contactEmail')} <Tip label={t('contactEmailTipLabel')}>{t('contactEmailTip')}</Tip></span>} type="email" value={contactEmail} maxLength={254} onChange={(e) => setContactEmail(e.target.value)} />
       </Card>
       <SelfChecks choices={choices} notes={notes} onChoice={(c, v) => setChoices({ ...choices, [c]: v })} onNote={(c, v) => setNotes({ ...notes, [c]: v })} />
@@ -306,54 +348,57 @@ function OrganizationForm({ person }: { person: MePerson }) {
   )
 }
 
-function Join() {
+function JoinBody({ me }: { me: Extract<MeResponse, { onboarded: true }> }) {
   const t = useTranslations('support.join')
   const router = useRouter()
-  const [tab, setTab] = useState<'individual' | 'organization'>('individual')
+  const candidates = me.faces.organizations.filter((o) => o.canApplySupporter)
+  // 開いたときに、相談のための団体で申し込める人には団体を、ほかの人には個人を先に出す。
+  // 最初の 1 回だけ決める(申し込んで読み直すと申し込める団体がなくなり、受け付けた表示ごと個人に切り替わってしまう)
+  const [tab, setTab] = useState<'individual' | 'organization'>(() => (candidates.length > 0 ? 'organization' : 'individual'))
   const [registered, setRegistered] = useState(false)
   const { refresh } = useSession()
   return (
-    <RequireMe>
-      {(me) => (
-        <AppFrame tone="support">
-          <div className="flex items-start justify-between gap-3">
-            <Heading level={2}>{t('title')}</Heading>
-            <Tip label={t('tipLabel')}>{t('tip')}</Tip>
-          </div>
-          {!canSupportAtAge(me.person.age) ? (
-            <Card tone="support" className="flex flex-col gap-2 p-4">
-              <span className="text-t15 font-bold">{t('underAgeTitle')}</span>
-              <Lead>{t('underAgeBody')}</Lead>
-              <Link href="/me" className="text-t13_5 font-bold text-night">{t('underAgeFix')}</Link>
-            </Card>
-          ) : (
-            <>
-            <div role="tablist" className="grid grid-cols-2 rounded-tool bg-steel p-1">
-              {(['individual', 'organization'] as const).map((k) => (
-                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-tool text-t14 font-bold', tab === k ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft')}>
-                  {t(`tab.${k}`)}
-                </button>
-              ))}
+    <AppFrame tone="support">
+      <div className="flex items-start justify-between gap-3">
+        <Heading level={2}>{t('title')}</Heading>
+        <Tip label={t('tipLabel')}>{t('tip')}</Tip>
+      </div>
+      {!canSupportAtAge(me.person.age) ? (
+        <Card tone="support" className="flex flex-col gap-2 p-4">
+          <span className="text-t15 font-bold">{t('underAgeTitle')}</span>
+          <Lead>{t('underAgeBody')}</Lead>
+          <Link href="/me" className="text-t13_5 font-bold text-night">{t('underAgeFix')}</Link>
+        </Card>
+      ) : (
+        <>
+        <div role="tablist" className="grid grid-cols-2 rounded-tool bg-steel p-1">
+          {(['individual', 'organization'] as const).map((k) => (
+            <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx('min-h-[44px] rounded-tool text-t14 font-bold', tab === k ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft')}>
+              {t(`tab.${k}`)}
+            </button>
+          ))}
+        </div>
+        {tab === 'individual' ? (
+          me.faces.individual || registered ? (
+            <div className="flex flex-col gap-3">
+              <Card tone="support" className="p-4"><Lead>{t('individualRegistered')}</Lead></Card>
+              {!me.faces.individual?.phoneVerified && <PhoneVerify />}
+              <Button tone="support" variant="night" onClick={() => router.push('/support')}>{t('toSupportHome')}</Button>
             </div>
-            {tab === 'individual' ? (
-              me.faces.individual || registered ? (
-                <div className="flex flex-col gap-3">
-                  <Card tone="support" className="p-4"><Lead>{t('individualRegistered')}</Lead></Card>
-                  {!me.faces.individual?.phoneVerified && <PhoneVerify />}
-                  <Button tone="support" variant="night" onClick={() => router.push('/support')}>{t('toSupportHome')}</Button>
-                </div>
-              ) : (
-                <IndividualForm person={me.person} onDone={() => { setRegistered(true); void refresh() }} />
-              )
-            ) : (
-              <OrganizationForm person={me.person} />
-            )}
-            </>
-          )}
-        </AppFrame>
+          ) : (
+            <IndividualForm person={me.person} onDone={() => { setRegistered(true); void refresh() }} />
+          )
+        ) : (
+          <OrganizationForm person={me.person} candidates={candidates} />
+        )}
+        </>
       )}
-    </RequireMe>
+    </AppFrame>
   )
+}
+
+function Join() {
+  return <RequireMe>{(me) => <JoinBody me={me} />}</RequireMe>
 }
 
 export default function JoinPage() {

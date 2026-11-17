@@ -4,6 +4,8 @@ import 'server-only'
 // 相談する顔は全員が持つ。運営(ADMIN)は支える顔も相談する顔も持たない。
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { canSupportAtAge, currentAge, todayInTokyo } from '@/lib/domain/age'
+import { isSupporterPurpose } from '@/lib/domain/publicSupporter'
+import { canApplyAsSupporter } from '@/lib/domain/orgVetting'
 
 export type OrganizationFace = {
   kind: 'ORGANIZATION'
@@ -14,6 +16,10 @@ export type OrganizationFace = {
   role: 'OWNER' | 'MEMBER'
   membershipId: string
   isCoordinator: boolean
+  // 支え手の団体か(#131)。相談のための団体(false)は、会社・地域として相談するときだけ使い、支える側の顔にしない
+  supporter: boolean
+  // この団体で支え手の申し込みができるか(相談のための団体の管理の人)
+  canApplySupporter: boolean
 }
 
 export type IndividualFace = {
@@ -32,7 +38,7 @@ type MembershipRow = {
   id: string
   role: string
   organization_id: string
-  organizations: { id: string; name: string; org_type: string; vetting_status: string; status: string } | null
+  organizations: { id: string; name: string; org_type: string; vetting_status: string; status: string; application: unknown } | null
 }
 
 // 今の年齢で支える側として活動できるか。読めないときは止める側に倒す。
@@ -50,7 +56,7 @@ export async function loadFaces(userId: string): Promise<Faces> {
   const [{ data: memberships, error: mErr }, { data: profile, error: pErr }] = await Promise.all([
     supabaseAdmin
       .from('organization_memberships')
-      .select('id, role, organization_id, organizations(id, name, org_type, vetting_status, status)')
+      .select('id, role, organization_id, organizations(id, name, org_type, vetting_status, status, application)')
       .eq('user_id', userId)
       .eq('status', 'ACTIVE'),
     supabaseAdmin
@@ -87,6 +93,8 @@ export async function loadFaces(userId: string): Promise<Faces> {
       role,
       membershipId: m.id,
       isCoordinator: coordinatorOrgIds.has(m.organization_id),
+      supporter: isSupporterPurpose(org.application),
+      canApplySupporter: canApplyAsSupporter({ application: org.application, vettingStatus: org.vetting_status, status: org.status, role }),
     }]
   })
 
