@@ -21,8 +21,6 @@
     "sendFailed": "届けられませんでした。もう一度お試しください。",
     "activeLimit": "開いている相談は3件までです。終わった相談を取り消すか、解決してから届けてください。",
     "dailyLimit": "続けて届けすぎました。少し時間をおいてください。",
-    "shownName": "表示される名前",
-    "wordsTitleOrg": "団体として、どんなことに困っていますか",
     "nextToPick": "次へ:近いものを選ぶ",
     "suggestTitle": "近いものがあれば、選んでください",
     "suggestLead": "書いてくださった内容から、近そうなものを出しました。3つまで選べます。",
@@ -30,15 +28,19 @@
     "suggestNone": "近いものが見つかりませんでした。下から探すこともできます。",
     "browseAll": "ほかの困りごとから探す",
     "noneIsOkSend": "当てはまるものがなければ、選ばずに届けられます。",
-    "backToWords": "書いた内容を直す"
+    "backToWords": "書いた内容を直す",
+    "step1Org": "1 ／ 3 自分の言葉で書く",
+    "step2Org": "2 ／ 3 近いものを選ぶ",
+    "step3Org": "3 ／ 3 届ける団体を選ぶ",
+    "wordsTitleCompany": "会社として、どんなことに困っていますか",
+    "wordsTitleCommunity": "地域として、どんなことに困っていますか",
+    "nextToOrg": "次へ:届ける団体を選ぶ",
+    "backToPick": "選んだものを直す"
   },
   "org": {
-    "titleCompany": "会社として相談する",
-    "titleCommunity": "地域として相談する",
     "leadCompany": "相談は会社のものになり、同じ会社のメンバーにも見えます。会社の中で相談を受け持つメンバーが替わっても続けられます。",
     "leadCommunity": "相談は自治体の課や町内会などのものになり、同じ団体のメンバーにも見えます。異動があっても後任が引き継げます。",
     "which": "どの団体として相談しますか",
-    "registerFirst": "団体を登録する",
     "registerAnother": "ほかの団体を登録する",
     "registerTitle": "団体を登録する",
     "registerTipLabel": "登録のしくみ",
@@ -53,9 +55,11 @@
     "populationHint": "(おおよそ。社会貢献の記録に使います)",
     "corporateNumber": "法人番号(13けた)",
     "optional": "(任意)",
-    "register": "登録する",
     "nameRequired": "名前を入れてください",
-    "registerFailed": "登録できませんでした。もう一度お試しください。"
+    "registerFailed": "登録できませんでした。もう一度お試しください。",
+    "whichCompany": "どの会社として届けますか",
+    "whichCommunity": "どの団体として届けますか",
+    "registerAndSend": "登録して相談を届ける"
   },
   "thread": {
     "label": "やりとり",

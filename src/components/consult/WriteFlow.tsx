@@ -1,14 +1,16 @@
 'use client'
 
-// 相談を書く(盤 12・12b・16)。1 ／ 2 困りごとを選ぶ → 2 ／ 2 自分の言葉で書く → 届ける
-import { useMemo, useRef, useState } from 'react'
+// 相談を書く(盤 12・12b・16)。自分の言葉で書く → 近いものを選ぶ → 届ける。
+// 会社・地域として相談するときは、届ける前に「どの団体として届けるか」を選ぶ(なければその場で登録)段を足す。
+// 団体の登録を先に求めない(何が得られるか分からないうちに登録する人はいない。2026-11-17 岡本さん)
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { detectUrgency } from '@/lib/urgency'
 import { DESCRIPTION_MAX, EXTRA_MAX, optionsFor, type SubjectType } from '@/lib/domain/intake'
 import { CrisisLinks } from '@/components/app/CrisisLinks'
-import { Button, Card, ErrorNote, Heading, Lead, StepBar, TextArea, TextField, Tip } from '@/components/app/ui'
+import { Button, ErrorNote, Heading, Lead, StepBar, TextArea, TextField, Tip } from '@/components/app/ui'
 import { IndicatorPicker, SuggestedOptions } from './IndicatorPicker'
 import { MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
 import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
@@ -25,16 +27,17 @@ export function CrisisNotice({ country }: { country?: string | null }) {
   )
 }
 
+// 届ける団体を選ぶ段(会社・地域の相談だけ)。send に団体を渡すと相談を届け、届けられたら true を返す
+export type OrganizationStep = (args: { send: (organizationId: string) => Promise<boolean>; busy: boolean }) => ReactNode
+
 export function WriteFlow({
   subject,
-  organizationId,
-  organizationName,
+  organizationStep,
   country,
   entryCode,
 }: {
   subject: SubjectType
-  organizationId?: string
-  organizationName?: string
+  organizationStep?: OrganizationStep
   country: string
   entryCode?: string | null
 }) {
@@ -44,7 +47,7 @@ export function WriteFlow({
   const options = useMemo(() => optionsFor(subject), [subject])
   // 先に自分の言葉で書き、そのあとで近いものを選ぶ(画面の見直し 所見 5、11/5 岡本さん「推奨案で」)。
   // 大項目の一覧を最初に見せない(相談者に SDGs を意識させない)。選ぶのは本人で、選ばなくても届けられる
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [selected, setSelected] = useState<string[]>([])
   const [words, setWords] = useState('')
   const [since, setSince] = useState('')
@@ -89,8 +92,8 @@ export function WriteFlow({
     }
   }
 
-  const submit = async () => {
-    if (!ready) return
+  const submit = async (organizationId?: string): Promise<boolean> => {
+    if (!ready) return false
     setBusy(true)
     setError(null)
     try {
@@ -107,27 +110,28 @@ export function WriteFlow({
         },
       })
       router.replace(`/cases/${res.id}?sent=1`)
+      return true
     } catch (e) {
       const code = e instanceof ApiError ? e.code : undefined
       setError(code === 'ACTIVE_LIMIT' ? t('activeLimit') : code === 'DAILY_LIMIT' ? t('dailyLimit') : t('sendFailed'))
       setBusy(false)
+      return false
     }
   }
 
+  const stepLabel = organizationStep
+    ? (step === 1 ? t('step1Org') : step === 2 ? t('step2Org') : t('step3Org'))
+    : (step === 1 ? t('step1') : t('step2'))
+  const wordsTitle = subject === 'COMPANY' ? t('wordsTitleCompany') : subject === 'COMMUNITY' ? t('wordsTitleCommunity') : t('wordsTitle')
+
   return (
     <div className="flex flex-col gap-4">
-      <StepBar label={step === 1 ? t('step1') : t('step2')} step={step} total={2} />
-      {organizationName && (
-        <Card className="flex items-center justify-between gap-2 p-3">
-          <span className="text-t13 text-mist">{t('shownName')}</span>
-          <span className="text-t14 font-bold">{organizationName}</span>
-        </Card>
-      )}
+      <StepBar label={stepLabel} step={step} total={organizationStep ? 3 : 2} />
 
       {step === 1 ? (
         <>
           <div className="flex items-start justify-between gap-3">
-            <Heading level={2}>{subject === 'PERSON' ? t('wordsTitle') : t('wordsTitleOrg')}</Heading>
+            <Heading level={2}>{wordsTitle}</Heading>
             <Tip label={t('wordsTipLabel')}>{t('wordsTip')}</Tip>
           </div>
           <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-t12_5 font-bold text-ink-soft">{t('noPersonalInfo')}</p>
@@ -137,6 +141,12 @@ export function WriteFlow({
           <TextField label={t('since')} hint={t('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
           <TextField label={t('wish')} hint={t('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
           <Button variant="lamp" disabled={!ready} onClick={() => void toPick()}>{ready ? t('nextToPick') : t('sendNeedsWords')}</Button>
+        </>
+      ) : step === 3 && organizationStep ? (
+        <>
+          {organizationStep({ send: submit, busy })}
+          <ErrorNote>{error}</ErrorNote>
+          <button type="button" onClick={() => setStep(2)} className="self-start min-h-[44px] text-t13 text-night underline">{t('backToPick')}</button>
         </>
       ) : (
         <>
@@ -156,7 +166,11 @@ export function WriteFlow({
           )}
           <p className="m-0 text-t12_5 text-mist">{t('noneIsOkSend')}</p>
           <ErrorNote>{error}</ErrorNote>
-          <Button variant="night" disabled={busy} onClick={() => void submit()}>{t('send')}</Button>
+          {organizationStep ? (
+            <Button variant="night" onClick={() => { setError(null); setStep(3) }}>{t('nextToOrg')}</Button>
+          ) : (
+            <Button variant="night" disabled={busy} onClick={() => void submit()}>{t('send')}</Button>
+          )}
           <button type="button" onClick={() => setStep(1)} className="self-start min-h-[44px] text-t13 text-night underline">{t('backToWords')}</button>
         </>
       )}
