@@ -48,3 +48,34 @@ export function RequireMe({ children, admin = false }: { children: (me: ReadyMe)
   if (!me.consentsUpToDate) return <ConsentPanel />
   return <>{children(me)}</>
 }
+
+// ログインしていなくても中身を出す(相談を書く画面。ログインは届けるときに求める。2026-11-17 岡本さん)。
+// ログインしていない・はじめの質問がまだの人には null を渡す。止められた人・運営・同意が古い人の扱いは RequireMe と同じ
+export function OptionalMe({ children }: { children: (me: ReadyMe | null) => ReactNode }) {
+  const { state, signOut } = useSession()
+  const router = useRouter()
+  const t = useTranslations('app.gate')
+  const isAdmin = state.status === 'ready' && state.me.person.role === 'ADMIN'
+  useEffect(() => {
+    // 運営は相談する顔を持たない
+    if (isAdmin) router.replace('/admin')
+  }, [isAdmin, router])
+
+  if (state.status === 'suspended') {
+    return (
+      <Screen>
+        <div className="flex flex-col gap-3 pt-16">
+          <Lead>{t('suspended')}</Lead>
+          <Button variant="outline" onClick={() => void signOut()}>{t('signOut')}</Button>
+        </div>
+      </Screen>
+    )
+  }
+  // セッションが分かるまで中身を出さない(下書きを端末から読むのは、ブラウザで描くときだけにする)
+  if (state.status === 'loading' || isAdmin) return <Screen><Spinner /></Screen>
+  if (state.status === 'ready') {
+    if (!state.me.consentsUpToDate) return <ConsentPanel />
+    return <>{children(state.me)}</>
+  }
+  return <>{children(null)}</>
+}

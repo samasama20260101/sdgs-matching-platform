@@ -1,14 +1,14 @@
 'use client'
 
 // 会社・地域として相談する(盤 16・05b・05c)。先に相談を書き、届けるときにどの団体として届けるかを選ぶ(なければその場で登録する)。
-// 団体の登録を先に求めない(2026-11-17 岡本さん)。相談した団体として団体の名前が出る。担当者の呼び名は出ない
+// 団体の登録もログインも先に求めない(2026-11-17 岡本さん)。ログインは届けるところで求め、戻ってきたら団体を選ぶ段から続ける。相談した団体として団体の名前が出る。担当者の呼び名は出ない
 import { Suspense, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '@/lib/client/api'
 import { canConsultAs, type SubjectType } from '@/lib/domain/intake'
 import { AppFrame } from '@/components/app/AppShell'
-import { RequireMe } from '@/components/app/RequireMe'
+import { OptionalMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, ErrorNote, Heading, Lead, TextField, Tip } from '@/components/app/ui'
 import { WriteFlow } from '@/components/consult/WriteFlow'
@@ -90,16 +90,18 @@ function Inner() {
   const subject: SubjectType = params.get('subject') === 'COMMUNITY' ? 'COMMUNITY' : 'COMPANY'
   const { refresh } = useSession()
   return (
-    <RequireMe>
+    <OptionalMe>
       {(me) => {
-        const candidates = me.faces.organizations.filter((o) => canConsultAs(subject, o.orgType) && !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus))
+        const candidates = me ? me.faces.organizations.filter((o) => canConsultAs(subject, o.orgType) && !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus)) : []
         return (
           <AppFrame tabs={false}>
             <WriteFlow
               subject={subject}
-              country={me.person.country}
+              country={me?.person.country ?? null}
               entryCode={params.get('shop')}
-              organizationStep={({ send, busy }) => (
+              signedIn={me !== null}
+              // 団体を選ぶ段はログインのあとにだけ出る(ログインしていなければ、その手前でログインへ進む)
+              organizationStep={({ send, busy }) => me && (
                 <OrgStep
                   subject={subject}
                   candidates={candidates}
@@ -115,7 +117,7 @@ function Inner() {
           </AppFrame>
         )
       }}
-    </RequireMe>
+    </OptionalMe>
   )
 }
 

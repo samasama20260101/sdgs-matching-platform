@@ -44,8 +44,10 @@ export function AppHeader() {
   const pathname = usePathname()
   const [crisisOpen, setCrisisOpen] = useState(false)
   const country = state.status === 'ready' ? state.me.person.country : null
-  // ログインしたあとの相談する側の画面だけに出す(入口と相談を書く画面には、窓口がもう出ている)
-  const showCrisis = state.status === 'ready' && state.me.person.role !== 'ADMIN' && mode === 'consult'
+  // ログインする前に相談を書いている(相談は先に書き、届けるときにログインする。2026-11-17)
+  const writingBeforeLogin = (state.status === 'anonymous' || state.status === 'needsOnboarding') && pathname.startsWith('/consult')
+  // 相談する側の画面に出す。ログインの前は相談を書く画面だけ(入口の画面には窓口がもう出ている)
+  const showCrisis = (state.status === 'ready' && state.me.person.role !== 'ADMIN' && mode === 'consult') || writingBeforeLogin
   return (
     <>
       <header className="flex h-14 items-center justify-between gap-2">
@@ -59,7 +61,8 @@ export function AppHeader() {
           {state.status === 'anonymous' && (
             <>
               <LanguageSwitcher />
-              {pathname !== '/start' && (
+              {/* 相談を書いている途中は出さない(ここから入ると書いた内容を預けずにホームへ進む。ログインは届けるボタンから) */}
+              {pathname !== '/start' && !writingBeforeLogin && (
                 <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-t13 font-bold text-night no-underline">
                   {t('login')}
                 </Link>

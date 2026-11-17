@@ -35,7 +35,11 @@
     "wordsTitleCompany": "What is your company struggling with?",
     "wordsTitleCommunity": "What is your community struggling with?",
     "nextToOrg": "Next: choose who is asking",
-    "backToPick": "Edit what you picked"
+    "backToPick": "Edit what you picked",
+    "loginToSend": "Log in and send my request",
+    "loginToChooseOrg": "Next: log in and choose who is asking",
+    "loginToSendNote": "Please log in to send your request. We do not ask for your name or phone number. What you wrote is kept, and you can continue after logging in.",
+    "resumedNote": "You are logged in. Check what you wrote and send it."
   },
   "org": {
     "leadCompany": "The request belongs to the company and other members can see it. It continues even if the member handling it changes.",

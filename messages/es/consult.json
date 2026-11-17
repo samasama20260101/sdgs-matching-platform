@@ -35,7 +35,11 @@
     "wordsTitleCompany": "¿Qué dificultades tiene tu empresa?",
     "wordsTitleCommunity": "¿Qué dificultades tiene tu comunidad?",
     "nextToOrg": "Siguiente: elegir quién consulta",
-    "backToPick": "Cambiar lo que elegiste"
+    "backToPick": "Cambiar lo que elegiste",
+    "loginToSend": "Iniciar sesión y enviar mi consulta",
+    "loginToChooseOrg": "Siguiente: iniciar sesión y elegir quién consulta",
+    "loginToSendNote": "Para enviar la consulta, inicia sesión. No te pedimos tu nombre ni tu número de teléfono. Lo que escribiste se conserva y podrás continuar después de iniciar sesión.",
+    "resumedNote": "Has iniciado sesión. Revisa lo que escribiste y envíalo."
   },
   "org": {
     "leadCompany": "La consulta pertenece a la empresa y otros miembros de la empresa pueden verla. Sigue aunque cambie el miembro que la lleva.",
