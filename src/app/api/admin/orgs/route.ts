@@ -12,15 +12,16 @@ export async function GET(request: Request) {
   if ('response' in auth) return auth.response
   const status = new URL(request.url).searchParams.get('status') ?? 'APPLIED'
   if (!STATUSES.includes(status)) return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
-  // 一覧と、審査の段階ごとの件数を並べて読む
+  // 一覧と、審査の段階ごとの件数を並べて読む。消した団体(ARCHIVED)は出さない(運営の画面の件数 /api/admin/counts と同じ)
   const [{ data, error }, ...countResults] = await Promise.all([
     supabaseAdmin
       .from('organizations')
       .select('id, display_id, name, org_type, vetting_status, applied_at, approved_at, application, contact_email, region_country, prefecture, population, created_at')
       .eq('vetting_status', status)
+      .neq('status', 'ARCHIVED')
       .order('created_at', { ascending: false })
       .limit(200),
-    ...STATUSES.map((s) => supabaseAdmin.from('organizations').select('id', { count: 'exact', head: true }).eq('vetting_status', s)),
+    ...STATUSES.map((s) => supabaseAdmin.from('organizations').select('id', { count: 'exact', head: true }).eq('vetting_status', s).neq('status', 'ARCHIVED')),
   ])
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   const counts: Record<string, number> = Object.fromEntries(STATUSES.map((s, i) => [s, countResults[i].count ?? 0]))
