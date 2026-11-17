@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '@/lib/client/api'
 import { canConsultAs, type SubjectType } from '@/lib/domain/intake'
+import { canConsultAsOrganization } from '@/lib/domain/orgVetting'
 import { AppFrame } from '@/components/app/AppShell'
 import { OptionalMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
@@ -92,7 +93,7 @@ function Inner() {
   return (
     <OptionalMe>
       {(me) => {
-        const candidates = me ? me.faces.organizations.filter((o) => canConsultAs(subject, o.orgType) && !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus)) : []
+        const candidates = me ? me.faces.organizations.filter((o) => canConsultAs(subject, o.orgType) && canConsultAsOrganization(o.vettingStatus)) : []
         return (
           <AppFrame tabs={false}>
             <WriteFlow

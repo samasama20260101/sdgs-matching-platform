@@ -1,14 +1,16 @@
 // 運営｜審査: 団体の状態を進める(面談の調整中・承認・見送り・停止)、面談のチェックリスト、コーディネーターの範囲。
-// 審査は2段階に分けない(11/5)。承認すると一覧に載り、機微な相談も受けられる。操作はすべて監査ログに残す
+// 審査は2段階に分けない(11/5)。承認すると一覧に載り、機微な相談も受けられる。操作はすべて監査ログに残す。
+// 相談のための団体は審査がなく、止める・止めるのを解くだけ(#131。変えられる先は src/lib/domain/orgVetting.ts の vettingTargets)
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { isSupporterPurpose } from '@/lib/domain/publicSupporter'
+import { VETTING_STATUSES, vettingTargets } from '@/lib/domain/orgVetting'
 
 const schema = z.object({
-  vettingStatus: z.enum(['APPLIED', 'INTERVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED']).optional(),
+  vettingStatus: z.enum(VETTING_STATUSES).optional(),
   note: z.string().max(2000).optional(),
   checklist: z.record(z.string(), z.union([z.boolean(), z.string().max(500)])).optional(),
   coordinatorRegion: z.string().regex(/^[A-Z]{2}-[0-9A-Z]{1,3}$/).nullable().optional(),
@@ -36,15 +38,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
   const p = parsed.data
+  const { data: current, error: currentError } = await supabaseAdmin.from('organizations').select('org_type, vetting_status, application').eq('id', id).maybeSingle()
+  if (currentError) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const supporter = isSupporterPurpose(current.application)
   const update: Record<string, unknown> = {}
   if (p.vettingStatus) {
+    // 相談のための団体は承認しない(支え手の申し込みをしていない)。支え手の団体は申し込み前に戻さない
+    if (!vettingTargets(current.application).includes(p.vettingStatus)) {
+      return NextResponse.json({ error: supporter ? 'この状態にはできません' : '相談のための団体は、止めるか止めるのを解くだけです', code: 'NOT_ALLOWED' }, { status: 400 })
+    }
     update.vetting_status = p.vettingStatus
     if (p.vettingStatus === 'APPROVED') {
       update.approved_at = new Date().toISOString()
       update.approved_by_user_id = auth.appUser.id
-      // 相談を受け付けるのは、支え手として登録した団体だけ(会社・地域として相談するための団体は受け付けにしない)
-      const { data: current } = await supabaseAdmin.from('organizations').select('application').eq('id', id).maybeSingle()
-      if (isSupporterPurpose(current?.application)) update.reception_status = 'ACCEPTING'
+      update.reception_status = 'ACCEPTING'
     }
   }
   if (p.note !== undefined) update.vetting_note = p.note
@@ -55,9 +63,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   // コーディネーター(市区町村と中間支援団体、11/5)。地域を1つ持たせる/外す
   if (p.coordinatorRegion !== undefined) {
-    const { data: org } = await supabaseAdmin.from('organizations').select('org_type, vetting_status').eq('id', id).single()
-    if (p.coordinatorRegion && (!org || !['MUNICIPALITY', 'INTERMEDIARY'].includes(org.org_type as string) || org.vetting_status !== 'APPROVED')) {
-      return NextResponse.json({ error: 'コーディネーターにできるのは、承認済みの自治体と中間支援団体です', code: 'NOT_ALLOWED' }, { status: 400 })
+    // コーディネーターは支える側の役割なので、支え手の団体だけ(相談のための団体はならない)
+    const status = (update.vetting_status as string | undefined) ?? current.vetting_status
+    if (p.coordinatorRegion && (!supporter || !['MUNICIPALITY', 'INTERMEDIARY'].includes(current.org_type as string) || status !== 'APPROVED')) {
+      return NextResponse.json({ error: 'コーディネーターにできるのは、承認済みの支え手の自治体と中間支援団体です', code: 'NOT_ALLOWED' }, { status: 400 })
     }
     await supabaseAdmin.from('coordinator_scopes').delete().eq('organization_id', id)
     if (p.coordinatorRegion) {

@@ -23,13 +23,15 @@ export function parseFaceParam(value: string | null): FaceKey | null {
 export { requireMfaForSensitive } from './mfaPolicy'
 import { requireMfaForSensitive } from './mfaPolicy'
 import { effectiveServiceAreas, type ServiceAreaRow } from '@/lib/domain/serviceAreas'
+import { isSupporterPurpose } from '@/lib/domain/publicSupporter'
 
 export type ResolvedFace = { face: SupporterFace; key: FaceKey; label: string; phoneVerified: boolean; regionCodes: string[]; country: string; nationwide: boolean; coordinatorRegions: string[] }
 
 // 顔を確かめる(その団体に今いるか・個人の支え手として登録しているか)。活動地域も一緒に読む。
 // 支える側の API は毎回ここを通るので、その顔の分だけを 1 回の往復(並べた問い合わせ)で読む(性能のレビュー 11/5)。
-// 決まりは loadFaces と同じ: 所属は ACTIVE、団体は ARCHIVED でない、コーディネーターは承認済みの団体だけ
-type FaceMembershipRow = { organizations: { name: string; vetting_status: string; status: string; region_country: string | null; prefecture: string | null } | null }
+// 決まりは loadFaces と同じ: 所属は ACTIVE、団体は ARCHIVED でない、コーディネーターは承認済みの団体だけ。
+// 相談のための団体は支える側の顔にならない(#131。src/lib/domain/orgVetting.ts)
+type FaceMembershipRow = { organizations: { name: string; vetting_status: string; status: string; region_country: string | null; prefecture: string | null; application: unknown } | null }
 
 export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'aal2'): Promise<ResolvedFace | null> {
   if (key.kind === 'INDIVIDUAL') {
@@ -54,7 +56,7 @@ export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'a
   const [membership, areas, scopes] = await Promise.all([
     supabaseAdmin
       .from('organization_memberships')
-      .select('organizations(name, vetting_status, status, region_country, prefecture)')
+      .select('organizations(name, vetting_status, status, region_country, prefecture, application)')
       .eq('user_id', userId)
       .eq('organization_id', key.organizationId)
       .eq('status', 'ACTIVE')
@@ -66,7 +68,7 @@ export async function resolveFace(userId: string, key: FaceKey, aal: 'aal1' | 'a
   const failed = membership.error ?? areas.error ?? scopes.error
   if (failed) throw failed
   const org = (membership.data as FaceMembershipRow | null)?.organizations
-  if (!org || org.status === 'ARCHIVED') return null
+  if (!org || org.status === 'ARCHIVED' || !isSupporterPurpose(org.application)) return null
   const approved = org.vetting_status === 'APPROVED'
   // 活動地域の決まりは公開の団体ページと同じ(登録した地域だけ。なければ申し込みのときの都道府県)
   const served = effectiveServiceAreas((areas.data ?? []) as ServiceAreaRow[], org.prefecture)

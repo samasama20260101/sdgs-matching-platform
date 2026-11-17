@@ -88,8 +88,8 @@ export async function GET(request: Request) {
       },
       consentsUpToDate: consentsOk,
       faces: {
-        organizations: faces.organizations.map(({ organizationId, organizationName, orgType, vettingStatus, role: r, isCoordinator }) => ({
-          organizationId, organizationName, orgType, vettingStatus, role: r, isCoordinator,
+        organizations: faces.organizations.map(({ organizationId, organizationName, orgType, vettingStatus, role: r, isCoordinator, supporter, canApplySupporter }) => ({
+          organizationId, organizationName, orgType, vettingStatus, role: r, isCoordinator, supporter, canApplySupporter,
         })),
         individual: faces.individual
           ? { realName: faces.individual.realName, phoneVerified: faces.individual.phoneVerified, status: faces.individual.status }

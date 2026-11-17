@@ -1,6 +1,7 @@
 'use client'
 
-// 運営｜審査。申し込み → 面談の調整中 → 承認(2段階に分けない、11/5)。面談のチェックリストは運営が決める項目を書き込む
+// 運営｜審査。申し込み → 面談の調整中 → 承認(2段階に分けない、11/5)。面談のチェックリストは運営が決める項目を書き込む。
+// 会社・地域として相談するために登録した団体は審査に並べず「相談のための団体」に分ける(#131)。止める・止めるのを解くだけ
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
@@ -8,8 +9,9 @@ import { useLoad } from '@/lib/client/useLoad'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { Button, Card, Chip, cx, ErrorNote, Lead, TextArea, TextField } from '@/components/app/ui'
 import { SUPPORTER_CHECKS, choiceKey, isSelfCheck, noteKey, parseCheckKey } from '@/lib/domain/supporterChecks'
+import { isSupporterPurpose } from '@/lib/domain/publicSupporter'
 
-const STATUSES = [['APPLIED', '申し込み'], ['INTERVIEW', '面談の調整中'], ['APPROVED', '承認済み'], ['REJECTED', '見送り'], ['SUSPENDED', '停止']] as const
+const STATUSES = [['APPLIED', '申し込み'], ['INTERVIEW', '面談の調整中'], ['APPROVED', '承認済み'], ['REJECTED', '見送り'], ['SUSPENDED', '停止'], ['NOT_APPLIED', '相談のための団体']] as const
 // 11/12 より前の申し込みにあった項目(今の申し込みの画面にはない)
 const LEGACY_LABELS: Record<string, string> = { activities: 'どんな活動をしていますか(前の項目)', targets: '支えられる困りごと・相手(前の項目)' }
 
@@ -51,7 +53,8 @@ function OrgCard({ org, onChanged, focused }: { org: Org; onChanged: () => Promi
   }
   const t = useTranslations('support.join')
   const appLabel = (k: string) => LEGACY_LABELS[k] ?? (t.has(`application.${k}`) ? t(`application.${k}`) : k)
-  const purpose = org.application?.purpose === 'CONSULT' ? '相談のための登録' : '支え手の申し込み'
+  const supporter = isSupporterPurpose(org.application)
+  const purpose = supporter ? '支え手の申し込み' : '相談のための団体'
   return (
     <div id={org.display_id} className="scroll-mt-4">
       <Card tone="support" className={cx('flex flex-col gap-2 p-4', focused && 'ring-2 ring-night')}>
@@ -67,13 +70,24 @@ function OrgCard({ org, onChanged, focused }: { org: Org; onChanged: () => Promi
         </dl>
         <SelfCheckAnswers application={org.application ?? {}} />
         <TextArea label="面談のメモ・チェックリスト(運営が決める項目)" value={note} rows={3} onChange={(e) => setNote(e.target.value)} />
-        <div className="flex flex-wrap gap-2">
-          {org.vetting_status === 'APPLIED' && <Button tone="support" variant="outline" onClick={() => void set({ vettingStatus: 'INTERVIEW', note })}>面談の調整中にする</Button>}
-          {org.vetting_status !== 'APPROVED' && <Button tone="support" variant="night" onClick={() => void set({ vettingStatus: 'APPROVED', note })}>承認する(一覧に載る)</Button>}
-          {org.vetting_status !== 'REJECTED' && org.vetting_status !== 'APPROVED' && <Button tone="support" variant="danger" onClick={() => void set({ vettingStatus: 'REJECTED', note })}>見送る</Button>}
-          {org.vetting_status === 'APPROVED' && <Button tone="support" variant="danger" onClick={() => void set({ vettingStatus: 'SUSPENDED', note })}>停止する</Button>}
-        </div>
-        {org.vetting_status === 'APPROVED' && ['MUNICIPALITY', 'INTERMEDIARY'].includes(org.org_type) && (
+        {supporter ? (
+          <div className="flex flex-wrap gap-2">
+            {org.vetting_status === 'APPLIED' && <Button tone="support" variant="outline" onClick={() => void set({ vettingStatus: 'INTERVIEW', note })}>面談の調整中にする</Button>}
+            {org.vetting_status !== 'APPROVED' && <Button tone="support" variant="night" onClick={() => void set({ vettingStatus: 'APPROVED', note })}>承認する(一覧に載る)</Button>}
+            {org.vetting_status !== 'REJECTED' && org.vetting_status !== 'APPROVED' && <Button tone="support" variant="danger" onClick={() => void set({ vettingStatus: 'REJECTED', note })}>見送る</Button>}
+            {org.vetting_status === 'APPROVED' && <Button tone="support" variant="danger" onClick={() => void set({ vettingStatus: 'SUSPENDED', note })}>停止する</Button>}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <span className="text-t12_5 text-mist">相談のための団体は審査しません。支える側に立つには、この団体の管理の人が支え手の申し込みをします。止めると、この団体として相談できなくなります。</span>
+            <div className="flex flex-wrap gap-2">
+              {org.vetting_status === 'SUSPENDED'
+                ? <Button tone="support" variant="outline" onClick={() => void set({ vettingStatus: 'NOT_APPLIED', note })}>止めるのを解く</Button>
+                : <Button tone="support" variant="danger" onClick={() => void set({ vettingStatus: 'SUSPENDED', note })}>停止する</Button>}
+            </div>
+          </div>
+        )}
+        {supporter && org.vetting_status === 'APPROVED' && ['MUNICIPALITY', 'INTERMEDIARY'].includes(org.org_type) && (
           <div className="flex items-end gap-2">
             <TextField label="コーディネーターにする地域(例 JP-43)" value={region} onChange={(e) => setRegion(e.target.value.toUpperCase())} className="flex-1" />
             <Button tone="support" variant="outline" onClick={() => void set({ coordinatorRegion: region || null })}>{region ? '設定する' : '外す'}</Button>
@@ -107,7 +121,7 @@ export default function VettingPage() {
   const { data, reload } = useLoad(fetchOrgs)
   return (
     <AdminShell title="審査">
-      <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。</Lead>
+      <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。会社・地域として相談するために登録した団体は審査に並ばず、「相談のための団体」に入ります。</Lead>
       <div className="flex flex-wrap gap-1.5">
         {STATUSES.map(([k, label]) => (
           <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-t12_5 font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>

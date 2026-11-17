@@ -1,5 +1,6 @@
 // 団体を登録する(v2.0)。会社・地域として相談するための登録と、支え手の団体の申し込みの入口を兼ねる。
-// どちらも「申し込み」(APPLIED)から始まり、支え手として一覧に載るのは運営の面談のあと(11/5 の審査の流れ)。
+// 支え手の団体は「申し込み」(APPLIED)から始まり、一覧に載るのは運営の面談のあと(11/5 の審査の流れ)。
+// 相談のための団体は審査に並べない(NOT_APPLIED、#131。src/lib/domain/orgVetting.ts)。
 // 登録した人がその団体の管理者(OWNER)になる
 import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
@@ -11,6 +12,7 @@ import { notifyOps } from '@/lib/server/opsNotify'
 import { canSupportNow } from '@/lib/faces'
 import { underSupporterAgeResponse } from '@/lib/server/supportAuth'
 import { missingChecks } from '@/lib/domain/supporterChecks'
+import { initialVettingStatus, newApplication } from '@/lib/domain/orgVetting'
 
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'NATIONAL_AGENCY', 'OTHER_PUBLIC', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER'] as const
 
@@ -55,14 +57,14 @@ export async function POST(request: Request) {
     .insert({
       name: input.name,
       org_type: input.orgType,
-      vetting_status: 'APPLIED',
-      applied_at: now,
+      vetting_status: initialVettingStatus(input.purpose),
+      applied_at: input.purpose === 'SUPPORT' ? now : null,
       region_country: input.country,
       prefecture: input.regionCode ?? null,
       population: input.population ?? null,
       corporate_number: input.corporateNumber ?? null,
       contact_email: input.contactEmail ?? null,
-      application: { purpose: input.purpose, ...(input.application ?? {}) },
+      application: newApplication(input.purpose, input.application),
       reception_status: input.purpose === 'SUPPORT' ? 'ACCEPTING' : 'UNAVAILABLE',
       status: 'ACTIVE',
       display_id: '',

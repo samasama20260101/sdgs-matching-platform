@@ -7,6 +7,7 @@ import { useReadyMe } from '@/components/app/SessionProvider'
 import { cx } from '@/components/app/ui'
 import { useStoredValue } from '@/lib/client/storedValue'
 import { canSupportAtAge } from '@/lib/domain/age'
+import { isSupporterFace } from '@/lib/domain/orgVetting'
 
 export type FaceOption = { key: string; label: string; kind: 'ORGANIZATION' | 'INDIVIDUAL'; approved: boolean; role?: 'OWNER' | 'MEMBER'; organizationId?: string; coordinator?: boolean }
 
@@ -17,8 +18,9 @@ export function useFace() {
   const options = useMemo<FaceOption[]>(() => {
     // 18歳未満の人には立場を出さない(相談する側の団体は me.faces にそのまま残る)
     if (!me || !canSupportAtAge(me.person.age)) return []
+    // 相談のための団体は支える側の顔にしない(#131)
     const orgs = me.faces.organizations
-      .filter((o) => !['REJECTED', 'SUSPENDED'].includes(o.vettingStatus))
+      .filter(isSupporterFace)
       .map((o) => ({ key: `org:${o.organizationId}`, label: o.organizationName, kind: 'ORGANIZATION' as const, approved: o.vettingStatus === 'APPROVED', role: o.role, organizationId: o.organizationId, coordinator: o.isCoordinator }))
     const ind = me.faces.individual ? [{ key: 'individual', label: me.faces.individual.realName, kind: 'INDIVIDUAL' as const, approved: me.faces.individual.status === 'ACTIVE' }] : []
     return [...orgs, ...ind]

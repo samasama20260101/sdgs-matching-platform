@@ -250,7 +250,12 @@
         "note": "No es necesario haber superado ya esas barreras.",
         "prompt": "Contadnos qué barreras notáis en vuestra actividad y qué apoyo os gustaría dar si desaparecieran. (opcional)"
       }
-    }
+    },
+    "orgChoiceTitle": "¿Con qué organización haces la solicitud?",
+    "orgChoiceTipLabel": "Organizaciones registradas para consultar",
+    "orgChoiceTip": "Una organización que registraste para consultar como empresa o comunidad también puede solicitarlo aquí. Si se aprueba tras la entrevista con el equipo de samasama, podrá ofrecer apoyo y aparecerá en la lista de organizaciones.",
+    "orgChoiceExisting": "Solicitar como {name}",
+    "orgChoiceNew": "Registrar una organización nueva y solicitar"
   },
   "orgType": {
     "NPO": "Entidad sin ánimo de lucro",
@@ -266,6 +271,7 @@
     "OTHER": "Otro"
   },
   "vetting": {
+    "NOT_APPLIED": "Sin solicitud de apoyo",
     "APPLIED": "Solicitada",
     "INTERVIEW": "Fijando entrevista",
     "APPROVED": "Entrevistada por samasama",

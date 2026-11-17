@@ -29,6 +29,11 @@ export function isSupporterPurpose(application: unknown): boolean {
   return (application as { purpose?: unknown }).purpose !== 'CONSULT'
 }
 
+// 公開の団体一覧に載り、共同支援に招ける団体か。運営が承認した・止めていない・支え手の団体だけ(#131。一覧と招く API で同じ決まりを使う)
+export function isListedSupporter(org: { application: unknown; vetting_status: string; status: string }): boolean {
+  return org.status === 'ACTIVE' && org.vetting_status === 'APPROVED' && isSupporterPurpose(org.application)
+}
+
 // 団体が登録した SNS などのリンク。http(s) の URL か、X・Instagram はアカウント名(@ 付きでもよい)だけを受ける。
 // javascript: などを href に入れないため、組み立てに失敗したものは出さない。LINE の ID はリンクにせず文字で出す
 export type PublicSocialLink = { kind: 'website' | 'x' | 'instagram' | 'facebook' | 'line'; href: string | null; label: string }

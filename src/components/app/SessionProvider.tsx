@@ -110,7 +110,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const canSupport = state.status === 'ready'
     && state.me.person.role === 'PERSON'
     && canSupportAtAge(state.me.person.age)
-    && (state.me.faces.organizations.length > 0 || state.me.faces.individual !== null)
+    // 相談のための団体だけの人は、支える側に切り替えない(#131)
+    && (state.me.faces.organizations.some((o) => o.supporter) || state.me.faces.individual !== null)
 
   const setMode = useCallback((next: Mode) => storeMode(next), [storeMode])
 
