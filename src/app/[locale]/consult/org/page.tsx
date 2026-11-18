@@ -1,7 +1,8 @@
 'use client'
 
-// 会社・地域として相談する(盤 16・05b・05c)。先に相談を書き、届けるときにどの団体として届けるかを選ぶ(なければその場で登録する)。
-// 団体の登録もログインも先に求めない(2026-11-17 岡本さん)。ログインは届けるところで求め、戻ってきたら団体を選ぶ段から続ける。相談した団体として団体の名前が出る。担当者の呼び名は出ない
+// 会社・地域として相談する(盤 16・05b・05c)。先に相談を書き、届けるときにどの会社・地域として届けるかを選ぶ(なければその場で登録する)。
+// 登録したもの(相談者の会社・地域。DB では application.purpose = CONSULT の organizations)は支援団体ではない(#131・#135)。画面では「団体」と書かない。
+// 登録もログインも先に求めない(2026-11-17 岡本さん)。ログインは届けるところで求め、戻ってきたら選ぶ段から続ける。相談者として会社・地域の名前が出る。担当者の呼び名は出ない
 import { Suspense, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
@@ -56,7 +57,7 @@ function RegisterOrg({ subject, country, regionCode, sending, onDone }: { subjec
   return (
     <Card className="flex flex-col gap-4 p-4">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-t15 font-bold">{t('registerTitle')}</span>
+        <span className="text-t15 font-bold">{subject === 'COMPANY' ? t('registerTitleCompany') : t('registerTitleCommunity')}</span>
         <Tip label={t('registerTipLabel')}>{t('registerTip')}</Tip>
       </div>
       <TextField label={subject === 'COMPANY' ? t('companyName') : t('communityName')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
@@ -101,7 +102,7 @@ function Inner() {
               country={me?.person.country ?? null}
               entryCode={params.get('shop')}
               signedIn={me !== null}
-              // 団体を選ぶ段はログインのあとにだけ出る(ログインしていなければ、その手前でログインへ進む)
+              // 会社・地域を選ぶ段はログインのあとにだけ出る(ログインしていなければ、その手前でログインへ進む)
               organizationStep={({ send, busy }) => me && (
                 <OrgStep
                   subject={subject}
@@ -122,7 +123,7 @@ function Inner() {
   )
 }
 
-// 届ける団体を選ぶ。所属している団体があれば選んで届け、なければ登録してそのまま届ける
+// 届ける会社・地域を選ぶ。所属しているものがあれば選んで届け、なければ登録してそのまま届ける
 function OrgStep({ subject, candidates, send, busy, renderRegister, refresh }: {
   subject: SubjectType
   candidates: MeOrganizationFace[]
@@ -139,7 +140,7 @@ function OrgStep({ subject, candidates, send, busy, renderRegister, refresh }: {
   const onRegistered = async (organizationId: string) => {
     const sent = await send(organizationId)
     if (sent) return
-    // 届けられなかったとき(上限など)は、登録した団体を一覧に出して選んだ状態にしておく
+    // 届けられなかったとき(上限など)は、登録したものを一覧に出して選んだ状態にしておく
     await refresh()
     setPicked(organizationId)
     setRegistering(false)
@@ -171,7 +172,7 @@ function OrgStep({ subject, candidates, send, busy, renderRegister, refresh }: {
       {registering ? renderRegister(onRegistered) : (
         <>
           <Button variant="night" disabled={busy || !picked} onClick={() => { if (picked) void send(picked) }}>{tWrite('send')}</Button>
-          <Button variant="outline" onClick={() => setRegistering(true)}>{t('registerAnother')}</Button>
+          <Button variant="outline" onClick={() => setRegistering(true)}>{subject === 'COMPANY' ? t('registerAnotherCompany') : t('registerAnotherCommunity')}</Button>
         </>
       )}
     </div>

@@ -69,7 +69,7 @@ function PreviewLinkCard({ url, previews }: { url: string; previews: PreviewMap 
     }
     return (
         <div className="rounded-tool border border-dashed border-line-strong bg-steel-faint px-4 py-3">
-            <p className="text-xs text-mist">{state === 'error' ? (supporterIdFromUrl(url) ? 'サイト内の団体が見つかりませんでした(公開ページでは何も出ません)' : 'リンク先のカードを取得できませんでした(公開ページではドメインだけのカードになります)') : 'リンク先のカードを読み込んでいます…'}</p>
+            <p className="text-xs text-mist">{state === 'error' ? (supporterIdFromUrl(url) ? 'サイト内の支援団体が見つかりませんでした(公開ページでは何も出ません)' : 'リンク先のカードを取得できませんでした(公開ページではドメインだけのカードになります)') : 'リンク先のカードを読み込んでいます…'}</p>
             <p className="mt-1 text-sm font-medium text-ink-soft break-all">{hostnameOf(url)}</p>
         </div>
     )
@@ -927,7 +927,7 @@ export default function AdminNewsPage() {
                                     {/* サイト内の団体(参加団体のみ) */}
                                     {isSupporterJoined && (
                                         <div>
-                                            <label className="block text-sm font-medium text-ink-soft mb-1">サイト内の団体 <span className="text-xs font-normal text-mist">(選ぶと、本文の下に団体のタイルと「この団体のページを見る」ボタンが出ます)</span></label>
+                                            <label className="block text-sm font-medium text-ink-soft mb-1">サイト内の支援団体 <span className="text-xs font-normal text-mist">(選ぶと、本文の下に支援団体のタイルと「この支援団体のページを見る」ボタンが出ます)</span></label>
                                             <select
                                                 value={linkedSupporterId}
                                                 onChange={(e) => setLinkedSupporter(e.target.value)}
@@ -936,10 +936,10 @@ export default function AdminNewsPage() {
                                                 <option value="">{supporterOptions === null ? '読み込んでいます…' : '選ばない'}</option>
                                                 {(supporterOptions ?? []).map((sp) => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
                                                 {linkedSupporterId && supporterOptions && !supporterOptions.some((sp) => sp.id === linkedSupporterId) && (
-                                                    <option value={linkedSupporterId}>(公開されていない団体)</option>
+                                                    <option value={linkedSupporterId}>(公開されていない支援団体)</option>
                                                 )}
                                             </select>
-                                            <p className="mt-1 text-xs text-mist">本文の最後に団体ページのアドレスが 1 行入ります(消すと外れます)。団体サイトのカードは、下の外部リンクで出ます</p>
+                                            <p className="mt-1 text-xs text-mist">本文の最後に支援団体のページのアドレスが 1 行入ります(消すと外れます)。団体サイトのカードは、下の外部リンクで出ます</p>
                                         </div>
                                     )}
 
@@ -969,7 +969,7 @@ export default function AdminNewsPage() {
                                     </div>
 
                                     {isSupporterJoined && (
-                                        <p className="rounded-tool bg-dawn-soft px-3 py-2 text-xs text-dawn-ink">参加団体の記事は、下書き保存して、本文を団体に送って OK をもらってから公開してください</p>
+                                        <p className="rounded-tool bg-dawn-soft px-3 py-2 text-xs text-dawn-ink">参加した支援団体の記事は、下書き保存して、本文を支援団体に送って OK をもらってから公開してください</p>
                                     )}
                                 </>
                             )}

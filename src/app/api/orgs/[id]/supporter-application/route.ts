@@ -46,7 +46,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!canApplyAsSupporter({ application: org.application, vettingStatus: org.vetting_status as string, status: org.status as string, role })) {
-    return NextResponse.json({ error: 'この団体ではいま申し込めません', code: 'NOT_APPLICABLE' }, { status: 409 })
+    return NextResponse.json({ error: 'いまは支援団体として申し込めません', code: 'NOT_APPLICABLE' }, { status: 409 })
   }
 
   // 同意を先に残す(同じ版は 1 行だけ。申し込みの書き換えに失敗しても害はない)
@@ -78,7 +78,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.error('[api/orgs/[id]/supporter-application] update', error)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
-  if (!updated) return NextResponse.json({ error: 'この団体ではいま申し込めません', code: 'NOT_APPLICABLE' }, { status: 409 })
+  if (!updated) return NextResponse.json({ error: 'いまは支援団体として申し込めません', code: 'NOT_APPLICABLE' }, { status: 409 })
 
   await supabaseAdmin.from('audit_logs').insert({
     actor_user_id: auth.appUser.id,

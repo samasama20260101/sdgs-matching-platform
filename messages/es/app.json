@@ -42,7 +42,7 @@
       },
       "whoSees": {
         "title": "Quién ve qué",
-        "body": "Quienes apoyan solo ven tu apodo, tu zona y lo que escribiste. Las consultas sobre la vida, la violencia y las de menores de 18 años solo llegan a organizaciones que hemos entrevistado."
+        "body": "Quienes apoyan solo ven tu apodo, tu zona y lo que escribiste. Las consultas sobre la vida, la violencia y las de menores de 18 años solo llegan a organizaciones de apoyo que hemos entrevistado."
       },
       "onlyChosen": {
         "title": "Solo a quien tú elijas",
@@ -136,7 +136,7 @@
     "communityNote": "Como gobierno local o asociación de vecinos",
     "besides": "Además de consultar",
     "becomeSupporter": "Apoyar",
-    "becomeSupporterNote": "Como persona u organización",
+    "becomeSupporterNote": "Como persona o como organización de apoyo",
     "learn": "Conocer los problemas sociales",
     "learnNote": "Noticias y temas",
     "trial": "Probar el formulario sin entrar"
@@ -144,7 +144,7 @@
   "footer": {
     "news": "Noticias",
     "story": "Nuestra historia",
-    "supporters": "Quienes apoyan",
+    "supporters": "Organizaciones de apoyo",
     "contact": "Contacto",
     "terms": "Condiciones de uso",
     "privacy": "Política de privacidad",
@@ -200,7 +200,7 @@
     "withdrawTip": "Las consultas abiertas o en curso se cancelarán. Si apoyaste a otras personas, también se borrarán todos tus registros de contribución.",
     "withdrawConfirm": "No se puede deshacer. ¿Seguro que quieres darte de baja?",
     "withdrawYes": "Darme de baja",
-    "withdrawLastOwner": "Eres la persona responsable de una organización. Nombra a otra persona antes de darte de baja.",
+    "withdrawLastOwner": "Eres responsable de una organización de apoyo o de una empresa o comunidad que consulta. Nombra a otra persona responsable antes de darte de baja.",
     "withdrawFailed": "No pudimos darte de baja. Escríbenos desde el formulario de contacto.",
     "loginMethods": "Formas de entrar",
     "loginMethodsTipLabel": "Si no puedes entrar",
@@ -232,7 +232,7 @@
     "choose": "Elige",
     "categories": {
       "aboutService": "Sobre el servicio",
-      "joinAsSupporter": "Participar como organización",
+      "joinAsSupporter": "Participar como organización de apoyo",
       "media": "Prensa y medios",
       "other": "Otro",
       "howto": "Cómo usar la app",
@@ -264,7 +264,7 @@
     "codeInvalid": "Introduce el código de 6 dígitos",
     "codeWrong": "Código incorrecto. Introduce el código actual de tu app",
     "done": "Segunda verificación completada",
-    "card": "Segunda verificación (miembros de organizaciones)",
+    "card": "Segunda verificación (miembros de organizaciones de apoyo)",
     "cardNote": "Necesaria para leer consultas delicadas"
   },
   "talkRow": {
@@ -276,26 +276,26 @@
     "resolved": "Resuelta"
   },
   "supporters": {
-    "title": "Quienes apoyan y organizaciones",
-    "lead": "Son organizaciones que nuestro equipo entrevistó y aprobó. Cuando escribes una consulta, las organizaciones que encajan te envían ofrecimientos.",
+    "title": "Organizaciones de apoyo",
+    "lead": "Son organizaciones de apoyo que nuestro equipo entrevistó y aprobó. Cuando escribes una consulta, las organizaciones de apoyo que encajan te envían ofrecimientos.",
     "count": "{count} organizaciones",
     "regionFirst": "Mostramos primero {count} organizaciones que actúan en tu zona",
     "regionChip": "Tu zona",
     "filterLabel": "Tipo de organización",
     "filterAll": "Todas",
-    "empty": "Todavía no hay organizaciones de este tipo",
-    "emptyAll": "Todavía no hay organizaciones",
+    "empty": "Todavía no hay organizaciones de apoyo de este tipo",
+    "emptyAll": "Todavía no hay organizaciones de apoyo",
     "nationwide": "Todo el país",
     "othersSuffix": "y {count} más",
     "resolved": "{count} resueltas",
     "thanks": "{count} agradecimientos",
     "showMore": "Ver más ({count})",
     "joinTitle": "¿Quieres apoyar?",
-    "joinBody": "Las organizaciones pueden leer las consultas después de solicitarlo, tener una entrevista con nuestro equipo y ser aprobadas. Las personas también pueden apoyar consultas de empresas y comunidades.",
+    "joinBody": "Las organizaciones de apoyo pueden leer las consultas después de solicitarlo, tener una entrevista con nuestro equipo y ser aprobadas. Las personas también pueden apoyar consultas de empresas y comunidades.",
     "joinCta": "Registrarse para apoyar",
     "consultCta": "Escribir una consulta",
     "detail": {
-      "backToList": "Quienes apoyan y organizaciones",
+      "backToList": "Organizaciones de apoyo",
       "since": "Participa desde {date}",
       "statResolved": "Resueltas",
       "statThanks": "Agradecimientos",
@@ -304,16 +304,16 @@
       "bioTitle": "Presentación",
       "areasTitle": "Zonas de actividad",
       "thanksTitle": "Agradecimientos recibidos",
-      "thanksLead": "Palabras elegidas por personas cuyas consultas se resolvieron",
+      "thanksLead": "Palabras elegidas por quienes consultaron y resolvieron su consulta",
       "thanksCount": "{count} veces",
       "website": "Sitio web",
       "line": "LINE: {id}",
-      "ctaTitle": "Si quieres consultar a esta organización",
-      "ctaBody": "Cuando escribes una consulta, las organizaciones que encajan te envían ofrecimientos (no necesariamente esta). Tú eliges con quién hablar.",
-      "notFoundTitle": "No encontramos la página de esta organización",
-      "notFoundLead": "La organización ya no aparece o la URL no es correcta.",
+      "ctaTitle": "Si quieres consultar a esta organización de apoyo",
+      "ctaBody": "Cuando escribes una consulta, las organizaciones de apoyo que encajan te envían ofrecimientos (no necesariamente esta). Tú eliges con quién hablar.",
+      "notFoundTitle": "No encontramos la página de esta organización de apoyo",
+      "notFoundLead": "La organización de apoyo ya no aparece o la URL no es correcta.",
       "ctaConsult": "Escribir una consulta"
     },
-    "loadFailed": "No pudimos cargar la lista. Inténtalo de nuevo más tarde."
+    "loadFailed": "No pudimos cargar la lista de organizaciones de apoyo. Inténtalo de nuevo más tarde."
   }
 }

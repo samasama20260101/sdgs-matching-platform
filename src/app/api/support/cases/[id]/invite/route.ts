@@ -27,12 +27,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const mine = loaded?.mine
   if (!loaded?.caseRow || !mine || mine.status !== 'ACCEPTED' || mine.accepted_order !== 1) return NextResponse.json({ error: '招けるのは中心の支え手です', code: 'NOT_LEAD' }, { status: 403 })
   if (loaded.caseRow.status !== 'MATCHED') return NextResponse.json({ error: 'いまは招けません', code: 'NOT_MATCHED' }, { status: 409 })
-  if (body.data.targetOrganizationId === mine.supporter_organization_id) return NextResponse.json({ error: '自分の団体は招けません', code: 'SELF' }, { status: 400 })
+  if (body.data.targetOrganizationId === mine.supporter_organization_id) return NextResponse.json({ error: '自分の支援団体は招けません', code: 'SELF' }, { status: 400 })
 
   const { count: accepted } = await supabaseAdmin.from('offers').select('id', { count: 'exact', head: true }).eq('case_id', id).eq('status', 'ACCEPTED')
   if ((accepted ?? 0) >= MAX_SUPPORTERS_PER_CASE) return NextResponse.json({ error: '支え手は3者までです', code: 'MAX_REACHED' }, { status: 409 })
   const { data: target } = await supabaseAdmin.from('organizations').select('id, vetting_status, status, application').eq('id', body.data.targetOrganizationId).maybeSingle()
-  if (!target || !isListedSupporter(target)) return NextResponse.json({ error: '招けない団体です', code: 'NOT_APPROVED' }, { status: 400 })
+  if (!target || !isListedSupporter(target)) return NextResponse.json({ error: '招けない支援団体です', code: 'NOT_APPROVED' }, { status: 400 })
 
   const { data, error } = await supabaseAdmin.from('offers').insert({
     case_id: id,
@@ -46,7 +46,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     status: 'INVITED',
   }).select('id').single()
   if (error) {
-    if (error.code === '23505') return NextResponse.json({ error: 'その団体はもう関わっています', code: 'ALREADY' }, { status: 409 })
+    if (error.code === '23505') return NextResponse.json({ error: 'その支援団体はもう関わっています', code: 'ALREADY' }, { status: 409 })
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   after(async () => {

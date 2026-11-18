@@ -20,7 +20,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
   const auth = await requireFace(request, parsed.data.face)
   if ('response' in auth) return auth.response
-  if (auth.rf.face.kind !== 'ORGANIZATION') return NextResponse.json({ error: '団体の申し出だけ替えられます', code: 'NOT_ORGANIZATION' }, { status: 403 })
+  if (auth.rf.face.kind !== 'ORGANIZATION') return NextResponse.json({ error: '支援団体の申し出だけ替えられます', code: 'NOT_ORGANIZATION' }, { status: 403 })
   const organizationId = auth.rf.face.organizationId
 
   const loaded = await loadSupportCase(auth.rf, id).catch(() => null)
@@ -42,7 +42,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (mError) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   const activeIds = (members ?? []).map((m) => m.user_id as string)
   if (!isValidNextMember(target, activeIds, mine.supporter_user_id)) {
-    return NextResponse.json({ error: '団体の今いるメンバーを選んでください', code: 'NOT_MEMBER' }, { status: 400 })
+    return NextResponse.json({ error: '支援団体の今いるメンバーを選んでください', code: 'NOT_MEMBER' }, { status: 400 })
   }
   if (!(await canSupportNow(target))) return NextResponse.json({ error: '支える側として活動できるのは18歳からです', code: 'UNDER_SUPPORTER_AGE' }, { status: 400 })
 
