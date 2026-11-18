@@ -37,3 +37,16 @@ export function CrisisLinks({ country }: { country?: string | null }) {
     </section>
   )
 }
+
+// 重い言葉に気づいたとき・緊急と判定した相談に、その場で出す案内(書く画面・体験ページ・届けたあとの相談の画面)。
+// body を渡さなければ、書いている途中の文言(「このまま続けて書けます」)を出す
+export function CrisisNotice({ country, body }: { country?: string | null; body?: string }) {
+  const t = useTranslations('consult.write')
+  return (
+    <div role="status" className="flex flex-col gap-2 rounded-[16px] bg-coral-soft p-4">
+      <span className="text-t15 font-bold text-coral-ink">{t('crisisTitle')}</span>
+      <span className="text-t13 leading-[1.7] text-ink-soft">{body ?? t('crisisBody')}</span>
+      <CrisisLinks country={country} />
+    </div>
+  )
+}

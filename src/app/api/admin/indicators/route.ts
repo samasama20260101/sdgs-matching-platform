@@ -1,4 +1,4 @@
-// 運営｜指標の仕分け(盤 51)。本人が選んだ指標・AI の候補を確定するか外す。運営が足すこともできる。
+// 運営｜指標の仕分け(盤 51)。届けるときに AI が選んだ指標(v2 の初めの相談は本人が選んだ指標)を確定するか外す。運営が足すこともできる。
 // 確定した指標だけが社会貢献の記録と地図に数えられる。解決済みの相談なら記録を付け直す(record_case_resolution)
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   const caseIds = [...new Set((proposed ?? []).map((p) => p.case_id as string))].slice(0, 50)
   if (caseIds.length === 0) return NextResponse.json({ cases: [] })
   const [{ data: cases }, { data: confirmed }] = await Promise.all([
-    supabaseAdmin.from('cases').select('id, display_id, title, status, subject_type, ai_sdg_suggestion, description_free').in('id', caseIds),
+    supabaseAdmin.from('cases').select('id, display_id, title, status, subject_type, description_free').in('id', caseIds),
     supabaseAdmin.from('case_indicators').select('case_id, indicator_code, source').in('case_id', caseIds).eq('status', 'CONFIRMED'),
   ])
   const text = (subject: string, code: string) => optionsFor(subject as SubjectType).find((o) => o.id === code)?.text ?? code
@@ -36,7 +36,8 @@ export async function GET(request: Request) {
       title: c.title,
       status: c.status,
       subjectType: c.subject_type,
-      summary: (c.ai_sdg_suggestion as { summary?: string } | null)?.summary ?? (c.description_free as string).slice(0, 200),
+      // 相談の時点の AI の要約は作らなくなった(#134)ので、本文の書き出しを出す
+      summary: (c.description_free as string).slice(0, 200),
       proposed: (proposed ?? []).filter((p) => p.case_id === c.id).map((p) => ({ code: p.indicator_code, text: text(c.subject_type as string, p.indicator_code as string), source: p.source, confidence: p.confidence, reason: p.reason })),
       confirmed: (confirmed ?? []).filter((p) => p.case_id === c.id).map((p) => ({ code: p.indicator_code, text: text(c.subject_type as string, p.indicator_code as string) })),
     })),
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     )
     if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   } else {
-    // 同じ番号の候補(本人・AI)をまとめて決める
+    // 同じ番号の候補(AI・v2 の初めの本人)をまとめて決める
     const { error } = await supabaseAdmin
       .from('case_indicators')
       .update({ status: decision === 'CONFIRM' ? 'CONFIRMED' : 'REJECTED', decided_by_user_id: auth.appUser.id, decided_at: now })

@@ -8,8 +8,8 @@ import { Card, cx, Heading, Lead, Screen } from '@/components/app/ui'
 
 // 運営の道具。countKey のあるものは、運営のホームの札に待っている件数を出す(/api/admin/counts)。
 export const ADMIN_TOOLS: readonly { href: string; title: string; note: string; countKey?: 'vetting' | 'indicators' | 'inquiries' }[] = [
-  { href: '/admin/vetting', title: '審査', note: '団体の申し込み・面談・承認・コーディネーター', countKey: 'vetting' },
-  { href: '/admin/indicators', title: '指標の仕分け', note: '本人が選んだ指標と AI の候補を確定する', countKey: 'indicators' },
+  { href: '/admin/vetting', title: '審査', note: '支援団体の申し込み・面談・承認・コーディネーター', countKey: 'vetting' },
+  { href: '/admin/indicators', title: '指標の仕分け', note: '届けるときに AI が選んだ指標を確定する', countKey: 'indicators' },
   { href: '/admin/summaries', title: '解決の要約', note: '内容・手立て・その後のナレッジ' },
   { href: '/admin/inquiries', title: 'お問い合わせ', note: '退会・付け替え・困りごとの連絡', countKey: 'inquiries' },
   { href: '/admin/stats', title: '分析', note: '今月の相談・解決の割合・待っている相談' },

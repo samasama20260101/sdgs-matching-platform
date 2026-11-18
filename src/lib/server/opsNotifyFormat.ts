@@ -1,6 +1,7 @@
 // 運営への知らせの文面(純粋関数)。Discord は外のサービスなので、載せるものを絞る:
-//   - 載せる: 番号・主体(会社・地域は団体名)・緊急/機微/18歳未満の印・分野(大項目)・選んだもの・入口・言語・国・運営の画面へのリンク
-//   - 載せない: 本文・呼び名・都道府県より細かい地域。機微な相談と18歳未満の相談は、選んだものも載せない(分野まで)
+//   - 載せる: 番号・主体(会社・地域はその名前)・緊急/機微/18歳未満の印・分野(大項目)・AI が選んだ指標・入口・言語・国・運営の画面へのリンク
+//   - 載せない: 本文・呼び名・都道府県より細かい地域。機微な相談と18歳未満の相談は、指標も載せない(分野まで)
+//   - AI で分類できず機微として扱った相談は、そう書き添える(運営が確かめて直せるように。#133)
 // 中身はリンク先の運営の画面(2つ目の確認まで済んだログインだけが開ける)で読む(2026-11-06 岡本さん「URL と相談の類をもう少し細かく」)
 import sdgsJa from '../../../messages/ja/sdgs.json'
 import supportJa from '../../../messages/ja/support.json'
@@ -13,15 +14,18 @@ export type OpsEvent =
   | (OpsCaseRef & {
       kind: 'NEW_CASE'
       subjectType: SubjectType
-      // 会社・地域として相談した団体の名前(個人の相談では null)
+      // 会社・地域として相談した相談者の会社・地域の名前(個人の相談では null)
       subjectName: string | null
       urgent: boolean
       sensitive: boolean
       minor: boolean
+      // 届けたときに AI で分類できなかった(使えない・時間切れ・壊れた応答)。このときは機微として扱っている
+      aiUnavailable?: boolean
+      // AI が選んだ指標(分類に使う指標)
       indicators: string[]
       entryChannel: string
       entryCode: string | null
-      // 代理の登録をした団体の名前
+      // 代理の登録をした支援団体の名前
       proxyName: string | null
       locale: string | null
       country: string | null
@@ -42,7 +46,7 @@ const SUBJECT_LABEL: Record<SubjectType, string> = { PERSON: '個人', COMPANY: 
 const LOCALE_LABEL: Record<string, string> = { ja: '日本語', en: '英語', es: 'スペイン語' }
 const AREA_LABELS = sdgsJa.area as Record<string, Record<string, string>>
 const ORG_TYPE_LABELS = supportJa.orgType as Record<string, string>
-// 選んだものは1つ 30 字までに縮め、3つまで並べる
+// 指標は1つ 30 字までに縮め、3つまで並べる
 const PICKED_MAX_CHARS = 30
 // 申し出のない相談の知らせに並べる番号の数
 const UNMATCHED_LIST_MAX = 10
@@ -56,7 +60,7 @@ export function adminVettingUrl(origin: string, organizationDisplayId: string): 
 }
 
 // 分野(大項目)の名前。会社・地域は主体ごとの名前、個人と、主体ごとの名前がない番号は個人の大項目の名前。
-// 何も選ばずに届いた相談は「SDGsの隣のお困りごと」
+// 指標のない相談(AI がどれにも当てはめなかった・分類できなかった)は「SDGsの隣のお困りごと」
 export function areaLabels(subject: SubjectType, indicators: string[]): string[] {
   const byId = new Map(optionsFor(subject).map((o) => [o.id, o.category]))
   const categories = [...new Set(indicators.map((id) => byId.get(id)).filter((c): c is number => typeof c === 'number'))]
@@ -71,7 +75,7 @@ function pickedLabels(subject: SubjectType, indicators: string[]): string[] {
 
 function entryLabel(channel: string, code: string | null, proxyName: string | null): string {
   if (channel === 'SHOP_CODE') return code ? `相談所のコード(${code})` : '相談所のコード'
-  if (channel === 'PROXY') return proxyName ? `団体の代理の登録(${proxyName})` : '団体の代理の登録'
+  if (channel === 'PROXY') return proxyName ? `支援団体の代理の登録(${proxyName})` : '支援団体の代理の登録'
   if (channel === 'LENS') return 'LENS'
   return 'アプリ'
 }
@@ -99,7 +103,8 @@ export function formatOpsEvent(event: OpsEvent, origin: string): string {
       return [
         `新しい相談 ${event.displayId}(${subject})${marks ? ` ${marks}` : ''}`,
         `分野: ${areaLabels(event.subjectType, event.indicators).join(' / ')}`,
-        hidden ? '選んだもの: 機微な相談なので載せません(リンク先で見てください)' : `選んだもの: ${picked.length > 0 ? picked.join(' / ') : 'なし(自分の言葉だけ)'}`,
+        hidden ? '指標(AI): 機微な相談なので載せません(リンク先で見てください)' : `指標(AI): ${picked.length > 0 ? picked.join(' / ') : 'なし'}`,
+        ...(event.aiUnavailable ? ['AI で分類できなかったので、機微として扱っています。リンク先で確かめ、要らなければ機微を外してください'] : []),
         about.join(' ・ '),
         adminCaseUrl(origin, event.caseId),
       ].join('\n')
@@ -113,7 +118,7 @@ export function formatOpsEvent(event: OpsEvent, origin: string): string {
     case 'ORG_APPLICATION': {
       const where = [event.regionName, countryLabel(event.country)].filter(Boolean).join('・')
       return [
-        `支え手の団体の申し込みが届きました ${event.organizationDisplayId}`,
+        `支援団体の申し込みが届きました ${event.organizationDisplayId}`,
         `${shortTitle(event.name)}(${ORG_TYPE_LABELS[event.orgType] ?? event.orgType}${where ? `・${where}` : ''})`,
         adminVettingUrl(origin, event.organizationDisplayId),
       ].join('\n')

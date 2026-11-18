@@ -1,12 +1,13 @@
 'use client'
 
-// 運営｜相談の中身。運営への知らせ(Discord)のリンクから開く。読むだけ(指標を決めるのは「指標の仕分け」)
-import { use, useCallback } from 'react'
+// 運営｜相談の中身。運営への知らせ(Discord)のリンクから開く。指標を決めるのは「指標の仕分け」。
+// ここで直せるのは機微の扱いだけ(AI で分類できず機微にした相談などを、運営が確かめて外す・機微にする。#133)
+import { use, useCallback, useState } from 'react'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
 import { Link } from '@/i18n/navigation'
 import { AdminShell } from '@/components/admin/AdminShell'
-import { Card, Chip, Lead, SectionLabel, Spinner } from '@/components/app/ui'
+import { Button, Card, Chip, ErrorNote, Lead, SectionLabel, Spinner } from '@/components/app/ui'
 
 type AdminCase = {
   id: string
@@ -20,9 +21,11 @@ type AdminCase = {
   isSensitive: boolean
   sensitiveReasons: string[]
   areas: string[]
+  // 分類に使う指標を選んだのは AI(#133 から)か本人(v2 の初め)か
+  indicatorsBy: 'AI' | 'SELF'
   indicators: { code: string; text: string; source: string; status: string; confidence: number | null; reason: string | null }[]
-  aiSummary: string | null
-  aiModel: string | null
+  // 届けるときの AI の分類の記録。分類できなかった相談は null
+  classification: { urgent: boolean; sensitive: boolean; model: string | null; generatedAt: string | null } | null
   description: string
   since: string | null
   wish: string | null
@@ -47,8 +50,8 @@ type Payload = {
 
 const STATUS: Record<string, string> = { OPEN: '申し出を待っている', MATCHED: '一緒に進めている', RESOLVED: '解決', CLOSED: '終了', CANCELLED: '取り消し' }
 const SUBJECT: Record<string, string> = { PERSON: '個人', COMPANY: '会社', COMMUNITY: '地域', NATION: '国' }
-const REASON: Record<string, string> = { INDICATOR: '選んだもの', MINOR: '18歳未満', AI: 'AI の判定', ADMIN: '運営' }
-const SOURCE: Record<string, string> = { SELF: '本人', AI: 'AI', ADMIN: '運営' }
+const REASON: Record<string, string> = { WORDS: '書いた言葉', MINOR: '18歳未満', INDICATOR: '指標の印', AI: 'AI の判定', AI_UNAVAILABLE: 'AI で分類できなかった', ADMIN: '運営が機微にした', ADMIN_CLEARED: '運営が外した' }
+const SOURCE: Record<string, string> = { SELF: '相談者', AI: 'AI', ADMIN: '運営' }
 const INDICATOR_STATUS: Record<string, string> = { PROPOSED: '候補', CONFIRMED: '確定', REJECTED: '外した' }
 const OFFER_STATUS: Record<string, string> = { PENDING: '返事待ち', INVITED: '招待', ACCEPTED: '選ばれた', DECLINED: '見送り', WITHDRAWN: '取り下げ', EXPIRED: '期限切れ' }
 const REFERRAL_STATUS: Record<string, string> = { CONSENTED: '伝えてよい(まだ伝えていない)', CONTACTED: '伝えた', DONE: '済み', WITHDRAWN: '取り下げ' }
@@ -58,7 +61,7 @@ const jst = (iso: string | null) => (iso ? new Date(iso).toLocaleString('ja-JP',
 
 function entryText(c: AdminCase) {
   if (c.entryChannel === 'SHOP_CODE') return `相談所のコード${c.entryCode ? `(${c.entryCode})` : ''}`
-  if (c.entryChannel === 'PROXY') return `団体の代理の登録(${c.proxyName ?? '—'}${c.proxyDisplayName ? `・呼び名 ${c.proxyDisplayName}` : ''})`
+  if (c.entryChannel === 'PROXY') return `支援団体の代理の登録(${c.proxyName ?? '—'}${c.proxyDisplayName ? `・呼び名 ${c.proxyDisplayName}` : ''})`
   return c.entryChannel === 'LENS' ? 'LENS' : 'アプリ'
 }
 
@@ -71,9 +74,50 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   )
 }
 
+// 機微の扱いを運営が直す。外すと、面談済みの支援団体のメンバーなら2つ目の確認なしで中身を読め、会社・地域の相談は個人の支え手にも出る
+function SensitivityPanel({ c, onDone }: { c: AdminCase; onDone: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const set = async (sensitive: boolean) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/admin/cases/${c.id}`, { method: 'PATCH', json: { sensitive } })
+      await onDone()
+    } catch (e) {
+      setError(e instanceof ApiError && e.code === 'CONFLICT' ? 'ほかの操作と重なりました。読み直してから、もう一度選んでください。' : '直せませんでした。')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const unavailable = c.sensitiveReasons.includes('AI_UNAVAILABLE')
+  return (
+    <Card tone="support" className="flex flex-col gap-2 p-4">
+      <SectionLabel>機微の扱い</SectionLabel>
+      <span className="text-t13">
+        いまは{c.isSensitive ? '機微として扱っています' : '機微として扱っていません'}
+        {c.sensitiveReasons.length > 0 ? `(理由: ${c.sensitiveReasons.map((r) => REASON[r] ?? r).join('・')})` : ''}。
+      </span>
+      {unavailable && (
+        <span className="text-t12_5 leading-[1.7] text-ink-soft">
+          届けたときに AI で分類できなかった(使えない・時間切れ・壊れた応答)ので、念のため機微にしました。本文を読んで、命・暴力・性・虐待・依存・偏見を受けやすい病気にかかわらなければ外してください。毎日の処理で分類し直しても、機微は自動では外れません。
+        </span>
+      )}
+      {c.isMinor && <span className="text-t12_5 leading-[1.7] text-ink-soft">18歳未満の相談は、機微を外しても、面談済みの支援団体の2つ目の確認を通った人にだけ見えます。</span>}
+      <span className="text-t12 leading-[1.7] text-mist">機微な相談は、面談済みの支援団体の、2つ目の確認を通った人にだけ中身が見え、個人の支え手には出ません。</span>
+      <ErrorNote>{error}</ErrorNote>
+      {c.isSensitive ? (
+        <Button tone="support" variant="outline" disabled={busy} className="self-start" onClick={() => void set(false)}>機微を外す</Button>
+      ) : (
+        <Button tone="support" variant="outline" disabled={busy} className="self-start" onClick={() => void set(true)}>機微として扱う</Button>
+      )}
+    </Card>
+  )
+}
+
 function Inner({ id }: { id: string }) {
   const fetchCase = useCallback(() => apiFetch<Payload>(`/api/admin/cases/${id}`), [id])
-  const { data, error } = useLoad(fetchCase)
+  const { data, error, reload } = useLoad(fetchCase)
   if (error) return <Lead>{error instanceof ApiError && error.status === 404 ? '相談が見つかりません。' : '読み込めませんでした。'}</Lead>
   if (!data) return <Spinner />
   const c = data.case
@@ -101,13 +145,22 @@ function Inner({ id }: { id: string }) {
         </dl>
       </Card>
 
+      <SensitivityPanel c={c} onDone={reload} />
+
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        <SectionLabel>選んだもの・指標の候補</SectionLabel>
-        {c.indicators.length === 0 && <Lead>ありません(自分の言葉だけで届いた相談)。</Lead>}
+        <SectionLabel>指標(分類)</SectionLabel>
+        <span className="text-t12_5 leading-[1.7] text-mist">
+          {c.indicatorsBy === 'AI'
+            ? c.classification
+              ? `届けたときに AI が選びました(${c.classification.model ?? 'モデル不明'}・${jst(c.classification.generatedAt)})。AI の判定: ${c.classification.urgent ? '緊急' : '緊急でない'}・${c.classification.sensitive ? '機微' : '機微でない'}。`
+              : '届けたときに AI で分類できませんでした。毎日の処理(JST 2:00)で分類し直します。'
+            : '相談者が選んだもの(困りごとを選ぶ段があった頃の相談)と、AI の候補です。'}
+        </span>
+        {c.indicators.length === 0 && <Lead>ありません(分野は「SDGsの隣のお困りごと」)。</Lead>}
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-t13">
           {c.indicators.map((i) => (
             <li key={`${i.source}${i.code}`} className="flex flex-wrap items-center gap-1.5">
-              <Chip color={i.source === 'SELF' ? 'night' : 'outline'}>{SOURCE[i.source] ?? i.source}</Chip>
+              <Chip color={i.source === 'AI' ? 'outline' : 'night'}>{SOURCE[i.source] ?? i.source}</Chip>
               <span>{i.code} {i.text}</span>
               <span className="text-mist">({INDICATOR_STATUS[i.status] ?? i.status}{i.source === 'AI' && i.reason ? `・${i.reason}` : ''})</span>
             </li>
@@ -117,12 +170,6 @@ function Inner({ id }: { id: string }) {
       </Card>
 
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        {c.aiSummary && (
-          <>
-            <SectionLabel>AI の要約{c.aiModel ? `(${c.aiModel})` : ''}</SectionLabel>
-            <Lead>{c.aiSummary}</Lead>
-          </>
-        )}
         <SectionLabel>書いた内容</SectionLabel>
         <p className="m-0 whitespace-pre-wrap text-t14 leading-[1.75]">{c.description}</p>
         {(c.since || c.wish) && (
@@ -139,14 +186,14 @@ function Inner({ id }: { id: string }) {
         <ul className="m-0 flex list-none flex-col gap-1 p-0 text-t13">
           {data.offers.map((o) => (
             <li key={o.id}>
-              {o.name}({o.kind === 'ORGANIZATION' ? '団体' : '個人'}) ・ {OFFER_STATUS[o.status] ?? o.status}{o.acceptedOrder === 1 ? ' ・ 中心' : ''} ・ {jst(o.createdAt)}
+              {o.name}({o.kind === 'ORGANIZATION' ? '支援団体' : '個人の支え手'}) ・ {OFFER_STATUS[o.status] ?? o.status}{o.acceptedOrder === 1 ? ' ・ 中心' : ''} ・ {jst(o.createdAt)}
             </li>
           ))}
         </ul>
       </Card>
 
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        <SectionLabel>つなぎ先(本人が「運営から伝えてよい」を選んだ窓口)</SectionLabel>
+        <SectionLabel>つなぎ先(相談者が「運営から伝えてよい」を選んだ窓口)</SectionLabel>
         {data.referrals.length === 0 && <Lead>ありません。</Lead>}
         <ul className="m-0 flex list-none flex-col gap-1 p-0 text-t13">
           {data.referrals.map((r, i) => (

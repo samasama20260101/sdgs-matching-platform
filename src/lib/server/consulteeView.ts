@@ -99,6 +99,8 @@ export async function buildConsulteeView(c: CaseRow): Promise<ConsulteeCaseView>
     }
   })
   const intake = c.intake_qna ?? {}
+  // AI が選んだ指標(#133 から)は相談者に見せない(相談者に SDGs を意識させない)。本人が選んだ v2 の初めの相談だけ出す
+  const selfPicked = intake.indicator_source !== 'AI'
   return {
     id: c.id,
     displayId: c.display_id,
@@ -107,8 +109,8 @@ export async function buildConsulteeView(c: CaseRow): Promise<ConsulteeCaseView>
     subjectType: c.subject_type,
     subjectName: c.subject_organization_id ? ((orgById.get(c.subject_organization_id)?.name as string | undefined) ?? null) : null,
     description: c.description_free,
-    indicators: intake.indicators ?? [],
-    indicatorTexts: intake.indicator_texts ?? [],
+    indicators: selfPicked ? intake.indicators ?? [] : [],
+    indicatorTexts: selfPicked ? intake.indicator_texts ?? [] : [],
     since: intake.since ?? null,
     wish: intake.wish ?? null,
     isMinor: c.is_minor,

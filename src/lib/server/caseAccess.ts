@@ -10,7 +10,7 @@ import { supporterCaseAccess, type SupporterFace } from '@/lib/domain/visibility
 import { requireMfaForSensitive } from './mfaPolicy'
 
 export const CASE_COLUMNS =
-  'id, display_id, owner_user_id, assignee_user_id, subject_type, subject_organization_id, proxy_organization_id, title, description_free, status, visibility, urgency, intake_qna, ai_sdg_suggestion, is_sensitive, is_minor, affected_population, region_country, region_code, city, locale, created_at, started_at, resolved_at, supporter_resolved_at, entry_code'
+  'id, display_id, owner_user_id, assignee_user_id, subject_type, subject_organization_id, proxy_organization_id, title, description_free, status, visibility, urgency, intake_qna, is_sensitive, is_minor, affected_population, region_country, region_code, city, locale, created_at, started_at, resolved_at, supporter_resolved_at, entry_code'
 
 export type CaseRow = {
   id: string
@@ -25,8 +25,8 @@ export type CaseRow = {
   status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CLOSED' | 'CANCELLED'
   visibility: string
   urgency: string | null
-  intake_qna: { indicators?: string[]; indicator_texts?: string[]; since?: string | null; wish?: string | null } | null
-  ai_sdg_suggestion: { title?: string; summary?: string } | null
+  // indicators は分類に使う指標。indicator_source が AI なら届けるときに AI が選んだもの(#133)、なければ本人が選んだもの(v2 の初め)
+  intake_qna: { indicators?: string[]; indicator_texts?: string[]; indicator_source?: 'AI'; since?: string | null; wish?: string | null } | null
   is_sensitive: boolean
   is_minor: boolean
   affected_population: number

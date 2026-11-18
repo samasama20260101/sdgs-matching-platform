@@ -24,7 +24,7 @@ export default function IndicatorsPage() {
   }
   return (
     <AdminShell title="指標の仕分け">
-      <Lead>本人が選んだ指標(実線)と AI の候補(点線)を確かめて決めます。確定した指標だけが、地図と社会貢献の記録に数えられます。</Lead>
+      <Lead>相談を届けるときに AI が選んだ指標(点線)を確かめて決めます。実線は、困りごとを選ぶ段があった頃に相談者が選んだものです。確定した指標だけが、地図と社会貢献の記録に数えられます。</Lead>
       {cases?.length === 0 && <Lead>確かめ待ちはありません。</Lead>}
       {cases?.map((c) => (
         <Card key={c.id} tone="support" className="flex flex-col gap-2 p-4">
@@ -34,7 +34,7 @@ export default function IndicatorsPage() {
           {c.confirmed.length > 0 && <div className="flex flex-wrap gap-1">{c.confirmed.map((i) => <Chip key={i.code} color="leaf">確定 {i.code}</Chip>)}</div>}
           {c.proposed.map((p) => (
             <div key={`${p.source}${p.code}`} className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2">
-              <span className="text-t13"><Chip color={p.source === 'SELF' ? 'night' : 'outline'}>{p.source === 'SELF' ? '本人' : 'AI'} {p.code}</Chip> {p.text}{p.reason ? `(${p.reason})` : ''}</span>
+              <span className="text-t13"><Chip color={p.source === 'SELF' ? 'night' : 'outline'}>{p.source === 'SELF' ? '相談者' : 'AI'} {p.code}</Chip> {p.text}{p.reason ? `(${p.reason})` : ''}</span>
               <span className="flex gap-1.5">
                 <Button tone="support" variant="night" className="min-h-[44px] px-3 text-t12_5" onClick={() => void decide(c.id, p.code, 'CONFIRM')}>確定</Button>
                 <Button tone="support" variant="outline" className="min-h-[44px] px-3 text-t12_5" onClick={() => void decide(c.id, p.code, 'REJECT')}>外す</Button>

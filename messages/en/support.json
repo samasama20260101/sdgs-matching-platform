@@ -53,7 +53,7 @@
   "find": {
     "title": "Find requests",
     "tipLabel": "How to read the tags",
-    "tip": "The numbered tags are SDG goals, named for the kind of requester. Open a request to see the problems in detail (dashed ones are AI suggestions the team has not checked yet). Requests written in other languages can be translated in the conversation.",
+    "tip": "The numbered tags are SDG goals, named for the kind of requester. Areas and indicators are chosen by AI from the request when it arrives, and the samasama team checks them later. Open a request to see it in detail. Requests written in other languages can be translated in the conversation.",
     "individualNote": "Individual supporters see only company and community requests (requests from individuals are supported through organizations).",
     "category": "Category",
     "all": "All",
@@ -79,7 +79,6 @@
   },
   "case": {
     "person": "Request from an individual",
-    "summary": "Summary",
     "words": "In their words",
     "since": "Since when",
     "wish": "What they'd like",
@@ -290,6 +289,7 @@
     "words": "In their words (as you heard them)",
     "consent": "The person agreed to registering this request here",
     "submit": "Register and show the handover code",
+    "submitting": "Registering…",
     "required": "Please fill in the required fields",
     "failed": "Couldn't register",
     "notApproved": "You can register on behalf of someone once the interview with the samasama team is done and your organization is approved.",
@@ -300,8 +300,7 @@
     "codeTip": "When the person has a phone, they can enter this code to make the request their own. Until then, offers and messages come to your organization's proxy requests.",
     "handOnPaper": "Write this code on paper and give it to the person (valid until {date}). Once you close this screen, it can't be shown again.",
     "print": "Print a sheet for the person",
-    "openCase": "Open the proxy request",
-    "noneIsOk": "If nothing fits, you can continue without picking."
+    "openCase": "Open the proxy request"
   },
   "contrib": {
     "title": "My contributions",

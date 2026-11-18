@@ -2,20 +2,18 @@
 //   - 相談は先に書き、届けるときにログインする(2026-11-17 岡本さん)。ログインの往復(Google・/start)で書いた内容を失わない
 //   - 置き場所は画面側で sessionStorage にする(サーバーに送らない・タブを閉じると消える)。届けたら消す
 //   - 読むときは形を確かめ、主体が違う・古い・壊れた下書きは捨てる
-import { DESCRIPTION_MAX, EXTRA_MAX, optionsFor, sanitizeSelection, type SubjectType } from './intake'
+//   - 困りごとを選ぶ段はなくなった(#133)。前の形の下書き(選んだもの・近いものを持つ)も、書いた言葉だけを読む
+import { DESCRIPTION_MAX, EXTRA_MAX, type SubjectType } from './intake'
 
 export const DRAFT_STORAGE_KEY = 'samasama.consultDraft'
 // ログインの往復に足りる長さ。これより古い下書きは捨てる
 export const DRAFT_TTL_MS = 6 * 60 * 60 * 1000
-const MAX_SUGGESTED = 10
 
 export type ConsultDraft = {
   subject: SubjectType
   words: string
   since: string
   wish: string
-  selected: string[]
-  suggested: string[]
 }
 
 type StoredDraft = ConsultDraft & { v: 1; savedAt: number }
@@ -48,9 +46,5 @@ export function parseDraft(raw: string | null | undefined, subject: SubjectType,
   const since = text(d.since, EXTRA_MAX)
   const wish = text(d.wish, EXTRA_MAX)
   if (words === null || since === null || wish === null || words.trim().length === 0) return null
-  const allowed = new Set(optionsFor(subject).map((o) => o.id))
-  const suggested = Array.isArray(d.suggested)
-    ? [...new Set(d.suggested.filter((id): id is string => typeof id === 'string' && allowed.has(id)))].slice(0, MAX_SUGGESTED)
-    : []
-  return { subject, words, since, wish, selected: sanitizeSelection(subject, d.selected), suggested }
+  return { subject, words, since, wish }
 }

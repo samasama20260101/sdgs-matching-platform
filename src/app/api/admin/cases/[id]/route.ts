@@ -1,11 +1,17 @@
 // 運営｜相談の中身(運営への知らせのリンクの行き先)。2つ目の確認まで済んだ運営だけが読める。
-// 番号・状態・主体・印・分野と選んだもの・AI の整理・本文・入口・言語と地域・申し出・つなぎ先の同意
+// GET: 番号・状態・主体・印・分野と指標・AI の分類・本文・入口・言語と地域・申し出・つなぎ先の同意
+// PATCH { sensitive }: 機微の扱いを運営が直す(AI で分類できず機微にした相談など。#133)。理由の付け方は src/lib/domain/sensitivity.ts
+// 相談の時点の AI の要約は作らなくなった(#134)。前に作った要約も出さない(本文をそのまま読む)
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { requireAdmin } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { optionsFor, type SubjectType } from '@/lib/domain/intake'
+import { normalizeReasons, setSensitivityByAdmin } from '@/lib/domain/sensitivity'
 import { areaLabels } from '@/lib/server/opsNotifyFormat'
+
+const patchSchema = z.object({ sensitive: z.boolean() })
 
 const CASE_COLUMNS = 'id, display_id, title, status, subject_type, subject_organization_id, proxy_organization_id, description_free, intake_qna, urgency, is_minor, is_sensitive, sensitive_reasons, region_country, region_code, city, locale, entry_channel, entry_code, created_at, escalated_at, supporter_resolved_at, resolved_at, ai_sdg_suggestion'
 
@@ -43,8 +49,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const subject = c.subject_type as SubjectType
   const text = new Map(optionsFor(subject).map((o) => [o.id, o.text]))
-  const intake = (c.intake_qna ?? {}) as { indicators?: string[]; since?: string | null; wish?: string | null; proxy_display_name?: string }
-  const ai = c.ai_sdg_suggestion as { title?: string; summary?: string; provider?: string; model?: string } | null
+  const intake = (c.intake_qna ?? {}) as { indicators?: string[]; indicator_source?: string; since?: string | null; wish?: string | null; proxy_display_name?: string }
+  // 分類の記録(version 4、#133)。前の版(相談の時点の要約)の記録はモデル名だけ使う
+  const ai = c.ai_sdg_suggestion as { version?: number; kind?: string; urgent?: boolean; sensitive?: boolean; model?: string; generated_at?: string } | null
+  const classification = ai?.kind === 'CLASSIFICATION' ? { urgent: ai.urgent === true, sensitive: ai.sensitive === true, model: ai.model ?? null, generatedAt: ai.generated_at ?? null } : null
 
   return NextResponse.json({
     case: {
@@ -57,11 +65,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       urgent: c.urgency === 'High',
       isMinor: c.is_minor,
       isSensitive: c.is_sensitive,
-      sensitiveReasons: c.sensitive_reasons ?? [],
+      sensitiveReasons: normalizeReasons(c.sensitive_reasons),
       areas: areaLabels(subject, intake.indicators ?? []),
+      indicatorsBy: intake.indicator_source === 'AI' ? 'AI' : 'SELF',
       indicators: (indicators.data ?? []).map((i) => ({ code: i.indicator_code, text: text.get(i.indicator_code as string) ?? i.indicator_code, source: i.source, status: i.status, confidence: i.confidence, reason: i.reason })),
-      aiSummary: ai?.summary ?? null,
-      aiModel: ai?.model ?? null,
+      classification,
       description: c.description_free,
       since: intake.since ?? null,
       wish: intake.wish ?? null,
@@ -91,4 +99,36 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return { status: r.status, consentedAt: r.consented_at, name: e?.name ?? '—', phone: e?.phone ?? null }
     }),
   })
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const auth = await requireAdmin(request)
+  if ('response' in auth) return auth.response
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const parsed = patchSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
+  const { data: c, error } = await supabaseAdmin.from('cases').select('id, display_id, is_sensitive, sensitive_reasons').eq('id', id).maybeSingle()
+  if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  if (!c) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const before = normalizeReasons(c.sensitive_reasons)
+  const next = setSensitivityByAdmin(before, parsed.data.sensitive)
+  // 読んだときの扱いのままのときだけ書く(毎日の処理がその間に機微へ上げていたら、古い画面のまま外さない)
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from('cases')
+    .update({ is_sensitive: next.isSensitive, sensitive_reasons: next.reasons })
+    .eq('id', id)
+    .eq('is_sensitive', c.is_sensitive)
+    .select('id')
+    .maybeSingle()
+  if (updateError) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  if (!updated) return NextResponse.json({ error: 'ほかの操作と重なりました。読み直してください', code: 'CONFLICT' }, { status: 409 })
+  await supabaseAdmin.from('audit_logs').insert({
+    actor_user_id: auth.appUser.id,
+    action: 'admin.case_sensitivity',
+    target_table: 'cases',
+    target_id: id,
+    metadata: { display_id: c.display_id, before: { is_sensitive: c.is_sensitive, reasons: before }, after: next },
+  })
+  return NextResponse.json({ isSensitive: next.isSensitive, sensitiveReasons: next.reasons })
 }
