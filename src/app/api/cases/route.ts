@@ -1,4 +1,6 @@
-// 相談する側の相談(v2.0)。GET: わたしの相談の一覧 / POST: 相談を届ける(個人・会社・地域)
+// 相談者の相談(v2.0)。GET: わたしの相談の一覧 / POST: 相談を届ける(個人・会社・地域)。
+// 相談者は困りごとを選ばない。届けるとき、保存する前に AI が指標を選び、緊急・機微を判定する(#133、src/lib/server/caseAi.ts)。
+// 緊急・機微は書いた言葉と年齢が下限で、AI は上げる方向だけ。AI が使えない・時間切れのときは機微として届ける(運営があとで直せる)
 import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -8,16 +10,16 @@ import { currentAge, isMinorAge, todayInTokyo } from '@/lib/domain/age'
 import {
   assessIntake,
   canConsultAs,
+  caseBodyForAi,
   DESCRIPTION_MAX,
   EXTRA_MAX,
   optionsFor,
   provisionalTitle,
   sanitizeEntryCode,
-  sanitizeSelection,
 } from '@/lib/domain/intake'
 import { canConsultAsOrganization } from '@/lib/domain/orgVetting'
 import { isProductionDeployment } from '@/lib/deployEnv'
-import { summarizeNewCase } from '@/lib/server/caseAi'
+import { classificationRecord, classifyConsultation } from '@/lib/server/caseAi'
 import { notifyOps } from '@/lib/server/opsNotify'
 import { listMyCases } from '@/lib/server/myCases'
 
@@ -28,7 +30,6 @@ const DAILY_CASE_LIMIT = isProductionDeployment() ? 10 : null
 const createSchema = z.object({
   subjectType: z.enum(['PERSON', 'COMPANY', 'COMMUNITY']),
   subjectOrganizationId: z.string().uuid().optional(),
-  indicators: z.array(z.string()).max(10).default([]),
   description: z.string().transform((v) => v.trim()).pipe(z.string().min(1).max(DESCRIPTION_MAX)),
   since: z.string().max(EXTRA_MAX).optional(),
   wish: z.string().max(EXTRA_MAX).optional(),
@@ -64,10 +65,10 @@ export async function POST(request: Request) {
     .single()
   if (personError) return serverError('person', personError)
 
-  // 会社・地域として相談するときは、その団体に今いるメンバーであること
+  // 会社・地域として相談するときは、その会社・地域(相談者として登録したもの)に今いるメンバーであること
   let organization: { id: string; name: string; org_type: string; population: number | null; vetting_status: string } | null = null
   if (input.subjectType !== 'PERSON') {
-    if (!input.subjectOrganizationId) return NextResponse.json({ error: '団体を選んでください', code: 'ORG_REQUIRED' }, { status: 400 })
+    if (!input.subjectOrganizationId) return NextResponse.json({ error: '相談する会社・地域を選んでください', code: 'ORG_REQUIRED' }, { status: 400 })
     const faces = await loadFaces(auth.appUser.id).catch(() => null)
     if (!faces) return serverError('faces', 'load failed')
     const face = faces.organizations.find((f) => f.organizationId === input.subjectOrganizationId)
@@ -78,14 +79,14 @@ export async function POST(request: Request) {
       .eq('id', face.organizationId)
       .single()
     if (orgError) return serverError('org', orgError)
-    // 団体として相談できないのは運営が止めた団体だけ(相談のための団体には審査がない、#131)
+    // 会社・地域として相談できないのは運営が止めたものだけ(相談者の会社・地域には審査がない、#131)
     if (!canConsultAs(input.subjectType, org.org_type) || !canConsultAsOrganization(org.vetting_status)) {
-      return NextResponse.json({ error: 'この団体では相談できません', code: 'ORG_NOT_ALLOWED' }, { status: 400 })
+      return NextResponse.json({ error: 'この会社・地域では相談できません', code: 'ORG_NOT_ALLOWED' }, { status: 400 })
     }
     organization = org
   }
 
-  // 回数の上限(個人の相談は本人ごと、団体の相談は団体ごと)
+  // 回数の上限(個人の相談は本人ごと、会社・地域の相談は会社・地域ごと)。AI を呼ぶ前に確かめる
   const activeQuery = supabaseAdmin.from('cases').select('id', { count: 'exact', head: true }).in('status', ['OPEN', 'MATCHED'])
   const { count: activeCount, error: countError } = organization
     ? await activeQuery.eq('subject_organization_id', organization.id)
@@ -107,16 +108,20 @@ export async function POST(request: Request) {
     }
   }
 
-  const indicatorIds = sanitizeSelection(input.subjectType, input.indicators)
-  const options = new Map(optionsFor(input.subjectType).map((o) => [o.id, o.text]))
+  // 保存する前に AI で分類する(相談文は伏せて囲む)。AI が使えなくても相談は届け、機微として扱う
+  const body = caseBodyForAi({ description: input.description, since: input.since, wish: input.wish })
+  const classified = await classifyConsultation(input.subjectType, body)
   const age = currentAge(person.age_years, person.age_base_date, todayInTokyo())
   const assessment = assessIntake({
     subject: input.subjectType,
-    indicatorIds,
-    text: [input.description, input.since, input.wish].filter(Boolean).join('\n'),
+    text: body,
     personIsMinor: isMinorAge(age),
     organizationPopulation: organization?.population ?? null,
+    ai: classified.ok ? { ok: true, indicatorIds: classified.indicators.map((i) => i.id), urgent: classified.urgent, sensitive: classified.sensitive } : { ok: false },
   })
+  if (!classified.ok) console.error(`[api/cases] classification unavailable (${classified.code}); treating as sensitive`)
+  const indicatorIds = assessment.indicatorIds
+  const options = new Map(optionsFor(input.subjectType).map((o) => [o.id, o.text]))
   const entryCode = sanitizeEntryCode(input.entryCode)
 
   const { data: created, error: insertError } = await supabaseAdmin
@@ -126,16 +131,18 @@ export async function POST(request: Request) {
       assignee_user_id: auth.appUser.id,
       subject_type: input.subjectType,
       subject_organization_id: organization?.id ?? null,
-      title: provisionalTitle(input.subjectType, indicatorIds, input.description),
+      title: (classified.ok && classified.title) || provisionalTitle(input.subjectType, indicatorIds, input.description),
       description_free: input.description,
       urgency: assessment.urgency,
       status: 'OPEN',
-      // v2.0: 届いたらすぐ支え手に見えるようにする(AI の整理はあとから重ねる)
+      // v2.0: 届いたらすぐ支え手に見えるようにする(機微な相談は見える範囲を visibility.ts が絞る)
       visibility: 'LISTED',
+      // 分類に使う指標は AI が選んだもの(indicator_source: AI)。相談者の画面には出さない
       intake_qna: {
-        version: 3,
+        version: 4,
         indicators: indicatorIds,
         indicator_texts: indicatorIds.map((id) => options.get(id) ?? id),
+        indicator_source: 'AI',
         since: input.since?.trim() || null,
         wish: input.wish?.trim() || null,
         locale: person.locale,
@@ -150,20 +157,22 @@ export async function POST(request: Request) {
       affected_population: assessment.affectedPopulation,
       entry_channel: entryCode ? 'SHOP_CODE' : 'DIRECT',
       entry_code: entryCode,
+      // 分類の記録。分類できなかった相談は null のままにし、毎日の処理が分類し直す
+      ai_sdg_suggestion: classified.ok ? classificationRecord(classified, new Date()) : null,
     })
     .select('id, display_id')
     .single()
   if (insertError) return serverError('insert', insertError)
 
-  if (indicatorIds.length > 0) {
+  const aiIndicators = classified.ok ? classified.indicators.filter((i) => indicatorIds.includes(i.id)) : []
+  if (aiIndicators.length > 0) {
     const { error: ciError } = await supabaseAdmin.from('case_indicators').insert(
-      indicatorIds.map((code) => ({ case_id: created.id, indicator_code: code, source: 'SELF', status: 'PROPOSED' })),
+      aiIndicators.map((i) => ({ case_id: created.id, indicator_code: i.id, source: 'AI', status: 'PROPOSED', confidence: i.confidence, reason: i.reason })),
     )
     if (ciError) console.error('[api/cases] case_indicators:', ciError)
   }
 
-  // 返事を待たせない処理はあとで。Workers では応答のあと 30 秒で打ち切られるので、
-  // 緊急の印つきの運営への知らせは AI の整理を待たずに先に送る(AI が遅くても知らせは消えない)
+  // 運営への知らせは返事のあとで(返事を待たせない)
   after(() => notifyOps({
     kind: 'NEW_CASE',
     displayId: created.display_id,
@@ -173,6 +182,7 @@ export async function POST(request: Request) {
     urgent: assessment.urgency === 'High',
     sensitive: assessment.isSensitive,
     minor: assessment.isMinor,
+    aiUnavailable: !classified.ok,
     indicators: indicatorIds,
     entryChannel: entryCode ? 'SHOP_CODE' : 'DIRECT',
     entryCode,
@@ -180,7 +190,6 @@ export async function POST(request: Request) {
     locale: person.locale ?? null,
     country: person.region_country ?? 'JP',
   }).catch((e) => console.error('[api/cases] notify:', e)))
-  after(() => summarizeNewCase(created.id).catch((e) => console.error('[api/cases] summarize:', e)))
 
   return NextResponse.json({ id: created.id, displayId: created.display_id, urgent: assessment.urgency === 'High' })
 }

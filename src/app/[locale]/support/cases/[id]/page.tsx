@@ -203,13 +203,13 @@ function Inner({ id }: { id: string }) {
         <Heading level={2}>{titleOf(c)}</Heading>
         {c.areaGoals.length > 0 && <span className="text-t13 font-bold text-ink-soft">{c.areaGoals.map((g) => tSdgs(`area.${c.subjectType}.${g}`)).join(' / ')}</span>}
         <span className="flex flex-wrap gap-1">
-          {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color={i.source === 'SELF' ? 'night' : 'outline'}>{i.source === 'AI' ? `AI ${i.code}` : `${i.code} ${label(c.subjectType, i.code) ?? i.text}`}</Chip>)}
+          {/* 分類した指標(届けるときに AI が選んだもの。v2 の初めの相談は本人が選んだもの)。運営が確かめる前の候補を含む(#133) */}
+          {c.indicators.map((i) => <Chip key={`${i.source}${i.code}`} color="outline">{`${i.code} ${label(c.subjectType, i.code) ?? i.text}`}</Chip>)}
           {c.urgent && <Chip color="coral">{tCard('urgent')}</Chip>}
           {c.isMinor && <Chip color="lamp">{tCard('minor')}</Chip>}
           {c.regionCode && <Chip>{regionText(c, locale)}</Chip>}
         </span>
       </div>
-      {c.summary && <Card tone="support" className="flex flex-col gap-1 p-4"><SectionLabel>{t('summary')}</SectionLabel><Lead>{c.summary}</Lead></Card>}
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <SectionLabel>{t('words')}</SectionLabel>
         <p className="m-0 whitespace-pre-wrap text-t14 leading-[1.75]">{c.description}</p>

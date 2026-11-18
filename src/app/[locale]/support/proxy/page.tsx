@@ -1,23 +1,21 @@
 'use client'
 
-// 代理で相談を登録(盤 23)。本人から同意を得てから。登録したら引き継ぎコードを紙に書いて本人に渡す
+// 代理で相談を登録(盤 23)。本人から同意を得てから。登録したら引き継ぎコードを紙に書いて本人に渡す。
+// 困りごとは選ばない。相談者が届けるときと同じく、登録するときに AI が分類する(#133)
 import { Suspense, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
-import { optionsFor } from '@/lib/domain/intake'
 import { Link } from '@/i18n/navigation'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip } from '@/components/app/ui'
-import { IndicatorPicker } from '@/components/consult/IndicatorPicker'
 
 function Inner() {
   const t = useTranslations('support.proxy')
   const face = useSearchParams().get('face') ?? ''
   const [name, setName] = useState('')
   const [minor, setMinor] = useState<boolean | null>(null)
-  const [selected, setSelected] = useState<string[]>([])
   const [words, setWords] = useState('')
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -37,7 +35,7 @@ function Inner() {
           setBusy(true)
           setError(null)
           try {
-            setDone(await apiFetch('/api/support/proxy', { method: 'POST', json: { face, displayName: name, isMinor: minor, country: me.person.country, regionCode: me.person.regionCode, indicators: selected, words, consent: true } }))
+            setDone(await apiFetch('/api/support/proxy', { method: 'POST', json: { face, displayName: name, isMinor: minor, country: me.person.country, regionCode: me.person.regionCode, words, consent: true } }))
           } catch (e) {
             // 断られた理由が分かるときは、それを出す(「登録できませんでした」だけでは何をすればよいか分からない。11/11 代表の Staging メモ 3)
             setError(e instanceof ApiError && e.code === 'NOT_ALLOWED' ? t('notApproved') : t('failed'))
@@ -85,15 +83,13 @@ function Inner() {
                     </div>
                   </div>
                 </Card>
-                <IndicatorPicker options={optionsFor('PERSON')} selected={selected} onChange={setSelected} subject="PERSON" />
-                <p className="m-0 px-1 text-t12_5 text-mist">{t('noneIsOk')}</p>
                 <TextArea label={t('words')} value={words} maxLength={2000} onChange={(e) => setWords(e.target.value)} />
                 <label className="flex min-h-[52px] items-center gap-3 rounded-tool border-[1.5px] border-line-strong bg-paper px-3">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="h-5 w-5 accent-night" />
                   <span className="text-t13_5 font-bold">{t('consent')}</span>
                 </label>
                 <ErrorNote>{error}</ErrorNote>
-                <Button tone="support" variant="night" disabled={busy || !consent} onClick={() => void submit()}>{t('submit')}</Button>
+                <Button tone="support" variant="night" disabled={busy || !consent} onClick={() => void submit()}>{busy ? t('submitting') : t('submit')}</Button>
               </>
             )}
           </AppFrame>

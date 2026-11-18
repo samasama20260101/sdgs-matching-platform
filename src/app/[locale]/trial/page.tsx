@@ -1,21 +1,20 @@
 'use client'
 
-// 相談を書く流れの体験(ログイン不要・公開)。本番(WriteFlow)と同じ順に 1 書く → 2 近いものを選ぶ → 結果。
-// 結果では、AI に渡す直前に個人情報を伏せる様子(src/lib/pii.ts の層1)を原文と並べて見せる。
-// 呼ぶのは「近いもの」の API(/api/public/trial/suggest)だけ。連絡先らしいところを伏せてから AI に渡し、何も保存しない(11/6 代表)。
-// 費用は API の回数の上限(DB)で抑え、上限を超えたとき・失敗したときは文字の重なり(suggestByOverlap)で出す。
+// 相談を書く流れの体験(ログイン不要・公開)。本番(WriteFlow)と同じく、書いて届ける → 結果。困りごとを選ぶ段はない(#133)。
+// 結果では、AI に渡す直前に個人情報を伏せる様子(src/lib/pii.ts の層1)を原文と並べて見せ、
+// 本番で届けたときにサービスの側でどう分類されて支援団体に届くかを、書いた文から作って見せる。
+// 呼ぶのは分類の API(/api/public/trial/classify)だけ。連絡先らしいところを伏せてから AI に渡し、何も保存しない(11/6 代表)。
+// 費用は API の回数の上限(DB)で抑え、上限を超えたとき・失敗したときは表示例を出す。
 // ほかの fetch や supabase の呼び出しは足さないこと(相談の保存・届け出はしない)
 import { useMemo, useRef, useState, type ReactNode } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { AppHeader } from '@/components/app/AppShell'
 import { Footer } from '@/components/app/Footer'
-import { Button, Card, Chip, Heading, Lead, Screen, SectionLabel, StepBar, TextArea, TextField } from '@/components/app/ui'
-import { IndicatorPicker, SuggestedOptions } from '@/components/consult/IndicatorPicker'
-import { CrisisNotice } from '@/components/consult/WriteFlow'
-import { suggestByOverlap } from '@/lib/ai/prompts/suggestIndicators'
-import { indicatorMessageKey, MAX_INDICATOR_SELECTIONS } from '@/lib/constants/intakeIndicators'
-import { caseBodyForAi, DESCRIPTION_MAX, EXTRA_MAX, optionsFor } from '@/lib/domain/intake'
+import { Button, Card, Chip, Heading, Lead, Screen, TextArea, TextField } from '@/components/app/ui'
+import { CrisisNotice } from '@/components/app/CrisisLinks'
+import { indicatorMessageKey, NEIGHBOR_CATEGORY } from '@/lib/constants/intakeIndicators'
+import { caseBodyForAi, caseTitle, DESCRIPTION_MAX, EXTRA_MAX, optionsFor, shortTitle } from '@/lib/domain/intake'
 import { detectPiiSpans, PII_PLACEHOLDERS, type PiiCategory, type PiiSpan } from '@/lib/pii'
 import { detectUrgency } from '@/lib/urgency'
 
@@ -31,7 +30,7 @@ const CATEGORY_CLASSES: Record<PiiCategory, string> = {
   number: 'bg-gray-200 text-gray-700 border-gray-400',
 }
 
-// 「本番ではこのあと」の表示例に付ける大項目(例文の困りごと: 住まい・地域 / 差別・不平等)
+// AI を使えなかったときの表示例に付ける大項目(例文の困りごと: 住まい・地域 / 差別・不平等)
 const MOCK_GOALS = [11, 10]
 
 // 原文(色付き)またはマスク後(印に置き換え)を描く
@@ -51,7 +50,7 @@ function SpanText({ text, spans, masked }: { text: string; spans: PiiSpan[]; mas
   return <p className="m-0 whitespace-pre-wrap break-words text-t14 leading-[1.9] text-ink">{parts}</p>
 }
 
-// 「本番ではこのあと」の 1 段。下に画面の表示例(架空の内容)を置く
+// 「本番ではこのあと」の 1 段。下に画面の表示例を置く
 function NextStep({ number, title, description, exampleTag, children }: { number: number; title: string; description: string; exampleTag: string; children: ReactNode }) {
   return (
     <li className="flex flex-col gap-2">
@@ -74,35 +73,24 @@ function GuardTerm({ children }: { children: ReactNode }) {
   return <span className="ml-1.5 inline-block whitespace-nowrap rounded border border-line-strong bg-paper px-1.5 py-px align-middle text-t10_5 font-bold text-night">{children}</span>
 }
 
-type Result = { body: string; chosen: string[] }
+// 分類の API の返事。source が none なら AI を使えなかった(回数の上限・失敗)ので、表示例を出す
+type Classified = { title: string | null; ids: string[]; source: 'ai' | 'none' }
+type Result = { body: string; words: string; classified: Classified }
 
 export default function TrialPage() {
   const t = useTranslations('consult.trial')
   const tWrite = useTranslations('consult.write')
-  const tSdgs = useTranslations('sdgs')
-  const options = useMemo(() => optionsFor('PERSON'), [])
 
-  const [step, setStep] = useState<1 | 2>(1)
   const [words, setWords] = useState('')
   const [since, setSince] = useState('')
   const [wish, setWish] = useState('')
-  const [selected, setSelected] = useState<string[]>([])
-  // null = 探している途中。source が overlap なら、AI を使えなかったことを添える
-  const [suggested, setSuggested] = useState<string[] | null>([])
-  const [suggestSource, setSuggestSource] = useState<'ai' | 'overlap'>('ai')
-  const suggestTicket = useRef(0)
-  const [browseAll, setBrowseAll] = useState(false)
-  // 「結果を見る」を押した時点の、AI に渡すはずの文と選んだもの(戻って直しても結果がずれないように固定する)
+  const [busy, setBusy] = useState(false)
+  const ticket = useRef(0)
+  // 「届けてみる」を押した時点の、AI に渡す文と分類(戻って直しても結果がずれないように固定する)
   const [result, setResult] = useState<Result | null>(null)
 
-  const textOf = (id: string) => tSdgs(`indicator.${indicatorMessageKey(id)}`)
-  const urgentIds = useMemo(() => new Set(options.filter((o) => o.urgent).map((o) => o.id)), [options])
-  const urgent = detectUrgency([words, since, wish].join('\n')) || selected.some((id) => urgentIds.has(id))
+  const urgent = detectUrgency([words, since, wish].join('\n'))
   const ready = words.trim().length > 0
-  const toggle = (id: string) => {
-    if (selected.includes(id)) setSelected(selected.filter((x) => x !== id))
-    else if (selected.length < MAX_INDICATOR_SELECTIONS) setSelected([...selected, id])
-  }
 
   const top = () => window.scrollTo({ top: 0 })
 
@@ -112,36 +100,28 @@ export default function TrialPage() {
     setWish(t('sample.wish'))
   }
 
-  const toPick = async () => {
+  const send = async () => {
     if (!ready) return
-    setStep(2)
-    setSuggested(null)
-    top()
+    setBusy(true)
     // AI に渡す文は結果の「AI に渡る内容」と同じ並び(本文 → いつから → どうしたいか)
-    const text = caseBodyForAi({ description: words, since, wish })
-    const ticket = ++suggestTicket.current
-    let next: { ids: string[]; source: 'ai' | 'overlap' }
+    const body = caseBodyForAi({ description: words, since, wish })
+    const mine = ++ticket.current
+    let classified: Classified
     try {
-      const res = await fetch('/api/public/trial/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+      const res = await fetch('/api/public/trial/classify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: body }) })
       if (!res.ok) throw new Error(String(res.status))
-      next = (await res.json()) as { ids: string[]; source: 'ai' | 'overlap' }
+      classified = (await res.json()) as Classified
     } catch {
-      next = { ids: suggestByOverlap(text, options), source: 'overlap' }
+      classified = { title: null, ids: [], source: 'none' }
     }
-    if (ticket !== suggestTicket.current) return
-    setSuggested(next.ids)
-    setSuggestSource(next.source)
-    setBrowseAll(next.ids.length === 0)
-  }
-
-  const showResult = () => {
-    setResult({ body: caseBodyForAi({ description: words, since, wish }), chosen: selected })
+    if (mine !== ticket.current) return
+    setBusy(false)
+    setResult({ body, words, classified })
     top()
   }
 
   const retry = () => {
     setResult(null)
-    setStep(1)
     top()
   }
 
@@ -157,10 +137,9 @@ export default function TrialPage() {
         <p className="m-0 rounded-tool bg-leaf-soft px-3 py-2 text-t12_5 font-bold leading-[1.7] text-leaf-ink">{t('safe')}</p>
 
         {result ? (
-          <ResultView result={result} textOf={textOf} onRetry={retry} />
-        ) : step === 1 ? (
+          <ResultView result={result} onRetry={retry} />
+        ) : (
           <>
-            <StepBar label={tWrite('step1')} step={1} total={2} />
             <Heading level={2}>{tWrite('wordsTitle')}</Heading>
             <div className="flex flex-col gap-1.5">
               <Button variant="outline" className="self-start" onClick={fillSample}>{t('fillSample')}</Button>
@@ -171,25 +150,8 @@ export default function TrialPage() {
             {urgent && <CrisisNotice />}
             <TextField label={tWrite('since')} hint={tWrite('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
             <TextField label={tWrite('wish')} hint={tWrite('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
-            <Button variant="lamp" disabled={!ready} onClick={() => void toPick()}>{ready ? tWrite('nextToPick') : t('needsWords')}</Button>
-          </>
-        ) : (
-          <>
-            <StepBar label={tWrite('step2')} step={2} total={2} />
-            <Heading level={2}>{tWrite('suggestTitle')}</Heading>
-            <Lead>{tWrite('suggestLead')}</Lead>
-            {suggested !== null && suggestSource === 'overlap' && <p className="m-0 rounded-tool bg-kinari-deep px-3 py-2 text-t12_5 leading-[1.7] text-ink-soft">{t('overlapNote')}</p>}
-            {urgent && <CrisisNotice />}
-            {suggested === null ? <Lead>{tWrite('suggestLoading')}</Lead> : <SuggestedOptions ids={suggested} selected={selected} onToggle={toggle} textOf={textOf} />}
-            {suggested !== null && suggested.length === 0 && <Lead>{tWrite('suggestNone')}</Lead>}
-            {browseAll ? (
-              <IndicatorPicker options={options} selected={selected} onChange={setSelected} subject="PERSON" />
-            ) : (
-              suggested !== null && <button type="button" onClick={() => setBrowseAll(true)} className="min-h-[44px] self-start text-t13_5 font-bold text-night underline">{tWrite('browseAll')}</button>
-            )}
-            <p className="m-0 text-t12_5 text-mist">{t('noneIsOk')}</p>
-            <Button variant="night" onClick={showResult}>{t('submit')}</Button>
-            <button type="button" onClick={() => setStep(1)} className="min-h-[44px] self-start text-t13 text-night underline">{tWrite('backToWords')}</button>
+            <Button variant="night" disabled={!ready || busy} onClick={() => void send()}>{!ready ? t('needsWords') : busy ? t('submitting') : t('submit')}</Button>
+            {busy && <p role="status" className="m-0 text-t12_5 text-mist">{t('submittingNote')}</p>}
           </>
         )}
 
@@ -200,28 +162,29 @@ export default function TrialPage() {
 
 }
 
-// 結果: 選んだもの → 書いた内容(見つかった所に色)→ AI に渡る内容(印に置き換え)→ 伏せられないもの → 守り方 → このあと
-function ResultView({ result, textOf, onRetry }: { result: Result; textOf: (id: string) => string; onRetry: () => void }) {
+// 結果: 書いた内容(見つかった所に色)→ AI に渡る内容(印に置き換え)→ 伏せられないもの → 守り方 → このあと(1 は書いた文の分類)
+function ResultView({ result, onRetry }: { result: Result; onRetry: () => void }) {
   const t = useTranslations('consult.trial')
   const tOffers = useTranslations('consult.offers')
   const tSdgs = useTranslations('sdgs')
+  const locale = useLocale()
+  const options = useMemo(() => optionsFor('PERSON'), [])
   const spans = detectPiiSpans(result.body)
   const counts = new Map<PiiCategory, number>()
   spans.forEach((s) => counts.set(s.cat, (counts.get(s.cat) ?? 0) + 1))
+  // 支援団体の画面での見え方。AI の分類があれば書いた文から、なければ表示例
+  const fromAi = result.classified.source === 'ai'
+  const goals = fromAi
+    ? [...new Set(result.classified.ids.map((id) => options.find((o) => o.id === id)?.category).filter((c): c is number => typeof c === 'number'))]
+    : MOCK_GOALS
+  const shownGoals = goals.length > 0 ? goals : [NEIGHBOR_CATEGORY]
+  const firstId = fromAi ? result.classified.ids[0] : undefined
+  const shownTitle = fromAi
+    ? caseTitle({ locale, savedTitle: result.classified.title ?? shortTitle(result.words), firstIndicatorLabel: firstId ? tSdgs(`indicator.${indicatorMessageKey(firstId)}`) : null, ownWords: null })
+    : t('mockCaseTitle')
   return (
     <>
       <Lead>{t('resultLead')}</Lead>
-
-      <Card className="flex flex-col gap-2 p-4">
-        <SectionLabel>{t('chosenTitle')}</SectionLabel>
-        {result.chosen.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {result.chosen.map((id) => <Chip key={id} color="lamp">{textOf(id)}</Chip>)}
-          </div>
-        ) : (
-          <span className="px-1 text-t13 text-mist">{t('chosenNone')}</span>
-        )}
-      </Card>
 
       <Card className="flex flex-col gap-2 p-4">
         <Heading level={3}>{t('beforeTitle')}</Heading>
@@ -266,15 +229,15 @@ function ResultView({ result, textOf, onRetry }: { result: Result; textOf: (id: 
 
       <div className="flex flex-col gap-1 px-1 pt-2">
         <Heading level={2}>{t('nextTitle')}</Heading>
-        <span className="text-t12 text-mist">{t('nextLead')}</span>
+        <span className="text-t12 text-mist">{fromAi ? t('nextLeadAi') : t('nextLead')}</span>
       </div>
       <ol className="m-0 flex list-none flex-col gap-5 p-0">
-        <NextStep number={1} title={t('next1Title')} description={t('next1')} exampleTag={t('exampleTag')}>
-          <span className="block text-t14_5 font-bold">{t('mockCaseTitle')}</span>
+        <NextStep number={1} title={t('next1Title')} description={t('next1')} exampleTag={fromAi ? t('fromYourWordsTag') : t('exampleTag')}>
+          <span className="block text-t14_5 font-bold">{shownTitle}</span>
           <div className="mt-2 flex flex-wrap gap-1">
-            {MOCK_GOALS.map((goal) => <Chip key={goal}>{goal} {tSdgs(`category.${goal}`)}</Chip>)}
+            {shownGoals.map((goal) => <Chip key={goal}>{goal} {tSdgs(`category.${goal}`)}</Chip>)}
           </div>
-          <p className="m-0 mt-2 text-t12_5 leading-[1.75] text-ink-soft">{t('mockSummary')}</p>
+          {!fromAi && <p className="m-0 mt-2 text-t12 leading-[1.7] text-mist">{t('aiUnavailableNote')}</p>}
         </NextStep>
 
         <NextStep number={2} title={t('next2Title')} description={t('next2')} exampleTag={t('exampleTag')}>

@@ -6,7 +6,6 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { offerBlock, supporterCaseAccess, type CaseAccess as Access, type OfferBlock, type SupporterFace } from '@/lib/domain/visibility'
 import { optionsFor } from '@/lib/domain/intake'
 import { caseAreaGoals, isAreaSubject, type AreaSubject } from '@/lib/domain/supportAreas'
-import { stripConsolation } from '@/lib/ai/prompts/caseSummary'
 import type { LastMessage } from '@/lib/domain/talk'
 import { lastMessagesFor } from './lastMessages'
 import { CASE_COLUMNS, type CaseRow, type OfferRow } from './caseAccess'
@@ -102,14 +101,13 @@ export type SupportCaseItem = {
   id: string
   locked: boolean
   title: string | null
-  // 相談した人が選んだ1つ目の選択肢。日本語以外の画面で、題をその訳に替えるために使う(caseTitle)
+  // 分類した1つ目の指標(届けるときに AI が選んだもの。v2 の初めの相談は本人が選んだもの)。日本語以外の画面で、題をその訳に替えるために使う(caseTitle)
   firstIndicator: string | null
-  summary: string | null
   status: CaseRow['status']
   subjectType: CaseRow['subject_type']
   subjectName: string | null
   indicators: { code: string; text: string; source: 'SELF' | 'AI'; status: string }[]
-  // 支える側の大項目(相談した人の種類ごとの名前で出す。src/lib/domain/supportAreas.ts)
+  // 支える側の大項目(相談者の種類ごとの名前で出す。src/lib/domain/supportAreas.ts)
   areaGoals: number[]
   urgent: boolean
   isMinor: boolean
@@ -166,13 +164,12 @@ async function decorate(rows: CaseRow[], rf: ResolvedFace, nowMs: number): Promi
       locked,
       title: locked ? null : c.title,
       firstIndicator: locked ? null : c.intake_qna?.indicators?.[0] ?? null,
-      // v1 の頃に作った要約には、相談した人に向けた共感の文が入っているので、表示のときに除く(画面の見直し 所見 4)
-      summary: locked || !c.ai_sdg_suggestion?.summary ? null : stripConsolation(c.ai_sdg_suggestion.summary),
       status: c.status,
       subjectType: c.subject_type,
-      // 2つ目の確認がまだ(LOCKED)なら、相談した団体の名前・地域・印・言語・申し出の数も出さない(セキュリティのレビュー 11/5)
+      // 2つ目の確認がまだ(LOCKED)なら、相談者の会社・地域の名前・地域・印・言語・申し出の数も出さない(セキュリティのレビュー 11/5)
       subjectName: !locked && c.subject_organization_id ? orgName.get(c.subject_organization_id) ?? null : null,
-      indicators: locked ? [] : (indByCase.get(c.id) ?? []).map((i) => ({ code: i.indicator_code, text: indicatorText(c.subject_type, i.indicator_code), source: i.source, status: i.status })),
+      // 同じ番号を本人と AI の両方が挙げた v2 の初めの相談は、1つにまとめる
+      indicators: locked ? [] : (indByCase.get(c.id) ?? []).filter((i, n, all) => all.findIndex((x) => x.indicator_code === i.indicator_code) === n).map((i) => ({ code: i.indicator_code, text: indicatorText(c.subject_type, i.indicator_code), source: i.source, status: i.status })),
       areaGoals: locked || !isAreaSubject(c.subject_type) ? [] : caseAreaGoals(c.subject_type, (indByCase.get(c.id) ?? []).map((i) => i.indicator_code)),
       urgent: !locked && c.urgency === 'High',
       isMinor: !locked && c.is_minor,
@@ -213,7 +210,7 @@ export async function findCases(rf: ResolvedFace, filters: FindFilters): Promise
     if (rf.face.kind === 'INDIVIDUAL' && filters.subject === 'PERSON') return none
     q = q.eq('subject_type', filters.subject)
   }
-  // 大項目: その種類の、その大項目の選択肢のどれかを相談した人が選んでいる(intake_qna.indicators に入っている)
+  // 大項目: その種類の、その大項目の選択肢のどれかが分類に使う指標(intake_qna.indicators。届けるときに AI が選んだもの)に入っている
   if (filters.category !== null) {
     const subjects: AreaSubject[] = filters.subject ? [filters.subject] : ['PERSON', 'COMPANY', 'COMMUNITY']
     const codes = [...new Set(subjects.flatMap((sub) => optionsFor(sub).filter((o) => o.category === filters.category).map((o) => o.id)))]

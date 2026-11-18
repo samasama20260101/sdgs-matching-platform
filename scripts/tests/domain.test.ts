@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { canSupportAtAge, currentAge, fullYearsBetween, isMinorAge, needsGuardianConsent, parseAgeInput, todayInTokyo } from '../../src/lib/domain/age'
 import { growthSince, summarizeContributions, resolvedForIndicator } from '../../src/lib/domain/score'
-import { applyAiSensitivity, deriveSensitivity } from '../../src/lib/domain/sensitivity'
+import { deriveSensitivity, isSensitiveByReasons, normalizeReasons, raiseSensitivityWithAi, setSensitivityByAdmin } from '../../src/lib/domain/sensitivity'
 import { canOffer, offerBlock, supporterCaseAccess, type CaseForVisibility, type SupporterFace } from '../../src/lib/domain/visibility'
 import { formatHandoverCode, HANDOVER_ALPHABET, normalizeHandoverInput } from '../../src/lib/domain/handover'
 
@@ -72,16 +72,35 @@ assert.deepEqual(resolvedForIndicator([
 ], now), { count: 3, growth: { month: 1, year: 2 } })
 assert.deepEqual(growthSince([Date.parse('2026-12-01T00:00:00Z')], now), { month: 0, year: 0 }) // 未来の時刻は数えない
 
-// ---- 機微: 指標の印・18歳未満・AI は上げるだけ
+// ---- 機微(#133): 書いた言葉と18歳未満が下限・AI は上げるだけ・AI が使えなければ機微・運営はどちらにも直せる
 const urgent = new Set(['3.4.2', '16.1.1'])
-assert.deepEqual(deriveSensitivity({ indicatorCodes: ['1.1.1'], urgentCodes: urgent, isMinor: false }), { isSensitive: false, reasons: [] })
-assert.deepEqual(deriveSensitivity({ indicatorCodes: ['3.4.2'], urgentCodes: urgent, isMinor: false }).reasons, ['INDICATOR'])
-assert.deepEqual(deriveSensitivity({ indicatorCodes: ['3.5.1'], urgentCodes: urgent, isMinor: false }).reasons, ['INDICATOR'])
-assert.deepEqual(deriveSensitivity({ indicatorCodes: [], urgentCodes: urgent, isMinor: true }).reasons, ['MINOR'])
-const plain = { isSensitive: false, reasons: [] as ('INDICATOR' | 'MINOR' | 'AI' | 'ADMIN')[] }
-assert.equal(applyAiSensitivity(plain, true, false).isSensitive, true)
-assert.equal(applyAiSensitivity(plain, false, false).isSensitive, false)
-assert.equal(applyAiSensitivity(plain, true, true).isSensitive, false) // 運営が下げたものを AI では戻さない
+const aiPlain = { ok: true as const, indicatorCodes: ['1.1.1'], sensitive: false }
+assert.deepEqual(deriveSensitivity({ urgentWords: false, isMinor: false, urgentCodes: urgent, ai: aiPlain }), { isSensitive: false, reasons: [] })
+// 下限: 書いた言葉・18歳未満は、AI が「機微でない」と言っても機微
+assert.deepEqual(deriveSensitivity({ urgentWords: true, isMinor: false, urgentCodes: urgent, ai: aiPlain }), { isSensitive: true, reasons: ['WORDS'] })
+assert.deepEqual(deriveSensitivity({ urgentWords: false, isMinor: true, urgentCodes: urgent, ai: aiPlain }), { isSensitive: true, reasons: ['MINOR'] })
+// AI は上げる方向: 機微の印のある指標(緊急の印・追加の印)と、AI の判定
+assert.deepEqual(deriveSensitivity({ urgentWords: false, isMinor: false, urgentCodes: urgent, ai: { ok: true, indicatorCodes: ['3.4.2'], sensitive: false } }).reasons, ['INDICATOR'])
+assert.deepEqual(deriveSensitivity({ urgentWords: false, isMinor: false, urgentCodes: urgent, ai: { ok: true, indicatorCodes: ['3.5.1'], sensitive: false } }).reasons, ['INDICATOR'])
+assert.deepEqual(deriveSensitivity({ urgentWords: false, isMinor: false, urgentCodes: urgent, ai: { ok: true, indicatorCodes: [], sensitive: true } }).reasons, ['AI'])
+// AI が使えない・時間切れ・壊れた応答のときは機微(理由で分かるように)
+assert.deepEqual(deriveSensitivity({ urgentWords: false, isMinor: false, urgentCodes: urgent, ai: { ok: false } }), { isSensitive: true, reasons: ['AI_UNAVAILABLE'] })
+assert.deepEqual(deriveSensitivity({ urgentWords: true, isMinor: true, urgentCodes: urgent, ai: { ok: false } }).reasons, ['WORDS', 'MINOR', 'AI_UNAVAILABLE'])
+// あとから AI を重ねる: 上げるだけで、今ある理由(AI が使えなかった印も)は消さない
+assert.deepEqual(raiseSensitivityWithAi(['AI_UNAVAILABLE'], { indicatorCodes: ['1.1.1'], sensitive: false }, urgent), { isSensitive: true, reasons: ['AI_UNAVAILABLE'] })
+assert.deepEqual(raiseSensitivityWithAi([], { indicatorCodes: ['16.1.1'], sensitive: true }, urgent), { isSensitive: true, reasons: ['INDICATOR', 'AI'] })
+assert.deepEqual(raiseSensitivityWithAi([], { indicatorCodes: [], sensitive: false }, urgent), { isSensitive: false, reasons: [] })
+// 運営が外した相談は、AI だけでは戻さない(理由は記録として足す)
+assert.deepEqual(raiseSensitivityWithAi(['AI_UNAVAILABLE', 'ADMIN_CLEARED'], { indicatorCodes: [], sensitive: true }, urgent), { isSensitive: false, reasons: ['AI', 'AI_UNAVAILABLE', 'ADMIN_CLEARED'] })
+// 運営はどちらにも直せる。自動の理由は残し、運営の決めは1つだけ
+assert.deepEqual(setSensitivityByAdmin(['AI_UNAVAILABLE'], false), { isSensitive: false, reasons: ['AI_UNAVAILABLE', 'ADMIN_CLEARED'] })
+assert.deepEqual(setSensitivityByAdmin(['AI_UNAVAILABLE', 'ADMIN_CLEARED'], true), { isSensitive: true, reasons: ['AI_UNAVAILABLE', 'ADMIN'] })
+assert.deepEqual(setSensitivityByAdmin([], true), { isSensitive: true, reasons: ['ADMIN'] })
+assert.equal(isSensitiveByReasons(['MINOR', 'ADMIN_CLEARED']), false) // 18歳未満の見える範囲は is_minor が別に守る(visibility.ts)
+assert.equal(isSensitiveByReasons([]), false)
+// DB から読んだ理由は、知っている名前だけに絞る
+assert.deepEqual(normalizeReasons(['MINOR', 'x', 'MINOR', 'WORDS']), ['WORDS', 'MINOR'])
+assert.deepEqual(normalizeReasons(null), [])
 
 // ---- 見える範囲
 const base: CaseForVisibility = {
@@ -145,7 +164,7 @@ assert.throws(() => formatHandoverCode(new Uint8Array(20).fill(255))) // 使え�
 console.log('domain: ok')
 
 // ---- 相談の受付
-import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBodyForAi, caseTitle, indicatorLabelKey, optionsFor, provisionalTitle, sanitizeEntryCode, sanitizeSelection }) => {
+import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBodyForAi, caseTitle, deriveUrgency, indicatorLabelKey, optionsFor, provisionalTitle, raiseWithAi, sanitizeEntryCode, sanitizeSelection }) => {
   assert.equal(optionsFor('PERSON').length, 115)
   assert.ok(optionsFor('COMPANY').length > 0 && optionsFor('COMMUNITY').length > 0)
   // 主体の選択肢にない番号・重複は落とし、3つで切る
@@ -153,21 +172,51 @@ import('../../src/lib/domain/intake').then(({ assessIntake, canConsultAs, caseBo
   const companyFirst = optionsFor('COMPANY')[0].id
   assert.deepEqual(sanitizeSelection('PERSON', [companyFirst]).length <= 1, true)
   assert.deepEqual(sanitizeSelection('COMPANY', [companyFirst]), [companyFirst])
-  // 緊急: 緊急の印のある選択肢か、本文の言葉
-  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: ['3.4.2'], text: '…', personIsMinor: false, organizationPopulation: null }).urgency, 'High')
-  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: [], text: 'もう死にたい', personIsMinor: false, organizationPopulation: null }).urgency, 'High')
-  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: [], text: 'quiero morir', personIsMinor: false, organizationPopulation: null }).urgency, 'High')
-  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: ['1.1.1'], text: 'お金がない', personIsMinor: false, organizationPopulation: null }).urgency, 'Medium')
+  // 緊急(#133): 書いた言葉が下限。AI の判定と、AI が選んだ指標の緊急の印は上げるだけ
+  const aiNone = { ok: true as const, indicatorIds: [] as string[], urgent: false, sensitive: false }
+  const assess = (over: Partial<Parameters<typeof assessIntake>[0]>) => assessIntake({ subject: 'PERSON', text: 'x', personIsMinor: false, organizationPopulation: null, ai: aiNone, ...over })
+  assert.equal(assess({ text: 'もう死にたい' }).urgency, 'High')
+  assert.equal(assess({ text: 'quiero morir' }).urgency, 'High')
+  assert.equal(assess({ text: 'もう死にたい', ai: { ok: false } }).urgency, 'High') // AI が使えなくても言葉の判定は効く
+  assert.equal(assess({ text: 'お金がない', ai: { ok: true, indicatorIds: ['1.1.1'], urgent: false, sensitive: false } }).urgency, 'Medium')
+  assert.equal(assess({ text: 'お金がない', ai: { ok: true, indicatorIds: ['3.4.2'], urgent: false, sensitive: false } }).urgency, 'High') // AI が選んだ指標の緊急の印
+  assert.equal(assess({ text: 'お金がない', ai: { ok: true, indicatorIds: [], urgent: true, sensitive: false } }).urgency, 'High') // AI の判定
+  assert.equal(assess({ text: 'お金がない', ai: { ok: false } }).urgency, 'Medium') // AI が使えないときの緊急度は言葉の判定のまま
+  assert.equal(deriveUrgency({ urgentWords: true, aiUrgent: false, urgentIndicator: false }), 'High')
+  assert.equal(deriveUrgency({ urgentWords: false, aiUrgent: false, urgentIndicator: false }), 'Medium')
+  // 分類に使う指標は AI が選んだもののうち、その主体の選択肢にあるものだけ・3つまで。AI が使えなければ空
+  assert.deepEqual(assess({ ai: { ok: true, indicatorIds: ['1.1.1', 'x', '1.1.1', '2.1.1', '11.1.1', '3.4.2'], urgent: false, sensitive: false } }).indicatorIds, ['1.1.1', '2.1.1', '11.1.1'])
+  assert.deepEqual(assess({ ai: { ok: false } }).indicatorIds, [])
+  // 機微: 書いた言葉と18歳未満が下限・AI が使えなければ機微
+  assert.deepEqual(assess({ text: 'もう死にたい' }).sensitiveReasons, ['WORDS'])
+  assert.equal(assess({ ai: { ok: false } }).isSensitive, true)
+  assert.deepEqual(assess({ ai: { ok: false } }).sensitiveReasons, ['AI_UNAVAILABLE'])
+  assert.equal(assess({ ai: { ok: true, indicatorIds: ['1.1.1'], urgent: false, sensitive: false } }).isSensitive, false)
+  assert.deepEqual(assess({ ai: { ok: true, indicatorIds: ['16.2.1'], urgent: false, sensitive: false } }).sensitiveReasons, ['INDICATOR'])
   // 18歳未満は機微。会社の相談では担当者の年齢を使わない
-  const minor = assessIntake({ subject: 'PERSON', indicatorIds: ['1.1.1'], text: 'x', personIsMinor: true, organizationPopulation: null })
+  const minor = assess({ personIsMinor: true })
   assert.equal(minor.isMinor, true)
   assert.equal(minor.isSensitive, true)
-  const company = assessIntake({ subject: 'COMPANY', indicatorIds: [companyFirst], text: 'x', personIsMinor: true, organizationPopulation: 120 })
+  const company = assess({ subject: 'COMPANY', personIsMinor: true, organizationPopulation: 120, ai: { ok: true, indicatorIds: [companyFirst], urgent: false, sensitive: false } })
   assert.equal(company.isMinor, false)
-  // 対象の人数: 個人は 1、団体は登録した人数(なければ 1)
+  assert.equal(company.isSensitive, false)
+  assert.deepEqual(company.indicatorIds, [companyFirst])
+  // 会社の相談に個人の選択肢の番号が返ってきても使わない
+  assert.deepEqual(assess({ subject: 'COMPANY', ai: { ok: true, indicatorIds: ['1.1.1'], urgent: false, sensitive: false } }).indicatorIds.includes('1.1.1'), optionsFor('COMPANY').some((o) => o.id === '1.1.1'))
+  // 対象の人数: 個人は 1、会社・地域は登録した人数(なければ 1)
   assert.equal(company.affectedPopulation, 120)
-  assert.equal(assessIntake({ subject: 'COMMUNITY', indicatorIds: [], text: 'x', personIsMinor: false, organizationPopulation: null }).affectedPopulation, 1)
-  assert.equal(assessIntake({ subject: 'PERSON', indicatorIds: [], text: 'x', personIsMinor: false, organizationPopulation: 999 }).affectedPopulation, 1)
+  assert.equal(assess({ subject: 'COMMUNITY' }).affectedPopulation, 1)
+  assert.equal(assess({ organizationPopulation: 999 }).affectedPopulation, 1)
+  // あとで分類し直す: 上げるだけ。分類に使う指標はまだないときだけ AI のものにする
+  const raisedUp = raiseWithAi({ subject: 'PERSON', currentIndicatorIds: [], urgency: 'Medium', reasons: ['AI_UNAVAILABLE'], ai: { indicatorIds: ['3.4.2', 'x'], urgent: false, sensitive: false } })
+  assert.deepEqual(raisedUp.indicatorIds, ['3.4.2'])
+  assert.equal(raisedUp.urgency, 'High')
+  assert.deepEqual(raisedUp.sensitiveReasons, ['INDICATOR', 'AI_UNAVAILABLE'])
+  const kept = raiseWithAi({ subject: 'PERSON', currentIndicatorIds: ['1.1.1'], urgency: 'High', reasons: ['WORDS'], ai: { indicatorIds: ['2.1.1'], urgent: false, sensitive: false } })
+  assert.deepEqual(kept.indicatorIds, ['1.1.1']) // 本人が選んだ v2 の初めの相談は、本人の選んだものを残す
+  assert.deepEqual(kept.aiIndicatorIds, ['2.1.1'])
+  assert.equal(kept.urgency, 'High') // 下げない
+  assert.equal(kept.isSensitive, true)
   // 会社として相談できるのは会社、地域として相談できるのは自治体と地域団体
   assert.equal(canConsultAs('COMPANY', 'COMPANY'), true)
   assert.equal(canConsultAs('COMPANY', 'NPO'), false)

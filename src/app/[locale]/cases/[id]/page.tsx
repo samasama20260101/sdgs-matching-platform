@@ -14,7 +14,7 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, cx, ErrorNote, Heading, Lead, SectionLabel, Spinner, Tip } from '@/components/app/ui'
 import { Thread } from '@/components/thread/Thread'
 import { Referrals } from '@/components/consult/Referrals'
-import { CrisisLinks } from '@/components/app/CrisisLinks'
+import { CrisisLinks, CrisisNotice } from '@/components/app/CrisisLinks'
 import { useSession } from '@/components/app/SessionProvider'
 import type { ConsulteeCaseView, ConsulteeOffer } from '@/lib/server/consulteeView'
 import { caseTitle } from '@/lib/domain/intake'
@@ -193,7 +193,8 @@ function CaseInner({ id }: { id: string }) {
   const waiting = c.offers.filter((o) => o.status === 'PENDING')
   const chosen = c.offers.filter((o) => o.status === 'ACCEPTED')
   const full = c.acceptedCount >= c.maxSupporters
-  // 選んだものと題は画面の言語で出す(保存してあるのは日本語)
+  const justSent = params.get('sent') === '1'
+  // 本人が選んだもの(v2 の初めの相談だけ)と題は画面の言語で出す(保存してあるのは日本語)。AI が選んだ指標は相談者の画面に出さない
   const chips = c.indicators.map((code, i) => label(c.subjectType, code) ?? c.indicatorTexts[i] ?? code)
   const title = caseTitle({ locale, savedTitle: c.title, firstIndicatorLabel: c.indicators[0] ? label(c.subjectType, c.indicators[0]) : null, ownWords: c.description })
 
@@ -204,10 +205,11 @@ function CaseInner({ id }: { id: string }) {
         <Heading level={2}>{title}</Heading>
       </div>
       <Steps c={c} />
-      {/* 緊急の印が付いた相談は、受付のあいだ、いますぐ話せる窓口を出しておく(行き止まりを作らない) */}
-      {c.urgent && open && <CrisisLinks country={country} />}
+      {/* 緊急と判定した相談は、受付のあいだ、いますぐ話せる窓口を出しておく(行き止まりを作らない)。
+          届けた直後は、書いた言葉で気づけなかった(AI が緊急と判定した)ときのために、言葉を添えて目立たせる(#133) */}
+      {c.urgent && open && (justSent ? <CrisisNotice country={country} body={t('crisisSent')} /> : <CrisisLinks country={country} />)}
 
-      {params.get('sent') === '1' && c.status === 'OPEN' && (
+      {justSent && c.status === 'OPEN' && (
         <Card className="flex flex-col gap-1 bg-lamp-faint p-4">
           <div className="flex items-center justify-between">
             <span className="text-t15 font-bold">{t('delivered')}</span>
@@ -218,7 +220,7 @@ function CaseInner({ id }: { id: string }) {
       )}
 
       {/* いまの段階で次にすること(画面の見直し 所見 6) */}
-      {c.status === 'OPEN' && waiting.length === 0 && params.get('sent') !== '1' && <Lead>{t('nextOpen')}</Lead>}
+      {c.status === 'OPEN' && waiting.length === 0 && !justSent && <Lead>{t('nextOpen')}</Lead>}
       {c.status === 'MATCHED' && c.supporterResolvedAt && data.canDecide && <ResolvePanel caseId={c.id} onDone={reload} />}
       {c.status === 'RESOLVED' && <Card className="bg-leaf-soft p-4"><span className="text-t15 font-bold text-leaf-ink">{t('resolved')}</span></Card>}
       {c.status === 'RESOLVED' && !c.thanked && data.canDecide && chosen.length > 0 && <ThanksPanel caseId={c.id} onDone={reload} />}

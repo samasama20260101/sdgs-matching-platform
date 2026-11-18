@@ -1,14 +1,9 @@
 // 相談の下書き(ログインの往復で書いた内容を失わない)。実行: npm run test:units
 import assert from 'node:assert/strict'
 import { DRAFT_TTL_MS, parseDraft, serializeDraft, type ConsultDraft } from '../../src/lib/domain/consultDraft'
-import { INTAKE_INDICATORS } from '../../src/lib/constants/intakeIndicators'
-import { COMPANY_INTAKE_INDICATORS } from '../../src/lib/constants/orgIntakeIndicators.generated'
 
 const NOW = Date.UTC(2026, 10, 17, 3, 0, 0)
-const p1 = INTAKE_INDICATORS[0].id
-const p2 = INTAKE_INDICATORS[1].id
-const c1 = COMPANY_INTAKE_INDICATORS[0].id
-const person: ConsultDraft = { subject: 'PERSON', words: '食べ物が足りない', since: '先月から', wish: '', selected: [p1], suggested: [p1, p2] }
+const person: ConsultDraft = { subject: 'PERSON', words: '食べ物が足りない', since: '先月から', wish: '' }
 
 // 書いたものがそのまま戻る
 assert.deepEqual(parseDraft(serializeDraft(person, NOW), 'PERSON', NOW + 60_000), person)
@@ -24,12 +19,11 @@ assert.equal(parseDraft('"text"', 'PERSON', NOW), null)
 assert.equal(parseDraft(serializeDraft({ ...person, words: '   ' }, NOW), 'PERSON', NOW), null)
 assert.equal(parseDraft(JSON.stringify({ v: 2, savedAt: NOW, ...person }), 'PERSON', NOW), null)
 assert.equal(parseDraft(serializeDraft({ ...person, words: 'あ'.repeat(2001) }, NOW), 'PERSON', NOW), null)
-// その主体の選択肢にないもの・重なり・上限を超えたものは落とす
-const messy = JSON.stringify({ v: 1, savedAt: NOW, ...person, selected: [p1, p1, 'x.y.z', c1, p2], suggested: [p1, 7, 'nope'] })
-assert.deepEqual(parseDraft(messy, 'PERSON', NOW)?.selected, [p1, p2])
-assert.deepEqual(parseDraft(messy, 'PERSON', NOW)?.suggested, [p1])
-// 会社の下書きは会社の選択肢で確かめる
-const company: ConsultDraft = { subject: 'COMPANY', words: '人手が足りない', since: '', wish: '', selected: [c1], suggested: [] }
+// 前の形の下書き(困りごとを選ぶ段があった頃。選んだもの・近いものを持つ)も、書いた言葉だけを読む(#133)
+const older = JSON.stringify({ v: 1, savedAt: NOW, ...person, selected: ['1.1.1'], suggested: ['1.1.1', 'x'] })
+assert.deepEqual(parseDraft(older, 'PERSON', NOW), person)
+// 会社の下書き
+const company: ConsultDraft = { subject: 'COMPANY', words: '人手が足りない', since: '', wish: '' }
 assert.deepEqual(parseDraft(serializeDraft(company, NOW), 'COMPANY', NOW), company)
 
 console.log('consultDraft: ok')

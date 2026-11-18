@@ -53,7 +53,7 @@
   "find": {
     "title": "Buscar consultas",
     "tipLabel": "Cómo leer las etiquetas",
-    "tip": "Las etiquetas con número son los Objetivos de los ODS, con el nombre según quién consulta. Abre la consulta para ver los problemas en detalle (las punteadas son sugerencias de la IA que el equipo aún no revisó). Las consultas en otros idiomas se pueden traducir en la conversación.",
+    "tip": "Las etiquetas con número son los Objetivos de los ODS, con el nombre según quién consulta. La IA elige las áreas y los indicadores a partir de la consulta cuando llega, y el equipo de samasama los revisa después. Abre la consulta para verla en detalle. Las consultas en otros idiomas se pueden traducir en la conversación.",
     "individualNote": "A título individual solo ves consultas de empresas y comunidades (las de personas se apoyan a través de organizaciones).",
     "category": "Categoría",
     "all": "Todas",
@@ -79,7 +79,6 @@
   },
   "case": {
     "person": "Consulta de una persona",
-    "summary": "Resumen",
     "words": "Con sus palabras",
     "since": "Desde cuándo",
     "wish": "Qué le gustaría",
@@ -290,6 +289,7 @@
     "words": "Con sus palabras (tal como las escuchaste)",
     "consent": "La persona aceptó que registremos esta consulta aquí",
     "submit": "Registrar y mostrar el código de traspaso",
+    "submitting": "Registrando…",
     "required": "Completa los campos necesarios",
     "failed": "No se pudo registrar",
     "notApproved": "Podrás registrar en nombre de otra persona cuando termine la entrevista con el equipo de samasama y tu organización esté aprobada.",
@@ -300,8 +300,7 @@
     "codeTip": "Cuando la persona tenga un teléfono, podrá introducir este código para que la consulta sea suya. Hasta entonces, los ofrecimientos y mensajes llegan a las consultas en nombre de otros de tu organización.",
     "handOnPaper": "Escribe este código en un papel y dáselo a la persona (válido hasta {date}). Si cierras esta pantalla, no se podrá volver a mostrar.",
     "print": "Imprimir una hoja para la persona",
-    "openCase": "Abrir la consulta",
-    "noneIsOk": "Si nada encaja, puedes seguir sin elegir."
+    "openCase": "Abrir la consulta"
   },
   "contrib": {
     "title": "Mis contribuciones",
