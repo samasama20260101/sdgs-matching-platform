@@ -11,7 +11,7 @@ import { Button, Card, Chip, cx, ErrorNote, Lead, TextArea, TextField } from '@/
 import { SUPPORTER_CHECKS, choiceKey, isSelfCheck, noteKey, parseCheckKey } from '@/lib/domain/supporterChecks'
 import { isSupporterPurpose } from '@/lib/domain/publicSupporter'
 
-const STATUSES = [['APPLIED', '申し込み'], ['INTERVIEW', '面談の調整中'], ['APPROVED', '承認済み'], ['REJECTED', '見送り'], ['SUSPENDED', '停止'], ['NOT_APPLIED', '相談のための団体']] as const
+const STATUSES = [['APPLIED', '申し込み'], ['INTERVIEW', '面談の調整中'], ['APPROVED', '承認済み'], ['REJECTED', '見送り'], ['SUSPENDED', '停止'], ['NOT_APPLIED', '相談者の会社・地域']] as const
 // 11/12 より前の申し込みにあった項目(今の申し込みの画面にはない)
 const LEGACY_LABELS: Record<string, string> = { activities: 'どんな活動をしていますか(前の項目)', targets: '支えられる困りごと・相手(前の項目)' }
 
@@ -54,7 +54,7 @@ function OrgCard({ org, onChanged, focused }: { org: Org; onChanged: () => Promi
   const t = useTranslations('support.join')
   const appLabel = (k: string) => LEGACY_LABELS[k] ?? (t.has(`application.${k}`) ? t(`application.${k}`) : k)
   const supporter = isSupporterPurpose(org.application)
-  const purpose = supporter ? '支え手の申し込み' : '相談のための団体'
+  const purpose = supporter ? '支援団体の申し込み' : '相談者の会社・地域'
   return (
     <div id={org.display_id} className="scroll-mt-4">
       <Card tone="support" className={cx('flex flex-col gap-2 p-4', focused && 'ring-2 ring-night')}>
@@ -79,7 +79,7 @@ function OrgCard({ org, onChanged, focused }: { org: Org; onChanged: () => Promi
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <span className="text-t12_5 text-mist">相談のための団体は審査しません。支える側に立つには、この団体の管理の人が支え手の申し込みをします。止めると、この団体として相談できなくなります。</span>
+            <span className="text-t12_5 text-mist">相談者の会社・地域は審査しません。支える側に立つには、この会社・地域の管理の人が支援団体の申し込みをします。止めると、この会社・地域として相談できなくなります。</span>
             <div className="flex flex-wrap gap-2">
               {org.vetting_status === 'SUSPENDED'
                 ? <Button tone="support" variant="outline" onClick={() => void set({ vettingStatus: 'NOT_APPLIED', note })}>止めるのを解く</Button>
@@ -121,7 +121,7 @@ export default function VettingPage() {
   const { data, reload } = useLoad(fetchOrgs)
   return (
     <AdminShell title="審査">
-      <Lead>申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した団体は、機微な相談と18歳未満の相談も受けられます。会社・地域として相談するために登録した団体は審査に並ばず、「相談のための団体」に入ります。</Lead>
+      <Lead>支援団体の申し込みフォーム → 運営へ知らせ → 面談 → 承認で一覧に載ります(11/5 定例)。承認した支援団体は、機微な相談と18歳未満の相談も受けられます。会社・地域として相談するために登録したもの(相談者の会社・地域)は審査に並ばず、「相談者の会社・地域」に入ります。</Lead>
       <div className="flex flex-wrap gap-1.5">
         {STATUSES.map(([k, label]) => (
           <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-t12_5 font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>

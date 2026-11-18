@@ -66,7 +66,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     // コーディネーターは支える側の役割なので、支え手の団体だけ(相談のための団体はならない)
     const status = (update.vetting_status as string | undefined) ?? current.vetting_status
     if (p.coordinatorRegion && (!supporter || !['MUNICIPALITY', 'INTERMEDIARY'].includes(current.org_type as string) || status !== 'APPROVED')) {
-      return NextResponse.json({ error: 'コーディネーターにできるのは、承認済みの支え手の自治体と中間支援団体です', code: 'NOT_ALLOWED' }, { status: 400 })
+      return NextResponse.json({ error: 'コーディネーターにできるのは、承認済みの支援団体のうち、自治体と中間支援団体です', code: 'NOT_ALLOWED' }, { status: 400 })
     }
     await supabaseAdmin.from('coordinator_scopes').delete().eq('organization_id', id)
     if (p.coordinatorRegion) {

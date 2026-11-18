@@ -22,7 +22,7 @@ export default function StatsPage() {
             {tile('今月の相談', String(s.thisMonth))}
             {tile('解決まで届いた割合', s.resolvedRate === null ? '—' : `${s.resolvedRate}%`)}
             {tile('24時間申し出のない相談', String(s.unmatched))}
-            {tile('支え手(団体・個人)', `${s.supporters.organizations}・${s.supporters.individuals}`)}
+            {tile('支え手(支援団体・個人)', `${s.supporters.organizations}・${s.supporters.individuals}`)}
           </div>
           <Card tone="support" className="flex flex-col gap-1 p-4">
             <SectionLabel>待っている相談の多い指標(営業とつなぎ先集めの優先順位に)</SectionLabel>

@@ -42,7 +42,7 @@
       },
       "whoSees": {
         "title": "Who sees what",
-        "body": "Supporters see only your nickname, your area and what you wrote. Requests about life, violence and those from people under 18 go only to organizations we have interviewed."
+        "body": "Supporters see only your nickname, your area and what you wrote. Requests about life, violence and those from people under 18 go only to support organizations we have interviewed."
       },
       "onlyChosen": {
         "title": "Only to people you choose",
@@ -136,7 +136,7 @@
     "communityNote": "As a local government or neighborhood group",
     "besides": "Other things you can do",
     "becomeSupporter": "Become a supporter",
-    "becomeSupporterNote": "As a person or an organization",
+    "becomeSupporterNote": "As an individual or a support organization",
     "learn": "Learn about social problems",
     "learnNote": "News and topics",
     "trial": "Try the form without signing in"
@@ -144,7 +144,7 @@
   "footer": {
     "news": "News",
     "story": "Our story",
-    "supporters": "Supporters",
+    "supporters": "Support organizations",
     "contact": "Contact",
     "terms": "Terms of use",
     "privacy": "Privacy policy",
@@ -200,7 +200,7 @@
     "withdrawTip": "Requests that are open or in progress will be cancelled. If you have supported others, all your contribution records will be deleted too.",
     "withdrawConfirm": "This can't be undone. Do you really want to delete your account?",
     "withdrawYes": "Delete my account",
-    "withdrawLastOwner": "You are the manager of an organization. Please make someone else the manager first.",
+    "withdrawLastOwner": "You manage a support organization or a requesting company or community. Please make someone else a manager first.",
     "withdrawFailed": "We couldn't delete your account. Please contact us through the contact form.",
     "loginMethods": "Sign-in methods",
     "loginMethodsTipLabel": "If you can't sign in",
@@ -232,7 +232,7 @@
     "choose": "Choose",
     "categories": {
       "aboutService": "About the service",
-      "joinAsSupporter": "Join as a supporting organization",
+      "joinAsSupporter": "Join as a support organization",
       "media": "Press and media",
       "other": "Other",
       "howto": "How to use the app",
@@ -264,7 +264,7 @@
     "codeInvalid": "Enter the 6-digit code",
     "codeWrong": "Wrong code. Enter the current code from your app",
     "done": "Second check completed",
-    "card": "Second check (organization members)",
+    "card": "Second check (support organization members)",
     "cardNote": "Needed to read sensitive requests"
   },
   "talkRow": {
@@ -276,26 +276,26 @@
     "resolved": "Solved"
   },
   "supporters": {
-    "title": "Supporters & organizations",
-    "lead": "These organizations have been interviewed and approved by our team. When you write a consultation, organizations that fit it send you offers.",
+    "title": "Support organizations",
+    "lead": "These support organizations have been interviewed and approved by our team. When you write a request, support organizations that fit it send you offers.",
     "count": "{count} organizations",
     "regionFirst": "{count} organizations active in your area are shown first",
     "regionChip": "Your area",
     "filterLabel": "Type of organization",
     "filterAll": "All",
-    "empty": "No organizations of this type are listed yet",
-    "emptyAll": "No organizations are listed yet",
+    "empty": "No support organizations of this type are listed yet",
+    "emptyAll": "No support organizations are listed yet",
     "nationwide": "Nationwide",
     "othersSuffix": "+{count} more",
     "resolved": "{count} resolved",
     "thanks": "{count} thanks",
     "showMore": "Show more ({count})",
     "joinTitle": "Would you like to help?",
-    "joinBody": "Organizations can read consultations after they apply, have an interview with our team and are approved. Individuals can also help with company and community consultations.",
+    "joinBody": "Support organizations can read requests after they apply, have an interview with our team and are approved. Individuals can also help with company and community requests.",
     "joinCta": "Register as a supporter",
     "consultCta": "Write a consultation",
     "detail": {
-      "backToList": "Supporters & organizations",
+      "backToList": "Support organizations",
       "since": "Joined {date}",
       "statResolved": "Resolved",
       "statThanks": "Thanks",
@@ -304,16 +304,16 @@
       "bioTitle": "About",
       "areasTitle": "Areas of activity",
       "thanksTitle": "Thanks received",
-      "thanksLead": "Words chosen by people whose consultations were resolved",
+      "thanksLead": "Words chosen by requesters whose requests were resolved",
       "thanksCount": "{count} times",
       "website": "Website",
       "line": "LINE: {id}",
-      "ctaTitle": "If you want to consult this organization",
-      "ctaBody": "When you write a consultation, organizations that fit it send you offers (not necessarily this one). You choose who to talk to.",
-      "notFoundTitle": "This organization page was not found",
-      "notFoundLead": "The organization is no longer listed, or the URL is wrong.",
+      "ctaTitle": "If you want to ask this support organization for help",
+      "ctaBody": "When you write a request, support organizations that fit it send you offers (not necessarily this one). You choose who to talk to.",
+      "notFoundTitle": "This support organization page was not found",
+      "notFoundLead": "The support organization is no longer listed, or the URL is wrong.",
       "ctaConsult": "Write a consultation"
     },
-    "loadFailed": "We could not load the list. Please try again later."
+    "loadFailed": "We could not load the list of support organizations. Please try again later."
   }
 }

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   }
   const result = data as { ok?: boolean; error?: string }
   if (result.error === 'LAST_OWNER') {
-    return NextResponse.json({ error: '団体の管理者を別の人に替えてから退会してください', code: 'LAST_OWNER' }, { status: 409 })
+    return NextResponse.json({ error: '管理の人になっている支援団体や会社・地域の管理を、別の人に替えてから退会してください', code: 'LAST_OWNER' }, { status: 409 })
   }
   if (!result.ok) return NextResponse.json({ error: '退会できませんでした', code: result.error }, { status: 400 })
 

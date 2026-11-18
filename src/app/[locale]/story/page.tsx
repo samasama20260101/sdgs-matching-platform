@@ -27,7 +27,7 @@ const VALUES = [
   { n: '03', title: 'AIは架け橋', body: 'AIは出会いを促す架け橋です。最後に動くのは人間の温かさと意思。テクノロジーはその補助です。' },
   { n: '04', title: '声なき声を聞く', body: '少ない言葉でも状況を理解しようとするAI設計。世界中どこからでも、敷居を低く、間口を広く。' },
   { n: '05', title: '持続できる仕組み', body: '一度きりでなく関係が続く設計。支え手のモチベーションも守り、持続可能な支援のエコシステムを目指します。' },
-  { n: '06', title: 'SDGsへの誠実さ', body: 'SDGsは私たちの羅針盤。相談する人には求めません。困りごとをAIが分類し最適な支援者へつなぐ、内側の地図として活用します。' },
+  { n: '06', title: 'SDGsへの誠実さ', body: 'SDGsは私たちの羅針盤。相談者には求めません。困りごとをAIが分類し最適な支援者へつなぐ、内側の地図として活用します。' },
 ]
 
 const GLOBAL = [
@@ -63,7 +63,7 @@ export default function StoryPage() {
         <Card className="flex flex-col gap-1.5 bg-lamp-faint p-4">
           <span className="text-t15 font-bold text-ink">SDGsは、私たちの羅針盤。</span>
           <p className="m-0 text-t13_5 leading-[1.85] text-ink-soft">
-            相談する人はSDGsを知らなくていい。ただ「困っている」と言えばいい。私たちがその内容をSDGsの視点で分類し、合う支え手へつなぐ。SDGsは強要するものではなく、支援の精度を上げるための<strong className="text-ink">内側の地図</strong>です。
+            相談者はSDGsを知らなくていい。ただ「困っている」と言えばいい。私たちがその内容をSDGsの視点で分類し、合う支え手へつなぐ。SDGsは強要するものではなく、支援の精度を上げるための<strong className="text-ink">内側の地図</strong>です。
           </p>
         </Card>
       </section>
@@ -134,7 +134,7 @@ export default function StoryPage() {
           無料で相談する
         </Link>
         <Link href="/supporters" className="flex min-h-[48px] items-center justify-center rounded-[16px] border-[1.5px] border-line-strong bg-paper px-4 text-t14 font-bold btn-track text-ink no-underline">
-          支え手と団体を見る
+          支援団体を見る
         </Link>
       </section>
     </DocShell>
