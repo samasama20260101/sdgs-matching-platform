@@ -160,6 +160,7 @@ SUPABASE_PROD_READONLY_DATABASE_URL=postgresql://app_prod_readonly:...
   - `archive/news-note-article-2026-10`(お知らせの note 記事ワークフロー)
   - `archive/sdgs-impact-dashboard-2026-10`(SDGs インパクトダッシュボードの設計書)
   - `archive/i18n-design-doc-2026-10`(多言語の設計書)
+  - `archive/consult-indicator-picker-2026-11`(相談者が困りごとの候補「近いもの」を選ぶ段と、その API。#133 で外した)
   - 中身を見るとき: `git show <タグ>:<ファイル>` または `git switch --detach <タグ>`
 - 本番に反映したら確かめること: `/`・`/trial`・`/api/health` が 200、セキュリティヘッダー 4 つ、変えた画面のブラウザ確認、翌朝の cron。
 
