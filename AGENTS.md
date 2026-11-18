@@ -35,23 +35,26 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 
 - **サーバーの API は `supabaseAdmin`(RLS を通らない)で DB を読み書きする。認可は API のコードで必ず行う。** 新しい API では `requireActiveAppUser()`(`src/lib/api/auth.ts`)を使う。**運営の API は `requireAdmin()`**(2つ目の確認まで済んだログインだけを通す)。ロールは PERSON と ADMIN だけで、支える側の顔は `src/lib/faces.ts`(所属と個人の支え手の登録)で決まる。ブラウザから DB を直接読まない。詳細は `docs/operations.md` §7。
 - **テスト用ユーザーは `supabaseAdmin.auth.admin.createUser()` で作る。** SQL で直接入れると Auth の identities ができずログインできない。消す順番: messages → offers → cases → public.users → auth.users。
-- **v2.0 はパスワードを持たない**(メールのコードと Google)。相談する人について DB に持つのは呼び名・年齢と基準日・国と地域・言語だけで、メールは Auth の中だけ。users に氏名やメールを書き足さない。
-- **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。** 大項目と緊急度は AI に決めさせない。
+- **v2.0 はパスワードを持たない**(メールのコードと Google)。相談者について DB に持つのは呼び名・年齢と基準日・国と地域・言語だけで、メールは Auth の中だけ。users に氏名やメールを書き足さない。
+- **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。**
+- **相談者は困りごとを選ばない。相談を届けるとき、保存する前に AI が指標を選ぶ**(#133、2026-11-17 運営了承。`src/lib/server/caseAi.ts` の `classifyConsultation`。代理の登録も同じ)。大項目は AI が選んだ指標からサーバーが決める(AI に大項目を答えさせない)。**緊急度と機微は、書いた言葉の判定(`detectUrgency`)と年齢を下限にし、AI の分類は上げる方向にだけ効かせる。AI が使えない・時間切れ・壊れた応答のときは機微(理由 `AI_UNAVAILABLE`)として届け**、運営が `/admin/cases/[id]` で直す(運営が外した相談は AI だけでは戻さない)。判定は `src/lib/domain/intake.ts` の `assessIntake`・`raiseWithAi` と `src/lib/domain/sensitivity.ts` だけで行う。分類できなかった相談は毎日の処理が分類し直す(上げる方向だけ)。AI が選んだ指標(`intake_qna.indicator_source = 'AI'`)は相談者の画面に出さない。記録のための指標の確定は、これまでどおり運営の「指標の仕分け」と解決の時点の要約(`caseKnowledge.ts`)。
+- **相談の時点の AI の要約は作らない**(#134)。支える側にも運営にも出さない。AI が書くのは題だけ。解決の時点の要約(`caseKnowledge.ts`、運営だけが見る)は別物。
+- **画面の呼び方**(#135、2026-11-17 運営と決定): 相談する側は個人・会社・地域とも「相談者」、支える側の団体は「支援団体」(個人は「個人の支え手」、まとめて「支え手」)。会社・地域として相談するために登録したもの(`application.purpose = CONSULT`)は「相談者の会社・地域」と書き、画面では「会社」「自治体の課・町内会」と呼ぶ。支援団体と取り違えるので、どちらも「団体」だけで書かない。英語は requester / support organization / individual supporter、スペイン語は quien consulta / organización de apoyo。規約の題「支える人と団体の決まり」は案文に合わせて残している。
 - **AI は `src/lib/ai/client.ts` の `generateJson` だけから呼ぶ。** 提供元の SDK を直接 import しない(提供元とモデルは `src/lib/ai/config.ts` が環境変数から決める)。
-- **体験ページ `/trial` が呼ぶのは「近いもの」の API(`/api/public/trial/suggest`)だけ。** 相談の保存・届け出はしない。AI に渡す前に伏せる・何も保存しない・回数の上限(DB の `hit_rate_limit`、10 分に 10 回・1 日 300 回)を外さない(2026-11-06 代表。それまでは API・DB・AI を呼ばない作りだった)。
-- **相談は先に書き、届けるときにログインする**(2026-11-17 岡本さん。会社・地域の団体の登録も届けるときに求める)。`/consult/new`・`/consult/org` は `OptionalMe` で包み、ログイン前の「近いもの」は体験ページと同じ公開の API を使う。書いた内容はログインの往復のあいだ端末の sessionStorage に預ける(`src/lib/domain/consultDraft.ts`。サーバーに送らない・届けたら消す)。相談を届ける API(`/api/cases`)は今までどおりログインが要る。
+- **体験ページ `/trial` が呼ぶのは分類の API(`/api/public/trial/classify`)だけ。** 本番と同じ分類を動かして、届けたら支援団体の画面にどう並ぶかを見せる(#133 までは「近いもの」の API だった)。相談の保存・届け出はしない。AI に渡す前に伏せる・何も保存しない・回数の上限(DB の `hit_rate_limit`、10 分に 10 回・1 日 300 回)を外さない(2026-11-06 代表。それまでは API・DB・AI を呼ばない作りだった)。
+- **相談は先に書き、届けるときにログインする**(2026-11-17 岡本さん。会社・地域の登録も届けるときに求める)。`/consult/new`・`/consult/org` は `OptionalMe` で包む。書いた内容はログインの往復のあいだ端末の sessionStorage に預ける(`src/lib/domain/consultDraft.ts`。サーバーに送らない・届けたら消す)。相談を届ける API(`/api/cases`)は今までどおりログインが要る。
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
 - 画面の言語は ja・en・es(v2.0、11/5 定例。中国語は入れない)。相談する側と支える側の画面は 3 言語、運営の画面は日本語だけ。文言は `messages/<言語>/app|consult|support.json` に足し、`npm run check:i18n` で 3 言語のキーをそろえる。
 - 災害SOS(2026-09-16 に受付終了)の画面と処理は v2.0 で外した。再開するときは v1(main の履歴)から取り出して v2 の形で作り直す。
-- 支え手は 1 件の相談に 3 者まで(`src/lib/domain/offers.ts`、DB の `accept_sos_offer`)。最初に選ばれた 1 者が中心。中心は相談した人の同意を得てほかの支え手を招く(招かれた申し出は INVITED)。
-- **団体の申し出の `offers.supporter_user_id` は「受け持つメンバー」**(#118)。管理の人と本人が替えられ、知らせ(選ばれた・新しいやりとり)とありがとうの宛先になる(`src/lib/domain/caseMember.ts` の `offerMemberUserId`)。申し出た人は `created_by_user_id` に残る。相談とやりとりは受け持つメンバーに限らず、団体の今いるメンバー全員が読める。
+- 支え手は 1 件の相談に 3 者まで(`src/lib/domain/offers.ts`、DB の `accept_sos_offer`)。最初に選ばれた 1 者が中心。中心は相談者の同意を得てほかの支え手を招く(招かれた申し出は INVITED)。
+- **支援団体の申し出の `offers.supporter_user_id` は「受け持つメンバー」**(#118)。管理の人と本人が替えられ、知らせ(選ばれた・新しいやりとり)とありがとうの宛先になる(`src/lib/domain/caseMember.ts` の `offerMemberUserId`)。申し出た人は `created_by_user_id` に残る。相談とやりとりは受け持つメンバーに限らず、支援団体の今いるメンバー全員が読める。
 - 解決したときの社会貢献の記録は DB の `record_case_resolution` だけで付ける(手で確定・14 日の自動・運営が指標を直したとき、すべて同じ関数)。
 - 画面の横スクロール化は、右端が切れて見えるとユーザーに却下されたことがある。
 - **文字の大きさは `text-t13` のような名前で書く**(`globals.css` の `--text-t*`。`text-[13px]` と書かない)。名前の値は「わたし」で選ぶ文字の大きさの倍率を掛けてあり、px で書くとその文字だけ大きくならない。単体テスト(`scripts/tests/textSize.test.ts`)が px の指定を見つけると落ちる。足りない大きさは `globals.css` に足す。
 - 作業の前後に `npm run lint -- --max-warnings 0`・`npx tsc --noEmit`・`npm run test:units`・`npm run check:i18n`・`npm run build` を通す。PR では CI(`.github/workflows/ci.yml`)が同じものと Workers 向けのビルド(`npm run build:cf`)を通す。画面で読み込むデータは `src/lib/client/useLoad.ts`、端末に覚える値は `src/lib/client/storedValue.ts` を使う(副作用の中で同期的に状態を変える書き方は lint が止める)。
 - **v2.0 の作業中(#72)。Staging の DB は 2026-11-05 から v2 の形**(`migrations/v2_0*.sql`)。dev の v1 の画面は v2 の画面に置き換わるまで Staging で動かないところがある。本番(main)は v1 の DB のまま。
-- **相談のための団体(`application.purpose = CONSULT`)は支え手ではない**(#131、2026-11-17 代表了承)。審査は `NOT_APPLIED`(並べない)で、支える側の顔・相談への権限・招く団体・公開の一覧・コーディネーターに出さない。判定は `isSupporterPurpose`・`isListedSupporter`(`src/lib/domain/publicSupporter.ts`)と `src/lib/domain/orgVetting.ts` だけ。支えるときは管理の人が支え手の申し込みをする(`/api/orgs/[id]/supporter-application`)。DB も `organizations_vetting_matches_purpose` で同じ決まりを持つ。登録の `application` に `purpose` を入れさせない(`newApplication`)。
+- **相談者の会社・地域(相談のための団体、`application.purpose = CONSULT`)は支え手ではない**(#131、2026-11-17 代表了承)。審査は `NOT_APPLIED`(並べない)で、支える側の顔・相談への権限・招く団体・公開の一覧・コーディネーターに出さない。判定は `isSupporterPurpose`・`isListedSupporter`(`src/lib/domain/publicSupporter.ts`)と `src/lib/domain/orgVetting.ts` だけ。支えるときは管理の人が支援団体の申し込みをする(`/api/orgs/[id]/supporter-application`)。DB も `organizations_vetting_matches_purpose` で同じ決まりを持つ。登録の `application` に `purpose` を入れさせない(`newApplication`)。
 - **支える側から見える相談の決まりは `src/lib/domain/visibility.ts` だけで判定する。** API ごとに条件を書き直さない(個人の支え手に個人の相談を出さない・機微は2つ目の確認・自分の相談を出さない)。
 - **支える側として活動できるのは18歳以上**(2026-11-06 代表。どの国でも同じ)。判定は `src/lib/domain/age.ts` の `canSupportAtAge` だけ。支える側の API は `requireFace` を通し、相談にかかわる API は `caseAccess` を通す(どちらも年齢を見る)。`loadFaces` は会社・地域として相談するときにも使うので、年齢で絞らない。
 - **`contributions` は追記だけ。** UPDATE は DB が断る。直すときは CORRECTION の行を足す。消すのは退会のときだけ。
