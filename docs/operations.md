@@ -73,7 +73,7 @@
 |---|---|
 | URL | https://samasama-app-staging.samasama.workers.dev(入口パスワードあり) |
 | 入口パスワード | Vercel の Staging とは別の値。作った人の手元の `.env.workers-staging.local`(コミットしない)にある |
-| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`・`DISCORD_OPS_WEBHOOK_URL`・`DISCORD_OPS_APPLICATION_WEBHOOK_URL`(2026-11-05)。AI の鍵(`OPENAI_API_KEY`・`XAI_API_KEY`)は未設定(相談の整理はデモの結果を返す)。AI のモデル名と考える量は `wrangler.jsonc` の vars |
+| Worker の Secret | `SUPABASE_SERVICE_ROLE_KEY`・`DEV_PASSWORD`・`CRON_SECRET`・`DISCORD_OPS_WEBHOOK_URL`・`DISCORD_OPS_APPLICATION_WEBHOOK_URL`(2026-11-05)。AI の鍵(`OPENAI_API_KEY`・`XAI_API_KEY`)は 2026-11-09 に入れた。AI のモデル名と考える量は `wrangler.jsonc` の vars |
 
 ### 2.2 環境変数
 
