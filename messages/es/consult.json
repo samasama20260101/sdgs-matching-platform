@@ -173,7 +173,12 @@
     "website": "Sitio web",
     "okToShare": "Pedir al equipo que lo transmita",
     "agreed": "El equipo lo transmitirá",
-    "source": "Fuente"
+    "source": "Fuente",
+    "area": {
+      "nationwide": "A nivel nacional",
+      "prefecture": "Con sede en {name}",
+      "otherPrefecture": "Con sede en otra prefectura"
+    }
   },
   "talk": {
     "title": "Mensajes",

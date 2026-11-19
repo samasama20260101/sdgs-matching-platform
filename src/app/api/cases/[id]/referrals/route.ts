@@ -7,14 +7,19 @@ import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { resolveCaseAccess } from '@/lib/server/caseAccess'
-import { displayChannels } from '@/lib/domain/suggestions'
+import { areaNoteFor, channelsForCard } from '@/lib/domain/suggestions'
 import { generateSuggestions, loadSuggestions, type SavedSuggestion } from '@/lib/server/suggestions'
 import { notifyOps } from '@/lib/server/opsNotify'
 
 // 届けた直後は応答のあとの処理が提案を作っているので、この間は画面に待ってもらう(その場で二重に AI を呼ばない)
 const PENDING_WINDOW_MS = 45_000
 
-function presentSuggestion(s: SavedSuggestion, e: NonNullable<SavedSuggestion['entry']>, locale: string) {
+type RegionName = { name_local: string; name_en: string }
+
+function presentSuggestion(s: SavedSuggestion, e: NonNullable<SavedSuggestion['entry']>, locale: string, regionCode: string | null, regionNames: Map<string, RegionName>) {
+  // 相談者と違う都道府県の団体は所在を出し、来所・訪問の手段は出さない(#148)
+  const area = areaNoteFor({ serviceScope: e.service_scope, serviceCodes: e.service_codes ?? [], prefectureCode: e.prefecture_code }, regionCode)
+  const prefecture = area?.kind === 'OTHER_PREFECTURE' && area.code ? regionNames.get(area.code) : undefined
   // 電話番号は、出典で照合が取れたものだけ出す(決めてほしいこと 7)
   const phoneOk = e.verification_status === 'SOURCE_OFFICIAL' || e.verification_status === 'VERIFIED'
   return {
@@ -23,7 +28,8 @@ function presentSuggestion(s: SavedSuggestion, e: NonNullable<SavedSuggestion['e
     name: e.name,
     // 理由は相談者の言語で AI が書く。AI が使えなかったときは、日本語の画面にだけ調べた要約を出す
     reason: s.reason ?? (locale === 'ja' ? e.consult_summary : null),
-    channels: displayChannels(e.consult_channels ?? []),
+    channels: channelsForCard(e.consult_channels ?? [], area?.kind === 'OTHER_PREFECTURE'),
+    area: area?.kind === 'NATIONWIDE' ? { kind: 'NATIONWIDE' as const } : area ? { kind: 'OTHER_PREFECTURE' as const, name: prefecture ? (locale === 'ja' ? prefecture.name_local : prefecture.name_en) : null } : null,
     phone: phoneOk ? e.phone : null,
     website: e.website_url,
     hours: e.hours_text,
@@ -55,7 +61,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return [] as SavedSuggestion[]
   })
   const locale = c.locale ?? 'ja'
-  return NextResponse.json({ pending: false, suggestions: saved.flatMap((s) => (s.entry ? [presentSuggestion(s, s.entry, locale)] : [])) })
+  // 都道府県の名前は 2 回に分けて取る(AGENTS.md: regions は JOIN しない)
+  const codes = [...new Set(saved.flatMap((s) => (s.entry?.prefecture_code ? [s.entry.prefecture_code] : [])))]
+  const { data: regionRows } = codes.length > 0 ? await supabaseAdmin.from('regions').select('code, name_local, name_en').in('code', codes) : { data: [] }
+  const regionNames = new Map(((regionRows ?? []) as (RegionName & { code: string })[]).map((r) => [r.code, r]))
+  return NextResponse.json({ pending: false, suggestions: saved.flatMap((s) => (s.entry ? [presentSuggestion(s, s.entry, locale, c.region_code, regionNames)] : [])) })
 }
 
 const postSchema = z.object({ entryId: z.string().uuid() })

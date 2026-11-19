@@ -11,6 +11,8 @@ import {
   isUrgentHotline,
   reachable,
   isLocalMembershipBody,
+  areaNoteFor,
+  channelsForCard,
   semanticScore,
   SEMANTIC_MIN,
   pickSuggestions,
@@ -241,5 +243,13 @@ assert.ok(parsed)
 assert.deepEqual(parsed.map((p) => p.id), ['a', 'b', 'c'])
 assert.equal(parsed[1].reason, null)
 assert.ok(!parsed[0].reason?.includes('https://'))
+
+// 札の所在: 全国・ほかの都道府県だけ出す。ほかの都道府県の団体には来所・訪問を出さない
+assert.deepEqual(areaNoteFor({ serviceScope: 'NATIONWIDE', serviceCodes: [], prefectureCode: 'JP-13' }, 'JP-43'), { kind: 'NATIONWIDE' })
+assert.equal(areaNoteFor({ serviceScope: 'PREFECTURE', serviceCodes: ['JP-43'], prefectureCode: 'JP-43' }, 'JP-43'), null)
+assert.deepEqual(areaNoteFor({ serviceScope: 'PREFECTURE', serviceCodes: ['JP-43'], prefectureCode: 'JP-43' }, 'JP-13'), { kind: 'OTHER_PREFECTURE', code: 'JP-43' })
+assert.deepEqual(areaNoteFor({ serviceScope: 'MUNICIPALITY', serviceCodes: [], prefectureCode: null }, 'JP-13'), { kind: 'OTHER_PREFECTURE', code: null })
+assert.deepEqual(channelsForCard(['VISIT', 'PHONE', 'OUTREACH', 'CHAT'], true), ['PHONE', 'CHAT'])
+assert.deepEqual(channelsForCard(['VISIT', 'PHONE'], false), ['PHONE', 'VISIT'])
 
 console.log('suggestions: ok')

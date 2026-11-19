@@ -173,7 +173,12 @@
     "website": "Website",
     "okToShare": "Ask the team to pass it on",
     "agreed": "The team will pass it on",
-    "source": "Source"
+    "source": "Source",
+    "area": {
+      "nationwide": "Nationwide",
+      "prefecture": "Based in {name}",
+      "otherPrefecture": "Based in another prefecture"
+    }
   },
   "talk": {
     "title": "Messages",

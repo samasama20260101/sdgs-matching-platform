@@ -241,6 +241,19 @@ export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: rea
   return picked
 }
 
+// 札に出す所在: 全国の団体は NATIONWIDE、相談者と違う都道府県の団体はその都道府県のコード、同じ都道府県なら null(#148)
+export function areaNoteFor(c: Pick<SuggestCandidate, 'serviceScope' | 'serviceCodes' | 'prefectureCode'>, regionCode: string | null): { kind: 'NATIONWIDE' } | { kind: 'OTHER_PREFECTURE'; code: string | null } | null {
+  if (c.serviceScope === 'NATIONWIDE') return { kind: 'NATIONWIDE' }
+  if (regionCode && (c.prefectureCode === regionCode || c.serviceCodes.includes(regionCode))) return null
+  return { kind: 'OTHER_PREFECTURE', code: c.prefectureCode }
+}
+
+// 相談者と違う都道府県の団体には、来所・訪問の手段を出さない(行けないので)
+export function channelsForCard(channels: readonly string[], otherPrefecture: boolean): ConsultChannel[] {
+  const shown = displayChannels(channels)
+  return otherPrefecture ? shown.filter((ch) => (REMOTE_CHANNELS as readonly string[]).includes(ch)) : shown
+}
+
 // 画面に出す相談の手段(加点の対象の電話・オンラインを先に)
 export function displayChannels(channels: readonly string[]): ConsultChannel[] {
   const order: ConsultChannel[] = ['PHONE', 'ONLINE', 'CHAT', 'EMAIL', 'FORM', 'VISIT', 'OUTREACH']

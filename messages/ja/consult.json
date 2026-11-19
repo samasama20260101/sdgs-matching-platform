@@ -173,7 +173,12 @@
     "website": "サイトを見る",
     "okToShare": "運営から伝えてもらう",
     "agreed": "伝えてもらうことにしました",
-    "source": "出典"
+    "source": "出典",
+    "area": {
+      "nationwide": "全国の団体",
+      "prefecture": "{name}の団体",
+      "otherPrefecture": "ほかの都道府県の団体"
+    }
   },
   "talk": {
     "title": "やりとり",
