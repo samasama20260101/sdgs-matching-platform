@@ -27,7 +27,10 @@
         "AI_OPENAI_MODEL": "gpt-6-luna",
         // gpt-6-luna の既定は medium で遅い。「近いもの」の 8 秒に収まるかは Staging で測って決める
         "AI_OPENAI_REASONING_EFFORT": "low",
-        "AI_XAI_MODEL": "grok-4.20-0309-non-reasoning"
+        // 翻訳は Grok の最新(別名 grok-latest。2026-11-19 岡本さん「grok-4.7 に替えてよい」、そのとき grok-4.7 を指していた)。
+        // 推論する版なので考える量を low にする(同じ 6 文で 1 文 2.4〜5.2 秒。既定のままだと 5〜11.5 秒)
+        "AI_XAI_MODEL": "grok-latest",
+        "AI_XAI_REASONING_EFFORT": "low"
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-staging" }],
@@ -41,7 +44,8 @@
         // staging と同じ値にそろえる
         "AI_OPENAI_MODEL": "gpt-6-luna",
         "AI_OPENAI_REASONING_EFFORT": "low",
-        "AI_XAI_MODEL": "grok-4.20-0309-non-reasoning"
+        "AI_XAI_MODEL": "grok-latest",
+        "AI_XAI_REASONING_EFFORT": "low"
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-production" }],
