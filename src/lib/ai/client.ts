@@ -30,10 +30,18 @@ export async function generateJson(task: AiTask, prompt: string, options: Genera
   if (!target) return { ok: false, code: 'NOT_CONFIGURED' }
 
   let text: string
+  // 実際に答えたモデルの版(別名 grok-latest などで頼んだときも、記録には答えた版を残す)。応答に無ければ頼んだ名前
+  let model = target.model
   try {
-    text = target.provider === 'gemini'
-      ? await callGemini(target, prompt, options)
-      : await callOpenAiCompatible(target, prompt, options)
+    if (target.provider === 'gemini') {
+      const reply = await callGemini(target, prompt, options)
+      text = reply.text
+      model = reply.model ?? model
+    } else {
+      const reply = await callOpenAiCompatible(target, prompt, options)
+      text = reply.text
+      model = reply.model ?? model
+    }
   } catch (error) {
     console.error(`[ai] ${task} ${target.provider} request failed:`, error instanceof Error ? error.message : error)
     return { ok: false, code: 'REQUEST_FAILED' }
@@ -44,10 +52,10 @@ export async function generateJson(task: AiTask, prompt: string, options: Genera
     console.error(`[ai] ${task} ${target.provider} returned non-JSON (${text.length} chars)`)
     return { ok: false, code: 'INVALID_JSON' }
   }
-  return { ok: true, json, provider: target.provider, model: target.model }
+  return { ok: true, json, provider: target.provider, model }
 }
 
-async function callGemini(target: AiTarget, prompt: string, options: GenerateJsonOptions): Promise<string> {
+async function callGemini(target: AiTarget, prompt: string, options: GenerateJsonOptions): Promise<{ text: string; model: string | null }> {
   const url = `${target.baseUrl}/models/${encodeURIComponent(target.model)}:generateContent`
   const response = await fetch(url, {
     method: 'POST',
@@ -63,14 +71,14 @@ async function callGemini(target: AiTarget, prompt: string, options: GenerateJso
     signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const data = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] }
-  return (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('')
+  const data = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; modelVersion?: string }
+  return { text: (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join(''), model: data.modelVersion || null }
 }
 
 // OpenAI と xAI(Grok)は同じ形の Chat Completions API。
 // 推論型のモデルは temperature の指定を断ることがあるので送らない。出力の上限も各社の既定に任せる。
 // 考える量は環境変数で決めたときだけ送る(src/lib/ai/config.ts)。
-async function callOpenAiCompatible(target: AiTarget, prompt: string, options: GenerateJsonOptions): Promise<string> {
+async function callOpenAiCompatible(target: AiTarget, prompt: string, options: GenerateJsonOptions): Promise<{ text: string; model: string | null }> {
   const response = await fetch(`${target.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${target.apiKey}` },
@@ -83,6 +91,6 @@ async function callOpenAiCompatible(target: AiTarget, prompt: string, options: G
     signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const data = (await response.json()) as { choices?: { message?: { content?: string | null } }[] }
-  return data.choices?.[0]?.message?.content ?? ''
+  const data = (await response.json()) as { choices?: { message?: { content?: string | null } }[]; model?: string }
+  return { text: data.choices?.[0]?.message?.content ?? '', model: data.model || null }
 }
