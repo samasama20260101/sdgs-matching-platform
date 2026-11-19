@@ -35,6 +35,7 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 
 ## 試して失敗したこと(AI で作業するとき)
 - **Supabase CLI を上げたあとに止まって見えたら、Mac の画面のキーチェーンの許可を見る**(CLI の本体が替わると、保存したトークンを読むのに許可が要る)。`!` からの `supabase login` は TTY がなく通らない(ターミナルのアプリで)
+- **手元の `npm run dev`(Turbopack)で画面が数秒ごとに読み直され続けたら `npx next dev --webpack` で起こす**(2026-11-19。ほかの処理が `~/dev/samasama` の別のリポに書き込み続けていると、Turbopack がそれを拾って読み直しを繰り返し、Playwright の撮影も終わらなかった)。日本語の画面は `/ja` を付けない URL(`/cases/<id>`)で開く
 - **`supabase db dump` は Docker を使う**。この Mac に Docker がないときは `--dry-run` の手順を pg_dump 17 で流す(`docs/operations.md` §3)
 - **画面の確認は手元の `npm run dev` を Staging の DB につないで行う**。ログインはメールを送らずに、管理 API の `generateLink`(magiclink)で出したコードを `verifyOtp` に渡してセッションを作る(一回きりのスクリプトで。コミットしない)。2つ目の確認は、登録の画面に出る文字列から TOTP を計算して入れる
 - **auto mode の分類器は「一括削除っぽい」コマンドを止める**(xargs や for ループでのブランチ削除)。名前を並べた単一のコマンドなら通る。本番の psql も止まるので、ユーザーが `!` で実行する
