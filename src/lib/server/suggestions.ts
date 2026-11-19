@@ -248,13 +248,16 @@ export type SavedSuggestion = {
     claim_status: string
     attribution: string | null
     source_url: string
+    service_scope: string
+    service_codes: string[]
+    prefecture_code: string | null
   } | null
 }
 
 export async function loadSuggestions(caseId: string): Promise<SavedSuggestion[]> {
   const { data, error } = await supabaseAdmin
     .from('case_suggestions')
-    .select('rank, reason, method, entry:directory_entries(id, kind, name, phone, website_url, hours_text, consult_summary, consult_channels, verification_status, claim_status, attribution, source_url)')
+    .select('rank, reason, method, entry:directory_entries(id, kind, name, phone, website_url, hours_text, consult_summary, consult_channels, verification_status, claim_status, attribution, source_url, service_scope, service_codes, prefecture_code)')
     .eq('case_id', caseId)
     .order('rank', { ascending: true })
   if (error) throw error

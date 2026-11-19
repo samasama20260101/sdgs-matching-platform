@@ -19,6 +19,8 @@ type Suggestion = {
   hours: string | null
   unregistered: boolean
   canShare: boolean
+  // 全国の団体、または相談者と違う都道府県の団体(name はその都道府県)。同じ都道府県なら null
+  area: { kind: 'NATIONWIDE' } | { kind: 'OTHER_PREFECTURE'; name: string | null } | null
   attribution: string | null
   sourceUrl: string
 }
@@ -99,8 +101,13 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
         <Chip className="shrink-0 whitespace-nowrap">{e.kind === 'ORGANIZATION' ? t('organization') : t('public')}</Chip>
       </span>
       {e.reason && <span className="text-t13 leading-[1.6] text-ink-soft">{e.reason}</span>}
-      {e.channels.length > 0 && (
+      {(e.area || e.channels.length > 0) && (
         <span className="flex flex-wrap gap-1">
+          {e.area && (
+            <Chip color="dawn">
+              {e.area.kind === 'NATIONWIDE' ? t('area.nationwide') : e.area.name ? t('area.prefecture', { name: e.area.name }) : t('area.otherPrefecture')}
+            </Chip>
+          )}
           {e.channels.slice(0, 3).map((ch) => <Chip key={ch} color="outline">{t(`channels.${ch}`)}</Chip>)}
         </span>
       )}
