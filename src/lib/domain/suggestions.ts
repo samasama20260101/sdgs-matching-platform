@@ -91,13 +91,20 @@ export function isLocalMembershipBody(c: Pick<SuggestCandidate, 'name' | 'orgTyp
   return c.orgType === 'BAR_ASSOCIATION' || LOCAL_MEMBERSHIP_NAME.test(c.name.normalize('NFKC'))
 }
 
+// 受け取りに行く支援(フードバンク・子ども食堂)。電話で受けていても、ほかの都道府県の相談者には使えない
+// (相談の例で、宮城の「食べるものがない」相談に新潟のフードバンクが出た)
+const PHYSICAL_SERVICE_CATEGORIES = new Set(['FOOD_BANK', 'KODOMO_SHOKUDO'])
+export function isPhysicalLocalService(c: Pick<SuggestCandidate, 'categories'>): boolean {
+  return c.categories.some((cat) => PHYSICAL_SERVICE_CATEGORIES.has(cat))
+}
+
 // 相談者が連絡して相談できるか: 相談の地域で受けている団体か、ほかの都道府県でも遠隔の手段で相談を受けている団体
-// (ほかの都道府県の地域の会員組織は除く)。
+// (ほかの都道府県の地域の会員組織と、受け取りに行く支援は除く)。
 // 掲載台帳は日本の団体だけなので、日本の外の相談には出さない
-export function reachable(c: Pick<SuggestCandidate, 'serviceScope' | 'serviceCodes' | 'prefectureCode' | 'channels' | 'name' | 'orgType'>, k: Pick<SuggestCase, 'regionCountry' | 'regionCode'>): boolean {
+export function reachable(c: Pick<SuggestCandidate, 'serviceScope' | 'serviceCodes' | 'prefectureCode' | 'channels' | 'name' | 'orgType' | 'categories'>, k: Pick<SuggestCase, 'regionCountry' | 'regionCode'>): boolean {
   if ((k.regionCountry ?? 'JP') !== 'JP') return false
   if (servesRegion(c, k)) return true
-  if (isLocalMembershipBody(c)) return false
+  if (isLocalMembershipBody(c) || isPhysicalLocalService(c)) return false
   return c.channels.some((ch) => (REMOTE_CHANNELS as readonly string[]).includes(ch))
 }
 
