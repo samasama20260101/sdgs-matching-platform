@@ -15,6 +15,8 @@ import {
   goalsOf,
   pickSuggestions,
   rankCandidates,
+  type RankedCandidate,
+  type Suggestion,
   type SuggestCandidate,
   type SuggestCase,
 } from '@/lib/domain/suggestions'
@@ -102,24 +104,8 @@ async function fetchCandidates(k: SuggestCase): Promise<CandidateRow[]> {
   return results.flatMap((r) => (r.data ?? []) as CandidateRow[])
 }
 
-// 提案を作って残す。作った(0 件を含む)なら true、ほかの処理が先に作っていた・対象外なら false
-export async function generateSuggestions(caseId: string): Promise<boolean> {
-  const { data, error } = await supabaseAdmin
-    .from('cases')
-    .select('id, status, subject_type, region_country, region_code, intake_qna, is_minor, description_free, locale, suggestions_generated_at')
-    .eq('id', caseId)
-    .single()
-  if (error) throw error
-  const c = data as CaseRow
-  if (c.suggestions_generated_at || c.status !== 'OPEN') return false
-
-  const k: SuggestCase = {
-    subject: c.subject_type,
-    regionCountry: c.region_country,
-    regionCode: c.region_code,
-    indicators: c.intake_qna?.indicators ?? [],
-    isMinor: c.is_minor === true,
-  }
+// 相談の条件と本文から提案を選ぶ(DB は読むだけ)。相談を保存せずに提案の質を確かめるときもこれを呼ぶ
+export async function computeSuggestions(k: SuggestCase, body: string, locale: string): Promise<{ picks: Suggestion[]; ranked: RankedCandidate[]; aiUsed: boolean }> {
   const rows = await fetchCandidates(k)
   const byId = new Map(rows.map((r) => [r.id, r]))
   const ranked = rankCandidates(rows.map(toCandidate), k)
@@ -128,11 +114,10 @@ export async function generateSuggestions(caseId: string): Promise<boolean> {
   const forAi = ranked.slice(0, AI_CANDIDATE_LIMIT)
   // 民間の候補が 1 つ以上あるときだけ AI に見比べさせる(公的な窓口だけなら決まりの並びで足りる)
   if (forAi.some((r) => r.tier === 'ORGANIZATION')) {
-    const body = caseBodyForAi({ description: c.description_free ?? '', since: c.intake_qna?.since, wish: c.intake_qna?.wish })
     const prompt = buildSuggestPrompt({
       subject: k.subject,
       fencedText: fenceConsultation(maskPii(body)),
-      locale: c.locale ?? 'ja',
+      locale,
       isMinor: k.isMinor,
       candidates: forAi.map((r) => ({
         id: r.candidate.id,
@@ -147,7 +132,25 @@ export async function generateSuggestions(caseId: string): Promise<boolean> {
     if (result.ok) aiPicks = parseSuggestPicks(result.json, new Set(forAi.map((r) => r.candidate.id)))
     else console.error(`[suggestions] AI unavailable (${result.code}); using rule order`)
   }
-  const picks = pickSuggestions(ranked, aiPicks)
+  return { picks: pickSuggestions(ranked, aiPicks), ranked, aiUsed: aiPicks !== null }
+}
+
+// 提案を作って残す。作った(0 件を含む)なら true、ほかの処理が先に作っていた・対象外なら false
+export async function generateSuggestions(caseId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('cases')
+    .select('id, status, subject_type, region_country, region_code, intake_qna, is_minor, description_free, locale, suggestions_generated_at')
+    .eq('id', caseId)
+    .single()
+  if (error) throw error
+  const c = data as CaseRow
+  if (c.suggestions_generated_at || c.status !== 'OPEN') return false
+
+  const { picks } = await computeSuggestions(
+    { subject: c.subject_type, regionCountry: c.region_country, regionCode: c.region_code, indicators: c.intake_qna?.indicators ?? [], isMinor: c.is_minor === true },
+    caseBodyForAi({ description: c.description_free ?? '', since: c.intake_qna?.since, wish: c.intake_qna?.wish }),
+    c.locale ?? 'ja',
+  )
 
   // 先に作り終えた印を付けた処理だけが書き込む(届けた直後の after と画面を開いたときが重なっても二重にしない)
   const { data: claimed, error: claimError } = await supabaseAdmin
