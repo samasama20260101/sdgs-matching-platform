@@ -20,7 +20,7 @@ import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAr
 import { canSupportAtAge } from '@/lib/domain/age'
 import { SELF_CHECKS, SUPPORTER_CHECKS, checkAnswers, missingChecks, type SelfCheck, type SupporterCheck } from '@/lib/domain/supporterChecks'
 
-const SUPPORTER_POINTS = ['age', 'purpose', 'inApp', 'sensitive', 'realName', 'records', 'stop'] as const
+const SUPPORTER_POINTS = ['age', 'purpose', 'sensitive', 'realName', 'records', 'stop'] as const
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER_PUBLIC', 'OTHER'] as const
 const APPLICATION_ITEMS = ['areas', 'staff', 'safeguarding', 'website', 'howFound'] as const
 
