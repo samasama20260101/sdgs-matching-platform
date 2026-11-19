@@ -46,7 +46,7 @@
       },
       "onlyChosen": {
         "title": "Solo a quien tú elijas",
-        "body": "Pasamos tu apodo y lo que escribiste a un servicio cercano solo si eliges «Se puede compartir»."
+        "body": "Pasamos tu apodo y lo que escribiste a una organización de apoyo sugerida solo si eliges «Pedir al equipo que lo transmita»."
       },
       "records": {
         "title": "Cómo se guardan los registros",
@@ -114,7 +114,7 @@
     "changeEmail": "Usar otro correo",
     "profileTitle": "Solo dinos un apodo y dónde vives",
     "profileTipLabel": "Qué preguntamos y qué no",
-    "profileTip": "No pedimos tu nombre, teléfono, dirección, género ni fecha de nacimiento. Todo el contacto se hace dentro de esta app. Tu zona sirve para buscar servicios cercanos. Tu edad sube uno cada año a partir de hoy.",
+    "profileTip": "No pedimos tu nombre, teléfono, dirección, género ni fecha de nacimiento. Todo el contacto se hace dentro de esta app. Tu zona sirve para buscar organizaciones de apoyo adecuadas. Tu edad sube uno cada año a partir de hoy.",
     "agreeRequired": "Tienes que aceptar para continuar",
     "saveFailed": "No pudimos guardarlo. Inténtalo de nuevo.",
     "finish": "Empezar",
@@ -125,7 +125,7 @@
   "entry": {
     "fromShop": "Vienes del código QR de un punto de ayuda",
     "title": "Deja aquí<br></br>lo que te preocupa",
-    "lead": "No te pediremos tu nombre ni tu teléfono. Te pondremos en contacto con personas que apoyan y con servicios cercanos.",
+    "lead": "No te pediremos tu nombre ni tu teléfono. Te pondremos en contacto con personas que apoyan y con organizaciones de apoyo.",
     "whose": "¿De quién es el problema?",
     "entriesLabel": "Formas de consultar",
     "mine": "Un problema mío",
@@ -153,7 +153,7 @@
   },
   "home": {
     "hello": "Hola, {name}",
-    "lead": "Escribe lo que te preocupa y te pondremos en contacto con personas que apoyan y servicios cercanos.",
+    "lead": "Escribe lo que te preocupa y te pondremos en contacto con personas que apoyan y organizaciones de apoyo.",
     "write": "Pedir ayuda",
     "asCompany": "Consultar como empresa",
     "asCommunity": "Consultar como comunidad",

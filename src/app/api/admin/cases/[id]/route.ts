@@ -24,13 +24,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   if (!c) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const [indicators, offers, referrals, region] = await Promise.all([
+  const [indicators, offers, referrals, region, suggestions] = await Promise.all([
     supabaseAdmin.from('case_indicators').select('indicator_code, source, status, confidence, reason').eq('case_id', id).order('created_at', { ascending: true }),
     supabaseAdmin.from('offers').select('id, supporter_kind, supporter_user_id, supporter_organization_id, status, accepted_order, created_at').eq('case_id', id).order('created_at', { ascending: true }),
-    supabaseAdmin.from('case_referrals').select('status, consented_at, directory_entries(name, phone, kind)').eq('case_id', id),
+    supabaseAdmin.from('case_referrals').select('status, consented_at, directory_entries(name, phone, kind, website_url)').eq('case_id', id),
     c.region_code ? supabaseAdmin.from('regions').select('name_local').eq('code', c.region_code).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    // 相談者に提案した支援団体(#138)
+    supabaseAdmin.from('case_suggestions').select('rank, reason, method, directory_entries(name, phone, website_url)').eq('case_id', id).order('rank', { ascending: true }),
   ])
-  const failed = indicators.error ?? offers.error ?? referrals.error ?? region.error
+  const failed = indicators.error ?? offers.error ?? referrals.error ?? region.error ?? suggestions.error
   if (failed) {
     console.error('[api/admin/cases/[id]]', failed)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
@@ -95,8 +97,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       createdAt: o.created_at,
     })),
     referrals: (referrals.data ?? []).map((r) => {
-      const e = r.directory_entries as unknown as { name: string; phone: string | null; kind: string } | null
-      return { status: r.status, consentedAt: r.consented_at, name: e?.name ?? '—', phone: e?.phone ?? null }
+      const e = r.directory_entries as unknown as { name: string; phone: string | null; kind: string; website_url: string | null } | null
+      return { status: r.status, consentedAt: r.consented_at, name: e?.name ?? '—', phone: e?.phone ?? null, website: e?.website_url ?? null }
+    }),
+    suggestions: (suggestions.data ?? []).map((r) => {
+      const e = r.directory_entries as unknown as { name: string; phone: string | null; website_url: string | null } | null
+      return { rank: r.rank as number, reason: (r.reason as string | null) ?? null, method: r.method as string, name: e?.name ?? '—', phone: e?.phone ?? null, website: e?.website_url ?? null }
     }),
   })
 }

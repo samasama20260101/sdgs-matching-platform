@@ -1,57 +1,34 @@
-// 待つあいだの近くの窓口(つなぎ先、盤 13)。GET: 地域と分野と、だれの相談か(個人・会社)に合う窓口 / POST: 「運営から伝えてよい」を選ぶ
-// 運営の担当者が窓口の受付(電話や相談フォーム)から伝える。自動のメールにはしない(決めてほしいこと 12 の推奨)
+// 相談に合う支援団体の提案(#138、盤 13 の置き換え)。
+// GET: 提案した支援団体(3 つまで。緊急と判定した相談では全国の電話窓口が入ることがある) / POST: 「運営から伝えてもらう」を選ぶ
+// 運営の担当者が支援団体の受付(電話や問い合わせフォーム)から伝える。自動のメールにはしない(2026-11-19 定例)
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
 import { isUuid } from '@/lib/api/validation'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { resolveCaseAccess } from '@/lib/server/caseAccess'
-import { optionsFor } from '@/lib/domain/intake'
-import { referralAudience, type ReferralAudience } from '@/lib/domain/referrals'
+import { displayChannels } from '@/lib/domain/suggestions'
+import { generateSuggestions, loadSuggestions, type SavedSuggestion } from '@/lib/server/suggestions'
 import { notifyOps } from '@/lib/server/opsNotify'
 
-const MAX_LOCAL = 3
-const MAX_NATIONAL = 2
-const COLUMNS = 'id, kind, name, categories, phone, website_url, hours_text, address, address_precision, sdgs_goals, verification_status, claim_status, attribution, source_url, service_scope'
+// 届けた直後は応答のあとの処理が提案を作っているので、この間は画面に待ってもらう(その場で二重に AI を呼ばない)
+const PENDING_WINDOW_MS = 45_000
 
-type Entry = {
-  id: string
-  kind: string
-  name: string
-  categories: string[]
-  phone: string | null
-  website_url: string | null
-  hours_text: string | null
-  address: string | null
-  address_precision: string
-  sdgs_goals: number[]
-  verification_status: string
-  claim_status: string
-  attribution: string | null
-  source_url: string
-  service_scope: string
-}
-
-// だれの相談かで窓口の種類を絞る(個人の相談に事業者の窓口を出さない・会社の相談に個人の窓口を出さない)
-function forAudience<Q extends { overlaps: (column: string, value: string[]) => Q; not: (column: string, operator: string, value: string) => Q }>(q: Q, audience: ReferralAudience): Q {
-  if (audience.kind === 'only') return q.overlaps('categories', [...audience.categories])
-  if (audience.kind === 'except') return q.not('categories', 'ov', `{${audience.categories.join(',')}}`)
-  return q
-}
-
-function present(e: Entry) {
+function presentSuggestion(s: SavedSuggestion, e: NonNullable<SavedSuggestion['entry']>, locale: string) {
   // 電話番号は、出典で照合が取れたものだけ出す(決めてほしいこと 7)
   const phoneOk = e.verification_status === 'SOURCE_OFFICIAL' || e.verification_status === 'VERIFIED'
   return {
     id: e.id,
     kind: e.kind,
     name: e.name,
-    categories: e.categories,
+    // 理由は相談者の言語で AI が書く。AI が使えなかったときは、日本語の画面にだけ調べた要約を出す
+    reason: s.reason ?? (locale === 'ja' ? e.consult_summary : null),
+    channels: displayChannels(e.consult_channels ?? []),
     phone: phoneOk ? e.phone : null,
     website: e.website_url,
     hours: e.hours_text,
-    address: e.address_precision === 'NONE' ? null : e.address,
     unregistered: e.claim_status !== 'CLAIMED',
+    canShare: e.kind !== 'NATIONAL_HOTLINE',
     attribution: e.attribution,
     sourceUrl: e.source_url,
   }
@@ -65,29 +42,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const access = await resolveCaseAccess(auth.appUser.id, id, auth.aal).catch(() => null)
   if (!access || access.role !== 'CONSULTEE') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const c = access.caseRow
-  const audience = referralAudience(c.subject_type)
-  if (audience.kind === 'none') return NextResponse.json({ local: [], national: [] })
+  if (c.status !== 'OPEN') return NextResponse.json({ pending: false, suggestions: [] })
 
-  const optionCategory = new Map(optionsFor(c.subject_type).map((o) => [o.id, o.category]))
-  const goals = [...new Set((c.intake_qna?.indicators ?? []).map((code) => optionCategory.get(code)).filter((g): g is number => typeof g === 'number'))]
-
-  const local: Entry[] = []
-  if (c.region_country === 'JP' && c.region_code) {
-    let q = forAudience(supabaseAdmin.from('directory_entries').select(COLUMNS).eq('visibility', 'PUBLIC').eq('prefecture_code', c.region_code).neq('kind', 'NATIONAL_HOTLINE'), audience)
-    if (goals.length > 0) q = q.overlaps('sdgs_goals', goals)
-    const { data, error } = await q.order('kind', { ascending: false }).limit(40)
-    if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
-    // 公的な窓口を先に、同じ種類は名前の順
-    local.push(...((data ?? []) as Entry[]).sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name, 'ja') : a.kind === 'PUBLIC_WINDOW' ? -1 : 1)).slice(0, MAX_LOCAL))
+  const { data: meta, error: metaError } = await supabaseAdmin.from('cases').select('suggestions_generated_at').eq('id', id).single()
+  if (metaError) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  if (!meta.suggestions_generated_at) {
+    if (Date.now() - Date.parse(c.created_at) < PENDING_WINDOW_MS) return NextResponse.json({ pending: true, suggestions: [] })
+    await generateSuggestions(id).catch((e) => console.error('[api/referrals] generate:', e))
   }
-  let national: Entry[] = []
-  if (c.region_country === 'JP') {
-    let q = forAudience(supabaseAdmin.from('directory_entries').select(COLUMNS).eq('visibility', 'PUBLIC').eq('kind', 'NATIONAL_HOTLINE'), audience)
-    if (goals.length > 0) q = q.overlaps('sdgs_goals', goals)
-    const { data } = await q.limit(MAX_NATIONAL)
-    national = (data ?? []) as Entry[]
-  }
-  return NextResponse.json({ local: local.map(present), national: national.map(present) })
+  const saved = await loadSuggestions(id).catch((e) => {
+    console.error('[api/referrals] load:', e)
+    return [] as SavedSuggestion[]
+  })
+  const locale = c.locale ?? 'ja'
+  return NextResponse.json({ pending: false, suggestions: saved.flatMap((s) => (s.entry ? [presentSuggestion(s, s.entry, locale)] : [])) })
 }
 
 const postSchema = z.object({ entryId: z.string().uuid() })
