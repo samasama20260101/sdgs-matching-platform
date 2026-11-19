@@ -10,7 +10,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { isValidCronAuthorization } from '@/lib/api/cronAuth'
 import { notifyOps } from '@/lib/server/opsNotify'
 import { reclassifyCase } from '@/lib/server/caseAi'
-import { generateSuggestions } from '@/lib/server/suggestions'
+import { generateSuggestions, regenerateEmptySuggestions } from '@/lib/server/suggestions'
 import { autoCloseCutoffs } from '@/lib/domain/schedule'
 import { mapInBatches } from '@/lib/concurrency'
 import { pruneRateLimitHits } from '@/lib/server/rateLimit'
@@ -19,6 +19,8 @@ import { pruneRateLimitHits } from '@/lib/server/rateLimit'
 const CRON_BATCH_MAX = 200
 const CRON_CONCURRENCY = 5
 const CLASSIFY_CONCURRENCY = 3
+// 提案が 0 件だった相談を作り直すまでの間(毎日の処理で 1 日 1 回)
+const RESUGGEST_AFTER_MS = 20 * 3_600_000
 
 type CaseRef = { id: string; owner_user_id: string | null; assignee_user_id: string | null; updated_at: string; created_at: string }
 
@@ -155,8 +157,35 @@ export async function GET(request: Request) {
   })
   suggested = suggestedFlags.filter(Boolean).length
 
+  // 6. 提案が 0 件だった 7 日以内の受付中の相談を、1 日 1 回作り直す(掲載台帳の団体があとから増えるため)。1 回に 10 件まで
+  let resuggested = 0
+  const { data: generated, error: gErr } = await supabaseAdmin
+    .from('cases')
+    .select('id')
+    .eq('status', 'OPEN')
+    .not('suggestions_generated_at', 'is', null)
+    .lt('suggestions_generated_at', new Date(Date.now() - RESUGGEST_AFTER_MS).toISOString())
+    .gt('created_at', new Date(Date.now() - 7 * 24 * 3_600_000).toISOString())
+    .order('suggestions_generated_at', { ascending: true })
+    .limit(50)
+  if (gErr) console.error('[cron] resuggest:', gErr)
+  const { data: withSuggestions } = (generated ?? []).length > 0
+    ? await supabaseAdmin.from('case_suggestions').select('case_id').in('case_id', (generated ?? []).map((c) => c.id as string))
+    : { data: [] }
+  const hasSuggestions = new Set((withSuggestions ?? []).map((r) => r.case_id as string))
+  const empty = (generated ?? []).filter((c) => !hasSuggestions.has(c.id as string)).slice(0, 10)
+  const resuggestedFlags = await mapInBatches(empty, CLASSIFY_CONCURRENCY, async (c) => {
+    try {
+      return await regenerateEmptySuggestions(c.id as string, RESUGGEST_AFTER_MS)
+    } catch (e) {
+      console.error('[cron] resuggest:', e)
+      return false
+    }
+  })
+  resuggested = resuggestedFlags.filter(Boolean).length
+
   await pruneRateLimitHits()
 
-  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated.length} classified=${classified} suggested=${suggested}`)
-  return NextResponse.json({ resolved, closed, escalated: escalated.length, classified, suggested })
+  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated.length} classified=${classified} suggested=${suggested} resuggested=${resuggested}`)
+  return NextResponse.json({ resolved, closed, escalated: escalated.length, classified, suggested, resuggested })
 }

@@ -116,7 +116,7 @@
     "notFound": "Request not found.",
     "loadFailed": "Couldn't load",
     "cancelFailed": "Couldn't cancel",
-    "nextOpen": "Waiting for offers from supporters. Meanwhile, you can also contact the support organizations below.",
+    "nextOpen": "Waiting for offers from supporters. If we find support organizations that fit your request, they will appear below.",
     "togetherDone": "Supporters who worked with you",
     "cancelMatched": "End this request",
     "thanksSent": "You sent your thanks."

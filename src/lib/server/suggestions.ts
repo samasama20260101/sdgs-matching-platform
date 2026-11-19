@@ -177,6 +177,25 @@ export async function generateSuggestions(caseId: string): Promise<boolean> {
   return true
 }
 
+// 提案が 0 件だった受付中の相談を作り直す(掲載台帳の団体はあとから増えるため)。作り直したら true。
+// 前に作ってから minAgeMs 経ったものだけ。0 件でなければ何もしない
+export async function regenerateEmptySuggestions(caseId: string, minAgeMs: number): Promise<boolean> {
+  const { count, error } = await supabaseAdmin.from('case_suggestions').select('case_id', { count: 'exact', head: true }).eq('case_id', caseId)
+  if (error) throw error
+  if ((count ?? 0) > 0) return false
+  const { data: reset, error: resetError } = await supabaseAdmin
+    .from('cases')
+    .update({ suggestions_generated_at: null })
+    .eq('id', caseId)
+    .eq('status', 'OPEN')
+    .lt('suggestions_generated_at', new Date(Date.now() - minAgeMs).toISOString())
+    .select('id')
+    .maybeSingle()
+  if (resetError) throw resetError
+  if (!reset) return false
+  return generateSuggestions(caseId)
+}
+
 export type SavedSuggestion = {
   rank: number
   reason: string | null
