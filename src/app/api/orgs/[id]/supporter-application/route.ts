@@ -2,6 +2,7 @@
 // 新しい団体の申し込み(POST /api/orgs の SUPPORT)と同じく、支え手の決まりへの同意と6つの自己採点が要り、18歳以上の人だけができる。
 // 申し込めるのはその団体の管理の人だけ。申し込むと用途が SUPPORT になって審査の列に並び(APPLIED)、運営に知らせる。
 // 承認されるまでは、支える側に審査中の団体として出る(新しい団体の申し込みと同じ)
+// 新しい団体の申し込みと同じく、活動地域(全国か地域)を必ず選び、掲載台帳から選んだ行を申し込みに残す(#140。結ぶのは運営の承認のとき)
 import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActiveAppUser } from '@/lib/api/auth'
@@ -14,11 +15,17 @@ import { underSupporterAgeResponse } from '@/lib/server/supportAuth'
 import { canSupportNow } from '@/lib/faces'
 import { missingChecks } from '@/lib/domain/supporterChecks'
 import { canApplyAsSupporter, supporterApplication } from '@/lib/domain/orgVetting'
+import { withDirectoryEntry } from '@/lib/domain/directoryClaim'
+import { SERVICE_AREAS_MAX, type ServiceAreas } from '@/lib/domain/serviceAreas'
+import { isClaimableEntryId } from '@/lib/server/directoryClaim'
+import { checkServiceAreas, saveServiceAreas } from '@/lib/server/serviceAreas'
 
 const schema = z.object({
   contactEmail: z.string().email().max(254).nullable().optional(),
   application: z.record(z.string(), z.string().max(2000)),
   acceptSupporterTerms: z.boolean(),
+  serviceAreas: z.object({ nationwide: z.boolean(), regionCodes: z.array(z.string().max(16)).max(SERVICE_AREAS_MAX * 2) }),
+  directoryEntryId: z.string().uuid().nullable().optional(),
 })
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -48,6 +55,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!canApplyAsSupporter({ application: org.application, vettingStatus: org.vetting_status as string, status: org.status as string, role })) {
     return NextResponse.json({ error: 'いまは支援団体として申し込めません', code: 'NOT_APPLICABLE' }, { status: 409 })
   }
+  const country = (org.region_country as string | null) ?? 'JP'
+  let areas: ServiceAreas
+  try {
+    const checked = await checkServiceAreas(country, input.serviceAreas)
+    if (!checked.ok) return NextResponse.json({ error: '活動地域を確かめてください', code: checked.reason }, { status: 400 })
+    areas = checked.value
+    if (input.directoryEntryId && !(await isClaimableEntryId(input.directoryEntryId))) {
+      return NextResponse.json({ error: '選んだ団体は、いまは選べません', code: 'DIRECTORY_ENTRY_UNAVAILABLE' }, { status: 409 })
+    }
+  } catch (e) {
+    console.error('[api/orgs/[id]/supporter-application] check', e)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  }
 
   // 同意を先に残す(同じ版は 1 行だけ。申し込みの書き換えに失敗しても害はない)
   try {
@@ -63,7 +83,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: updated, error } = await supabaseAdmin
     .from('organizations')
     .update({
-      application: supporterApplication(org.application, answers),
+      application: withDirectoryEntry(supporterApplication(org.application, answers), input.directoryEntryId ?? null),
       vetting_status: 'APPLIED',
       applied_at: new Date().toISOString(),
       reception_status: 'ACCEPTING',
@@ -79,6 +99,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   }
   if (!updated) return NextResponse.json({ error: 'いまは支援団体として申し込めません', code: 'NOT_APPLICABLE' }, { status: 409 })
+  // 地域の保存に失敗しても申し込みは受け付ける(団体の画面の「活動地域を変える」で直せる)
+  await saveServiceAreas(id, auth.appUser.id, country, areas).catch((e) => console.error('[api/orgs/[id]/supporter-application] service areas', e))
 
   await supabaseAdmin.from('audit_logs').insert({
     actor_user_id: auth.appUser.id,

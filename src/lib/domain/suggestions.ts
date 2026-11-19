@@ -136,8 +136,10 @@ export function relevanceScore(c: Pick<SuggestCandidate, 'indicators' | 'sdgsGoa
   return score
 }
 
-// 同じ団体かを名前で見るための鍵(法人格・空白・全角半角の違いを除く)。出典が違うと同じ団体が別の行になることがある
-const LEGAL_FORMS = /(特定非営利活動法人|認定特定非営利活動法人|認定NPO法人|NPO法人|一般社団法人|公益社団法人|一般財団法人|公益財団法人|社会福祉法人|社会福祉協議会法人)/gu
+// 同じ団体かを名前で見るための鍵(法人格・空白・全角半角の違いを除く)。出典が違うと同じ団体が別の行になることがある。
+// 支援団体の登録で掲載台帳の行を探すときも同じ鍵を使う(#140)。DB の directory_entries.name_key(migrations/v2_17)も同じ作りにしてある
+export const LEGAL_FORM_NAMES = ['特定非営利活動法人', '認定特定非営利活動法人', '認定NPO法人', 'NPO法人', '一般社団法人', '公益社団法人', '一般財団法人', '公益財団法人', '社会福祉法人', '社会福祉協議会法人'] as const
+const LEGAL_FORMS = new RegExp(`(${LEGAL_FORM_NAMES.join('|')})`, 'gu')
 export function nameKey(name: string): string {
   return name.normalize('NFKC').replace(LEGAL_FORMS, '').replace(/[\s・()（）「」『』]/gu, '').toLowerCase()
 }

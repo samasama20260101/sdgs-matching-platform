@@ -56,6 +56,7 @@
 | `v2_14_resolution_codes_change.sql` | 指標を入れ替えたときも訂正の行を足す(社会貢献の記録、2026-11-12) |
 | `v2_15_consult_organizations_not_vetted.sql` | 審査の状態に「支え手の申し込み前」(NOT_APPLIED)を足し、相談のための団体を審査から外す。相談のための団体は NOT_APPLIED か停止だけ、支え手の団体は NOT_APPLIED にならない決まりを DB に置く。戻した団体は audit_logs に残す(2026-11-17、#131) |
 | `v2_16_directory_consult_profile.sql` | 掲載台帳に団体の相談の受け方(受けているか・要約・指標・対象・だれの相談か・手段・料金・言語・根拠)を足し、相談ごとに提案した支援団体 `case_suggestions` と作り終えた時刻 `cases.suggestions_generated_at` を置く(2026-11-19、#138・#139) |
+| `v2_17_directory_claim_search.sql` | 掲載台帳に名前の鍵 `name_key`(名前から DB が作る列。`nameKey` と同じ作り)を足し、支援団体の登録で名前の近い団体を探す関数 `search_directory_organizations` を置く。service_role だけが呼べる(2026-11-19、#140) |
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
 
 Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を取り込んだ(`scripts/import-directory-entries.mts`、データは directory-data の出力)。
@@ -72,6 +73,8 @@ Staging には 2026-11-05 に v2_01〜03 を流し、つなぎ先 13,506 件を�
 
 **相談のための団体は審査しない**(2026-11-17 代表了承、#131)。会社・地域として相談するために登録した団体(`application.purpose = CONSULT`)は、支え手の決まりへの同意も6つの自己採点もしていないので、審査の列に並べず(`NOT_APPLIED`)、支える側の顔・招く団体・公開の一覧に出さない。相談するのに承認は要らない。運営ができるのは止める・止めるのを解くことだけで、団体として相談できないのは止めた団体だけ(見送りは支え手の申し込みを断ったという意味で、相談は止めない)。
 その団体で支えるときは、管理の人が「支え手になる」の画面で今の団体を選んで申し込む(`/api/orgs/[id]/supporter-application`)。同意と6つの自己採点をすると用途が SUPPORT になって審査の列に並び、承認で「運営と面談済み」が付く。決まりは `src/lib/domain/orgVetting.ts`、DB の決まりは `v2_15`。
+
+**掲載台帳の行と支援団体を結ぶ**(2026-11-19 定例、#140)。支援団体の申し込みでは、活動地域(全国か地域を 1 つ以上)を必ず選ぶ(前は「活動している地域」を文章で書いてもらっていた)。団体名(と任意の法人番号)を入れると、掲載台帳の民間の団体・公開中・まだ結んでいない行から、名前の鍵の部分一致か法人番号の一致で 5 つまで「この団体でしょうか」と出す(`/api/support/directory-candidates`。返すのは名前・都道府県・サイトと出典の表記だけ)。選ばれた行は申し込み(`application.directoryEntryId`)に残すだけで、**結ぶのは運営の承認のとき**(面談で本人の団体かを確かめる前に結ぶと、名の知れた団体を名乗る申し込みで行を取られるため)。承認で `claim_status = CLAIMED`・`claimed_organization_id` を付け、行の名前と活動地域(`service_scope`・`service_codes`)を申し込みの内容に合わせ、法人番号は行に無いときだけ足す。出典の列(`source_*`・`license`・`attribution`)と、出典から調べた電話・住所・相談の受け方は変えない。前の値は `audit_logs`(`admin.directory_entry_claim`)に残す。結んだ行は相談に合う支援団体の提案に出ない。取り込み(`scripts/import-directory-entries.mts`)は結んだ行の名前・法人番号・活動地域を出典の値で戻さない。運営は審査の画面で、選んだ行を外す(面談で別の団体と分かったとき)・承認のあとに結び直すことができる。選ばなかった申し込みは今までどおり新しい団体として登録する。決まりは `src/lib/domain/directoryClaim.ts`。
 
 ## 5. まだ決まっていないこと
 
