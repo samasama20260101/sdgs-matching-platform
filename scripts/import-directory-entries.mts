@@ -41,7 +41,16 @@ for (let from = 0; ; from += 1000) {
 
 // 人が決めた状態 (掲載停止・claim) と、支援団体と結んだ行の登録の内容は、取り込みで戻さない
 let keptClaimed = 0;
-const payload = publishable.map(({publishable: _p, ...r}) => {
+// 相談の受け方 (v2_16) を調べていない行は、書き出しが null を入れてくることがある。DB の既定値 (UNKNOWN・空) に読み替える
+const CONSULT_DEFAULTS: Record<string, unknown> = {
+    accepts_consultation: 'UNKNOWN', consult_fee: 'UNKNOWN', consult_evidence: [],
+    consult_indicators: [], consult_targets: [], consult_subjects: [], consult_channels: [], consult_languages: [],
+};
+const withConsultDefaults = (r: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v === null && k in CONSULT_DEFAULTS ? CONSULT_DEFAULTS[k] : v]));
+
+const payload = publishable.map(({publishable: _p, ...raw}) => {
+    const r = withConsultDefaults(raw) as typeof raw;
     const current = existing.get(r.entry_key);
     if (!current) return {...r, imported_at: new Date().toISOString()};
     const claimed = current.claim_status === 'CLAIMED' ? Object.fromEntries(CLAIM_PRESERVED_COLUMNS.map((c) => [c, current[c]])) : {};
