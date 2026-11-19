@@ -28,6 +28,7 @@ const org = (over: Partial<SuggestCandidate> = {}): SuggestCandidate => ({
   serviceCodes: ['JP-13'],
   acceptsConsultation: 'YES',
   claimStatus: 'UNCLAIMED',
+  orgType: 'NPO',
   indicators: ['1.2.1'],
   sdgsGoals: [1],
   targets: ['ANYONE'],
@@ -70,6 +71,10 @@ assert.equal(isOrganizationCandidate(org(), person), true)
 assert.equal(isOrganizationCandidate(org({ acceptsConsultation: 'UNKNOWN' }), person), false)
 assert.equal(isOrganizationCandidate(org({ claimStatus: 'CLAIMED' }), person), false)
 assert.equal(isOrganizationCandidate(org({ kind: 'PUBLIC_WINDOW' }), person), false)
+// 営利の会社は扱いを決めるまで出さない。弁護士会・法人格の分からない団体は出す
+assert.equal(isOrganizationCandidate(org({ orgType: 'COMPANY' }), person), false)
+assert.equal(isOrganizationCandidate(org({ orgType: 'BAR_ASSOCIATION' }), person), true)
+assert.equal(isOrganizationCandidate(org({ orgType: null }), person), true)
 
 // 公的な窓口は自治体でないものだけを埋め草に。個人の相談に事業者の窓口を出さない(逆も)
 const yorozu = org({ id: 'y', kind: 'PUBLIC_WINDOW', categories: ['YOROZU_SUPPORT_CENTER'], acceptsConsultation: 'UNKNOWN', indicators: [], sdgsGoals: Array.from({ length: 17 }, (_, i) => i + 1) })
@@ -109,12 +114,26 @@ assert.deepEqual(many.map((r) => r.candidate.id), ['a', 'b', 'd'])
 // 会社の相談は、民間の候補がなくても事業者の窓口で埋める
 assert.deepEqual(rankCandidates([yorozu, a], company).map((r) => r.candidate.id), ['y'])
 
-// 選び方: AI が選んだ候補を先に、足りない分を決まりの並びで。候補にない id・重なりは捨てる
+// 会社の相談は、指標が付かなくても事業者向けの窓口を出す(法テラスは出さない)
+assert.deepEqual(rankCandidates([yorozu, houterasu], { ...company, indicators: [] }).map((r) => r.candidate.id), ['y'])
+assert.deepEqual(rankCandidates([org({ ...yorozu, sdgsGoals: [] })], { ...company, indicators: [] }).map((r) => r.candidate.id), ['y'])
+
+// 同じ名前の団体(法人格・空白・全角半角の違い)は点数の高い 1 つだけ
+const dup1 = org({ id: 'dup1', name: '特定非営利活動法人TEDIC', indicators: ['1.2.1', '11.1.1'] })
+const dup2 = org({ id: 'dup2', name: 'ＴＥＤＩＣ' })
+assert.deepEqual(rankCandidates([dup2, dup1], person).map((r) => r.candidate.id), ['dup1'])
+
+// 選び方: AI が選んだ候補を先に。候補にない id・重なりは捨てる
 const picks = pickSuggestions(many, [{ id: 'd', reason: '住まいの相談に乗ってくれます' }, { id: 'zzz', reason: 'x' }, { id: 'd', reason: 'y' }])
-assert.deepEqual(picks.map((p) => [p.id, p.rank, p.method]), [['d', 1, 'AI'], ['a', 2, 'RULE'], ['b', 3, 'RULE']])
+assert.deepEqual(picks.map((p) => [p.id, p.rank, p.method]), [['d', 1, 'AI']])
 assert.equal(picks[0].reason, '住まいの相談に乗ってくれます')
-assert.equal(picks[1].reason, null)
+// AI が選んだときは、AI が選ばなかった民間の団体で埋めず、公的な窓口だけで埋める
+const withPublic = rankCandidates([a, b, houterasu], legal)
+assert.deepEqual(pickSuggestions(withPublic, [{ id: 'b', reason: 'x' }]).map((p) => [p.id, p.method]), [['b', 'AI'], ['h', 'RULE']])
+assert.deepEqual(pickSuggestions(withPublic, []).map((p) => p.id), ['h'])
+// AI が使えなかったときは決まりの並びの上から 3 つ
 assert.equal(pickSuggestions(many, null).length, SUGGESTION_COUNT)
+assert.deepEqual(pickSuggestions(many, null)[0].method, 'RULE')
 assert.deepEqual(pickSuggestions([], [{ id: 'a', reason: 'x' }]), [])
 
 // 全国の電話窓口は、緊急と判定した個人の相談にだけ

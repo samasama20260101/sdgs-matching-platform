@@ -23,7 +23,7 @@ import {
 import { buildSuggestPrompt, parseSuggestPicks } from '@/lib/ai/prompts/suggestOrganizations'
 import { AFTER_RESPONSE_AI_TIMEOUT_MS } from './caseAi'
 
-const CANDIDATE_COLUMNS = 'id, kind, categories, name, prefecture_code, service_scope, service_codes, accepts_consultation, claim_status, consult_indicators, sdgs_goals, consult_targets, consult_subjects, consult_channels, consult_summary'
+const CANDIDATE_COLUMNS = 'id, kind, categories, name, prefecture_code, service_scope, service_codes, accepts_consultation, claim_status, org_type, consult_indicators, sdgs_goals, consult_targets, consult_subjects, consult_channels, consult_summary'
 // 1 回の問い合わせで拾う候補の上限(決まりで並べ直す前)
 const FETCH_LIMIT = 300
 
@@ -37,6 +37,7 @@ type CandidateRow = {
   service_codes: string[]
   accepts_consultation: string
   claim_status: string
+  org_type: string | null
   consult_indicators: string[]
   sdgs_goals: number[]
   consult_targets: string[]
@@ -69,6 +70,7 @@ function toCandidate(r: CandidateRow): SuggestCandidate {
     serviceCodes: r.service_codes ?? [],
     acceptsConsultation: r.accepts_consultation,
     claimStatus: r.claim_status,
+    orgType: r.org_type,
     indicators: r.consult_indicators ?? [],
     sdgsGoals: r.sdgs_goals ?? [],
     targets: r.consult_targets ?? [],

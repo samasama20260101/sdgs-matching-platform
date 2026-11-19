@@ -1,6 +1,7 @@
 // 相談に合う支援団体の提案(#138、2026-11-19 定例)。どの団体を候補にし、どう並べるかの決まり(純粋関数)。
 //   - 候補は掲載台帳の民間の団体(kind = ORGANIZATION)で、相談を受けていると調べが付いたもの(accepts_consultation = YES)
 //     明日もsamasama に登録済み(claim 済み)の団体は、相談そのものが届いているので出さない
+//   - 営利の会社(org_type = COMPANY)は、提案に入れるかを決めるまで出さない(弁護士会の相談センターは出す)
 //   - 自治体の窓口は出さない(定例の決定)。民間の候補が足りないときだけ、自治体でない公的な窓口(よろず支援拠点・法テラスなど)で埋める
 //   - 地域: 全国で受けている団体か、相談の都道府県で受けている団体(相談者に住所は聞かない)
 //   - 並べ方: AI が選んだ指標との重なり > 同じ大項目 > 電話・オンラインで受けている(加点)> 同じ都道府県
@@ -21,6 +22,9 @@ export const NON_MUNICIPAL_PUBLIC_CATEGORIES = [...BUSINESS_WINDOW_CATEGORIES, '
 export const CONSULT_CHANNELS = ['PHONE', 'ONLINE', 'EMAIL', 'FORM', 'CHAT', 'VISIT', 'OUTREACH'] as const
 export type ConsultChannel = (typeof CONSULT_CHANNELS)[number]
 
+// 提案に入れるかを決めるまで出さない法人格(営利の会社。2026-11-19 の Issue #138 の論点)
+const EXCLUDED_ORG_TYPES = new Set(['COMPANY'])
+
 // 18歳未満の相談に出さない対象(高齢者・事業者・地域だけを対象にしている団体)
 const ADULT_ONLY_TARGETS = new Set(['ELDERLY', 'BUSINESS', 'COMMUNITY'])
 
@@ -34,6 +38,7 @@ export type SuggestCandidate = {
   serviceCodes: string[]
   acceptsConsultation: string
   claimStatus: string
+  orgType: string | null
   indicators: string[]
   sdgsGoals: number[]
   targets: string[]
@@ -93,6 +98,7 @@ export function isOrganizationCandidate(c: SuggestCandidate, k: SuggestCase): bo
   return c.kind === 'ORGANIZATION'
     && c.acceptsConsultation === 'YES'
     && c.claimStatus !== 'CLAIMED'
+    && !EXCLUDED_ORG_TYPES.has(c.orgType ?? '')
     && servesRegion(c, k)
     && fitsSubject(c, k.subject)
     && fitsAge(c, k.isMinor)
@@ -121,28 +127,45 @@ export function relevanceScore(c: Pick<SuggestCandidate, 'indicators' | 'sdgsGoa
   return score
 }
 
-// 候補を決まりで絞って並べる。民間の団体を先に、足りない分だけ公的な窓口を後ろに足す
+// 同じ団体かを名前で見るための鍵(法人格・空白・全角半角の違いを除く)。出典が違うと同じ団体が別の行になることがある
+const LEGAL_FORMS = /(特定非営利活動法人|認定特定非営利活動法人|認定NPO法人|NPO法人|一般社団法人|公益社団法人|一般財団法人|公益財団法人|社会福祉法人|社会福祉協議会法人)/gu
+export function nameKey(name: string): string {
+  return name.normalize('NFKC').replace(LEGAL_FORMS, '').replace(/[\s・()（）「」『』]/gu, '').toLowerCase()
+}
+
+// 候補を決まりで絞って並べる。民間の団体を先に、足りない分だけ公的な窓口を後ろに足す。同じ名前の団体は 1 つにする
 export function rankCandidates(candidates: readonly SuggestCandidate[], k: SuggestCase): RankedCandidate[] {
   const seen = new Set<string>()
-  const ranked: RankedCandidate[] = []
+  const scored: RankedCandidate[] = []
   for (const c of candidates) {
     if (seen.has(c.id)) continue
     seen.add(c.id)
     const tier = isOrganizationCandidate(c, k) ? 'ORGANIZATION' : isPublicFallback(c, k) ? 'PUBLIC' : null
     if (!tier) continue
     const score = relevanceScore(c, k)
-    // 公的な窓口の埋め草も、相談の大項目と合うものだけ(命にかかわる相談に法テラスを出さない)
-    if (score === 0) continue
-    ranked.push({ candidate: c, score, tier })
+    // 埋め草の公的な窓口も相談の大項目と合うものだけ(命にかかわる相談に法テラスを出さない)。
+    // ただし会社の相談の事業者向けの窓口は、指標が付かなくても出す(経営の相談はどれも受けるため)
+    const businessForCompany = tier === 'PUBLIC' && k.subject === 'COMPANY' && c.categories.some((cat) => (BUSINESS_WINDOW_CATEGORIES as readonly string[]).includes(cat))
+    if (score === 0 && !businessForCompany) continue
+    scored.push({ candidate: c, score, tier })
   }
   const order = (r: RankedCandidate) => (r.tier === 'ORGANIZATION' ? 0 : 1)
-  ranked.sort((a, b) => order(a) - order(b) || b.score - a.score || a.candidate.name.localeCompare(b.candidate.name, 'ja'))
+  scored.sort((a, b) => order(a) - order(b) || b.score - a.score || a.candidate.name.localeCompare(b.candidate.name, 'ja'))
+  const names = new Set<string>()
+  const ranked = scored.filter((r) => {
+    const key = nameKey(r.candidate.name)
+    if (names.has(key)) return false
+    names.add(key)
+    return true
+  })
   const organizations = ranked.filter((r) => r.tier === 'ORGANIZATION')
   const publics = ranked.filter((r) => r.tier === 'PUBLIC')
   return [...organizations, ...publics.slice(0, Math.max(0, SUGGESTION_COUNT - organizations.length))]
 }
 
-// AI が選んだもの(候補の中の id だけ・重なりなし)を先に、足りない分を決まりの並びで埋めて 3 つにする
+// AI が選んだもの(候補の中の id だけ・重なりなし)を先に並べる。
+// AI が選んだときは、AI が合わないと見た民間の団体で埋めず、足りない分は公的な窓口(大項目の合うもの)だけで埋める。
+// AI が使えなかったときは決まりの並びの上から 3 つ
 export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: readonly { id: string; reason: string | null }[] | null): Suggestion[] {
   const allowed = new Set(ranked.map((r) => r.candidate.id))
   const picked: Suggestion[] = []
@@ -151,7 +174,8 @@ export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: rea
     if (!allowed.has(p.id) || picked.some((s) => s.id === p.id)) continue
     picked.push({ id: p.id, rank: picked.length + 1, reason: p.reason, method: 'AI' })
   }
-  for (const r of ranked) {
+  const fill = aiPicks === null ? ranked : ranked.filter((r) => r.tier === 'PUBLIC')
+  for (const r of fill) {
     if (picked.length >= SUGGESTION_COUNT) break
     if (picked.some((s) => s.id === r.candidate.id)) continue
     picked.push({ id: r.candidate.id, rank: picked.length + 1, reason: null, method: 'RULE' })

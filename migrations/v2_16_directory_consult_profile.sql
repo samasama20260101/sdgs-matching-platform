@@ -22,7 +22,8 @@
 --     DROP COLUMN IF EXISTS consult_subjects, DROP COLUMN IF EXISTS consult_channels,
 --     DROP COLUMN IF EXISTS consult_fee, DROP COLUMN IF EXISTS consult_languages,
 --     DROP COLUMN IF EXISTS consult_evidence, DROP COLUMN IF EXISTS consult_checked_at,
---     DROP COLUMN IF EXISTS consult_collected_by;
+--     DROP COLUMN IF EXISTS consult_collected_by, DROP COLUMN IF EXISTS consult_status,
+--     DROP COLUMN IF EXISTS org_type;
 -- ============================================================
 
 BEGIN;
@@ -51,7 +52,12 @@ ALTER TABLE directory_entries
     ADD COLUMN IF NOT EXISTS consult_evidence jsonb NOT NULL DEFAULT '[]'::jsonb,
     ADD COLUMN IF NOT EXISTS consult_checked_at timestamptz,
     -- codex:<model> / manual
-    ADD COLUMN IF NOT EXISTS consult_collected_by text;
+    ADD COLUMN IF NOT EXISTS consult_collected_by text,
+    -- 調べの結果(OK = 調べが付いた / NO_SOURCE = 調べる出典がない / FAILED = 取得や照合に失敗)。null は調べていない
+    ADD COLUMN IF NOT EXISTS consult_status text CHECK (consult_status IS NULL OR consult_status IN ('OK', 'NO_SOURCE', 'FAILED')),
+    -- 法人格(NPO・GENERAL_INCORPORATED・PUBLIC_INTEREST・SOCIAL_WELFARE・VOLUNTARY・BAR_ASSOCIATION・COMPANY・OTHER など)。
+    -- 営利の会社(COMPANY)は、提案に入れるかを決めるまで候補にしない(src/lib/domain/suggestions.ts)
+    ADD COLUMN IF NOT EXISTS org_type text;
 
 -- 提案の候補を指標の重なりで引く
 CREATE INDEX IF NOT EXISTS directory_entries_consult_indicators_idx
