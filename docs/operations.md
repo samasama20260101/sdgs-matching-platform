@@ -83,7 +83,7 @@
 | `SUPABASE_SERVICE_ROLE_KEY` | サーバー用の秘密キー(`sb_secret_` 形式)。Vercel では Secret |
 | `GOOGLE_GEMINI_API_KEY`(または `GEMINI_API_KEY`)/ `OPENAI_API_KEY` / `XAI_API_KEY` | AI の鍵。どれもない場合、相談は分類されずに機微として届く(`AI_UNAVAILABLE`、#133) |
 | `AI_PROVIDER`・`AI_<用途>_PROVIDER` | 使う提供元(`gemini` / `openai` / `xai`)。用途は `CONSULTATION`(相談を届けるときの分類・体験ページの分類・解決の要約)・`NEWS`・`TRANSLATION`。書かなければ鍵のある提供元を選ぶ(翻訳は xAI が先、ほかは Gemini が先) |
-| `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`)。Workers では `wrangler.jsonc` の vars に `gpt-6-luna`・`grok-4.20-0309-non-reasoning`(2026-11-06) |
+| `AI_GEMINI_MODEL`・`AI_OPENAI_MODEL`・`AI_XAI_MODEL` | 提供元ごとのモデル名。Gemini だけ既定(`gemini-2.5-flash`)があり、OpenAI と xAI は書かないと使わない。`AI_<用途>_MODEL` は `AI_<用途>_PROVIDER` を書いたときだけ効く(`src/lib/ai/config.ts`)。Workers では `wrangler.jsonc` の vars に `gpt-6-luna`(2026-11-06)・翻訳は別名 `grok-latest` と `AI_XAI_REASONING_EFFORT=low`(2026-11-19。版を書かず常に最新) |
 | `AI_OPENAI_REASONING_EFFORT`・`AI_XAI_REASONING_EFFORT` | 考えてから答える型のモデルに渡す考える量(`none`・`low`・`medium` など)。書かなければ送らず各社の既定(gpt-6-luna は medium で遅い)。考えない型のモデルには書かない |
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
 | `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせのうち相談のこと(新しい相談・つなぎ先の同意・申し出のない相談)。Discord の「新着sos」の Webhook。番号・主体・印・分野・選んだもの・入口・言語・国と、運営の相談の画面(`/admin/cases/<id>`)へのリンクを載せる。本文・呼び名・都道府県より細かい地域は載せず、機微と18歳未満の相談は選んだものも載せない(`src/lib/server/opsNotifyFormat.ts`)。リンクの先頭は `APP_ORIGIN`。本番以外は先頭に `[Staging]` が付く。未設定なら送らない |
