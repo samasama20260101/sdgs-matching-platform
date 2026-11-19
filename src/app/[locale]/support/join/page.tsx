@@ -5,10 +5,12 @@
 // 団体: 申し込み → 運営が面談 → 承認されると一覧に載る(11/5 の審査の流れ。2段階に分けない)
 //   申し込みでは、面談で確かめる6つの点を自己採点してもらう(11/12。面談前の自己採点はこれ1回)
 //   会社・地域として相談するために登録した団体(相談のための団体)の管理の人は、その団体のまま申し込める(#131)
+//   活動地域(全国か地域)は必ず選ぶ。前もって載せている団体(掲載台帳)に名前の近い団体があれば「この団体でしょうか」と出し、
+//   選ばれたら申し込みに残す。運営が承認したときに、載せていた情報を申し込みの内容に合わせる(#140)
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase/client'
-import { apiFetch } from '@/lib/client/api'
+import { apiFetch, ApiError } from '@/lib/client/api'
 import { Link, useRouter } from '@/i18n/navigation'
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing'
 import { AppFrame } from '@/components/app/AppShell'
@@ -19,10 +21,14 @@ import type { MeOrganizationFace, MePerson, MeResponse } from '@/lib/client/meTy
 import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAreas'
 import { canSupportAtAge } from '@/lib/domain/age'
 import { SELF_CHECKS, SUPPORTER_CHECKS, checkAnswers, missingChecks, type SelfCheck, type SupporterCheck } from '@/lib/domain/supporterChecks'
+import { normalizeCorporateNumber } from '@/lib/domain/directoryClaim'
+import { ServiceAreaPicker, isAreaChoiceComplete, type AreaChoice } from '@/components/support/ServiceAreaPicker'
+import { DirectoryCandidates, useClaimCandidates } from '@/components/support/DirectoryCandidates'
 
 const SUPPORTER_POINTS = ['age', 'purpose', 'sensitive', 'realName', 'records', 'stop'] as const
 const ORG_TYPES = ['NPO', 'NGO', 'COMPANY', 'MUNICIPALITY', 'COMMUNITY', 'SCHOOL', 'INTERMEDIARY', 'PRO_BONO_LAWYER', 'OTHER_PUBLIC', 'OTHER'] as const
-const APPLICATION_ITEMS = ['areas', 'staff', 'safeguarding', 'website', 'howFound'] as const
+// 活動地域は文章で聞かず、全国か地域を選んでもらう(#140。前は areas の欄に書いてもらっていた)
+const APPLICATION_ITEMS = ['staff', 'safeguarding', 'website', 'howFound'] as const
 
 function SupporterTerms({ agreed, onChange }: { agreed: boolean; onChange: (v: boolean) => void }) {
   const t = useTranslations('support.join')
@@ -245,14 +251,17 @@ function OrgChoice({ candidates, target, onChange }: { candidates: MeOrganizatio
 
 const NEW_ORG = 'new'
 
-function OrganizationForm({ person, candidates }: { person: MePerson; candidates: MeOrganizationFace[] }) {
+function OrganizationForm({ person, orgChoices }: { person: MePerson; orgChoices: MeOrganizationFace[] }) {
   const t = useTranslations('support.join')
   const tType = useTranslations('support.orgType')
   // 相談のための団体があれば、その団体で申し込むのを先に出す
-  const [target, setTarget] = useState<string>(candidates[0]?.organizationId ?? NEW_ORG)
-  const existing = candidates.find((o) => o.organizationId === target) ?? null
+  const [target, setTarget] = useState<string>(orgChoices[0]?.organizationId ?? NEW_ORG)
+  const existing = orgChoices.find((o) => o.organizationId === target) ?? null
   const [name, setName] = useState('')
   const [orgType, setOrgType] = useState<(typeof ORG_TYPES)[number]>('NPO')
+  const [corporateNumber, setCorporateNumber] = useState('')
+  const [areas, setAreas] = useState<AreaChoice>({ nationwide: null, regionCodes: [] })
+  const [pickedEntry, setPickedEntry] = useState<string | null>(null)
   const [contactEmail, setContactEmail] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [choices, setChoices] = useState<Partial<Record<SupporterCheck, SelfCheck>>>({})
@@ -262,23 +271,34 @@ function OrganizationForm({ person, candidates }: { person: MePerson; candidates
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { refresh } = useSession()
+  const corporate = existing ? null : normalizeCorporateNumber(corporateNumber)
+  const { candidates, reload: reloadCandidates } = useClaimCandidates(existing ? existing.organizationName : name, corporate)
+  // 名前を直して候補から外れた団体は、選んでいないものとして扱う
+  const directoryEntryId = candidates.some((c) => c.id === pickedEntry) ? pickedEntry : null
   const submit = async () => {
     const checks = checkAnswers(choices, notes)
     const missing = missingChecks(checks)
     const nameMissing = !existing && !name.trim()
-    if (nameMissing || missing.length > 0 || !agreed) {
-      setError(nameMissing ? t('orgNameRequired') : missing.length > 0 ? t('checksRequired', { numbers: missing.map((c) => SUPPORTER_CHECKS.indexOf(c) + 1).join('・') }) : t('agreeRequired'))
+    const corporateInvalid = !existing && corporateNumber.trim() !== '' && corporate === null
+    const areasMissing = !isAreaChoiceComplete(areas)
+    if (nameMissing || corporateInvalid || areasMissing || missing.length > 0 || !agreed) {
+      setError(nameMissing ? t('orgNameRequired')
+        : corporateInvalid ? t('corporateNumberInvalid')
+          : areasMissing ? t('areasRequired')
+            : missing.length > 0 ? t('checksRequired', { numbers: missing.map((c) => SUPPORTER_CHECKS.indexOf(c) + 1).join('・') })
+              : t('agreeRequired'))
       return
     }
     setBusy(true)
     setError(null)
     const application = { ...Object.fromEntries(Object.entries(answers).filter(([, v]) => v.trim())), ...checks }
+    const serviceAreas = { nationwide: areas.nationwide === true, regionCodes: areas.nationwide === true ? [] : areas.regionCodes }
     try {
       if (existing) {
         // 相談のための団体のまま、支え手の申し込みをする
         await apiFetch(`/api/orgs/${existing.organizationId}/supporter-application`, {
           method: 'POST',
-          json: { contactEmail: contactEmail.trim() || null, application, acceptSupporterTerms: true },
+          json: { contactEmail: contactEmail.trim() || null, application, acceptSupporterTerms: true, serviceAreas, directoryEntryId },
         })
       } else {
         await apiFetch('/api/orgs', {
@@ -289,16 +309,26 @@ function OrganizationForm({ person, candidates }: { person: MePerson; candidates
             purpose: 'SUPPORT',
             country: person.country,
             regionCode: person.regionCode,
+            corporateNumber: corporate,
             contactEmail: contactEmail.trim() || null,
             application,
             acceptSupporterTerms: true,
+            serviceAreas,
+            directoryEntryId,
           },
         })
       }
       await refresh()
       setDone(true)
-    } catch {
-      setError(t('saveFailed'))
+    } catch (e) {
+      // 選んだ団体が、そのあいだにほかの支援団体と結ばれたときなど。候補を探し直して選び直してもらう
+      if (e instanceof ApiError && e.code === 'DIRECTORY_ENTRY_UNAVAILABLE') {
+        setPickedEntry(null)
+        void reloadCandidates()
+        setError(t('claimUnavailable'))
+      } else {
+        setError(t('saveFailed'))
+      }
     } finally {
       setBusy(false)
     }
@@ -320,19 +350,30 @@ function OrganizationForm({ person, candidates }: { person: MePerson; candidates
           <li>{t('flow.apply')}</li><li>{t('flow.interview')}</li><li>{t('flow.approved')}</li>
         </ol>
       </Card>
-      {candidates.length > 0 && <OrgChoice candidates={candidates} target={target} onChange={setTarget} />}
+      {orgChoices.length > 0 && <OrgChoice candidates={orgChoices} target={target} onChange={setTarget} />}
+      {!existing && (
+        <Card tone="support" className="flex flex-col gap-4 p-4">
+          <TextField label={t('orgName')} hint={t('orgNameHint')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
+          <TextField
+            label={<span className="inline-flex items-center gap-2">{t('corporateNumber')} <Tip label={t('corporateNumberTipLabel')}>{t('corporateNumberTip')}</Tip></span>}
+            inputMode="numeric" autoComplete="off" maxLength={20} value={corporateNumber} onChange={(e) => setCorporateNumber(e.target.value)}
+          />
+        </Card>
+      )}
+      <DirectoryCandidates candidates={candidates} selected={directoryEntryId} onSelect={setPickedEntry} />
       <Card tone="support" className="flex flex-col gap-4 p-4">
         {!existing && (
-          <>
-            <TextField label={t('orgName')} hint={t('orgNameHint')} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
-            <label className="flex flex-col gap-1.5">
-              <span className="text-t13 font-bold">{t('orgType')}</span>
-              <select value={orgType} onChange={(e) => setOrgType(ORG_TYPES.find((x) => x === e.target.value) ?? 'OTHER')} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
-                {ORG_TYPES.map((o) => <option key={o} value={o}>{tType(o)}</option>)}
-              </select>
-            </label>
-          </>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-t13 font-bold">{t('orgType')}</span>
+            <select value={orgType} onChange={(e) => setOrgType(ORG_TYPES.find((x) => x === e.target.value) ?? 'OTHER')} className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16">
+              {ORG_TYPES.map((o) => <option key={o} value={o}>{tType(o)}</option>)}
+            </select>
+          </label>
         )}
+        <div className="flex flex-col gap-2">
+          <span className="inline-flex items-center gap-2 text-t13 font-bold">{t('areas')} <Tip label={t('areasTipLabel')}>{t('areasTip')}</Tip></span>
+          <ServiceAreaPicker country={person.country} value={areas} onChange={setAreas} label={t('areas')} />
+        </div>
         <TextField label={<span className="inline-flex items-center gap-2">{t('contactEmail')} <Tip label={t('contactEmailTipLabel')}>{t('contactEmailTip')}</Tip></span>} type="email" value={contactEmail} maxLength={254} onChange={(e) => setContactEmail(e.target.value)} />
       </Card>
       <SelfChecks choices={choices} notes={notes} onChoice={(c, v) => setChoices({ ...choices, [c]: v })} onNote={(c, v) => setNotes({ ...notes, [c]: v })} />
@@ -389,7 +430,7 @@ function JoinBody({ me }: { me: Extract<MeResponse, { onboarded: true }> }) {
             <IndividualForm person={me.person} onDone={() => { setRegistered(true); void refresh() }} />
           )
         ) : (
-          <OrganizationForm person={me.person} candidates={candidates} />
+          <OrganizationForm person={me.person} orgChoices={candidates} />
         )}
         </>
       )}

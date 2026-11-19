@@ -1,9 +1,11 @@
 // 運営｜審査(盤 51): 団体の申し込みの一覧。?status=APPLIED|INTERVIEW|APPROVED|REJECTED|SUSPENDED|NOT_APPLIED
 // NOT_APPLIED は相談のための団体(審査に並べない、#131)。止めるために一覧で引けるようにしておく
+// 札ごとに、登録で選んだ活動地域と、掲載台帳から選んだ行(と結べるか)を付ける(#140)
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { VETTING_STATUSES } from '@/lib/domain/orgVetting'
+import { loadAdminDirectoryEntries, loadAdminServiceAreas } from '@/lib/server/directoryClaim'
 
 const STATUSES: readonly string[] = VETTING_STATUSES
 
@@ -25,5 +27,16 @@ export async function GET(request: Request) {
   ])
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   const counts: Record<string, number> = Object.fromEntries(STATUSES.map((s, i) => [s, countResults[i].count ?? 0]))
-  return NextResponse.json({ organizations: data ?? [], counts })
+  const orgs = data ?? []
+  try {
+    const [entries, areas] = await Promise.all([
+      loadAdminDirectoryEntries(orgs.map((o) => ({ id: o.id as string, application: o.application }))),
+      loadAdminServiceAreas(orgs.map((o) => o.id as string)),
+    ])
+    const organizations = orgs.map((o) => ({ ...o, directory_entry: entries.get(o.id as string) ?? null, service_areas: areas.get(o.id as string) ?? null }))
+    return NextResponse.json({ organizations, counts })
+  } catch (e) {
+    console.error('[api/admin/orgs] directory', e)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  }
 }
