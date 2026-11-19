@@ -77,3 +77,16 @@ function reasoningEffortFor(provider: AiProvider, env: Env): string | null {
   const v = clean(env[`AI_${provider.toUpperCase()}_REASONING_EFFORT`]).toLowerCase()
   return (REASONING_EFFORTS as readonly string[]).includes(v) ? v : null
 }
+
+// 埋め込み(支援団体の提案の候補を相談の意味で引く、#148)。OpenAI の鍵と AI_EMBEDDING_MODEL があるときだけ使う。
+// 埋め込みはモデルが替わると比べられないので、モデルは wrangler.jsonc の vars で明示し、
+// 掲載台帳の行に保存したモデル(consult_embedding_model)と同じものだけを検索する(上げるときは全件を作り直す)
+export type EmbeddingTarget = { model: string; apiKey: string; baseUrl: string }
+
+export function resolveEmbeddingTarget(env: Env): EmbeddingTarget | null {
+  const apiKey = apiKeyFor('openai', env)
+  const model = clean(env.AI_EMBEDDING_MODEL)
+  if (!apiKey || !model) return null
+  const baseUrl = clean(env.AI_OPENAI_BASE_URL) || BASE_URLS.openai
+  return { model, apiKey, baseUrl: baseUrl.replace(/\/+$/, '') }
+}
