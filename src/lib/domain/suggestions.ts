@@ -131,8 +131,8 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
     const tier = isOrganizationCandidate(c, k) ? 'ORGANIZATION' : isPublicFallback(c, k) ? 'PUBLIC' : null
     if (!tier) continue
     const score = relevanceScore(c, k)
-    // 公的な窓口は相談の大項目と合わなくても、だれの相談かが合えば埋め草にしてよい(会社の相談のよろず支援拠点など)
-    if (score === 0 && tier === 'ORGANIZATION') continue
+    // 公的な窓口の埋め草も、相談の大項目と合うものだけ(命にかかわる相談に法テラスを出さない)
+    if (score === 0) continue
     ranked.push({ candidate: c, score, tier })
   }
   const order = (r: RankedCandidate) => (r.tier === 'ORGANIZATION' ? 0 : 1)

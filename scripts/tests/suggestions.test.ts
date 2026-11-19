@@ -72,8 +72,8 @@ assert.equal(isOrganizationCandidate(org({ claimStatus: 'CLAIMED' }), person), f
 assert.equal(isOrganizationCandidate(org({ kind: 'PUBLIC_WINDOW' }), person), false)
 
 // 公的な窓口は自治体でないものだけを埋め草に。個人の相談に事業者の窓口を出さない(逆も)
-const yorozu = org({ id: 'y', kind: 'PUBLIC_WINDOW', categories: ['YOROZU_SUPPORT_CENTER'], acceptsConsultation: 'UNKNOWN', indicators: [], sdgsGoals: [] })
-const houterasu = org({ id: 'h', kind: 'PUBLIC_WINDOW', categories: ['LEGAL_SUPPORT_OFFICE'], acceptsConsultation: 'UNKNOWN' })
+const yorozu = org({ id: 'y', kind: 'PUBLIC_WINDOW', categories: ['YOROZU_SUPPORT_CENTER'], acceptsConsultation: 'UNKNOWN', indicators: [], sdgsGoals: Array.from({ length: 17 }, (_, i) => i + 1) })
+const houterasu = org({ id: 'h', kind: 'PUBLIC_WINDOW', categories: ['LEGAL_SUPPORT_OFFICE'], acceptsConsultation: 'UNKNOWN', indicators: [], sdgsGoals: [16] })
 const municipal = org({ id: 'm', kind: 'PUBLIC_WINDOW', categories: ['SELF_RELIANCE_SUPPORT'], acceptsConsultation: 'UNKNOWN' })
 const hotline = org({ id: 'n', kind: 'NATIONAL_HOTLINE', categories: ['GENERAL_CONSULTATION_HOTLINE'], serviceScope: 'NATIONWIDE' })
 const company: SuggestCase = { ...person, subject: 'COMPANY', indicators: ['8.3.1'] }
@@ -99,16 +99,19 @@ assert.ok(relevanceScore(org({ indicators: ['1.4.1'], channels: ['PHONE', 'ONLIN
 const a = org({ id: 'a', name: 'あ', channels: ['PHONE'] })
 const b = org({ id: 'b', name: 'い', indicators: ['1.2.1', '11.1.1'] })
 const c = org({ id: 'c', name: 'う', indicators: ['5.2.1'], sdgsGoals: [5] })
-const ranked = rankCandidates([a, b, c, houterasu, municipal, hotline, a], person)
-assert.deepEqual(ranked.map((r) => r.candidate.id), ['b', 'a', 'h'])
-const many = rankCandidates([a, b, org({ id: 'd', name: 'え' }), houterasu], person)
-assert.deepEqual(many.map((r) => r.candidate.id), ['b', 'a', 'd'])
+const legal: SuggestCase = { ...person, indicators: ['1.2.1', '16.3.1'] }
+const ranked = rankCandidates([a, b, c, houterasu, municipal, hotline, a], legal)
+assert.deepEqual(ranked.map((r) => r.candidate.id), ['a', 'b', 'h'])
+// 公的な窓口の埋め草も、相談の大項目と合わなければ出さない(家賃の相談に法テラスを出さない)
+assert.deepEqual(rankCandidates([a, b, houterasu], person).map((r) => r.candidate.id), ['b', 'a'])
+const many = rankCandidates([a, b, org({ id: 'd', name: 'え' }), houterasu], legal)
+assert.deepEqual(many.map((r) => r.candidate.id), ['a', 'b', 'd'])
 // 会社の相談は、民間の候補がなくても事業者の窓口で埋める
 assert.deepEqual(rankCandidates([yorozu, a], company).map((r) => r.candidate.id), ['y'])
 
 // 選び方: AI が選んだ候補を先に、足りない分を決まりの並びで。候補にない id・重なりは捨てる
 const picks = pickSuggestions(many, [{ id: 'd', reason: '住まいの相談に乗ってくれます' }, { id: 'zzz', reason: 'x' }, { id: 'd', reason: 'y' }])
-assert.deepEqual(picks.map((p) => [p.id, p.rank, p.method]), [['d', 1, 'AI'], ['b', 2, 'RULE'], ['a', 3, 'RULE']])
+assert.deepEqual(picks.map((p) => [p.id, p.rank, p.method]), [['d', 1, 'AI'], ['a', 2, 'RULE'], ['b', 3, 'RULE']])
 assert.equal(picks[0].reason, '住まいの相談に乗ってくれます')
 assert.equal(picks[1].reason, null)
 assert.equal(pickSuggestions(many, null).length, SUGGESTION_COUNT)
