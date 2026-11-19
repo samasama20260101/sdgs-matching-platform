@@ -3,8 +3,10 @@ import 'server-only'
 // 相談に合う支援団体の提案(#138)を作って残し、読み出す。
 // 届けた直後に応答のあと(after)で作り、画面を開いたときにまだ無ければその場で作る。毎日の処理も抜けを拾う。
 // 候補の絞り込みと並べ方は src/lib/domain/suggestions.ts、AI のプロンプトは src/lib/ai/prompts/suggestOrganizations.ts。
-// 相談文は maskPii で伏せ、fenceConsultation で囲んでから渡す(AGENTS.md)。AI は generateJson だけから呼ぶ。
-import { generateJson } from '@/lib/ai/client'
+// 候補は全国から、指標の重なりの多い順(DB の match_directory_by_indicators)と、相談文と団体の要約の意味の近い順
+// (埋め込み、match_directory_by_embedding)で引いて合わせる(#148)。ほかの都道府県の団体は遠隔で相談を受けているものだけ。
+// 相談文は maskPii で伏せ、fenceConsultation で囲んでから渡す(AGENTS.md)。AI は src/lib/ai/client.ts だけから呼ぶ。
+import { generateEmbeddings, generateJson, isEmbeddingConfigured } from '@/lib/ai/client'
 import { fenceConsultation } from '@/lib/aiSafety'
 import { maskPii } from '@/lib/pii'
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -24,8 +26,11 @@ import { buildSuggestPrompt, parseSuggestPicks } from '@/lib/ai/prompts/suggestO
 import { AFTER_RESPONSE_AI_TIMEOUT_MS } from './caseAi'
 
 const CANDIDATE_COLUMNS = 'id, kind, categories, name, prefecture_code, service_scope, service_codes, accepts_consultation, claim_status, org_type, consult_indicators, sdgs_goals, consult_targets, consult_subjects, consult_channels, consult_summary'
-// 1 回の問い合わせで拾う候補の上限(決まりで並べ直す前)
-const FETCH_LIMIT = 300
+// 指標の重なりで拾う候補の数と、意味の近さで拾う候補の数(決まりで並べ直す前)
+const INDICATOR_FETCH_LIMIT = 60
+const EMBEDDING_FETCH_LIMIT = 40
+// 相談文の埋め込みを待つ長さ(届けた直後の after と画面を開いたときの両方で使う)
+const EMBEDDING_TIMEOUT_MS = 8_000
 
 type CandidateRow = {
   id: string
@@ -77,6 +82,7 @@ function toCandidate(r: CandidateRow): SuggestCandidate {
     targets: r.consult_targets ?? [],
     subjects: r.consult_subjects ?? [],
     channels: r.consult_channels ?? [],
+    similarity: null,
   }
 }
 
@@ -86,34 +92,63 @@ function regionFilter(regionCode: string | null): string {
   return `service_scope.eq.NATIONWIDE,prefecture_code.eq.${regionCode},service_codes.cs.{${regionCode}}`
 }
 
-async function fetchCandidates(k: SuggestCase): Promise<CandidateRow[]> {
-  const base = () => supabaseAdmin.from('directory_entries').select(CANDIDATE_COLUMNS).eq('visibility', 'PUBLIC').or(regionFilter(k.regionCode))
+// 相談文の埋め込み(伏せてから)。使えないときは null(指標の重なりだけで引く)
+async function embedConsultation(body: string): Promise<{ vector: number[]; model: string } | null> {
+  if (!isEmbeddingConfigured()) return null
+  const result = await generateEmbeddings([maskPii(body)], { timeoutMs: EMBEDDING_TIMEOUT_MS })
+  if (!result.ok || !result.vectors[0]) {
+    if (!result.ok) console.error(`[suggestions] embedding unavailable (${result.code}); using indicators only`)
+    return null
+  }
+  return { vector: result.vectors[0], model: result.model }
+}
+
+async function fetchCandidates(k: SuggestCase, body: string): Promise<{ rows: CandidateRow[]; similarity: Map<string, number> }> {
+  const region = k.regionCode && /^JP-\d{2}$/.test(k.regionCode) ? k.regionCode : null
+  const base = () => supabaseAdmin.from('directory_entries').select(CANDIDATE_COLUMNS).eq('visibility', 'PUBLIC').or(regionFilter(region))
   const goals = goalsOf(k.indicators)
-  const queries = [
-    // 指標が重なる民間の団体
-    k.indicators.length > 0
-      ? base().eq('kind', 'ORGANIZATION').eq('accepts_consultation', 'YES').neq('claim_status', 'CLAIMED').overlaps('consult_indicators', k.indicators).limit(FETCH_LIMIT)
-      : null,
-    // 大項目が重なる民間の団体(指標の重なりが少ないとき用)
-    goals.length > 0
-      ? base().eq('kind', 'ORGANIZATION').eq('accepts_consultation', 'YES').neq('claim_status', 'CLAIMED').overlaps('sdgs_goals', goals).limit(FETCH_LIMIT)
-      : null,
-    // 足りないときに埋める、自治体でない公的な窓口(事業者向けの全国の電話窓口を含む)
+  const embedding = (k.regionCountry ?? 'JP') === 'JP' ? await embedConsultation(body) : null
+  const [byIndicators, byEmbedding, publics, hotlines] = await Promise.all([
+    // 指標・大項目が重なる民間の団体を、重なりの多い順に(全国から。ほかの都道府県は遠隔で受けている団体だけ)
+    k.indicators.length > 0 && (k.regionCountry ?? 'JP') === 'JP'
+      ? supabaseAdmin.rpc('match_directory_by_indicators', { p_indicators: k.indicators, p_goals: goals, p_region: region, p_limit: INDICATOR_FETCH_LIMIT })
+      : Promise.resolve({ data: [], error: null }),
+    // 相談文と団体の要約の意味が近い民間の団体を、近い順に
+    embedding
+      ? supabaseAdmin.rpc('match_directory_by_embedding', { p_embedding: JSON.stringify(embedding.vector), p_model: embedding.model, p_region: region, p_limit: EMBEDDING_FETCH_LIMIT })
+      : Promise.resolve({ data: [], error: null }),
+    // 足りないときに埋める、自治体でない公的な窓口(事業者向けの全国の電話窓口を含む。同じ都道府県だけ)
     base().in('kind', ['PUBLIC_WINDOW', 'NATIONAL_HOTLINE']).overlaps('categories', [...NON_MUNICIPAL_PUBLIC_CATEGORIES]).limit(50),
     // 緊急と判定した相談では、全国の電話窓口も AI に見せる
-    k.urgent ? base().eq('kind', 'NATIONAL_HOTLINE').limit(50) : null,
-  ]
-  const results = await Promise.all(queries.map((q) => q ?? Promise.resolve({ data: [], error: null })))
-  const failed = results.find((r) => r.error)
+    k.urgent ? base().eq('kind', 'NATIONAL_HOTLINE').limit(50) : Promise.resolve({ data: [], error: null }),
+  ])
+  const failed = [byIndicators, byEmbedding, publics, hotlines].find((r) => r.error)
   if (failed?.error) throw failed.error
-  return results.flatMap((r) => (r.data ?? []) as CandidateRow[])
+  const similarity = new Map(((byEmbedding.data ?? []) as { id: string; similarity: number }[]).map((r) => [r.id, r.similarity]))
+  const orgIds = [...new Set([...((byIndicators.data ?? []) as { id: string }[]).map((r) => r.id), ...similarity.keys()])]
+  const { data: orgRows, error: orgError } = orgIds.length > 0
+    ? await supabaseAdmin.from('directory_entries').select(CANDIDATE_COLUMNS).in('id', orgIds)
+    : { data: [], error: null }
+  if (orgError) throw orgError
+  return {
+    rows: [...((orgRows ?? []) as CandidateRow[]), ...((publics.data ?? []) as CandidateRow[]), ...((hotlines.data ?? []) as CandidateRow[])],
+    similarity,
+  }
+}
+
+// AI に見せる団体の地域の書き方
+function areaLabel(r: RankedCandidate, regionCode: string | null): string {
+  if (r.tier === 'HOTLINE') return '全国の電話窓口'
+  if (r.candidate.serviceScope === 'NATIONWIDE') return '全国'
+  if (regionCode && (r.candidate.prefectureCode === regionCode || r.candidate.serviceCodes.includes(regionCode))) return '相談と同じ都道府県'
+  return 'ほかの都道府県(電話やオンラインなどで相談できる)'
 }
 
 // 相談の条件と本文から提案を選ぶ(DB は読むだけ)。相談を保存せずに提案の質を確かめるときもこれを呼ぶ
 export async function computeSuggestions(k: SuggestCase, body: string, locale: string): Promise<{ picks: Suggestion[]; ranked: RankedCandidate[]; aiUsed: boolean }> {
-  const rows = await fetchCandidates(k)
+  const { rows, similarity } = await fetchCandidates(k, body)
   const byId = new Map(rows.map((r) => [r.id, r]))
-  const ranked = rankCandidates(rows.map(toCandidate), k)
+  const ranked = rankCandidates(rows.map((r) => ({ ...toCandidate(r), similarity: similarity.get(r.id) ?? null })), k)
 
   let aiPicks: { id: string; reason: string | null }[] | null = null
   // 民間・公的な窓口の上位に、緊急の電話窓口(あれば全部)を足して AI に見せる
@@ -131,7 +166,7 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
         summary: byId.get(r.candidate.id)?.consult_summary ?? null,
         targets: r.candidate.targets,
         channels: r.candidate.channels,
-        area: r.tier === 'HOTLINE' ? '全国の電話窓口' : r.candidate.serviceScope === 'NATIONWIDE' ? '全国' : '相談と同じ都道府県',
+        area: areaLabel(r, k.regionCode),
       })),
     })
     const result = await generateJson('consultation', prompt, { temperature: 0, maxOutputTokens: 2048, timeoutMs: AFTER_RESPONSE_AI_TIMEOUT_MS })

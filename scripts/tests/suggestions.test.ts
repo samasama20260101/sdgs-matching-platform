@@ -9,6 +9,10 @@ import {
   isOrganizationCandidate,
   isPublicFallback,
   isUrgentHotline,
+  reachable,
+  isLocalMembershipBody,
+  semanticScore,
+  SEMANTIC_MIN,
   pickSuggestions,
   rankCandidates,
   relevanceScore,
@@ -52,6 +56,19 @@ assert.equal(servesRegion(org({ serviceScope: 'MUNICIPALITY', serviceCodes: ['13
 assert.equal(servesRegion(org({ serviceScope: 'NATIONWIDE' }), { ...person, regionCountry: 'US' }), false)
 assert.equal(servesRegion(org(), { ...person, regionCode: null }), false)
 
+// 相談者が連絡して相談できるか(#148): 全国から選ぶ。ほかの都道府県の団体は遠隔の手段で相談を受けているものだけ
+const farInPerson = org({ prefectureCode: 'JP-43', serviceCodes: ['JP-43'], channels: ['VISIT'] })
+const farRemote = org({ prefectureCode: 'JP-43', serviceCodes: ['JP-43'], channels: ['VISIT', 'CHAT'] })
+const unknownPlace = org({ prefectureCode: null, serviceScope: 'MUNICIPALITY', serviceCodes: [], channels: [] })
+assert.equal(reachable(farInPerson, person), false)
+assert.equal(reachable(farRemote, person), true)
+assert.equal(reachable(org({ prefectureCode: 'JP-43', serviceCodes: ['JP-43'], channels: ['PHONE'] }), person), true)
+assert.equal(reachable(org({ channels: ['VISIT'] }), person), true)
+assert.equal(reachable(unknownPlace, person), false)
+assert.equal(reachable(farRemote, { ...person, regionCountry: 'US' }), false)
+assert.equal(isOrganizationCandidate(farInPerson, person), false)
+assert.equal(isOrganizationCandidate(farRemote, person), true)
+
 // だれの相談か: 調べが付いていればそれに従う。分からなければ対象者から推す
 assert.equal(fitsSubject(org({ subjects: ['PERSON'] }), 'COMPANY'), false)
 assert.equal(fitsSubject(org({ subjects: [], targets: ['BUSINESS'] }), 'PERSON'), false)
@@ -59,6 +76,24 @@ assert.equal(fitsSubject(org({ subjects: [], targets: ['BUSINESS'] }), 'COMPANY'
 assert.equal(fitsSubject(org({ subjects: [], targets: [] }), 'PERSON'), true)
 assert.equal(fitsSubject(org({ subjects: [], targets: [] }), 'COMPANY'), false)
 assert.equal(fitsSubject(org({ subjects: ['PERSON', 'COMPANY', 'COMMUNITY'] }), 'NATION'), false)
+
+// ほかの都道府県の地域の会員組織(弁護士会・商工会議所など)は、電話で受けていても出さない。全国の連合会と同じ都道府県なら出す
+const farBar = org({ name: '仙台弁護士会', prefectureCode: 'JP-04', serviceCodes: ['JP-04'], channels: ['PHONE'] })
+assert.equal(isLocalMembershipBody(farBar), true)
+assert.equal(isLocalMembershipBody(org({ name: '一般社団法人ＡＢＣユニオン' })), true)
+assert.equal(isLocalMembershipBody(org({ name: '特定非営利活動法人TEDIC' })), false)
+assert.equal(isLocalMembershipBody(org({ name: 'X', orgType: 'BAR_ASSOCIATION' })), true)
+assert.equal(reachable(farBar, person), false)
+assert.equal(reachable({ ...farBar, prefectureCode: 'JP-13', serviceCodes: ['JP-13'] }, person), true)
+assert.equal(reachable(org({ name: '日本司法書士会連合会', serviceScope: 'NATIONWIDE', prefectureCode: 'JP-04', serviceCodes: [], channels: ['PHONE'] }), person), true)
+
+// 地域の相談は、地域の相談を受ける団体に加えて、個人の相談を受ける団体も候補にする(事業者だけの団体は除く)
+const community: SuggestCase = { ...person, subject: 'COMMUNITY' }
+assert.equal(fitsSubject(org({ subjects: ['PERSON'] }), 'COMMUNITY'), true)
+assert.equal(fitsSubject(org({ subjects: ['COMPANY'] }), 'COMMUNITY'), false)
+assert.equal(fitsSubject(org({ subjects: [], targets: ['BUSINESS'] }), 'COMMUNITY'), false)
+assert.equal(fitsSubject(org({ subjects: [], targets: [] }), 'COMMUNITY'), true)
+assert.equal(isOrganizationCandidate(org(), community), true)
 
 // 18歳未満: 高齢者・事業者・地域だけが対象の団体は出さない
 assert.equal(fitsAge(org({ targets: ['ELDERLY'] }), true), false)
@@ -99,6 +134,25 @@ assert.equal(phone, exact + 4)
 assert.equal(relevanceScore(org(), person), exact + 1)
 // 加点は指標の重なり 1 つ分を超えない
 assert.ok(relevanceScore(org({ indicators: ['1.4.1'], channels: ['PHONE', 'ONLINE'] }), person) < exact)
+
+// 意味の近さ(#148): SEMANTIC_MIN 未満は 0。指標が重ならなくても、意味が近ければ候補になる
+assert.equal(semanticScore(null), 0)
+assert.equal(semanticScore(SEMANTIC_MIN - 0.01), 0)
+assert.equal(semanticScore(SEMANTIC_MIN), 3)
+assert.equal(semanticScore(0.5), 11)
+assert.equal(semanticScore(Number.NaN), 0)
+const noIndicator = org({ indicators: [], sdgsGoals: [], serviceScope: 'NATIONWIDE' })
+assert.equal(relevanceScore({ ...noIndicator, similarity: 0.2 }, person), 0)
+assert.equal(relevanceScore({ ...noIndicator, similarity: 0.5 }, person), 11)
+assert.equal(relevanceScore({ ...noIndicator, similarity: 0.5 }, { ...person, indicators: [] }), 11)
+assert.deepEqual(rankCandidates([{ ...noIndicator, id: 'sem', similarity: 0.45 }], { ...person, indicators: [] }).map((r) => r.candidate.id), ['sem'])
+
+// ほかの都道府県の団体は、合い方が同じなら同じ都道府県・全国の団体より後ろ(減点しても 1 点は残る)
+const localPhone = org({ id: 'local', name: 'う', channels: ['PHONE'] })
+const farPhone = org({ id: 'far', name: 'あ', prefectureCode: 'JP-43', serviceCodes: ['JP-43'], channels: ['PHONE'] })
+assert.ok(relevanceScore(farPhone, person) < relevanceScore(localPhone, person))
+assert.deepEqual(rankCandidates([farPhone, localPhone], person).map((r) => r.candidate.id), ['local', 'far'])
+assert.equal(relevanceScore({ ...farPhone, indicators: [], sdgsGoals: [], similarity: 0.3 }, person), 1)
 
 // 並べ方: 民間を点数順に。公的な窓口は民間が 3 つに足りない分だけ後ろに
 const a = org({ id: 'a', name: 'あ', channels: ['PHONE'] })

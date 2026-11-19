@@ -3,8 +3,9 @@
 //     明日もsamasama に登録済み(claim 済み)の団体は、相談そのものが届いているので出さない
 //   - 営利の会社(org_type = COMPANY)は、提案に入れるかを決めるまで出さない(弁護士会の相談センターは出す)
 //   - 自治体の窓口は出さない(定例の決定)。民間の候補が足りないときだけ、自治体でない公的な窓口(よろず支援拠点・法テラスなど)で埋める
-//   - 地域: 全国で受けている団体か、相談の都道府県で受けている団体(相談者に住所は聞かない)
-//   - 並べ方: AI が選んだ指標との重なり > 同じ大項目 > 電話・オンラインで受けている(加点)> 同じ都道府県
+//   - 地域: 全国から選ぶ(2026-11-19 定例「範囲は全国で、優先の高いものから 3 つ」、#148)。同じ都道府県・全国の団体は手段を問わず、
+//     ほかの都道府県の団体は遠隔(電話・オンライン・チャット・メール・フォーム)で相談を受けているものだけ(来所だけの遠い団体は行けないので出さない)
+//   - 並べ方: AI が選んだ指標との重なり・相談文と団体の要約の意味の近さ(埋め込み、#148)> 同じ大項目 > 電話・オンライン(加点)> 同じ都道府県
 //     その上位を AI が相談の本文と見比べて 3 つに絞る。AI が使えないときはこの並びの上から 3 つ
 //   - 全国の電話窓口(DV相談ナビ・189 など)は常には出さず、緊急と判定した個人の相談でだけ AI に候補として見せる
 //     (どれが合うかは AI が相談と見比べて選ぶ。決まりの並びでは埋めない。よりそいホットライン・119・110 は相談の画面の上に別に出る)
@@ -19,6 +20,8 @@ export const AI_CANDIDATE_LIMIT = 12
 export const NON_MUNICIPAL_PUBLIC_CATEGORIES = [...BUSINESS_WINDOW_CATEGORIES, 'LEGAL_SUPPORT_OFFICE'] as const
 
 export const CONSULT_CHANNELS = ['PHONE', 'ONLINE', 'EMAIL', 'FORM', 'CHAT', 'VISIT', 'OUTREACH'] as const
+// 離れた所からでも相談できる手段(ほかの都道府県の団体を候補にする条件)
+export const REMOTE_CHANNELS = ['PHONE', 'ONLINE', 'CHAT', 'EMAIL', 'FORM'] as const
 export type ConsultChannel = (typeof CONSULT_CHANNELS)[number]
 
 // 提案に入れるかを決めるまで出さない法人格(営利の会社。2026-11-19 の Issue #138 の論点)
@@ -43,6 +46,8 @@ export type SuggestCandidate = {
   targets: string[]
   subjects: string[]
   channels: string[]
+  // 相談文と団体の要約の埋め込みの近さ(コサイン類似度)。意味の検索で引いていなければ null
+  similarity?: number | null
 }
 
 export type SuggestCase = {
@@ -79,14 +84,36 @@ export function servesRegion(c: Pick<SuggestCandidate, 'serviceScope' | 'service
   return c.prefectureCode === k.regionCode
 }
 
-// だれの相談を受けるか。調べで分かっていればそれに従い、分からなければ対象者から推す
+// その地域の人や会員のための組織(弁護士会・商工会議所・社会福祉協議会・地域の労働組合・都道府県の産業支援機関など)。
+// 電話で受けていても、ほかの都道府県の相談者の相談先にはならない(相談の例で、東京の会社の相談に仙台弁護士会が出た。#148)
+const LOCAL_MEMBERSHIP_NAME = /(弁護士会|司法書士会|行政書士会|社会保険労務士会|税理士会|土地家屋調査士会|商工会議所|商工会|中小企業団体中央会|社会福祉協議会|社会福祉協会|労働組合|ユニオン|産業振興|産業支援|経営者協会)/u
+export function isLocalMembershipBody(c: Pick<SuggestCandidate, 'name' | 'orgType'>): boolean {
+  return c.orgType === 'BAR_ASSOCIATION' || LOCAL_MEMBERSHIP_NAME.test(c.name.normalize('NFKC'))
+}
+
+// 相談者が連絡して相談できるか: 相談の地域で受けている団体か、ほかの都道府県でも遠隔の手段で相談を受けている団体
+// (ほかの都道府県の地域の会員組織は除く)。
+// 掲載台帳は日本の団体だけなので、日本の外の相談には出さない
+export function reachable(c: Pick<SuggestCandidate, 'serviceScope' | 'serviceCodes' | 'prefectureCode' | 'channels' | 'name' | 'orgType'>, k: Pick<SuggestCase, 'regionCountry' | 'regionCode'>): boolean {
+  if ((k.regionCountry ?? 'JP') !== 'JP') return false
+  if (servesRegion(c, k)) return true
+  if (isLocalMembershipBody(c)) return false
+  return c.channels.some((ch) => (REMOTE_CHANNELS as readonly string[]).includes(ch))
+}
+
+// だれの相談を受けるか。調べで分かっていればそれに従い、分からなければ対象者から推す。
+// 地域(町内会・自治体の課など)の相談は、地域の相談を受ける団体に加えて、個人の相談を受ける団体も候補にする
+// (子ども食堂の立ち上げや見守りの相談は、個人やグループの相談として受けている団体が多い。#148)
 export function fitsSubject(c: Pick<SuggestCandidate, 'subjects' | 'targets'>, subject: SubjectType): boolean {
   if (subject === 'NATION') return false
-  if (c.subjects.length > 0) return c.subjects.includes(subject)
   const onlyBusiness = c.targets.length > 0 && c.targets.every((t) => t === 'BUSINESS')
+  if (c.subjects.length > 0) {
+    if (subject === 'COMMUNITY') return c.subjects.includes('COMMUNITY') || c.subjects.includes('PERSON')
+    return c.subjects.includes(subject)
+  }
   if (subject === 'PERSON') return !onlyBusiness
   if (subject === 'COMPANY') return c.targets.includes('BUSINESS')
-  return c.targets.includes('COMMUNITY')
+  return c.targets.includes('COMMUNITY') || !onlyBusiness
 }
 
 export function fitsAge(c: Pick<SuggestCandidate, 'targets'>, isMinor: boolean): boolean {
@@ -100,7 +127,7 @@ export function isOrganizationCandidate(c: SuggestCandidate, k: SuggestCase): bo
     && c.acceptsConsultation === 'YES'
     && c.claimStatus !== 'CLAIMED'
     && !EXCLUDED_ORG_TYPES.has(c.orgType ?? '')
-    && servesRegion(c, k)
+    && reachable(c, k)
     && fitsSubject(c, k.subject)
     && fitsAge(c, k.isMinor)
 }
@@ -120,19 +147,37 @@ export function isUrgentHotline(c: SuggestCandidate, k: SuggestCase): boolean {
     && fitsAudience(c.categories, referralAudience(k.subject)) && servesRegion(c, k)
 }
 
-// 相談との近さの点数。指標も大項目も重ならなければ 0(候補にしない)
-export function relevanceScore(c: Pick<SuggestCandidate, 'indicators' | 'sdgsGoals' | 'channels' | 'serviceScope' | 'prefectureCode'>, k: Pick<SuggestCase, 'indicators' | 'regionCode'>): number {
+// 意味の近さがこれ以上なら、指標が重ならなくても候補にする。相談の例 30 件(text-embedding-3-small)で、合う団体は 0.33〜0.50、
+// 合わない団体はおおむね 0.30 未満だった(重なりはあるので、最後は AI が相談と見比べて選ぶ)。モデルを替えたら測り直す
+export const SEMANTIC_MIN = 0.3
+// 意味の近さの点数の重み(近さ 0.30 で 3 点、0.50 で 3 + 0.2 × 40 = 11 点。指標 1 つの重なり 10 点と同じくらい)
+const SEMANTIC_WEIGHT = 40
+// ほかの都道府県の団体を後ろにする減点(指標 1 つの重なりより少し小さく、合い方の差が大きければ前に出られる)
+const FAR_PENALTY = 8
+
+// 意味の近さの点数(SEMANTIC_MIN 未満は 0)
+export function semanticScore(similarity: number | null | undefined): number {
+  if (typeof similarity !== 'number' || !Number.isFinite(similarity) || similarity < SEMANTIC_MIN) return 0
+  return 3 + Math.round((similarity - SEMANTIC_MIN) * SEMANTIC_WEIGHT)
+}
+
+// 相談との近さの点数。指標も大項目も重ならず、意味も遠ければ 0(候補にしない)
+export function relevanceScore(c: Pick<SuggestCandidate, 'indicators' | 'sdgsGoals' | 'channels' | 'serviceScope' | 'serviceCodes' | 'prefectureCode' | 'similarity'>, k: Pick<SuggestCase, 'indicators' | 'regionCode'>): number {
   const indicatorHits = k.indicators.filter((code) => c.indicators.includes(code)).length
   const caseGoals = goalsOf(k.indicators)
   const candidateGoals = new Set([...c.sdgsGoals, ...goalsOf(c.indicators)])
   const goalHit = caseGoals.some((g) => candidateGoals.has(g))
-  if (indicatorHits === 0 && !goalHit) return 0
-  let score = indicatorHits * 10 + (goalHit ? 3 : 0)
+  const semantic = semanticScore(c.similarity)
+  if (indicatorHits === 0 && !goalHit && semantic === 0) return 0
+  let score = indicatorHits * 10 + (goalHit ? 3 : 0) + semantic
   // 電話・オンラインで受けている団体はつながりやすい(定例の決定で加点)
   if (c.channels.includes('PHONE')) score += 2
   if (c.channels.includes('ONLINE')) score += 2
-  // 同じ都道府県で受けている団体を、全国の団体より少しだけ前に
+  // 同じ都道府県で受けている団体を、全国の団体やほかの都道府県の団体より少しだけ前に
   if (c.serviceScope !== 'NATIONWIDE' && k.regionCode && c.prefectureCode === k.regionCode) score += 1
+  // ほかの都道府県の団体(遠隔で受けているので候補には入る)は、同じ都道府県・全国の団体より後ろに。
+  // 地元の団体を先に出すため(相談の例で、地元の弁護士会より遠くの弁護士会が先に出た。#148)
+  if (!servesRegion(c, { regionCountry: 'JP', regionCode: k.regionCode })) score = Math.max(1, score - FAR_PENALTY)
   return score
 }
 

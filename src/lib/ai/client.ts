@@ -3,7 +3,7 @@ import 'server-only'
 // AI を呼ぶ唯一の入口。提供元(Gemini・OpenAI・xAI)は src/lib/ai/config.ts が環境変数から決める。
 // ここは文を渡して JSON の文字列を受け取るだけで、相談文の個人情報を伏せる(maskPii)・囲む(fenceConsultation)のは
 // プロンプトを組む側の責任。AI にはツールも DB の権限も渡さない。
-import { resolveAiTarget, type AiTarget, type AiTask } from '@/lib/ai/config'
+import { resolveAiTarget, resolveEmbeddingTarget, type AiTarget, type AiTask } from '@/lib/ai/config'
 import { parseJsonObject } from '@/lib/ai/json'
 
 // 既定の待ち時間。応答のあとに動く処理(after)は Workers では 30 秒で打ち切られるので、そこで呼ぶものは短く渡す
@@ -93,4 +93,36 @@ async function callOpenAiCompatible(target: AiTarget, prompt: string, options: G
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const data = (await response.json()) as { choices?: { message?: { content?: string | null } }[]; model?: string }
   return { text: data.choices?.[0]?.message?.content ?? '', model: data.model || null }
+}
+
+export type EmbeddingsResult =
+  | { ok: true; vectors: number[][]; model: string }
+  | { ok: false; code: 'NOT_CONFIGURED' | 'REQUEST_FAILED' | 'INVALID_SHAPE' }
+
+export function isEmbeddingConfigured(): boolean {
+  return resolveEmbeddingTarget(process.env) !== null
+}
+
+// 文の埋め込み(#148)。相談文を渡すときは maskPii で伏せてから(AGENTS.md)。
+// model は頼んだモデル(保存したベクトルと同じモデルで検索するため、答えた版ではなく頼んだ名前で比べる)
+export async function generateEmbeddings(texts: string[], options: { timeoutMs?: number } = {}): Promise<EmbeddingsResult> {
+  const target = resolveEmbeddingTarget(process.env)
+  if (!target) return { ok: false, code: 'NOT_CONFIGURED' }
+  if (texts.length === 0) return { ok: true, vectors: [], model: target.model }
+  try {
+    const response = await fetch(`${target.baseUrl}/embeddings`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${target.apiKey}` },
+      body: JSON.stringify({ model: target.model, input: texts }),
+      signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
+    })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const data = (await response.json()) as { data?: { index?: number; embedding?: number[] }[] }
+    const rows = [...(data.data ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    if (rows.length !== texts.length || rows.some((r) => !Array.isArray(r.embedding))) return { ok: false, code: 'INVALID_SHAPE' }
+    return { ok: true, vectors: rows.map((r) => r.embedding as number[]), model: target.model }
+  } catch (error) {
+    console.error('[ai] embeddings request failed:', error instanceof Error ? error.message : error)
+    return { ok: false, code: 'REQUEST_FAILED' }
+  }
 }

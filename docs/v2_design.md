@@ -55,6 +55,7 @@
 | `v2_13_two_organization_roles.sql` | 団体の中の役割を管理(OWNER)とメンバー(MEMBER)の2つにする。追加(ADMIN)の人と招待は OWNER に移し、移した人は audit_logs に残す(2026-11-11) |
 | `v2_14_resolution_codes_change.sql` | 指標を入れ替えたときも訂正の行を足す(社会貢献の記録、2026-11-12) |
 | `v2_15_consult_organizations_not_vetted.sql` | 審査の状態に「支え手の申し込み前」(NOT_APPLIED)を足し、相談のための団体を審査から外す。相談のための団体は NOT_APPLIED か停止だけ、支え手の団体は NOT_APPLIED にならない決まりを DB に置く。戻した団体は audit_logs に残す(2026-11-17、#131) |
+| `v2_18_directory_suggest_retrieval.sql` | pgvector と団体の要約の埋め込みの列、候補を全国から「指標の重なりの多い順」「相談の意味の近い順」で引く関数(ほかの都道府県は遠隔で受けている団体だけ)(2026-11-19、#148) |
 | `v2_16_directory_consult_profile.sql` | 掲載台帳に団体の相談の受け方(受けているか・要約・指標・対象・だれの相談か・手段・料金・言語・根拠)を足し、相談ごとに提案した支援団体 `case_suggestions` と作り終えた時刻 `cases.suggestions_generated_at` を置く(2026-11-19、#138・#139) |
 | `v2_17_directory_claim_search.sql` | 掲載台帳に名前の鍵 `name_key`(名前から DB が作る列。`nameKey` と同じ作り)を足し、支援団体の登録で名前の近い団体を探す関数 `search_directory_organizations` を置く。service_role だけが呼べる(2026-11-19、#140) |
 | `v2_90_drop_pii.sql`(未作成) | 規約とポリシーの施行のあとで、相談者の氏名・電話・住所・性別・生年月日の列を消す |
