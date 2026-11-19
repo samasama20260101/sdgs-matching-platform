@@ -7,8 +7,8 @@ import { apiFetch, ApiError } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
-import { Button, Card, Chip, cx, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea, TextField, Tip } from '@/components/app/ui'
-import { regionLevelFor } from '@/lib/domain/serviceAreas'
+import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea, TextField, Tip } from '@/components/app/ui'
+import { ServiceAreaPicker, isAreaChoiceComplete, useRegions, type AreaChoice } from '@/components/support/ServiceAreaPicker'
 
 type Payload = {
   organization: { id: string; display_id: string; name: string; org_type: string; vetting_status: string; bio: string | null; contact_email: string | null; population: number | null }
@@ -19,22 +19,14 @@ type Payload = {
 }
 
 type Areas = { country: string; registered: boolean; nationwide: boolean; regionCodes: string[] }
-type Region = { code: string; name_local: string; name_en: string }
 
 // 活動地域(メンバーみんなが見られ、管理の人だけが変えられる)。「さがす」に出る相談の地域と、公開の団体ページの地域になる
 function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Areas; canEdit: boolean; onSaved: () => Promise<void> }) {
   const t = useTranslations('support.org')
   const locale = useLocale()
-  const fetchRegions = useCallback(
-    () => fetch(`/api/regions?country=${encodeURIComponent(areas.country)}&level=${regionLevelFor(areas.country)}`)
-      .then((r) => (r.ok ? r.json() : { regions: [] }))
-      .then((d: { regions?: Region[] }) => d.regions ?? []),
-    [areas.country],
-  )
-  const { data: regions } = useLoad(fetchRegions)
+  const regions = useRegions(areas.country)
   const [editing, setEditing] = useState(false)
-  const [nationwide, setNationwide] = useState(false)
-  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [choice, setChoice] = useState<AreaChoice>({ nationwide: false, regionCodes: [] })
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const nameOf = (code: string) => {
@@ -42,24 +34,17 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
     return r ? (locale === 'ja' ? r.name_local : r.name_en) : code
   }
   const startEdit = () => {
-    setNationwide(areas.nationwide)
-    setPicked(new Set(areas.regionCodes))
+    setChoice({ nationwide: areas.nationwide, regionCodes: areas.regionCodes })
     setMessage(null)
     setEditing(true)
   }
-  const toggle = (code: string) => setPicked((prev) => {
-    const next = new Set(prev)
-    if (next.has(code)) next.delete(code)
-    else next.add(code)
-    return next
-  })
-  const needOne = !nationwide && picked.size === 0
+  const complete = isAreaChoiceComplete(choice)
   const save = async () => {
-    if (needOne) return
+    if (!complete) return
     setBusy(true)
     setMessage(null)
     try {
-      await apiFetch(`/api/support/orgs/${id}/areas`, { method: 'PUT', json: { nationwide, regionCodes: nationwide ? [] : [...picked] } })
+      await apiFetch(`/api/support/orgs/${id}/areas`, { method: 'PUT', json: { nationwide: choice.nationwide === true, regionCodes: choice.nationwide ? [] : choice.regionCodes } })
       await onSaved()
       setEditing(false)
       setMessage(t('saved'))
@@ -69,12 +54,6 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
       setBusy(false)
     }
   }
-  const choice = (on: boolean, label: string, onClick: () => void) => (
-    <button type="button" role="radio" aria-checked={on} onClick={onClick}
-      className={cx('min-h-[44px] flex-1 rounded-tool px-3 text-t13_5 font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
-      {label}
-    </button>
-  )
   return (
     <Card tone="support" className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between"><SectionLabel>{t('areas')}</SectionLabel><Tip label={t('areasTipLabel')}>{t('areasTip')}</Tip></div>
@@ -90,26 +69,9 @@ function ServiceAreas({ id, areas, canEdit, onSaved }: { id: string; areas: Area
         </>
       ) : (
         <>
-          <div role="radiogroup" aria-label={t('areas')} className="flex gap-1.5">
-            {choice(nationwide, t('areasNationwide'), () => setNationwide(true))}
-            {choice(!nationwide, t('areasPick'), () => setNationwide(false))}
-          </div>
-          {!nationwide && (
-            <>
-              <div className="flex flex-wrap gap-1.5">
-                {(regions ?? []).map((r) => (
-                  <button key={r.code} type="button" aria-pressed={picked.has(r.code)} onClick={() => toggle(r.code)}
-                    className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', picked.has(r.code) ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
-                    {locale === 'ja' ? r.name_local : r.name_en}
-                  </button>
-                ))}
-                {!regions && <Spinner />}
-              </div>
-              <span className={cx('text-t12_5', needOne ? 'text-coral' : 'text-mist')}>{needOne ? t('areasNeedOne') : t('areasPicked', { count: picked.size })}</span>
-            </>
-          )}
+          <ServiceAreaPicker country={areas.country} value={choice} onChange={setChoice} label={t('areas')} />
           <div className="flex gap-2">
-            <Button tone="support" variant="night" className="flex-1" disabled={busy || needOne} onClick={() => void save()}>{t('save')}</Button>
+            <Button tone="support" variant="night" className="flex-1" disabled={busy || !complete} onClick={() => void save()}>{t('save')}</Button>
             <Button tone="support" variant="outline" disabled={busy} onClick={() => setEditing(false)}>{t('areasCancel')}</Button>
           </div>
         </>
