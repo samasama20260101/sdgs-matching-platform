@@ -8,7 +8,9 @@
 // - entry_key で upsert する。掲載停止 (visibility = HIDDEN) や claim の状態は取り込みで上書きしない
 // - 支援団体と結んだ行 (claim_status = CLAIMED、#140) は、承認のときに登録の内容に合わせた列
 //   (名前・法人番号・活動地域。src/lib/domain/directoryClaim.ts の CLAIM_PRESERVED_COLUMNS) を出典の値で戻さない
-// - 公開できない行 (publishable = false: 出典で確認できなかった行) は取り込まない
+// - 公開できない行 (publishable = false: 出典で確認できなかった行) は取り込まない。ただし前の取り込みで入っている行が
+//   公開できなくなったときは、相談の受け方を UNKNOWN に戻して提案から外す (掲載停止 HIDDEN にはしない。
+//   HIDDEN は取り込みで PUBLIC に戻さないので、あとで公開できるようになっても戻らなくなる)
 // - 今回の取り込みに無い既存行は消さずに件数だけ報告する (削除は人が判断する)
 // - Staging で確認してから、本番は明示の OK を得て実行する (AGENTS.md の DB 変更ルール)
 import {readFileSync} from 'node:fs';
@@ -58,9 +60,11 @@ const payload = publishable.map(({publishable: _p, ...raw}) => {
     return {...r, ...claimed, claim_status: current.claim_status, imported_at: new Date().toISOString()};
 });
 const incoming = new Set(payload.map((r) => r.entry_key));
+// 前に取り込んだ行で、今回の書き出しでは公開できないもの (相談を受けている根拠が取れなくなった団体など)
+const demoted = rows.filter((r) => !r.publishable && existing.has(r.entry_key)).map((r) => r.entry_key);
 const added = payload.filter((r) => !existing.has(r.entry_key)).length;
 const missing = [...existing.keys()].filter((k) => !incoming.has(k)).length;
-console.log(`入力 ${rows.length} 行 / 公開可 ${publishable.length} / 新規 ${added} / 更新 ${publishable.length - added} (うち支援団体と結んだ行 ${keptClaimed} は名前・活動地域を残す) / 今回に無い既存行 ${missing} (削除しない)`);
+console.log(`入力 ${rows.length} 行 / 公開可 ${publishable.length} / 新規 ${added} / 更新 ${publishable.length - added} (うち支援団体と結んだ行 ${keptClaimed} は名前・活動地域を残す) / 公開できなくなった既存行 ${demoted.length} (相談の受け方を UNKNOWN に戻す) / 今回に無い既存行 ${missing} (削除しない)`);
 
 if (!apply) {
     console.log('ドライラン。書き込むには --apply を付ける');
@@ -71,4 +75,11 @@ for (let i = 0; i < payload.length; i += 500) {
     if (error) throw error;
     console.log(`  ${Math.min(i + 500, payload.length)} / ${payload.length}`);
 }
+for (let i = 0; i < demoted.length; i += 500) {
+    const {error} = await supabase.from('directory_entries')
+        .update({accepts_consultation: 'UNKNOWN', consult_status: null, consult_summary: null, consult_channels: [], consult_indicators: [], consult_targets: [], consult_subjects: [], consult_evidence: []})
+        .in('entry_key', demoted.slice(i, i + 500));
+    if (error) throw error;
+}
+if (demoted.length) console.log(`  公開できなくなった ${demoted.length} 行を UNKNOWN に戻した`);
 console.log('完了');
