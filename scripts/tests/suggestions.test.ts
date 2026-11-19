@@ -11,6 +11,7 @@ import {
   isUrgentHotline,
   reachable,
   isLocalMembershipBody,
+  isPhysicalLocalService,
   areaNoteFor,
   channelsForCard,
   semanticScore,
@@ -88,6 +89,13 @@ assert.equal(isLocalMembershipBody(org({ name: 'X', orgType: 'BAR_ASSOCIATION' }
 assert.equal(reachable(farBar, person), false)
 assert.equal(reachable({ ...farBar, prefectureCode: 'JP-13', serviceCodes: ['JP-13'] }, person), true)
 assert.equal(reachable(org({ name: '日本司法書士会連合会', serviceScope: 'NATIONWIDE', prefectureCode: 'JP-04', serviceCodes: [], channels: ['PHONE'] }), person), true)
+
+// 受け取りに行く支援(フードバンク・子ども食堂)は、ほかの都道府県の相談者に出さない。同じ都道府県なら出す
+const farFoodbank = org({ categories: ['FOOD_BANK'], prefectureCode: 'JP-15', serviceCodes: ['JP-15'], channels: ['PHONE'] })
+assert.equal(isPhysicalLocalService(farFoodbank), true)
+assert.equal(reachable(farFoodbank, person), false)
+assert.equal(reachable({ ...farFoodbank, prefectureCode: 'JP-13', serviceCodes: ['JP-13'] }, person), true)
+assert.equal(isPhysicalLocalService(org()), false)
 
 // 地域の相談は、地域の相談を受ける団体に加えて、個人の相談を受ける団体も候補にする(事業者だけの団体は除く)
 const community: SuggestCase = { ...person, subject: 'COMMUNITY' }
