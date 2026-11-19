@@ -1,7 +1,7 @@
 'use client'
 
 // 相談に合いそうな支援団体(#138、盤 13 の置き換え)。届けた相談の内容から 3 つまで選んだものを出す。
-// 運営が伝えてよいかは本人が選ぶ。緊急と判定した相談にだけ、全国の電話窓口を別の欄で出す
+// 運営が伝えてよいかは本人が選ぶ。緊急と判定した相談では、AI が選んだ全国の電話窓口が入ることがある
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
@@ -23,9 +23,7 @@ type Suggestion = {
   sourceUrl: string
 }
 
-type Hotline = { id: string; name: string; phone: string | null; website: string | null; hours: string | null; attribution: string | null; sourceUrl: string }
-
-type Data = { pending: boolean; suggestions: Suggestion[]; emergency: Hotline[] }
+type Data = { pending: boolean; suggestions: Suggestion[] }
 
 // 届けた直後は提案を作っている途中なので、少しずつ間を空けて読み直す
 const POLL_MS = 4_000
@@ -75,23 +73,6 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
     </p>
   )
 
-  const emergency = data.emergency.length > 0 && (
-    <section className="flex flex-col gap-2">
-      <span className="px-1 text-t15 font-bold">{t('emergencyTitle')}</span>
-      {data.emergency.map((h) => (
-        <Card key={h.id} className="flex flex-col gap-1 px-3.5 pb-1 pt-3">
-          <span className="text-t14_5 font-bold leading-[1.5]">{h.name}</span>
-          {h.hours && <span className="text-t12_5 text-mist">{h.hours}</span>}
-          <span className="flex flex-wrap items-center gap-x-4">
-            {h.phone && <a href={`tel:${h.phone}`} className={action}>{t('call')}</a>}
-            {h.website && <a href={h.website} target="_blank" rel="noopener noreferrer" className={action}>{t('website')}</a>}
-          </span>
-        </Card>
-      ))}
-      {sourceLine(data.emergency)}
-    </section>
-  )
-
   const header = (
     <div className="flex items-center justify-between px-1">
       <span className="text-t15 font-bold">{t('title')}</span>
@@ -100,26 +81,22 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
   )
 
   if (data.pending) {
+    if (polls >= POLL_MAX) return null
     return (
-      <>
-        {emergency}
-        {polls < POLL_MAX && (
-          <section className="flex flex-col gap-2">
-            {header}
-            <Card className="px-3.5 py-3"><span className="text-t13 text-mist">{t('pending')}</span></Card>
-          </section>
-        )}
-      </>
+      <section className="flex flex-col gap-2">
+        {header}
+        <Card className="px-3.5 py-3"><span className="text-t13 text-mist">{t('pending')}</span></Card>
+      </section>
     )
   }
-  if (data.suggestions.length === 0) return emergency || null
+  if (data.suggestions.length === 0) return null
 
   // 札は名前・理由・相談の手段と、できること(電話する・サイトを見る・運営から伝えてもらう)だけにする
   const render = (e: Suggestion) => (
     <Card key={e.id} className="flex flex-col gap-1.5 px-3.5 pb-1 pt-3">
       <span className="flex items-start justify-between gap-2">
         <span className="text-t14_5 font-bold leading-[1.5]">{e.name}</span>
-        <Chip>{e.kind === 'ORGANIZATION' ? t('organization') : t('public')}</Chip>
+        <Chip className="shrink-0 whitespace-nowrap">{e.kind === 'ORGANIZATION' ? t('organization') : t('public')}</Chip>
       </span>
       {e.reason && <span className="text-t13 leading-[1.6] text-ink-soft">{e.reason}</span>}
       {e.channels.length > 0 && (
@@ -140,13 +117,10 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
     </Card>
   )
   return (
-    <>
-      {emergency}
-      <section className="flex flex-col gap-2">
-        {header}
-        {data.suggestions.map(render)}
-        {sourceLine(data.suggestions)}
-      </section>
-    </>
+    <section className="flex flex-col gap-2">
+      {header}
+      {data.suggestions.map(render)}
+      {sourceLine(data.suggestions)}
+    </section>
   )
 }

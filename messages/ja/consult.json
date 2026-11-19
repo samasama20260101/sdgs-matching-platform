@@ -116,7 +116,7 @@
     "notFound": "相談が見つかりません。",
     "loadFailed": "読み込めませんでした",
     "cancelFailed": "取り消せませんでした",
-    "nextOpen": "支え手からの申し出を待っています。待つあいだに、下の近くの窓口にも相談できます。",
+    "nextOpen": "支え手からの申し出を待っています。待つあいだに、下の支援団体にも相談できます。",
     "togetherDone": "一緒に進めた支え手",
     "cancelMatched": "相談を終える",
     "thanksSent": "ありがとうを贈りました。"
@@ -173,8 +173,7 @@
     "website": "サイトを見る",
     "okToShare": "運営から伝えてもらう",
     "agreed": "伝えてもらうことにしました",
-    "source": "出典",
-    "emergencyTitle": "いま、すぐに話せる窓口"
+    "source": "出典"
   },
   "talk": {
     "title": "やりとり",

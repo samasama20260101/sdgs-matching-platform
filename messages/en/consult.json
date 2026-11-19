@@ -116,7 +116,7 @@
     "notFound": "Request not found.",
     "loadFailed": "Couldn't load",
     "cancelFailed": "Couldn't cancel",
-    "nextOpen": "Waiting for offers from supporters. Meanwhile, you can also contact the services nearby below.",
+    "nextOpen": "Waiting for offers from supporters. Meanwhile, you can also contact the support organizations below.",
     "togetherDone": "Supporters who worked with you",
     "cancelMatched": "End this request",
     "thanksSent": "You sent your thanks."
@@ -173,8 +173,7 @@
     "website": "Website",
     "okToShare": "Ask the team to pass it on",
     "agreed": "The team will pass it on",
-    "source": "Source",
-    "emergencyTitle": "Talk to someone right now"
+    "source": "Source"
   },
   "talk": {
     "title": "Messages",

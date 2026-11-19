@@ -6,15 +6,14 @@
 //   - 地域: 全国で受けている団体か、相談の都道府県で受けている団体(相談者に住所は聞かない)
 //   - 並べ方: AI が選んだ指標との重なり > 同じ大項目 > 電話・オンラインで受けている(加点)> 同じ都道府県
 //     その上位を AI が相談の本文と見比べて 3 つに絞る。AI が使えないときはこの並びの上から 3 つ
-//   - 全国の電話窓口(よりそいホットライン・189 など)は常には出さず、緊急と判定した相談にだけ出す
+//   - 全国の電話窓口(DV相談ナビ・189 など)は常には出さず、緊急と判定した個人の相談でだけ AI に候補として見せる
+//     (どれが合うかは AI が相談と見比べて選ぶ。決まりの並びでは埋めない。よりそいホットライン・119・110 は相談の画面の上に別に出る)
 import { BUSINESS_WINDOW_CATEGORIES, fitsAudience, referralAudience } from './referrals'
 import type { SubjectType } from './intake'
 
 export const SUGGESTION_COUNT = 3
 // AI に見比べさせる候補の数(多すぎると遅く、少なすぎると選ぶ余地がない)
 export const AI_CANDIDATE_LIMIT = 12
-// 緊急の相談に出す全国の窓口の数
-export const EMERGENCY_HOTLINE_LIMIT = 3
 
 // 民間の候補が足りないときに埋める、自治体でない公的な窓口の種類(よろず支援拠点・取引かけこみ寺・知財総合支援窓口・法テラス)
 export const NON_MUNICIPAL_PUBLIC_CATEGORIES = [...BUSINESS_WINDOW_CATEGORIES, 'LEGAL_SUPPORT_OFFICE'] as const
@@ -52,9 +51,11 @@ export type SuggestCase = {
   regionCode: string | null
   indicators: string[]
   isMinor: boolean
+  // 緊急と判定した相談(全国の電話窓口を AI に見せる)
+  urgent: boolean
 }
 
-export type RankedCandidate = { candidate: SuggestCandidate; score: number; tier: 'ORGANIZATION' | 'PUBLIC' }
+export type RankedCandidate = { candidate: SuggestCandidate; score: number; tier: 'ORGANIZATION' | 'PUBLIC' | 'HOTLINE' }
 
 export type Suggestion = { id: string; rank: number; reason: string | null; method: 'AI' | 'RULE' }
 
@@ -104,11 +105,19 @@ export function isOrganizationCandidate(c: SuggestCandidate, k: SuggestCase): bo
     && fitsAge(c, k.isMinor)
 }
 
-// 民間の候補が足りないときに埋める公的な窓口として使えるか(自治体の窓口と全国の電話窓口は使わない)
+// 民間の候補が足りないときに埋める公的な窓口として使えるか(自治体の窓口は使わない)。
+// 全国の電話窓口は、事業者向け(取引かけこみ寺・知財総合支援窓口)だけを埋め草にする
 export function isPublicFallback(c: SuggestCandidate, k: SuggestCase): boolean {
-  if (c.kind !== 'PUBLIC_WINDOW') return false
+  const businessHotline = c.kind === 'NATIONAL_HOTLINE' && c.categories.some((cat) => (BUSINESS_WINDOW_CATEGORIES as readonly string[]).includes(cat))
+  if (c.kind !== 'PUBLIC_WINDOW' && !businessHotline) return false
   if (!c.categories.some((cat) => (NON_MUNICIPAL_PUBLIC_CATEGORIES as readonly string[]).includes(cat))) return false
   return fitsAudience(c.categories, referralAudience(k.subject)) && servesRegion(c, k)
+}
+
+// 緊急と判定した個人の相談で、AI に見せる全国の電話窓口か(事業者向けは除く)
+export function isUrgentHotline(c: SuggestCandidate, k: SuggestCase): boolean {
+  return k.urgent && k.subject === 'PERSON' && c.kind === 'NATIONAL_HOTLINE'
+    && fitsAudience(c.categories, referralAudience(k.subject)) && servesRegion(c, k)
 }
 
 // 相談との近さの点数。指標も大項目も重ならなければ 0(候補にしない)
@@ -140,16 +149,17 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
   for (const c of candidates) {
     if (seen.has(c.id)) continue
     seen.add(c.id)
-    const tier = isOrganizationCandidate(c, k) ? 'ORGANIZATION' : isPublicFallback(c, k) ? 'PUBLIC' : null
+    const tier = isOrganizationCandidate(c, k) ? 'ORGANIZATION' : isPublicFallback(c, k) ? 'PUBLIC' : isUrgentHotline(c, k) ? 'HOTLINE' : null
     if (!tier) continue
     const score = relevanceScore(c, k)
     // 埋め草の公的な窓口も相談の大項目と合うものだけ(命にかかわる相談に法テラスを出さない)。
-    // ただし会社の相談の事業者向けの窓口は、指標が付かなくても出す(経営の相談はどれも受けるため)
+    // ただし会社の相談の事業者向けの窓口は、指標が付かなくても出す(経営の相談はどれも受けるため)。
+    // 緊急の電話窓口は大項目で絞らず、AI が相談と見比べて選ぶ
     const businessForCompany = tier === 'PUBLIC' && k.subject === 'COMPANY' && c.categories.some((cat) => (BUSINESS_WINDOW_CATEGORIES as readonly string[]).includes(cat))
-    if (score === 0 && !businessForCompany) continue
+    if (score === 0 && !businessForCompany && tier !== 'HOTLINE') continue
     scored.push({ candidate: c, score, tier })
   }
-  const order = (r: RankedCandidate) => (r.tier === 'ORGANIZATION' ? 0 : 1)
+  const order = (r: RankedCandidate) => (r.tier === 'ORGANIZATION' ? 0 : r.tier === 'PUBLIC' ? 1 : 2)
   scored.sort((a, b) => order(a) - order(b) || b.score - a.score || a.candidate.name.localeCompare(b.candidate.name, 'ja'))
   const names = new Set<string>()
   const ranked = scored.filter((r) => {
@@ -160,12 +170,13 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
   })
   const organizations = ranked.filter((r) => r.tier === 'ORGANIZATION')
   const publics = ranked.filter((r) => r.tier === 'PUBLIC')
-  return [...organizations, ...publics.slice(0, Math.max(0, SUGGESTION_COUNT - organizations.length))]
+  const hotlines = ranked.filter((r) => r.tier === 'HOTLINE')
+  return [...organizations, ...publics.slice(0, Math.max(0, SUGGESTION_COUNT - organizations.length)), ...hotlines]
 }
 
 // AI が選んだもの(候補の中の id だけ・重なりなし)を先に並べる。
 // AI が選んだときは、AI が合わないと見た民間の団体で埋めず、足りない分は公的な窓口(大項目の合うもの)だけで埋める。
-// AI が使えなかったときは決まりの並びの上から 3 つ
+// AI が使えなかったときは決まりの並びの上から 3 つ。緊急の電話窓口は AI が選んだときだけ出す
 export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: readonly { id: string; reason: string | null }[] | null): Suggestion[] {
   const allowed = new Set(ranked.map((r) => r.candidate.id))
   const picked: Suggestion[] = []
@@ -174,18 +185,13 @@ export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: rea
     if (!allowed.has(p.id) || picked.some((s) => s.id === p.id)) continue
     picked.push({ id: p.id, rank: picked.length + 1, reason: p.reason, method: 'AI' })
   }
-  const fill = aiPicks === null ? ranked : ranked.filter((r) => r.tier === 'PUBLIC')
+  const fill = aiPicks === null ? ranked.filter((r) => r.tier !== 'HOTLINE') : ranked.filter((r) => r.tier === 'PUBLIC')
   for (const r of fill) {
     if (picked.length >= SUGGESTION_COUNT) break
     if (picked.some((s) => s.id === r.candidate.id)) continue
     picked.push({ id: r.candidate.id, rank: picked.length + 1, reason: null, method: 'RULE' })
   }
   return picked
-}
-
-// 緊急の相談にだけ全国の電話窓口を出す。事業者向けの窓口は個人の相談に出さない(逆も)
-export function emergencyHotlinesFor(subject: SubjectType, urgent: boolean): { show: boolean; audience: ReturnType<typeof referralAudience> } {
-  return { show: urgent && subject === 'PERSON', audience: referralAudience(subject) }
 }
 
 // 画面に出す相談の手段(加点の対象の電話・オンラインを先に)

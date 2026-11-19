@@ -3,12 +3,12 @@ import assert from 'node:assert/strict'
 import {
   SUGGESTION_COUNT,
   displayChannels,
-  emergencyHotlinesFor,
   fitsAge,
   fitsSubject,
   goalOfIndicator,
   isOrganizationCandidate,
   isPublicFallback,
+  isUrgentHotline,
   pickSuggestions,
   rankCandidates,
   relevanceScore,
@@ -36,7 +36,7 @@ const org = (over: Partial<SuggestCandidate> = {}): SuggestCandidate => ({
   channels: [],
   ...over,
 })
-const person: SuggestCase = { subject: 'PERSON', regionCountry: 'JP', regionCode: 'JP-13', indicators: ['1.2.1', '11.1.1'], isMinor: false }
+const person: SuggestCase = { subject: 'PERSON', regionCountry: 'JP', regionCode: 'JP-13', indicators: ['1.2.1', '11.1.1'], isMinor: false, urgent: false }
 
 // 指標の番号から大項目
 assert.equal(goalOfIndicator('1.2.1'), 1)
@@ -136,10 +136,22 @@ assert.equal(pickSuggestions(many, null).length, SUGGESTION_COUNT)
 assert.deepEqual(pickSuggestions(many, null)[0].method, 'RULE')
 assert.deepEqual(pickSuggestions([], [{ id: 'a', reason: 'x' }]), [])
 
-// 全国の電話窓口は、緊急と判定した個人の相談にだけ
-assert.equal(emergencyHotlinesFor('PERSON', true).show, true)
-assert.equal(emergencyHotlinesFor('PERSON', false).show, false)
-assert.equal(emergencyHotlinesFor('COMPANY', true).show, false)
+// 全国の電話窓口は、緊急と判定した個人の相談でだけ AI に見せる。事業者向けは会社の相談の埋め草
+const dvHotline = org({ id: 'dv', kind: 'NATIONAL_HOTLINE', categories: ['DV_HOTLINE'], serviceScope: 'NATIONWIDE', serviceCodes: [], indicators: [], sdgsGoals: [5], acceptsConsultation: 'UNKNOWN' })
+const tradeHotline = org({ id: 'tr', kind: 'NATIONAL_HOTLINE', categories: ['TRADE_DISPUTE_HOTLINE'], serviceScope: 'NATIONWIDE', serviceCodes: [], indicators: [], sdgsGoals: [8], acceptsConsultation: 'UNKNOWN' })
+const urgentPerson: SuggestCase = { ...person, urgent: true }
+assert.equal(isUrgentHotline(dvHotline, urgentPerson), true)
+assert.equal(isUrgentHotline(dvHotline, person), false)
+assert.equal(isUrgentHotline(dvHotline, { ...company, urgent: true }), false)
+assert.equal(isUrgentHotline(tradeHotline, urgentPerson), false)
+assert.equal(isPublicFallback(tradeHotline, company), true)
+assert.equal(isPublicFallback(dvHotline, person), false)
+// 緊急の電話窓口は大項目で絞らずに後ろに並べ、AI が選んだときだけ出す(決まりの並びでは埋めない)
+const urgentRanked = rankCandidates([a, dvHotline], urgentPerson)
+assert.deepEqual(urgentRanked.map((r) => [r.candidate.id, r.tier]), [['a', 'ORGANIZATION'], ['dv', 'HOTLINE']])
+assert.deepEqual(pickSuggestions(urgentRanked, null).map((p) => p.id), ['a'])
+assert.deepEqual(pickSuggestions(urgentRanked, []).map((p) => p.id), [])
+assert.deepEqual(pickSuggestions(urgentRanked, [{ id: 'dv', reason: 'x' }, { id: 'a', reason: 'y' }]).map((p) => p.id), ['dv', 'a'])
 
 // 画面の相談の手段は電話・オンラインを先に、知らない値は出さない
 assert.deepEqual(displayChannels(['VISIT', 'ONLINE', 'X', 'PHONE']), ['PHONE', 'ONLINE', 'VISIT'])

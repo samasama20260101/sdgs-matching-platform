@@ -54,6 +54,7 @@ type CaseRow = {
   region_code: string | null
   intake_qna: { indicators?: string[]; since?: string | null; wish?: string | null } | null
   is_minor: boolean | null
+  urgency: string | null
   description_free: string | null
   locale: string | null
   suggestions_generated_at: string | null
@@ -97,8 +98,10 @@ async function fetchCandidates(k: SuggestCase): Promise<CandidateRow[]> {
     goals.length > 0
       ? base().eq('kind', 'ORGANIZATION').eq('accepts_consultation', 'YES').neq('claim_status', 'CLAIMED').overlaps('sdgs_goals', goals).limit(FETCH_LIMIT)
       : null,
-    // 足りないときに埋める、自治体でない公的な窓口
-    base().eq('kind', 'PUBLIC_WINDOW').overlaps('categories', [...NON_MUNICIPAL_PUBLIC_CATEGORIES]).limit(50),
+    // 足りないときに埋める、自治体でない公的な窓口(事業者向けの全国の電話窓口を含む)
+    base().in('kind', ['PUBLIC_WINDOW', 'NATIONAL_HOTLINE']).overlaps('categories', [...NON_MUNICIPAL_PUBLIC_CATEGORIES]).limit(50),
+    // 緊急と判定した相談では、全国の電話窓口も AI に見せる
+    k.urgent ? base().eq('kind', 'NATIONAL_HOTLINE').limit(50) : null,
   ]
   const results = await Promise.all(queries.map((q) => q ?? Promise.resolve({ data: [], error: null })))
   const failed = results.find((r) => r.error)
@@ -113,9 +116,10 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
   const ranked = rankCandidates(rows.map(toCandidate), k)
 
   let aiPicks: { id: string; reason: string | null }[] | null = null
-  const forAi = ranked.slice(0, AI_CANDIDATE_LIMIT)
-  // 民間の候補が 1 つ以上あるときだけ AI に見比べさせる(公的な窓口だけなら決まりの並びで足りる)
-  if (forAi.some((r) => r.tier === 'ORGANIZATION')) {
+  // 民間・公的な窓口の上位に、緊急の電話窓口(あれば全部)を足して AI に見せる
+  const forAi = [...ranked.filter((r) => r.tier !== 'HOTLINE').slice(0, AI_CANDIDATE_LIMIT), ...ranked.filter((r) => r.tier === 'HOTLINE')]
+  // 民間の団体か緊急の電話窓口があるときだけ AI に見比べさせる(公的な窓口だけなら決まりの並びで足りる)
+  if (forAi.some((r) => r.tier !== 'PUBLIC')) {
     const prompt = buildSuggestPrompt({
       subject: k.subject,
       fencedText: fenceConsultation(maskPii(body)),
@@ -127,7 +131,7 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
         summary: byId.get(r.candidate.id)?.consult_summary ?? null,
         targets: r.candidate.targets,
         channels: r.candidate.channels,
-        area: r.candidate.serviceScope === 'NATIONWIDE' ? '全国' : '相談と同じ都道府県',
+        area: r.tier === 'HOTLINE' ? '全国の電話窓口' : r.candidate.serviceScope === 'NATIONWIDE' ? '全国' : '相談と同じ都道府県',
       })),
     })
     const result = await generateJson('consultation', prompt, { temperature: 0, maxOutputTokens: 2048, timeoutMs: AFTER_RESPONSE_AI_TIMEOUT_MS })
@@ -141,7 +145,7 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
 export async function generateSuggestions(caseId: string): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from('cases')
-    .select('id, status, subject_type, region_country, region_code, intake_qna, is_minor, description_free, locale, suggestions_generated_at')
+    .select('id, status, subject_type, region_country, region_code, intake_qna, is_minor, urgency, description_free, locale, suggestions_generated_at')
     .eq('id', caseId)
     .single()
   if (error) throw error
@@ -149,7 +153,7 @@ export async function generateSuggestions(caseId: string): Promise<boolean> {
   if (c.suggestions_generated_at || c.status !== 'OPEN') return false
 
   const { picks } = await computeSuggestions(
-    { subject: c.subject_type, regionCountry: c.region_country, regionCode: c.region_code, indicators: c.intake_qna?.indicators ?? [], isMinor: c.is_minor === true },
+    { subject: c.subject_type, regionCountry: c.region_country, regionCode: c.region_code, indicators: c.intake_qna?.indicators ?? [], isMinor: c.is_minor === true, urgent: c.urgency === 'High' },
     caseBodyForAi({ description: c.description_free ?? '', since: c.intake_qna?.since, wish: c.intake_qna?.wish }),
     c.locale ?? 'ja',
   )
