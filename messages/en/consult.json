@@ -154,16 +154,27 @@
     "thanksSend": "Send thanks"
   },
   "referrals": {
-    "title": "While you wait: services nearby",
-    "tipLabel": "What sharing means",
-    "tip": "If you choose \"Ask the team to pass it on\", the samasama team will contact the service through its reception (phone or form) and share only your nickname and what you wrote. We never send emails automatically.",
+    "title": "Support organizations that may fit your request",
+    "tipLabel": "About these suggestions",
+    "tip": "Based on what you wrote, we suggest up to three support organizations. Some are not registered with samasama yet. If you choose \"Ask the team to pass it on\", the samasama team will contact the organization through its reception (phone or form) and share only your nickname and what you wrote. We never send emails automatically.",
+    "pending": "Looking for support organizations that fit",
     "public": "Public service",
-    "organization": "Organization",
+    "organization": "Support organization",
+    "channels": {
+      "PHONE": "By phone",
+      "ONLINE": "Online",
+      "CHAT": "By chat",
+      "EMAIL": "By email",
+      "FORM": "By form",
+      "VISIT": "In person",
+      "OUTREACH": "Home visits"
+    },
     "call": "Call",
     "website": "Website",
     "okToShare": "Ask the team to pass it on",
     "agreed": "The team will pass it on",
-    "source": "Source"
+    "source": "Source",
+    "emergencyTitle": "Talk to someone right now"
   },
   "talk": {
     "title": "Messages",

@@ -10,6 +10,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { isValidCronAuthorization } from '@/lib/api/cronAuth'
 import { notifyOps } from '@/lib/server/opsNotify'
 import { reclassifyCase } from '@/lib/server/caseAi'
+import { generateSuggestions } from '@/lib/server/suggestions'
 import { autoCloseCutoffs } from '@/lib/domain/schedule'
 import { mapInBatches } from '@/lib/concurrency'
 import { pruneRateLimitHits } from '@/lib/server/rateLimit'
@@ -131,8 +132,31 @@ export async function GET(request: Request) {
   })
   classified = classifiedFlags.filter(Boolean).length
 
+  // 5. 提案(#138)が抜けた相談を作り直す(届けた直後の処理が落ちた・AI が時間切れだったもの)。分類が済んだ 7 日以内の受付中の相談を、1 回に 10 件まで
+  let suggested = 0
+  const { data: unsuggested, error: sErr } = await supabaseAdmin
+    .from('cases')
+    .select('id')
+    .is('suggestions_generated_at', null)
+    .not('ai_sdg_suggestion', 'is', null)
+    .eq('status', 'OPEN')
+    .lt('created_at', new Date(Date.now() - 10 * 60_000).toISOString())
+    .gt('created_at', new Date(Date.now() - 7 * 24 * 3_600_000).toISOString())
+    .order('created_at', { ascending: true })
+    .limit(10)
+  if (sErr) console.error('[cron] unsuggested:', sErr)
+  const suggestedFlags = await mapInBatches(unsuggested ?? [], CLASSIFY_CONCURRENCY, async (c) => {
+    try {
+      return await generateSuggestions(c.id as string)
+    } catch (e) {
+      console.error('[cron] suggest:', e)
+      return false
+    }
+  })
+  suggested = suggestedFlags.filter(Boolean).length
+
   await pruneRateLimitHits()
 
-  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated.length} classified=${classified}`)
-  return NextResponse.json({ resolved, closed, escalated: escalated.length, classified })
+  console.log(`[cron] resolved=${resolved} closed=${closed} escalated=${escalated.length} classified=${classified} suggested=${suggested}`)
+  return NextResponse.json({ resolved, closed, escalated: escalated.length, classified, suggested })
 }

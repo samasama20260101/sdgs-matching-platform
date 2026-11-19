@@ -45,7 +45,8 @@ type AdminCase = {
 type Payload = {
   case: AdminCase
   offers: { id: string; kind: string; name: string; status: string; acceptedOrder: number | null; createdAt: string }[]
-  referrals: { status: string; consentedAt: string | null; name: string; phone: string | null }[]
+  referrals: { status: string; consentedAt: string | null; name: string; phone: string | null; website: string | null }[]
+  suggestions: { rank: number; reason: string | null; method: string; name: string; phone: string | null; website: string | null }[]
 }
 
 const STATUS: Record<string, string> = { OPEN: '申し出を待っている', MATCHED: '一緒に進めている', RESOLVED: '解決', CLOSED: '終了', CANCELLED: '取り消し' }
@@ -193,12 +194,25 @@ function Inner({ id }: { id: string }) {
       </Card>
 
       <Card tone="support" className="flex flex-col gap-2 p-4">
-        <SectionLabel>つなぎ先(相談者が「運営から伝えてよい」を選んだ窓口)</SectionLabel>
+        <SectionLabel>相談者に提案した支援団体</SectionLabel>
+        {data.suggestions.length === 0 && <Lead>まだありません(届けた直後に作ります。合う団体がないときも出ません)。</Lead>}
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-t13">
+          {data.suggestions.map((s) => (
+            <li key={s.rank}>
+              {s.rank}. {s.name}{s.phone ? `(${s.phone})` : ''} ・ {s.method === 'AI' ? 'AI が選んだ' : '決まりで選んだ'}{s.reason ? ` ・ ${s.reason}` : ''}
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      <Card tone="support" className="flex flex-col gap-2 p-4">
+        <SectionLabel>つなぎ先(相談者が「運営から伝えてもらう」を選んだ団体)</SectionLabel>
         {data.referrals.length === 0 && <Lead>ありません。</Lead>}
         <ul className="m-0 flex list-none flex-col gap-1 p-0 text-t13">
           {data.referrals.map((r, i) => (
             <li key={i}>
               {r.name}{r.phone ? `(${r.phone})` : ''} ・ {REFERRAL_STATUS[r.status] ?? r.status} ・ {jst(r.consentedAt)}
+              {r.website && <> ・ <a href={r.website} target="_blank" rel="noopener noreferrer">サイト</a></>}
             </li>
           ))}
         </ul>

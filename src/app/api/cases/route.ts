@@ -20,6 +20,7 @@ import {
 import { canConsultAsOrganization } from '@/lib/domain/orgVetting'
 import { isProductionDeployment } from '@/lib/deployEnv'
 import { classificationRecord, classifyConsultation } from '@/lib/server/caseAi'
+import { generateSuggestions } from '@/lib/server/suggestions'
 import { notifyOps } from '@/lib/server/opsNotify'
 import { listMyCases } from '@/lib/server/myCases'
 
@@ -171,6 +172,9 @@ export async function POST(request: Request) {
     )
     if (ciError) console.error('[api/cases] case_indicators:', ciError)
   }
+
+  // 相談に合う支援団体の提案(#138)は返事のあとで作る。画面は作り終えるまで待つ(作れなければ画面を開いたときと毎日の処理が作り直す)
+  after(() => generateSuggestions(created.id).then(() => undefined).catch((e) => console.error('[api/cases] suggestions:', e)))
 
   // 運営への知らせは返事のあとで(返事を待たせない)
   after(() => notifyOps({

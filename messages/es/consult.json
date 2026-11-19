@@ -154,16 +154,27 @@
     "thanksSend": "Dar las gracias"
   },
   "referrals": {
-    "title": "Mientras esperas: servicios cercanos",
-    "tipLabel": "Qué significa compartir",
-    "tip": "Si eliges «Pedir al equipo que lo transmita», el equipo de samasama contactará con el servicio por su recepción (teléfono o formulario) y solo compartirá tu apodo y lo que escribiste. Nunca enviamos correos automáticos.",
+    "title": "Organizaciones de apoyo que pueden ayudarte",
+    "tipLabel": "Sobre estas sugerencias",
+    "tip": "Según lo que escribiste, sugerimos hasta tres organizaciones de apoyo. Algunas aún no están registradas en samasama. Si eliges «Pedir al equipo que lo transmita», el equipo de samasama contactará con la organización por su recepción (teléfono o formulario) y solo compartirá tu apodo y lo que escribiste. Nunca enviamos correos automáticos.",
+    "pending": "Buscando organizaciones de apoyo adecuadas",
     "public": "Servicio público",
-    "organization": "Organización",
+    "organization": "Organización de apoyo",
+    "channels": {
+      "PHONE": "Por teléfono",
+      "ONLINE": "En línea",
+      "CHAT": "Por chat",
+      "EMAIL": "Por correo",
+      "FORM": "Por formulario",
+      "VISIT": "En persona",
+      "OUTREACH": "Visitas a domicilio"
+    },
     "call": "Llamar",
     "website": "Sitio web",
     "okToShare": "Pedir al equipo que lo transmita",
     "agreed": "El equipo lo transmitirá",
-    "source": "Fuente"
+    "source": "Fuente",
+    "emergencyTitle": "Habla con alguien ahora"
   },
   "talk": {
     "title": "Mensajes",
