@@ -12,6 +12,7 @@ import {
   reachable,
   isLocalMembershipBody,
   isPhysicalLocalService,
+  prefectureInName,
   areaNoteFor,
   channelsForCard,
   semanticScore,
@@ -97,6 +98,21 @@ assert.equal(reachable(farFoodbank, person), false)
 assert.equal(reachable({ ...farFoodbank, prefectureCode: 'JP-13', serviceCodes: ['JP-13'] }, person), true)
 assert.equal(isPhysicalLocalService(org()), false)
 
+// 団体名の都道府県: 都府県の付いた名前を先に。「東京都」を京都府と取り違えない
+assert.equal(prefectureInName('長崎県信用保証協会'), 'JP-42')
+assert.equal(prefectureInName('社会福祉法人 沖縄いのちの電話'), 'JP-47')
+assert.equal(prefectureInName('東京都社会福祉協議会'), 'JP-13')
+assert.equal(prefectureInName('東京英語いのちの電話'), 'JP-13')
+assert.equal(prefectureInName('京都府ひきこもり支援'), 'JP-26')
+assert.equal(prefectureInName('北海道家庭生活総合カウンセリングセンター'), 'JP-01')
+assert.equal(prefectureInName('特定非営利活動法人TEDIC'), null)
+// 団体名に相談者と違う都道府県の名前がある団体は、遠隔で受けていても・対応地域が全国でも出さない。同じ県なら出す
+const nagasaki = org({ name: '公益社団法人 長崎犯罪被害者支援センター', serviceScope: 'NATIONWIDE', prefectureCode: 'JP-42', serviceCodes: [], channels: ['PHONE'] })
+assert.equal(reachable(nagasaki, person), false)
+assert.equal(reachable(nagasaki, { ...person, regionCode: 'JP-42' }), true)
+assert.equal(reachable(org({ name: '愛知県信用保証協会', prefectureCode: 'JP-23', serviceCodes: ['JP-23'], channels: ['PHONE'] }), { ...person, regionCode: 'JP-26' }), false)
+assert.equal(reachable(org({ name: '特定非営利活動法人TEDIC', prefectureCode: 'JP-04', serviceCodes: ['JP-04'], channels: ['PHONE'] }), person), true)
+
 // 地域の相談は、地域の相談を受ける団体に加えて、個人の相談を受ける団体も候補にする(事業者だけの団体は除く)
 const community: SuggestCase = { ...person, subject: 'COMMUNITY' }
 assert.equal(fitsSubject(org({ subjects: ['PERSON'] }), 'COMMUNITY'), true)
@@ -174,7 +190,9 @@ assert.deepEqual(ranked.map((r) => r.candidate.id), ['a', 'b', 'h'])
 // 公的な窓口の埋め草も、相談の大項目と合わなければ出さない(家賃の相談に法テラスを出さない)
 assert.deepEqual(rankCandidates([a, b, houterasu], person).map((r) => r.candidate.id), ['b', 'a'])
 const many = rankCandidates([a, b, org({ id: 'd', name: 'え' }), houterasu], legal)
-assert.deepEqual(many.map((r) => r.candidate.id), ['a', 'b', 'd'])
+// 公的な窓口は民間の数にかかわらず後ろに残る(AI が民間を選ばなかったときに埋められる)
+assert.deepEqual(many.map((r) => r.candidate.id), ['a', 'b', 'd', 'h'])
+assert.deepEqual(pickSuggestions(many, []).map((p) => p.id), ['h'])
 // 会社の相談は、民間の候補がなくても事業者の窓口で埋める
 assert.deepEqual(rankCandidates([yorozu, a], company).map((r) => r.candidate.id), ['y'])
 
@@ -189,7 +207,7 @@ assert.deepEqual(rankCandidates([dup2, dup1], person).map((r) => r.candidate.id)
 
 // 選び方: AI が選んだ候補を先に。候補にない id・重なりは捨てる
 const picks = pickSuggestions(many, [{ id: 'd', reason: '住まいの相談に乗ってくれます' }, { id: 'zzz', reason: 'x' }, { id: 'd', reason: 'y' }])
-assert.deepEqual(picks.map((p) => [p.id, p.rank, p.method]), [['d', 1, 'AI']])
+assert.deepEqual(picks.map((p) => [p.id, p.rank, p.method]), [['d', 1, 'AI'], ['h', 2, 'RULE']])
 assert.equal(picks[0].reason, '住まいの相談に乗ってくれます')
 // AI が選んだときは、AI が選ばなかった民間の団体で埋めず、公的な窓口だけで埋める
 const withPublic = rankCandidates([a, b, houterasu], legal)

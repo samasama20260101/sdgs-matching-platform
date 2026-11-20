@@ -86,7 +86,7 @@ export function servesRegion(c: Pick<SuggestCandidate, 'serviceScope' | 'service
 
 // その地域の人や会員のための組織(弁護士会・商工会議所・社会福祉協議会・地域の労働組合・都道府県の産業支援機関など)。
 // 電話で受けていても、ほかの都道府県の相談者の相談先にはならない(相談の例で、東京の会社の相談に仙台弁護士会が出た。#148)
-const LOCAL_MEMBERSHIP_NAME = /(弁護士会|司法書士会|行政書士会|社会保険労務士会|税理士会|土地家屋調査士会|商工会議所|商工会|中小企業団体中央会|社会福祉協議会|社会福祉協会|労働組合|ユニオン|産業振興|産業支援|経営者協会)/u
+const LOCAL_MEMBERSHIP_NAME = /(弁護士会|司法書士会|行政書士会|社会保険労務士会|税理士会|土地家屋調査士会|商工会議所|商工会|中小企業団体中央会|社会福祉協議会|社会福祉協会|労働組合|ユニオン|産業振興|産業支援|経営者協会|信用保証協会)/u
 export function isLocalMembershipBody(c: Pick<SuggestCandidate, 'name' | 'orgType'>): boolean {
   return c.orgType === 'BAR_ASSOCIATION' || LOCAL_MEMBERSHIP_NAME.test(c.name.normalize('NFKC'))
 }
@@ -98,11 +98,36 @@ export function isPhysicalLocalService(c: Pick<SuggestCandidate, 'categories'>):
   return c.categories.some((cat) => PHYSICAL_SERVICE_CATEGORIES.has(cat))
 }
 
+// 団体名に入っている都道府県(「長崎県信用保証協会」「沖縄いのちの電話」など)。入っていなければ null。
+// 「東京都」の中の「京都」を京都府と取り違えないよう、都府県の付いた名前を先に見て、消してから県名だけを見る
+const PREFECTURE_NAMES: [string, string][] = [
+  ['JP-01', '北海道'], ['JP-02', '青森'], ['JP-03', '岩手'], ['JP-04', '宮城'], ['JP-05', '秋田'], ['JP-06', '山形'], ['JP-07', '福島'],
+  ['JP-08', '茨城'], ['JP-09', '栃木'], ['JP-10', '群馬'], ['JP-11', '埼玉'], ['JP-12', '千葉'], ['JP-13', '東京'], ['JP-14', '神奈川'],
+  ['JP-15', '新潟'], ['JP-16', '富山'], ['JP-17', '石川'], ['JP-18', '福井'], ['JP-19', '山梨'], ['JP-20', '長野'], ['JP-21', '岐阜'],
+  ['JP-22', '静岡'], ['JP-23', '愛知'], ['JP-24', '三重'], ['JP-25', '滋賀'], ['JP-26', '京都'], ['JP-27', '大阪'], ['JP-28', '兵庫'],
+  ['JP-29', '奈良'], ['JP-30', '和歌山'], ['JP-31', '鳥取'], ['JP-32', '島根'], ['JP-33', '岡山'], ['JP-34', '広島'], ['JP-35', '山口'],
+  ['JP-36', '徳島'], ['JP-37', '香川'], ['JP-38', '愛媛'], ['JP-39', '高知'], ['JP-40', '福岡'], ['JP-41', '佐賀'], ['JP-42', '長崎'],
+  ['JP-43', '熊本'], ['JP-44', '大分'], ['JP-45', '宮崎'], ['JP-46', '鹿児島'], ['JP-47', '沖縄'],
+]
+const SUFFIXED = PREFECTURE_NAMES.map(([code, name]) => [code, name === '北海道' ? name : name === '東京' ? '東京都' : name === '京都' || name === '大阪' ? `${name}府` : `${name}県`] as const)
+export function prefectureInName(name: string): string | null {
+  let rest = name.normalize('NFKC')
+  for (const [code, full] of SUFFIXED) if (rest.includes(full)) return code
+  rest = rest.replace(/東京/gu, '')
+  for (const [code, bare] of PREFECTURE_NAMES) if (bare !== '東京' && rest.includes(bare)) return code
+  return name.includes('東京') ? 'JP-13' : null
+}
+
 // 相談者が連絡して相談できるか: 相談の地域で受けている団体か、ほかの都道府県でも遠隔の手段で相談を受けている団体
 // (ほかの都道府県の地域の会員組織と、受け取りに行く支援は除く)。
 // 掲載台帳は日本の団体だけなので、日本の外の相談には出さない
 export function reachable(c: Pick<SuggestCandidate, 'serviceScope' | 'serviceCodes' | 'prefectureCode' | 'channels' | 'name' | 'orgType' | 'categories'>, k: Pick<SuggestCase, 'regionCountry' | 'regionCode'>): boolean {
   if ((k.regionCountry ?? 'JP') !== 'JP') return false
+  // 団体名に相談者と違う都道府県の名前が入っている団体は、その県の人のための団体として出さない
+  // (全国の調査の確かめで、京都の会社の相談に愛知県・長崎県の信用保証協会、東京の相談に長崎の犯罪被害者支援センターが出た。
+  //  データの対応地域が「全国」になっていても同じに扱う。2026-11-20)
+  const named = prefectureInName(c.name)
+  if (named && named !== k.regionCode) return false
   if (servesRegion(c, k)) return true
   if (isLocalMembershipBody(c) || isPhysicalLocalService(c)) return false
   return c.channels.some((ch) => (REMOTE_CHANNELS as readonly string[]).includes(ch))
@@ -196,7 +221,7 @@ export function nameKey(name: string): string {
   return name.normalize('NFKC').replace(LEGAL_FORMS, '').replace(/[\s・()（）「」『』]/gu, '').toLowerCase()
 }
 
-// 候補を決まりで絞って並べる。民間の団体を先に、足りない分だけ公的な窓口を後ろに足す。同じ名前の団体は 1 つにする
+// 候補を決まりで絞って並べる。民間の団体を先に、公的な窓口(3 つまで)を後ろに足す。同じ名前の団体は 1 つにする
 export function rankCandidates(candidates: readonly SuggestCandidate[], k: SuggestCase): RankedCandidate[] {
   const seen = new Set<string>()
   const scored: RankedCandidate[] = []
@@ -225,7 +250,8 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
   const organizations = ranked.filter((r) => r.tier === 'ORGANIZATION')
   const publics = ranked.filter((r) => r.tier === 'PUBLIC')
   const hotlines = ranked.filter((r) => r.tier === 'HOTLINE')
-  return [...organizations, ...publics.slice(0, Math.max(0, SUGGESTION_COUNT - organizations.length)), ...hotlines]
+  // 公的な窓口は民間の数にかかわらず後ろに残す(AI が民間の候補を合わないと見たときに埋められるように。京都の会社の資金繰りで 0 件になった)
+  return [...organizations, ...publics.slice(0, SUGGESTION_COUNT), ...hotlines]
 }
 
 // AI が選んだもの(候補の中の id だけ・重なりなし)を先に並べる。
