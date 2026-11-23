@@ -233,7 +233,7 @@
     "changeEmail": "メールアドレスを変える",
     "newEmail": "新しいメールアドレス",
     "changeEmailNote": "新しいアドレスに届くコードを入れると変わります。古いアドレスには、変わったことをお知らせします。",
-    "confirmEmailChange": "変える",
+    "confirmEmailChange": "このアドレスに変える",
     "emailChanged": "メールアドレスを変えました。",
     "emailSame": "今のメールアドレスと同じです",
     "emailTaken": "このメールアドレスは、ほかのアカウントで使われています",

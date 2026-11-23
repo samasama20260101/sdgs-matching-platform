@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { adminEmailChangeBlocker, normalizeEmail } from '@/lib/domain/accountEmail'
+import { authUserIdsByEmail } from '@/lib/server/authUsers'
 
 const schema = z.object({
   organizationId: z.uuid(),
@@ -46,6 +47,21 @@ export async function POST(request: Request) {
   })
   if (blocker || !user?.auth_user_id) {
     return NextResponse.json({ error: BLOCKER_MESSAGES[blocker ?? 'NO_USER'], code: blocker ?? 'NO_USER' }, { status: 409 })
+  }
+
+  // ほかの利用者が使っているアドレスは、管理 API が中身のない 500 を返すので先に確かめる
+  let holders: string[]
+  try {
+    holders = await authUserIdsByEmail(email)
+  } catch (e) {
+    console.error('[api/admin/accounts/email] lookup', e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+  }
+  if (holders.includes(user.auth_user_id as string)) {
+    return NextResponse.json({ error: '今のメールアドレスと同じです', code: 'SAME' }, { status: 409 })
+  }
+  if (holders.length > 0) {
+    return NextResponse.json({ error: 'このメールアドレスは、ほかのアカウントで使われています', code: 'TAKEN' }, { status: 409 })
   }
 
   const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.auth_user_id as string, { email, email_confirm: true })

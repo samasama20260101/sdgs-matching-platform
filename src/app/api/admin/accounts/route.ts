@@ -25,7 +25,8 @@ export async function GET(request: Request) {
   if (supportOrgs.length === 0) return NextResponse.json({ organizations: [] })
   const { data: members, error: mError } = await supabaseAdmin
     .from('organization_memberships')
-    .select('organization_id, user_id, role, users(display_name, display_id, role, is_suspended)')
+    // 所属から利用者へは本人(user_id)と招いた人(invited_by_user_id)の 2 本があるので、本人の側を名前で指す
+    .select('organization_id, user_id, role, users!organization_memberships_user_id_fkey(display_name, display_id, role, is_suspended)')
     .in('organization_id', supportOrgs.map((o) => o.id as string))
     .eq('status', 'ACTIVE')
   if (mError) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
