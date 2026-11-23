@@ -92,7 +92,8 @@ function LoginStep({ next }: { next: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
-        <Heading>{t(GOOGLE_ENABLED ? 'loginTitle' : 'loginTitleEmailOnly')}</Heading>
+        {/* コードを送ったあとは Google の入口を隠すので、「どちらで続けますか」でなくコードを入れる段の見出しにする */}
+        <Heading>{t(sentTo ? 'codeTitle' : GOOGLE_ENABLED ? 'loginTitle' : 'loginTitleEmailOnly')}</Heading>
         <Tip label={t('loginTipLabel')}>{t('loginTip')}</Tip>
       </div>
       {GOOGLE_ENABLED && !sentTo && (
