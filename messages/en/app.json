@@ -149,7 +149,13 @@
     "terms": "Terms of use",
     "privacy": "Privacy policy",
     "company": "samasama, LLC",
+    "namia": "Namia",
     "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "namia": {
+    "title": "Namia",
+    "caption": "Original character \"Namia,\" produced by samasama",
+    "alt": "Namia, the Ashita mo samasama character: a blue, drop-shaped character waving"
   },
   "home": {
     "hello": "Hi, {name}",

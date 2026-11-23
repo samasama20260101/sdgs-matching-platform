@@ -17,6 +17,8 @@ export function Footer() {
       <nav className="flex flex-wrap gap-x-4 gap-y-2">
         {links.map((l) => <Link key={l.key} href={l.href} className="text-mist">{t(l.key)}</Link>)}
         <a href="https://www.samasama.site" className="text-mist" rel="noopener">{t('company')}</a>
+        {/* ナミアは会社のサイトの後ろに置く(2026-11-23 代表の要望。#161) */}
+        <Link href="/namia" className="text-mist">{t('namia')}</Link>
       </nav>
       <span>{t('copyright')}</span>
     </footer>

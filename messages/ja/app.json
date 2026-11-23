@@ -149,7 +149,13 @@
     "terms": "利用規約",
     "privacy": "プライバシーポリシー",
     "company": "合同会社samasama",
+    "namia": "ナミア",
     "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "namia": {
+    "title": "ナミア",
+    "caption": "オリジナルキャラクター「ナミア」produced by samasama",
+    "alt": "明日もsamasamaのキャラクター ナミア。しずく型の青いキャラクターが手を振っている"
   },
   "home": {
     "hello": "{name}さん",
