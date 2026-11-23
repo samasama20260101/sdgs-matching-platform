@@ -233,7 +233,7 @@
     "changeEmail": "Cambiar correo",
     "newEmail": "Nuevo correo electrónico",
     "changeEmailNote": "Escribe el código que llegue a la nueva dirección para terminar. Avisaremos a tu dirección anterior del cambio.",
-    "confirmEmailChange": "Cambiar",
+    "confirmEmailChange": "Cambiar a esta dirección",
     "emailChanged": "Cambiamos tu correo electrónico.",
     "emailSame": "Es el mismo correo que usas ahora",
     "emailTaken": "Este correo ya lo usa otra cuenta",
