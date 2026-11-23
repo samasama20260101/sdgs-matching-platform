@@ -108,7 +108,6 @@
     "verify": "Continue",
     "codeInvalid": "Please enter the code (numbers only)",
     "codeWrong": "The code is wrong or has expired. Please send a new one.",
-    "linkAlsoWorks": "You can also tap the link in the email.",
     "resend": "Send the code again",
     "resendIn": "You can resend in {seconds} s",
     "changeEmail": "Use a different email",

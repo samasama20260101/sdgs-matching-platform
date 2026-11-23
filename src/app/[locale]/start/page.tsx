@@ -126,7 +126,7 @@ function LoginStep({ next }: { next: string }) {
             className="max-w-[220px]"
           />
           <Button type="submit" variant="night" disabled={busy}>{t('verify')}</Button>
-          <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('linkAlsoWorks')}</p>
+          {/* ログインのメールはコードだけでリンクを載せない(ops/supabase-auth の login-code.html)ので、リンクの案内は出さない */}
           <div className="flex flex-wrap gap-2">
             <Button variant="quiet" disabled={cooldown > 0 || busy} onClick={() => void sendCode()}>
               {cooldown > 0 ? t('resendIn', { seconds: cooldown }) : t('resend')}

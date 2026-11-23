@@ -108,7 +108,6 @@
     "verify": "続ける",
     "codeInvalid": "届いた数字のコードを入れてください",
     "codeWrong": "コードが違うか、期限が切れています。送り直してください。",
-    "linkAlsoWorks": "メールのリンクを押しても入れます。",
     "resend": "コードを送り直す",
     "resendIn": "{seconds}秒後に送り直せます",
     "changeEmail": "メールアドレスを変える",
