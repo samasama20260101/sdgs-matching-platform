@@ -1,7 +1,7 @@
 {
   "write": {
     "crisisTitle": "Thank you for telling us",
-    "crisisBody": "There are places you can talk to right now. You can keep writing this request.",
+    "crisisBody": "You can keep writing this request.",
     "wordsTitle": "What is troubling you?",
     "wordsTipLabel": "How your words are handled",
     "wordsTip": "Before anything goes to AI, we hide what looks like names and contact details. Supporters only see your nickname and this text. You can write in any language; we keep the original and supporters can also see a translation.",
@@ -100,7 +100,6 @@
     "subjectMine": "My request",
     "subjectOrg": "Request from {name}",
     "delivered": "Your request has been delivered",
-    "crisisSent": "Your request has been sent. While you wait for offers, there are places you can talk to right now.",
     "deliveredLead": "It has reached supporters who fit. Offers will appear here.",
     "deliveredTipLabel": "Who can see it",
     "deliveredTip": "Only your nickname and what you wrote are visible. We don't have your name or contact details.",

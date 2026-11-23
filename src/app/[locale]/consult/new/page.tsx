@@ -13,7 +13,7 @@ function Inner() {
     <OptionalMe>
       {(me) => (
         <AppFrame tabs={false}>
-          <WriteFlow subject="PERSON" country={me?.person.country ?? null} entryCode={params.get('shop')} signedIn={me !== null} />
+          <WriteFlow subject="PERSON" entryCode={params.get('shop')} signedIn={me !== null} />
         </AppFrame>
       )}
     </OptionalMe>

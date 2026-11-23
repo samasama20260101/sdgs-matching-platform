@@ -1,13 +1,12 @@
 'use client'
 
-// 画面の枠(盤 04): 上のヘッダー(相談する / 支える の切り替え・相談する側だけ「いますぐ話したい」)と下のタブ。
-// いますぐの窓口は、印でなく言葉のボタンで相談する側の全画面に置く(11/5 岡本さん。他社と英国政府の設計の決まりに合わせる)
+// 画面の枠(盤 04): 上のヘッダー(相談する / 支える の切り替え)と下のタブ。
+// よりそいホットライン・119・110 の「いますぐ話したい」は置かない(2026-11-23 代表の要望で外した。#160)
 // 相談する: ホーム・やりとり・知る・わたし / 支える: ホーム・さがす・やりとり・わたし
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
-import { CrisisLinks } from './CrisisLinks'
 import { Mark } from './Mark'
 import { useSession, type Mode } from './SessionProvider'
 import { cx, Screen, type Tone } from './ui'
@@ -40,50 +39,32 @@ function ModeSwitch() {
 
 export function AppHeader() {
   const t = useTranslations('app.shell')
-  const { state, canSupport, mode } = useSession()
+  const { state, canSupport } = useSession()
   const pathname = usePathname()
-  const [crisisOpen, setCrisisOpen] = useState(false)
-  const country = state.status === 'ready' ? state.me.person.country : null
   // ログインする前に相談を書いている(相談は先に書き、届けるときにログインする。2026-11-17)
   const writingBeforeLogin = (state.status === 'anonymous' || state.status === 'needsOnboarding') && pathname.startsWith('/consult')
-  // 相談する側の画面に出す。ログインの前は相談を書く画面だけ(入口の画面には窓口がもう出ている)
-  const showCrisis = (state.status === 'ready' && state.me.person.role !== 'ADMIN' && mode === 'consult') || writingBeforeLogin
   return (
-    <>
-      <header className="flex h-14 items-center justify-between gap-2">
-        <Link href={state.status === 'ready' ? '/home' : '/'} className="flex shrink-0 items-center gap-2.5 text-ink no-underline">
-          <Mark />
-          {/* 切り替えが出る人は、スマホの幅では名前を印だけにする(390px で名前と切り替えが折り返す) */}
-          <span className={cx('whitespace-nowrap font-heading text-t16 font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
-        </Link>
-        <div className="flex min-w-0 items-center gap-1">
-          {canSupport && <ModeSwitch />}
-          {state.status === 'anonymous' && (
-            <>
-              <LanguageSwitcher />
-              {/* 相談を書いている途中は出さない(ここから入ると書いた内容を預けずにホームへ進む。ログインは届けるボタンから) */}
-              {pathname !== '/start' && !writingBeforeLogin && (
-                <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-t13 font-bold text-night no-underline">
-                  {t('login')}
-                </Link>
-              )}
-            </>
-          )}
-          {showCrisis && (
-            <button
-              type="button"
-              aria-expanded={crisisOpen}
-              onClick={() => setCrisisOpen((v) => !v)}
-              // 文字を大きくした細いスマホでは、横にはみ出さずに2行に折り返す。折り返すのは文言の <wbr> の位置だけ(break-keep)
-              className="flex min-h-[44px] min-w-0 shrink items-center rounded-full px-2.5 text-center text-t13 font-bold leading-tight break-keep text-coral-ink"
-            >
-              {t.rich('crisisNow', { wbr: () => <wbr /> })}
-            </button>
-          )}
-        </div>
-      </header>
-      {showCrisis && crisisOpen && <div className="mb-3"><CrisisLinks country={country} /></div>}
-    </>
+    <header className="flex h-14 items-center justify-between gap-2">
+      <Link href={state.status === 'ready' ? '/home' : '/'} className="flex shrink-0 items-center gap-2.5 text-ink no-underline">
+        <Mark />
+        {/* 切り替えが出る人は、スマホの幅では名前を印だけにする(390px で名前と切り替えが折り返す) */}
+        <span className={cx('whitespace-nowrap font-heading text-t16 font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
+      </Link>
+      <div className="flex min-w-0 items-center gap-1">
+        {canSupport && <ModeSwitch />}
+        {state.status === 'anonymous' && (
+          <>
+            <LanguageSwitcher />
+            {/* 相談を書いている途中は出さない(ここから入ると書いた内容を預けずにホームへ進む。ログインは届けるボタンから) */}
+            {pathname !== '/start' && !writingBeforeLogin && (
+              <Link href="/start" className="flex min-h-[44px] items-center px-2.5 text-t13 font-bold text-night no-underline">
+                {t('login')}
+              </Link>
+            )}
+          </>
+        )}
+      </div>
+    </header>
   )
 }
 

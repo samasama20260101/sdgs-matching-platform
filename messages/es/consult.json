@@ -1,7 +1,7 @@
 {
   "write": {
     "crisisTitle": "Gracias por contárnoslo",
-    "crisisBody": "Hay lugares donde puedes hablar ahora mismo. Puedes seguir escribiendo esta consulta.",
+    "crisisBody": "Puedes seguir escribiendo esta consulta.",
     "wordsTitle": "¿Qué te preocupa?",
     "wordsTipLabel": "Qué pasa con lo que escribes",
     "wordsTip": "Antes de enviar algo a la IA, ocultamos lo que parecen nombres y datos de contacto. Quienes apoyan solo ven tu apodo y este texto. Puedes escribir en cualquier idioma; guardamos el original y quienes apoyan también pueden ver una traducción.",
@@ -100,7 +100,6 @@
     "subjectMine": "Mi consulta",
     "subjectOrg": "Consulta de {name}",
     "delivered": "Tu consulta se entregó",
-    "crisisSent": "Tu consulta se envió. Mientras esperas ofrecimientos, hay lugares donde puedes hablar ahora mismo.",
     "deliveredLead": "Llegó a quienes pueden apoyarte. Los ofrecimientos aparecerán aquí.",
     "deliveredTipLabel": "Quién puede verla",
     "deliveredTip": "Solo se ven tu apodo y lo que escribiste. No tenemos tu nombre ni tus datos de contacto.",

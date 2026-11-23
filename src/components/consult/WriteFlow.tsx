@@ -11,7 +11,7 @@ import { usePathname, useRouter } from '@/i18n/navigation'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { detectUrgency } from '@/lib/urgency'
 import { DESCRIPTION_MAX, EXTRA_MAX, type SubjectType } from '@/lib/domain/intake'
-import { CrisisNotice } from '@/components/app/CrisisLinks'
+import { HeavyWordsNotice } from './HeavyWordsNotice'
 import { Button, ErrorNote, Heading, StepBar, TextArea, TextField, Tip } from '@/components/app/ui'
 import { DRAFT_STORAGE_KEY, parseDraft, serializeDraft, type ConsultDraft } from '@/lib/domain/consultDraft'
 import { loginPathFor } from '@/lib/domain/safeNext'
@@ -47,13 +47,11 @@ export type OrganizationStep = (args: { send: (organizationId: string) => Promis
 export function WriteFlow({
   subject,
   organizationStep,
-  country,
   entryCode,
   signedIn,
 }: {
   subject: SubjectType
   organizationStep?: OrganizationStep
-  country: string | null
   entryCode?: string | null
   signedIn: boolean
 }) {
@@ -130,7 +128,7 @@ export function WriteFlow({
           <p className="m-0 rounded-tool bg-lamp-faint px-3 py-2 text-t12_5 font-bold text-ink-soft">{t('noPersonalInfo')}</p>
           <TextArea label={t('words')} value={words} maxLength={DESCRIPTION_MAX} onChange={(e) => setWords(e.target.value)} />
           <span className="-mt-3 self-end text-t12 text-mist">{t('charCount', { count: words.length })}</span>
-          {urgentWords && <CrisisNotice country={country} />}
+          {urgentWords && <HeavyWordsNotice />}
           <TextField label={t('since')} hint={t('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
           <TextField label={t('wish')} hint={t('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
           <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('noPickingNote')}</p>

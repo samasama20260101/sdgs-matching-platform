@@ -99,7 +99,6 @@ function Inner() {
           <AppFrame tabs={false}>
             <WriteFlow
               subject={subject}
-              country={me?.person.country ?? null}
               entryCode={params.get('shop')}
               signedIn={me !== null}
               // 会社・地域を選ぶ段はログインのあとにだけ出る(ログインしていなければ、その手前でログインへ進む)

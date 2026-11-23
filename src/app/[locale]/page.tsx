@@ -7,7 +7,6 @@ import { useSearchParams } from 'next/navigation'
 import { Link, useRouter } from '@/i18n/navigation'
 import { useSession } from '@/components/app/SessionProvider'
 import { AppHeader } from '@/components/app/AppShell'
-import { CrisisLinks } from '@/components/app/CrisisLinks'
 import { Footer } from '@/components/app/Footer'
 import { Heading, Lead, Screen, SectionLabel } from '@/components/app/ui'
 
@@ -83,7 +82,6 @@ function EntryInner() {
 
         <Link href="/trial" className="flex min-h-[40px] items-center self-center text-t13 text-night">{t('trial')}</Link>
 
-        <CrisisLinks />
         <Footer />
       </main>
     </Screen>
