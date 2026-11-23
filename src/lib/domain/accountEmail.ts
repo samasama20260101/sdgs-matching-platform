@@ -58,3 +58,18 @@ export function emailChangeError(err: { code?: string; status?: number }): Email
   if (err.code === 'email_address_invalid' || err.code === 'validation_failed') return 'INVALID'
   return 'FAILED'
 }
+
+// 支え手の電話番号の確認(updateUser({ phone }))を Auth が断ったときに、画面に出す言葉の種類。
+// SMS の会社(Twilio)が断ると、Auth は sms_send_failed に会社の言葉をそのまま載せて返す。
+// 番号の形が違うとき(Twilio の 60200)だけは番号の直しを促し、それ以外(会社側の審査や設定の不足など)は送れなかったと出す
+export type PhoneChangeError = 'TAKEN' | 'TOO_MANY' | 'INVALID' | 'SEND_FAILED' | 'FAILED'
+
+export function phoneChangeError(err: { code?: string; status?: number; message?: string }): PhoneChangeError {
+  if (err.code === 'phone_exists') return 'TAKEN'
+  if (err.status === 429 || err.code === 'over_sms_send_rate_limit' || err.code === 'over_request_rate_limit') return 'TOO_MANY'
+  if (err.code === 'validation_failed') return 'INVALID'
+  if (err.code === 'sms_send_failed') {
+    return /errors\/60200|Invalid parameter `To`/.test(err.message ?? '') ? 'INVALID' : 'SEND_FAILED'
+  }
+  return 'FAILED'
+}

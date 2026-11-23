@@ -10,7 +10,7 @@
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase/client'
-import { normalizePhone } from '@/lib/domain/accountEmail'
+import { normalizePhone, phoneChangeError } from '@/lib/domain/accountEmail'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { Link, useRouter } from '@/i18n/navigation'
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing'
@@ -68,8 +68,14 @@ function PhoneVerify() {
     setState('busy')
     const { error: e } = await supabase.auth.updateUser({ phone: normalized })
     setState('idle')
-    if (e) setError(t('smsUnavailable'))
-    else setSent(true)
+    if (e) {
+      // 送れなかった理由ごとに言葉を分ける(SMS の会社が断ったときも、これまでは「準備中」と出ていた)
+      const kind = phoneChangeError(e)
+      setError(kind === 'TAKEN' ? t('phoneTaken')
+        : kind === 'TOO_MANY' ? t('smsTooMany')
+          : kind === 'INVALID' ? t('phoneInvalid')
+            : t('smsSendFailed'))
+    } else setSent(true)
   }
   const verify = async () => {
     if (!normalized) return
