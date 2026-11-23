@@ -108,7 +108,6 @@
     "verify": "Continuar",
     "codeInvalid": "Escribe el código (solo números)",
     "codeWrong": "El código no es correcto o ha caducado. Pide uno nuevo.",
-    "linkAlsoWorks": "También puedes tocar el enlace del correo.",
     "resend": "Enviar el código otra vez",
     "resendIn": "Podrás reenviarlo en {seconds} s",
     "changeEmail": "Usar otro correo",
