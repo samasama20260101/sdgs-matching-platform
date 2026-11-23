@@ -1,6 +1,6 @@
 // ログインのメールアドレスの変更(#155)。実行: npm run test:units
 import assert from 'node:assert/strict'
-import { adminEmailChangeBlocker, emailChangeError, normalizeEmail, normalizePhone } from '../../src/lib/domain/accountEmail'
+import { adminEmailChangeBlocker, emailChangeError, normalizeEmail, normalizePhone, phoneChangeError } from '../../src/lib/domain/accountEmail'
 
 // メールアドレス
 assert.equal(normalizeEmail('  Taro@Example.JP '), 'taro@example.jp')
@@ -57,5 +57,27 @@ assert.equal(emailChangeError({ code: 'insufficient_aal', status: 403 }), 'NEEDS
 assert.equal(emailChangeError({ code: 'email_address_invalid', status: 400 }), 'INVALID')
 assert.equal(emailChangeError({ status: 500 }), 'FAILED')
 assert.equal(emailChangeError({}), 'FAILED')
+
+// 電話番号の確認で Auth が断ったときの言葉
+assert.equal(phoneChangeError({ code: 'phone_exists', status: 422 }), 'TAKEN')
+assert.equal(phoneChangeError({ code: 'over_sms_send_rate_limit', status: 429 }), 'TOO_MANY')
+assert.equal(phoneChangeError({ status: 429 }), 'TOO_MANY')
+assert.equal(phoneChangeError({ code: 'validation_failed', status: 400, message: 'Invalid phone number format (E.164 required)' }), 'INVALID')
+// Twilio が番号の形を断った(60200)
+assert.equal(phoneChangeError({
+  code: 'sms_send_failed',
+  status: 422,
+  message: 'Error sending phone_change OTP to provider: Invalid parameter `To`: +810000000000 More information: https://www.twilio.com/docs/errors/60200',
+}), 'INVALID')
+// Twilio の審査が済んでいない(21608)など、番号のせいではない断り
+assert.equal(phoneChangeError({
+  code: 'sms_send_failed',
+  status: 422,
+  message: 'Error sending phone_change OTP to provider: To send messages or make calls to unverified numbers, you must have an approved Primary Compliance Profile. More information: https://www.twilio.com/docs/errors/21608',
+}), 'SEND_FAILED')
+assert.equal(phoneChangeError({ code: 'sms_send_failed', status: 422 }), 'SEND_FAILED')
+// ログインが切れた・つながらないなど
+assert.equal(phoneChangeError({ status: 401 }), 'FAILED')
+assert.equal(phoneChangeError({}), 'FAILED')
 
 console.log('accountEmail: ok')
