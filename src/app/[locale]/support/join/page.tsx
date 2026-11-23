@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase/client'
+import { normalizePhone } from '@/lib/domain/accountEmail'
 import { apiFetch, ApiError } from '@/lib/client/api'
 import { Link, useRouter } from '@/i18n/navigation'
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing'
@@ -55,22 +56,26 @@ function PhoneVerify() {
   const [code, setCode] = useState('')
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
   const [error, setError] = useState<string | null>(null)
+  // 090-1234-5678 のように 0 から書いても、国番号から書いても同じ形(E.164)にする。
+  // ここで確かめた番号は、メールが使えなくなったときに SMS で入る番号にもなる(#155)
+  const normalized = normalizePhone(phone)
   const send = async () => {
     setError(null)
-    if (!/^\+[1-9]\d{7,14}$/.test(phone.replace(/[\s-]/g, ''))) {
+    if (!normalized) {
       setError(t('phoneInvalid'))
       return
     }
     setState('busy')
-    const { error: e } = await supabase.auth.updateUser({ phone: phone.replace(/[\s-]/g, '') })
+    const { error: e } = await supabase.auth.updateUser({ phone: normalized })
     setState('idle')
     if (e) setError(t('smsUnavailable'))
     else setSent(true)
   }
   const verify = async () => {
+    if (!normalized) return
     setState('busy')
     setError(null)
-    const { error: e } = await supabase.auth.verifyOtp({ phone: phone.replace(/[\s-]/g, ''), token: code, type: 'phone_change' })
+    const { error: e } = await supabase.auth.verifyOtp({ phone: normalized, token: code, type: 'phone_change' })
     if (e) {
       setState('idle')
       setError(t('codeWrong'))
