@@ -9,8 +9,7 @@
       "consult": "Ask",
       "support": "Support"
     },
-    "login": "Sign in",
-    "crisisNow": "Talk now"
+    "login": "Sign in"
   },
   "tabs": {
     "label": "Navigation",
@@ -19,15 +18,6 @@
     "learn": "Learn",
     "find": "Find",
     "me": "Me"
-  },
-  "crisis": {
-    "title": "If you need to talk right now",
-    "jp": {
-      "yorisoi": "Yorisoi Hotline",
-      "fire": "119",
-      "police": "110"
-    },
-    "abroad": "If your life is in danger, call the emergency number (police or ambulance) of the country where you live."
   },
   "gate": {
     "suspended": "This account can't be used right now. Please contact us through the contact form.",

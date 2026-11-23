@@ -9,8 +9,7 @@
       "consult": "Pedir ayuda",
       "support": "Apoyar"
     },
-    "login": "Entrar",
-    "crisisNow": "Hablar ahora"
+    "login": "Entrar"
   },
   "tabs": {
     "label": "Navegación",
@@ -19,15 +18,6 @@
     "learn": "Conocer",
     "find": "Buscar",
     "me": "Yo"
-  },
-  "crisis": {
-    "title": "Si necesitas hablar ahora mismo",
-    "jp": {
-      "yorisoi": "Yorisoi Hotline",
-      "fire": "119",
-      "police": "110"
-    },
-    "abroad": "Si tu vida corre peligro, llama al número de emergencias (policía o ambulancia) del país donde vives."
   },
   "gate": {
     "suspended": "Esta cuenta no se puede usar ahora. Escríbenos desde el formulario de contacto.",

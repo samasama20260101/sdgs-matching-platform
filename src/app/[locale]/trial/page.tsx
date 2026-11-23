@@ -12,7 +12,7 @@ import { Link } from '@/i18n/navigation'
 import { AppHeader } from '@/components/app/AppShell'
 import { Footer } from '@/components/app/Footer'
 import { Button, Card, Chip, Heading, Lead, Screen, TextArea, TextField } from '@/components/app/ui'
-import { CrisisNotice } from '@/components/app/CrisisLinks'
+import { HeavyWordsNotice } from '@/components/consult/HeavyWordsNotice'
 import { indicatorMessageKey, NEIGHBOR_CATEGORY } from '@/lib/constants/intakeIndicators'
 import { caseBodyForAi, caseTitle, DESCRIPTION_MAX, EXTRA_MAX, optionsFor, shortTitle } from '@/lib/domain/intake'
 import { detectPiiSpans, PII_PLACEHOLDERS, type PiiCategory, type PiiSpan } from '@/lib/pii'
@@ -147,7 +147,7 @@ export default function TrialPage() {
             </div>
             <TextArea label={tWrite('words')} value={words} maxLength={DESCRIPTION_MAX} onChange={(e) => setWords(e.target.value)} />
             <span className="-mt-3 self-end text-t12 text-mist">{tWrite('charCount', { count: words.length })}</span>
-            {urgent && <CrisisNotice />}
+            {urgent && <HeavyWordsNotice />}
             <TextField label={tWrite('since')} hint={tWrite('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
             <TextField label={tWrite('wish')} hint={tWrite('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
             <Button variant="night" disabled={!ready || busy} onClick={() => void send()}>{!ready ? t('needsWords') : busy ? t('submitting') : t('submit')}</Button>

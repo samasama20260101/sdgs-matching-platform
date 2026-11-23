@@ -8,7 +8,8 @@
 //   - 並べ方: AI が選んだ指標との重なり・相談文と団体の要約の意味の近さ(埋め込み、#148)> 同じ大項目 > 電話・オンライン(加点)> 同じ都道府県
 //     その上位を AI が相談の本文と見比べて 3 つに絞る。AI が使えないときはこの並びの上から 3 つ
 //   - 全国の電話窓口(DV相談ナビ・189 など)は常には出さず、緊急と判定した個人の相談でだけ AI に候補として見せる
-//     (どれが合うかは AI が相談と見比べて選ぶ。決まりの並びでは埋めない。よりそいホットライン・119・110 は相談の画面の上に別に出る)
+//     (どれが合うかは AI が相談と見比べて選ぶ。決まりの並びでは埋めない)。分野を問わない総合の電話相談(よりそいホットライン)は見せない
+//     (つながりにくく、行き止まりに案内してしまう。2026-11-23 代表の要望で、119・110 とともにアプリの窓口から外した。#160)
 import { BUSINESS_WINDOW_CATEGORIES, fitsAudience, referralAudience } from './referrals'
 import type { SubjectType } from './intake'
 
@@ -173,9 +174,13 @@ export function isPublicFallback(c: SuggestCandidate, k: SuggestCase): boolean {
   return fitsAudience(c.categories, referralAudience(k.subject)) && servesRegion(c, k)
 }
 
-// 緊急と判定した個人の相談で、AI に見せる全国の電話窓口か(事業者向けは除く)
+// 緊急の相談でも AI に見せない全国の電話窓口の種類(総合の電話相談 = よりそいホットライン。#160)
+const EXCLUDED_HOTLINE_CATEGORIES = new Set(['GENERAL_CONSULTATION_HOTLINE'])
+
+// 緊急と判定した個人の相談で、AI に見せる全国の電話窓口か(事業者向けと総合の電話相談は除く)
 export function isUrgentHotline(c: SuggestCandidate, k: SuggestCase): boolean {
   return k.urgent && k.subject === 'PERSON' && c.kind === 'NATIONAL_HOTLINE'
+    && !c.categories.some((cat) => EXCLUDED_HOTLINE_CATEGORIES.has(cat))
     && fitsAudience(c.categories, referralAudience(k.subject)) && servesRegion(c, k)
 }
 
