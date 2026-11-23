@@ -149,7 +149,13 @@
     "terms": "Condiciones de uso",
     "privacy": "Política de privacidad",
     "company": "samasama, LLC",
+    "namia": "Namia",
     "copyright": "© 2026 samasama, LLC. All rights reserved."
+  },
+  "namia": {
+    "title": "Namia",
+    "caption": "Personaje original «Namia», producido por samasama",
+    "alt": "Namia, el personaje de Ashita mo samasama: un personaje azul con forma de gota que saluda con la mano"
   },
   "home": {
     "hello": "Hola, {name}",
