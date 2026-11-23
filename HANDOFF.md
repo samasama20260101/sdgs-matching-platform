@@ -30,6 +30,7 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 2. 規約とポリシーのリーガルチェック → 本文を画面に入れる。前もっての告知期間は置かず、公開の日に施行し、今の利用者には初めて入るときに同意をもらい直す(2026-11-05 岡本さん。10/30 の「2週間前に告知」は取りやめ)
 3. 本番の DB を v1 の形のまま読み取りで確かめる → `migrations/v2_01〜18` を本番に流す(v2_18 のあとに掲載台帳の取り込み `scripts/import-directory-entries.mts` と埋め込み `scripts/embed-directory-entries.mts --env production` を流す)(直前に内容を出して確認をもらう。v2_13 は v1 で「ADMIN」にした団体のメンバーを OWNER に移すので、件数も出す)
    - 本番の Auth の設定(6 けたのコードのメール・戻り先・送り主)も入れる。今は `ops/supabase-auth/staging` しかないので、本番の分を作ってから(権限は 2026-11-06 にそろった。本番に流すのは直前に確認をもらう)
+     - メールアドレスの変更(#155)の分も同じく入れる: `double_confirm_changes = false`(新しいアドレスのコードだけで確定)、アドレス変更のメールをコードだけの文面に(`template.email_change`。本番には v1 の件名と文面が残っている見込み)、古いアドレスへの知らせ(`notification.email_changed`)。電話番号で入る入口は `auth.sms`(Twilio Verify)が本番に入ってから動く
 4. DNS は 2026-11-09 に Cloudflare へ移した(レコードは DNS only のまま Vercel 向き、Resend の分も写した)。本番を Workers に切り替える → 本番の目視確認
 5. 施行のあと、相談者の個人情報の列を消す(`v2_90_drop_pii.sql`、未作成)。Vercel を止め、リポジトリを非公開にする
 

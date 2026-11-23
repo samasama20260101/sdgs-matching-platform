@@ -1,6 +1,6 @@
 'use client'
 
-// わたし(盤 17): 呼び名・地域・言語・年齢 / 知らせの受け取り方 / ログインの方法 / 支える側にもなる / 退会
+// わたし(盤 17): 呼び名・地域・言語・年齢 / 知らせの受け取り方 / ログインの方法(メールアドレスの変更、#155) / 支える側にもなる / 退会
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/navigation'
@@ -17,6 +17,7 @@ import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } 
 import type { MePerson } from '@/lib/client/meTypes'
 import { Invitations } from '@/components/support/Invitations'
 import { MfaGate } from '@/components/app/MfaGate'
+import { EmailChange } from '@/components/app/EmailChange'
 
 const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED === 'true'
 
@@ -151,6 +152,33 @@ function TextSizeCard() {
   )
 }
 
+// ログインの方法。メールアドレスは本人がここで変えられる(#155)。
+// 電話番号の SMS で入り直した人は /me?email=change に着くので、変える欄を開いておく(ログインの画面の「メールアドレスが使えなくなった方」)
+function LoginMethodsCard({ email, loginMethods, onChanged }: { email: string | null; loginMethods: string[]; onChanged: () => Promise<void> }) {
+  const t = useTranslations('app.me')
+  // セッションを読んでから描くので、サーバーの描画と食い違わない
+  const [open, setOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('email') === 'change')
+  return (
+    <Card className="flex flex-col gap-2 p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-t15 font-bold">{t('loginMethods')}</span>
+        <Tip label={t('loginMethodsTipLabel')}>{t('loginMethodsTip')}</Tip>
+      </div>
+      <div className="flex min-h-[44px] items-center justify-between gap-3 text-t14">
+        <span className="shrink-0">{t('emailCode')}</span>
+        <span className="min-w-0 break-all text-right text-t12_5 text-mist">{email ?? '—'}</span>
+      </div>
+      <EmailChange current={email} open={open} onOpenChange={setOpen} onChanged={onChanged} />
+      {(GOOGLE_ENABLED || loginMethods.includes('google')) && (
+        <div className="flex min-h-[44px] items-center justify-between text-t14">
+          <span>Google</span>
+          <span className="text-t12_5 text-mist">{loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 function WithdrawCard() {
   const t = useTranslations('app.me')
   const { signOut } = useSession()
@@ -209,22 +237,7 @@ export default function MePage() {
           <NotificationsCard />
           <TextSizeCard />
 
-          <Card className="flex flex-col gap-2 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-t15 font-bold">{t('loginMethods')}</span>
-              <Tip label={t('loginMethodsTipLabel')}>{t('loginMethodsTip')}</Tip>
-            </div>
-            <div className="flex min-h-[44px] items-center justify-between gap-3 text-t14">
-              <span className="shrink-0">{t('emailCode')}</span>
-              <span className="min-w-0 break-all text-right text-t12_5 text-mist">{me.email ?? '—'}</span>
-            </div>
-            {(GOOGLE_ENABLED || me.loginMethods.includes('google')) && (
-              <div className="flex min-h-[44px] items-center justify-between text-t14">
-                <span>Google</span>
-                <span className="text-t12_5 text-mist">{me.loginMethods.includes('google') ? t('linked') : t('notLinked')}</span>
-              </div>
-            )}
-          </Card>
+          <LoginMethodsCard email={me.email} loginMethods={me.loginMethods} onChanged={refresh} />
 
           {/* 2つ目の確認は支え手の団体のメンバーが機微な相談を見るためのもの。相談のための団体だけの人には出さない(#131) */}
           {me.faces.organizations.some((o) => o.supporter) && (
