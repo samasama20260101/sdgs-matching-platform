@@ -1,5 +1,5 @@
 # Staging(fzawgdmqewmwdqjsqjwt)の Auth のうち、v2.0 で決めて持つ項目だけ(#72)。
-# ここに書いた項目だけが書き換わり、書いていない項目(site_url・SMTP など)はそのまま残る。
+# ここに書いた項目だけが書き換わり、書いていない項目(site_url など)はそのまま残る。
 #   npx supabase config diff --workdir ops/supabase-auth/staging --remote=fzawgdmqewmwdqjsqjwt
 #   npx supabase config push --workdir ops/supabase-auth/staging --remote=fzawgdmqewmwdqjsqjwt --yes
 project_id = "sdgs-staging"
@@ -19,6 +19,18 @@ otp_expiry = 600
 # メールアドレスの変更(#155)は、新しいアドレスに届くコードだけで確定する。古いアドレスでは確かめない
 # (退職などで古いアドレスを使えなくなった人が変えられるように。2026-11-23 運営了承)。変わったことは古いアドレスに知らせる
 double_confirm_changes = false
+
+[auth.email.smtp]
+# ログインのコードなど Auth のメールを、本番(v1)と同じ Resend のチーム ocn から samasama.site の名前で送る(2026-11-23)。
+# 鍵は Staging 用の送信専用の鍵「supabase-staging」(samasama.site だけに送れる)。本番の鍵「supabase-prod」とは分ける。
+# 鍵は手元の .env.workers-staging.local の RESEND_SMTP_PASS_STAGING を環境変数で渡して push する
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_SMTP_PASS_STAGING)"
+admin_email = "no-reply@samasama.site"
+sender_name = "明日もsamasama"
 
 [auth.email.template.magic_link]
 subject = "明日もsamasama のログインコード / Sign-in code"

@@ -88,7 +88,7 @@
 | `CRON_SECRET` | cron の認証。未設定なら cron は必ず断る |
 | `DISCORD_OPS_WEBHOOK_URL` | 運営への知らせのうち相談のこと(新しい相談・つなぎ先の同意・申し出のない相談)。Discord の「新着sos」の Webhook。番号・主体・印・分野・選んだもの・入口・言語・国と、運営の相談の画面(`/admin/cases/<id>`)へのリンクを載せる。本文・呼び名・都道府県より細かい地域は載せず、機微と18歳未満の相談は選んだものも載せない(`src/lib/server/opsNotifyFormat.ts`)。リンクの先頭は `APP_ORIGIN`。本番以外は先頭に `[Staging]` が付く。未設定なら送らない |
 | `DISCORD_OPS_APPLICATION_WEBHOOK_URL` | 団体の申し込みの知らせ(団体名・種類・地域と、審査の画面のその団体へのリンク `/admin/vetting#ORG-…`)。Discord の「サポーター申請」の Webhook。未設定なら `DISCORD_OPS_WEBHOOK_URL` に流す |
-| `RESEND_API_KEY` / `NOTIFY_FROM_EMAIL` | 利用者への知らせのメール(本人がオンにしたときだけ。件名と本文に中身を書かない)。未設定なら送らない |
+| `RESEND_API_KEY` / `NOTIFY_FROM_EMAIL` | 利用者への知らせのメール(本人がオンにしたときだけ。件名と本文に中身を書かない)。未設定なら送らない。Resend のチーム ocn(本番 v1 の Auth と同じ)から送る。差出人は `wrangler.jsonc` の vars(`明日もsamasama <no-reply@samasama.site>`)、鍵は Secret で、Staging は送信専用の鍵「workers-staging」(2026-11-23)。本番は鍵を別に作る |
 | `APP_ORIGIN` | 知らせのメールに書くアプリの URL(既定 https://app.samasama.site) |
 | `REQUIRE_MFA_FOR_SENSITIVE` | `false` にすると、団体のメンバーが機微な相談を見るときの2つ目の確認を外す(既定は要る) |
 | `NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED` | `true` で「Google で続ける」を出す(Supabase に Google の設定が要る)。Workers では GitHub の Environment の変数で渡す(Staging は 2026-11-10 から `true`、本番は未設定)。Google の設定は `ops/supabase-auth/staging` |
