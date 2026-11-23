@@ -12,6 +12,7 @@ export const ADMIN_TOOLS: readonly { href: string; title: string; note: string; 
   { href: '/admin/indicators', title: '指標の仕分け', note: '届けるときに AI が選んだ指標を確定する', countKey: 'indicators' },
   { href: '/admin/summaries', title: '解決の要約', note: '内容・手立て・その後のナレッジ' },
   { href: '/admin/inquiries', title: 'お問い合わせ', note: '退会・付け替え・困りごとの連絡', countKey: 'inquiries' },
+  { href: '/admin/accounts', title: 'メールアドレスの変更', note: 'ログインできなくなった支援団体のメンバー' },
   { href: '/admin/stats', title: '分析', note: '今月の相談・解決の割合・待っている相談' },
   { href: '/admin/ledger', title: '指標の台帳', note: '相談の選択肢と緊急・機微の印(読むだけ)' },
   { href: '/admin/news', title: 'お知らせ', note: '書く・公開する・AI の下書き' },

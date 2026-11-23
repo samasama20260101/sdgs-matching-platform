@@ -95,7 +95,7 @@
     "loginTitleEmailOnly": "Continue with your email",
     "codeTitle": "Enter the code we sent you",
     "loginTipLabel": "How signing in works",
-    "loginTip": "There is no password. Next time, sign in the same way. Your email is used only for signing in and is never shown to supporters.",
+    "loginTip": "There is no password. Next time, sign in the same way. Your email is used only for signing in and is never shown to supporters. Signing up with an email you will keep for a long time saves you from changing it later. It doesn't have to be an address from your company or organization.",
     "google": "Continue with Google",
     "or": "or",
     "email": "Email address",
@@ -120,7 +120,17 @@
     "finish": "Start",
     "useAnotherAccount": "Use a different account",
     "callbackFailed": "We couldn't complete the sign-in. Please try again.",
-    "backToStart": "Back to start"
+    "backToStart": "Back to start",
+    "lostEmail": "Can't use your email?",
+    "phoneTitle": "Sign in with your phone number",
+    "phoneLead": "If you have verified your phone number (individual supporters), you can sign in with a code sent by SMS to that number. After signing in, change to your new email address.",
+    "phone": "Phone number",
+    "phoneHint": "with country code, e.g. +1 …",
+    "sendSms": "Send code by SMS",
+    "phoneInvalid": "Please check the phone number",
+    "phoneSendFailed": "We couldn't send the code. This only works for phone numbers you have verified. Please check the number.",
+    "smsSentTo": "We sent a code by SMS to {phone}.",
+    "backToEmail": "Sign in with email"
   },
   "entry": {
     "fromShop": "You came from a help point QR code",
@@ -204,7 +214,7 @@
     "withdrawFailed": "We couldn't delete your account. Please contact us through the contact form.",
     "loginMethods": "Sign-in methods",
     "loginMethodsTipLabel": "If you can't sign in",
-    "loginMethodsTip": "If you lose access to both, contact the samasama team and we can switch your sign-in method.",
+    "loginMethodsTip": "You can change your email with “Change email”. If you can no longer sign in with your old address and you have verified your phone number, use “Can't use your email?” on the sign-in screen. Members of support organizations can contact the samasama team; we will check with your organization's manager and change it for you.",
     "emailCode": "Email code",
     "linked": "In use",
     "notLinked": "Not in use",
@@ -219,7 +229,15 @@
     "textSizes": {
       "normal": "Normal",
       "large": "Large"
-    }
+    },
+    "changeEmail": "Change email",
+    "newEmail": "New email address",
+    "changeEmailNote": "Enter the code sent to the new address to finish. We will let your old address know that it was changed.",
+    "confirmEmailChange": "Change",
+    "emailChanged": "Your email address has been changed.",
+    "emailSame": "This is the same as your current email",
+    "emailTaken": "This email address is already used by another account",
+    "emailNeedsMfa": "Please complete the second verification step, then try again."
   },
   "contact": {
     "title": "Contact us",

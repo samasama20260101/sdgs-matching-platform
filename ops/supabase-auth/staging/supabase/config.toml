@@ -16,6 +16,9 @@ additional_redirect_urls = [
 # パスワードを持たず、メールに届く 6 けたのコードで入る(キャンバス盤 11)
 otp_length = 6
 otp_expiry = 600
+# メールアドレスの変更(#155)は、新しいアドレスに届くコードだけで確定する。古いアドレスでは確かめない
+# (退職などで古いアドレスを使えなくなった人が変えられるように。2026-11-23 運営了承)。変わったことは古いアドレスに知らせる
+double_confirm_changes = false
 
 [auth.email.template.magic_link]
 subject = "明日もsamasama のログインコード / Sign-in code"
@@ -24,6 +27,16 @@ content_path = "./supabase/templates/login-code.html"
 [auth.email.template.confirmation]
 subject = "明日もsamasama のログインコード / Sign-in code"
 content_path = "./supabase/templates/login-code.html"
+
+[auth.email.template.email_change]
+# v1 の件名と文面が残っていたので、コードだけの文面にする。画面は updateUser({ email }) → verifyOtp(type=email_change)
+subject = "明日もsamasama のメールアドレス変更のコード / Code to change your email"
+content_path = "./supabase/templates/email-change-code.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "明日もsamasama のメールアドレスが変わりました / Your sign-in email was changed"
+content_path = "./supabase/templates/email-changed-notification.html"
 
 [auth.external.google]
 # 「Google で続ける」(2026-11-10)。GCP のプロジェクト samasama-app の OAuth クライアント samasama-app-staging。
@@ -37,7 +50,9 @@ skip_nonce_check = false
 [auth.sms]
 # 個人の支え手の電話番号の確認(2026-11-12 定例で Twilio に決定)。画面は updateUser({ phone }) → verifyOtp(type=phone_change)。
 # コードは Twilio Verify が作って送る(6 けた。文面の名前は Verify の Service の Friendly name「明日もsamasama」)。
-# enabled は電話の入口そのものの有効化で、切ると電話番号の確認も動かない
+# enabled は電話の入口そのものの有効化で、切ると電話番号の確認も動かない。
+# 確認済みの電話番号では SMS のコードでログインもできる(メールが使えなくなった個人の支え手の入口、#155)。
+# 電話番号での新規登録は画面が shouldCreateUser: false で断る
 enabled = true
 enable_confirmations = true
 

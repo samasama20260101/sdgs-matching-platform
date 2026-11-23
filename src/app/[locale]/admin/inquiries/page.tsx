@@ -35,7 +35,7 @@ export default function InquiriesPage() {
   const { data: items, reload } = useLoad(fetchInquiries)
   return (
     <AdminShell title="お問い合わせ">
-      <Lead>ログインの方法の付け替えは、本人だと確かめてから Supabase の画面で行い、メモに確かめた内容を残してください。</Lead>
+      <Lead>メールアドレスの変更の依頼は、支援団体のメンバーなら団体の管理の人に確かめてから「メールアドレスの変更」で行い、メモに確かめた内容を残してください。相談者は本人と確かめる手がかりがないので、新しいアドレスで登録し直していただきます。電話番号を確認した個人の支え手には、ログインの画面の「メールアドレスが使えなくなった方」を案内してください。</Lead>
       <div className="flex gap-1.5">
         {STATUS.map(([k, label]) => <button key={k} type="button" onClick={() => setStatus(k)} className={cx('min-h-[44px] rounded-full px-3 text-t12_5 font-bold', status === k ? 'bg-night text-white' : 'border border-line bg-paper')}>{label}</button>)}
       </div>

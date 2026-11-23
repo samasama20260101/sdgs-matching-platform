@@ -95,7 +95,7 @@
     "loginTitleEmailOnly": "Continúa con tu correo electrónico",
     "codeTitle": "Escribe el código que te enviamos",
     "loginTipLabel": "Cómo funciona el acceso",
-    "loginTip": "No hay contraseña. La próxima vez entra de la misma forma. Tu correo solo se usa para entrar y nunca se muestra a quienes apoyan.",
+    "loginTip": "No hay contraseña. La próxima vez entra de la misma forma. Tu correo solo se usa para entrar y nunca se muestra a quienes apoyan. Si te registras con un correo que vayas a usar durante mucho tiempo, no tendrás que cambiarlo después. No hace falta que sea una dirección de tu empresa u organización.",
     "google": "Continuar con Google",
     "or": "o",
     "email": "Correo electrónico",
@@ -120,7 +120,17 @@
     "finish": "Empezar",
     "useAnotherAccount": "Usar otra cuenta",
     "callbackFailed": "No pudimos completar el acceso. Inténtalo de nuevo.",
-    "backToStart": "Volver al inicio"
+    "backToStart": "Volver al inicio",
+    "lostEmail": "¿No puedes usar tu correo?",
+    "phoneTitle": "Entrar con tu número de teléfono",
+    "phoneLead": "Si verificaste tu número de teléfono (personas que apoyan a título individual), puedes entrar con un código que llega por SMS a ese número. Después de entrar, cambia a tu nuevo correo electrónico.",
+    "phone": "Teléfono",
+    "phoneHint": "con prefijo del país, p. ej. +34 …",
+    "sendSms": "Enviar código por SMS",
+    "phoneInvalid": "Revisa el número de teléfono",
+    "phoneSendFailed": "No pudimos enviar el código. Solo funciona con números que hayas verificado. Revisa el número.",
+    "smsSentTo": "Enviamos un código por SMS a {phone}.",
+    "backToEmail": "Entrar con el correo"
   },
   "entry": {
     "fromShop": "Vienes del código QR de un punto de ayuda",
@@ -204,7 +214,7 @@
     "withdrawFailed": "No pudimos darte de baja. Escríbenos desde el formulario de contacto.",
     "loginMethods": "Formas de entrar",
     "loginMethodsTipLabel": "Si no puedes entrar",
-    "loginMethodsTip": "Si pierdes el acceso a ambas, contacta con el equipo de samasama y podremos cambiar tu forma de entrar.",
+    "loginMethodsTip": "Puedes cambiar tu correo con «Cambiar correo». Si ya no puedes entrar con tu correo anterior y verificaste tu número de teléfono, usa «¿No puedes usar tu correo?» en la pantalla para entrar. Si eres miembro de una organización de apoyo, contacta con el equipo de samasama: lo confirmaremos con quien administra tu organización y lo cambiaremos.",
     "emailCode": "Código por correo",
     "linked": "En uso",
     "notLinked": "Sin usar",
@@ -219,7 +229,15 @@
     "textSizes": {
       "normal": "Normal",
       "large": "Grande"
-    }
+    },
+    "changeEmail": "Cambiar correo",
+    "newEmail": "Nuevo correo electrónico",
+    "changeEmailNote": "Escribe el código que llegue a la nueva dirección para terminar. Avisaremos a tu dirección anterior del cambio.",
+    "confirmEmailChange": "Cambiar",
+    "emailChanged": "Cambiamos tu correo electrónico.",
+    "emailSame": "Es el mismo correo que usas ahora",
+    "emailTaken": "Este correo ya lo usa otra cuenta",
+    "emailNeedsMfa": "Completa la segunda verificación y vuelve a intentarlo."
   },
   "contact": {
     "title": "Contacto",
