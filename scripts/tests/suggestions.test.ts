@@ -9,6 +9,7 @@ import {
   isOrganizationCandidate,
   isPublicFallback,
   isUrgentHotline,
+  hotlineClass,
   reachable,
   isLocalMembershipBody,
   isPhysicalLocalService,
@@ -229,6 +230,27 @@ assert.equal(isUrgentHotline(tradeHotline, urgentPerson), false)
 // 総合の電話相談(よりそいホットライン)は緊急の相談でも見せない(つながりにくい。#160)
 assert.equal(isUrgentHotline(hotline, urgentPerson), false)
 assert.deepEqual(rankCandidates([hotline], urgentPerson), [])
+// 110・119 も全国の電話窓口として、緊急と判定した個人の相談でだけ AI に見せる(18歳未満でも。日本の外の相談には出さない。#163)
+const police = org({ id: 'p110', name: '警察への緊急通報「110」', kind: 'NATIONAL_HOTLINE', categories: ['POLICE_EMERGENCY_CALL'], serviceScope: 'NATIONWIDE', serviceCodes: [], indicators: [], sdgsGoals: [16], acceptsConsultation: 'UNKNOWN' })
+const fire = org({ id: 'f119', name: '消防・救急車の緊急通報「119」', kind: 'NATIONAL_HOTLINE', categories: ['FIRE_AMBULANCE_EMERGENCY_CALL'], serviceScope: 'NATIONWIDE', serviceCodes: [], indicators: [], sdgsGoals: [3, 11], acceptsConsultation: 'UNKNOWN' })
+assert.equal(isUrgentHotline(police, urgentPerson), true)
+assert.equal(isUrgentHotline(fire, { ...urgentPerson, isMinor: true }), true)
+assert.equal(isUrgentHotline(police, person), false)
+assert.equal(isUrgentHotline(fire, { ...company, urgent: true }), false)
+assert.equal(isUrgentHotline(police, { ...urgentPerson, regionCountry: 'BD', regionCode: null }), false)
+assert.equal(isPublicFallback(police, person), false)
+const withEmergency = rankCandidates([a, police, fire], urgentPerson)
+assert.deepEqual(withEmergency.filter((r) => r.tier === 'HOTLINE').map((r) => r.candidate.id).sort(), ['f119', 'p110'])
+assert.deepEqual(pickSuggestions(withEmergency, null).map((p) => p.id), ['a'])
+assert.deepEqual(pickSuggestions(withEmergency, [{ id: 'p110', reason: 'x' }, { id: 'a', reason: 'y' }]).map((p) => p.id), ['p110', 'a'])
+// 緊急通報(110・119)と分野の電話窓口は、それぞれ 1 つまで(民間の団体の枠を必ず 1 つ残す)
+const childHotline = org({ id: 'c189', name: '児童相談所虐待対応ダイヤル「189」', kind: 'NATIONAL_HOTLINE', categories: ['CHILD_ABUSE_HOTLINE'], serviceScope: 'NATIONWIDE', serviceCodes: [], indicators: [], sdgsGoals: [16], acceptsConsultation: 'UNKNOWN' })
+const hotlineRanked = rankCandidates([a, police, fire, dvHotline, childHotline], urgentPerson)
+assert.deepEqual(hotlineRanked.filter((r) => r.tier === 'HOTLINE').map((r) => [r.candidate.id, hotlineClass(r)]).sort(), [['c189', 'FIELD'], ['dv', 'FIELD'], ['f119', 'EMERGENCY'], ['p110', 'EMERGENCY']])
+assert.equal(hotlineClass(hotlineRanked[0]), null)
+assert.deepEqual(pickSuggestions(hotlineRanked, [{ id: 'p110', reason: 'x' }, { id: 'dv', reason: 'y' }, { id: 'a', reason: 'z' }]).map((p) => p.id), ['p110', 'dv', 'a'])
+assert.deepEqual(pickSuggestions(hotlineRanked, [{ id: 'p110', reason: 'x' }, { id: 'f119', reason: 'y' }, { id: 'a', reason: 'z' }]).map((p) => p.id), ['p110', 'a'])
+assert.deepEqual(pickSuggestions(hotlineRanked, [{ id: 'dv', reason: 'x' }, { id: 'c189', reason: 'y' }]).map((p) => [p.id, p.rank]), [['dv', 1]])
 assert.equal(isPublicFallback(tradeHotline, company), true)
 assert.equal(isPublicFallback(dvHotline, person), false)
 // 緊急の電話窓口は大項目で絞らずに後ろに並べ、AI が選んだときだけ出す(決まりの並びでは埋めない)
@@ -254,6 +276,9 @@ assert.ok(prompt.includes('スペイン語'))
 assert.ok(prompt.includes('18歳未満'))
 assert.ok(prompt.includes('(調べが付いていない)'))
 assert.ok(prompt.includes(`最大${SUGGESTION_COUNT}つ`))
+// 110・119 をどんなときに選ぶか(死にたい気持ちだけの相談に 119 を選ばせない。#163)
+assert.ok(prompt.includes('110(警察)'))
+assert.ok(prompt.includes('110・119 は選ばず'))
 
 // 返事の読み取り: 並びでなければ null。候補にない id・重なり・4 つ目以降を捨て、理由のリンクを外して短くする
 assert.equal(parseSuggestPicks({ picks: 'a' }, new Set(['a'])), null)
