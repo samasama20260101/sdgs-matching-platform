@@ -7,13 +7,17 @@
 //     ほかの都道府県の団体は遠隔(電話・オンライン・チャット・メール・フォーム)で相談を受けているものだけ(来所だけの遠い団体は行けないので出さない)
 //   - 並べ方: AI が選んだ指標との重なり・相談文と団体の要約の意味の近さ(埋め込み、#148)> 同じ大項目 > 電話・オンライン(加点)> 同じ都道府県
 //     その上位を AI が相談の本文と見比べて 3 つに絞る。AI が使えないときはこの並びの上から 3 つ
-//   - 全国の電話窓口(DV相談ナビ・189 など)は常には出さず、緊急と判定した個人の相談でだけ AI に候補として見せる
+//   - 全国の電話窓口(DV相談ナビ・189・110・119 など)は常には出さず、緊急と判定した個人の相談でだけ AI に候補として見せる
 //     (どれが合うかは AI が相談と見比べて選ぶ。決まりの並びでは埋めない)。分野を問わない総合の電話相談(よりそいホットライン)は見せない
 //     (つながりにくく、行き止まりに案内してしまう。2026-11-23 代表の要望で、119・110 とともにアプリの窓口から外した。#160)
+//     110・119 は 2026-11-24 の代表の提案で候補に戻した(緊急の相談をどこにつないだかを見るため。#163)。
+//     緊急通報(110・119)と分野の電話窓口は、それぞれ 1 つまで(pickSuggestions)
 import { BUSINESS_WINDOW_CATEGORIES, fitsAudience, referralAudience } from './referrals'
 import type { SubjectType } from './intake'
 
 export const SUGGESTION_COUNT = 3
+// 緊急通報(110・119)の種類。全国の電話窓口のうち、分野の電話窓口(DV相談ナビ・189 など)とは別に数える(#163)
+export const EMERGENCY_CALL_CATEGORIES = ['POLICE_EMERGENCY_CALL', 'FIRE_AMBULANCE_EMERGENCY_CALL'] as const
 // AI に見比べさせる候補の数(多すぎると遅く、少なすぎると選ぶ余地がない)
 export const AI_CANDIDATE_LIMIT = 12
 
@@ -261,13 +265,26 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
 
 // AI が選んだもの(候補の中の id だけ・重なりなし)を先に並べる。
 // AI が選んだときは、AI が合わないと見た民間の団体で埋めず、足りない分は公的な窓口(大項目の合うもの)だけで埋める。
-// AI が使えなかったときは決まりの並びの上から 3 つ。緊急の電話窓口は AI が選んだときだけ出す
+// 全国の電話窓口の分け方: 緊急通報(110・119)か、分野の電話窓口か。全国の電話窓口でなければ null
+export function hotlineClass(r: RankedCandidate): 'EMERGENCY' | 'FIELD' | null {
+  if (r.tier !== 'HOTLINE') return null
+  return r.candidate.categories.some((cat) => (EMERGENCY_CALL_CATEGORIES as readonly string[]).includes(cat)) ? 'EMERGENCY' : 'FIELD'
+}
+
+// AI が使えなかったときは決まりの並びの上から 3 つ。緊急の電話窓口は AI が選んだときだけ出し、
+// 緊急通報(110・119)と分野の電話窓口をそれぞれ 1 つまでにする(民間の団体の枠を必ず 1 つ残す)。
+// AI への指示でも伝えるが、#163 の確かめで分野の電話窓口を 2 つ選ぶことがあったので、選んだあとにも絞る
 export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: readonly { id: string; reason: string | null }[] | null): Suggestion[] {
-  const allowed = new Set(ranked.map((r) => r.candidate.id))
+  const byId = new Map(ranked.map((r) => [r.candidate.id, r]))
   const picked: Suggestion[] = []
+  const usedClasses = new Set<string>()
   for (const p of aiPicks ?? []) {
     if (picked.length >= SUGGESTION_COUNT) break
-    if (!allowed.has(p.id) || picked.some((s) => s.id === p.id)) continue
+    const r = byId.get(p.id)
+    if (!r || picked.some((s) => s.id === p.id)) continue
+    const cls = hotlineClass(r)
+    if (cls && usedClasses.has(cls)) continue
+    if (cls) usedClasses.add(cls)
     picked.push({ id: p.id, rank: picked.length + 1, reason: p.reason, method: 'AI' })
   }
   const fill = aiPicks === null ? ranked.filter((r) => r.tier !== 'HOTLINE') : ranked.filter((r) => r.tier === 'PUBLIC')
