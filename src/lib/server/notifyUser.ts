@@ -2,8 +2,11 @@ import 'server-only'
 
 // 利用者への知らせ(メール)。本人が「メール」をオンにしているときだけ送る(既定はオフ)。
 // 件名にも本文にも相談の中身・相手の名前を書かない(盤 17: DV などで端末やメールを見られる人を守る)。
-// Resend の鍵(RESEND_API_KEY)と差出人(NOTIFY_FROM_EMAIL)がない環境では何もしない
+// Cloudflare Email Sending の send_email バインディング(EMAIL、#166)で送る。鍵は要らない。
+// バインディングか差出人(NOTIFY_FROM_EMAIL)がない環境(手元の next dev など)では何もしない
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { senderForBinding, type Mailbox } from '@/lib/domain/mailbox'
 import { buildNoticeEmail } from './noticeEmail'
 import { mapInBatches } from '@/lib/concurrency'
 import { offerMemberUserId } from '@/lib/domain/caseMember'
@@ -12,12 +15,27 @@ const NOTIFY_CONCURRENCY = 5
 
 export type NoticeKind = 'NEW_OFFER' | 'NEW_MESSAGE' | 'RESOLVE_REPORTED' | 'CHOSEN' | 'INVITED'
 
+// wrangler.jsonc の send_email。@cloudflare/workers-types を足さずに使う分だけ書く
+interface SendEmailBinding {
+  send(message: { from: string | Mailbox; to: string; subject: string; text: string }): Promise<{ messageId: string }>
+}
+
+async function emailBinding(): Promise<SendEmailBinding | null> {
+  try {
+    const { env } = await getCloudflareContext({ async: true })
+    return ((env as { EMAIL?: SendEmailBinding }).EMAIL) ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function notifyUsers(userIds: string[], kind: NoticeKind): Promise<void> {
-  const key = process.env.RESEND_API_KEY
-  const from = process.env.NOTIFY_FROM_EMAIL
+  const from = senderForBinding(process.env.NOTIFY_FROM_EMAIL)
   const origin = process.env.APP_ORIGIN ?? 'https://app.samasama.site'
   const ids = [...new Set(userIds.filter(Boolean))]
-  if (!key || !from || ids.length === 0) return
+  if (!from || ids.length === 0) return
+  const binding = await emailBinding()
+  if (!binding) return
   // 受け取る設定と、宛先の人を並べて読む
   const [{ data: prefs }, { data: users }] = await Promise.all([
     supabaseAdmin.from('notification_prefs').select('user_id').in('user_id', ids).eq('email_enabled', true),
@@ -31,16 +49,10 @@ export async function notifyUsers(userIds: string[], kind: NoticeKind): Promise<
     const to = authUser.user?.email
     if (!to) return
     const mail = buildNoticeEmail(u.locale as string, kind, origin)
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ from, to, subject: mail.subject, text: mail.text }),
-      signal: AbortSignal.timeout(10_000),
-    }).catch((e: unknown) => {
-      console.error('[notify] send failed', e instanceof Error ? e.message : e)
-      return null
+    await binding.send({ from, to, subject: mail.subject, text: mail.text }).catch((e: unknown) => {
+      const code = (e as { code?: unknown })?.code
+      console.error('[notify] send failed', code ?? '', e instanceof Error ? e.message : e)
     })
-    if (res && !res.ok) console.error('[notify] resend status', res.status)
   })
 }
 
