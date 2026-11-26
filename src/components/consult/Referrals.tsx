@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
 import { Card, Chip, Tip } from '@/components/app/ui'
+import { telHref } from '@/lib/domain/tel'
 
 type Suggestion = {
   id: string
@@ -94,35 +95,38 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
   if (data.suggestions.length === 0) return null
 
   // 札は名前・理由・相談の手段と、できること(電話する・サイトを見る・運営から伝えてもらう)だけにする
-  const render = (e: Suggestion) => (
-    <Card key={e.id} className="flex flex-col gap-1.5 px-3.5 pb-1 pt-3">
-      <span className="flex items-start justify-between gap-2">
-        <span className="text-t14_5 font-bold leading-[1.5]">{e.name}</span>
-        <Chip className="shrink-0 whitespace-nowrap">{e.kind === 'ORGANIZATION' ? t('organization') : t('public')}</Chip>
-      </span>
-      {e.reason && <span className="text-t13 leading-[1.6] text-ink-soft">{e.reason}</span>}
-      {(e.area || e.channels.length > 0) && (
-        <span className="flex flex-wrap gap-1">
-          {e.area && (
-            <Chip color="dawn">
-              {e.area.kind === 'NATIONWIDE' ? t('area.nationwide') : e.area.name ? t('area.prefecture', { name: e.area.name }) : t('area.otherPrefecture')}
-            </Chip>
-          )}
-          {e.channels.slice(0, 3).map((ch) => <Chip key={ch} color="outline">{t(`channels.${ch}`)}</Chip>)}
+  const render = (e: Suggestion) => {
+    const tel = telHref(e.phone)
+    return (
+      <Card key={e.id} className="flex flex-col gap-1.5 px-3.5 pb-1 pt-3">
+        <span className="flex items-start justify-between gap-2">
+          <span className="text-t14_5 font-bold leading-[1.5]">{e.name}</span>
+          <Chip className="shrink-0 whitespace-nowrap">{e.kind === 'ORGANIZATION' ? t('organization') : t('public')}</Chip>
         </span>
-      )}
-      {e.hours && <span className="text-t12_5 text-mist">{e.hours}</span>}
-      <span className="flex flex-wrap items-center gap-x-4">
-        {e.phone && <a href={`tel:${e.phone}`} className={action}>{t('call')}</a>}
-        {e.website && <a href={e.website} target="_blank" rel="noopener noreferrer" className={action}>{t('website')}</a>}
-        {canDecide && e.canShare && (
-          agreed.has(e.id)
-            ? <span className="inline-flex min-h-[44px] items-center text-t12_5 font-bold text-leaf">{t('agreed')}</span>
-            : <button type="button" disabled={busyId === e.id} onClick={() => void consent(e.id)} className={`${action} disabled:text-mist`}>{t('okToShare')}</button>
+        {e.reason && <span className="text-t13 leading-[1.6] text-ink-soft">{e.reason}</span>}
+        {(e.area || e.channels.length > 0) && (
+          <span className="flex flex-wrap gap-1">
+            {e.area && (
+              <Chip color="dawn">
+                {e.area.kind === 'NATIONWIDE' ? t('area.nationwide') : e.area.name ? t('area.prefecture', { name: e.area.name }) : t('area.otherPrefecture')}
+              </Chip>
+            )}
+            {e.channels.slice(0, 3).map((ch) => <Chip key={ch} color="outline">{t(`channels.${ch}`)}</Chip>)}
+          </span>
         )}
-      </span>
-    </Card>
-  )
+        {e.hours && <span className="text-t12_5 text-mist">{e.hours}</span>}
+        <span className="flex flex-wrap items-center gap-x-4">
+          {tel && <a href={tel} className={action}>{t('call')}</a>}
+          {e.website && <a href={e.website} target="_blank" rel="noopener noreferrer" className={action}>{t('website')}</a>}
+          {canDecide && e.canShare && (
+            agreed.has(e.id)
+              ? <span className="inline-flex min-h-[44px] items-center text-t12_5 font-bold text-leaf">{t('agreed')}</span>
+              : <button type="button" disabled={busyId === e.id} onClick={() => void consent(e.id)} className={`${action} disabled:text-mist`}>{t('okToShare')}</button>
+          )}
+        </span>
+      </Card>
+    )
+  }
   return (
     <section className="flex flex-col gap-2">
       {header}
