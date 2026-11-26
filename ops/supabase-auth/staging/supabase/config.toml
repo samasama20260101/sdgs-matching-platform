@@ -21,14 +21,15 @@ otp_expiry = 600
 double_confirm_changes = false
 
 [auth.email.smtp]
-# ログインのコードなど Auth のメールを、本番(v1)と同じ Resend のチーム ocn から samasama.site の名前で送る(2026-11-23)。
-# 鍵は Staging 用の送信専用の鍵「supabase-staging」(samasama.site だけに送れる)。本番の鍵「supabase-prod」とは分ける。
-# 鍵は手元の .env.workers-staging.local の RESEND_SMTP_PASS_STAGING を環境変数で渡して push する
+# ログインのコードなど Auth のメールを、Cloudflare Email Sending の SMTP から samasama.site の名前で送る(#166、2026-11-26。
+# それまでは Resend のチーム ocn)。Cloudflare の SMTP は 465 の暗黙の TLS だけで、ユーザー名は文字どおり api_token。
+# パスワードは samasama のアカウントの Email Sending: Edit だけの API トークン(Staging 用。本番とは分ける)。
+# 手元の .env.workers-staging.local の CF_EMAIL_SMTP_TOKEN_STAGING を環境変数で渡して push する
 enabled = true
-host = "smtp.resend.com"
+host = "smtp.mx.cloudflare.net"
 port = 465
-user = "resend"
-pass = "env(RESEND_SMTP_PASS_STAGING)"
+user = "api_token"
+pass = "env(CF_EMAIL_SMTP_TOKEN_STAGING)"
 admin_email = "no-reply@samasama.site"
 sender_name = "明日もsamasama"
 

@@ -23,8 +23,7 @@
         "APP_ENV": "staging",
         // 知らせのメールに書くアプリの URL(既定は本番の https://app.samasama.site)
         "APP_ORIGIN": "https://samasama-app-staging.samasama.workers.dev",
-        // 知らせのメールの差出人(本番 v1 と同じ Resend のチーム ocn・同じアドレス)。鍵は Secret の RESEND_API_KEY
-        // (Staging は送信専用の鍵「workers-staging」、samasama.site だけに送れる)。鍵がなければ送らない
+        // 知らせのメールの差出人。送信は下の send_email(Cloudflare Email Sending、#166)で、同じアドレスに限定している
         "NOTIFY_FROM_EMAIL": "明日もsamasama <no-reply@samasama.site>",
         // AI のモデル(2026-11-06 岡本さん)。相談の整理・お知らせは OpenAI、翻訳は xAI(Grok)。鍵は Secret で、なければ AI を使わない
         "AI_OPENAI_MODEL": "gpt-6-luna",
@@ -40,6 +39,8 @@
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-staging" }],
+      // 知らせのメール(#166)。samasama.site は 2026-11-26 に Email Sending を有効化した。差出人を限定する
+      "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["no-reply@samasama.site"] }],
       // 毎日 JST 2:00(UTC 17:00)。式を変えるときは worker/index.ts の CRON_ROUTES も直す
       "triggers": { "crons": ["0 17 * * *"] }
     },
@@ -47,7 +48,7 @@
       "name": "samasama-app-production",
       "vars": {
         "APP_ENV": "production",
-        // staging と同じ値にそろえる(知らせのメールは本番の鍵を Secret に入れるまで送らない)
+        // staging と同じ値にそろえる
         "NOTIFY_FROM_EMAIL": "明日もsamasama <no-reply@samasama.site>",
         "AI_OPENAI_MODEL": "gpt-6-luna",
         "AI_OPENAI_REASONING_EFFORT": "low",
@@ -57,6 +58,8 @@
       },
       "images": { "binding": "IMAGES" },
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "samasama-app-production" }],
+      // 知らせのメール(#166)。samasama.site は 2026-11-26 に Email Sending を有効化した。差出人を限定する
+      "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["no-reply@samasama.site"] }],
       "triggers": { "crons": ["0 17 * * *"] }
     }
   }
