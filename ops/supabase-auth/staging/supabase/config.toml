@@ -2,6 +2,8 @@
 # ここに書いた項目だけが書き換わり、書いていない項目(site_url など)はそのまま残る。
 #   npx supabase config diff --workdir ops/supabase-auth/staging --remote=fzawgdmqewmwdqjsqjwt
 #   npx supabase config push --workdir ops/supabase-auth/staging --remote=fzawgdmqewmwdqjsqjwt --yes
+# push するときは下の env() をすべて環境変数で渡す(1 つでも欠けると、その項目が壊れる)。
+# diff の出力は JSON 1 行なので解析して見る。push の反映は数十秒遅れる。
 project_id = "sdgs-staging"
 
 [auth]

@@ -34,7 +34,8 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 ## 知らないと事故になること
 
 - **サーバーの API は `supabaseAdmin`(RLS を通らない)で DB を読み書きする。認可は API のコードで必ず行う。** 新しい API では `requireActiveAppUser()`(`src/lib/api/auth.ts`)を使う。**運営の API は `requireAdmin()`**(2つ目の確認まで済んだログインだけを通す)。ロールは PERSON と ADMIN だけで、支える側の顔は `src/lib/faces.ts`(所属と個人の支え手の登録)で決まる。ブラウザから DB を直接読まない。詳細は `docs/operations.md` §7。
-- **テスト用ユーザーは `supabaseAdmin.auth.admin.createUser()` で作る。** SQL で直接入れると Auth の identities ができずログインできない。消す順番: messages → offers → cases → public.users → auth.users。
+- **テスト用ユーザーは `supabaseAdmin.auth.admin.createUser()` で作る。** SQL で直接入れると Auth の identities ができずログインできない。消す順番: messages → offers → cases → public.users → auth.users。確かめで作った団体は所属が残っていると DB が消すのを断るので `ARCHIVED` にする。
+- **Workers の Staging には運営への知らせの Webhook と本物の宛先が入っている。** 確かめで団体の申し込みを通したり相談を届けたりしない。手元から Staging の DB に作った相談は取り消す。
 - **v2.0 はパスワードを持たない**(メールのコードと Google)。相談者について DB に持つのは呼び名・年齢と基準日・国と地域・言語だけで、メールは Auth の中だけ。users に氏名やメールを書き足さない。
 - **ログインのメールアドレスは本人が「わたし」で変える**(#155、2026-11-23 運営了承)。新しいアドレスに届くコードだけで確定し、古いアドレスでは確かめない(Auth の `double_confirm_changes = false`。退職などで古いアドレスを使えなくなった人のため)。変わったことは Auth が古いアドレスに知らせる。古いアドレスでログインできなくなった人は、確認済みの電話番号なら SMS のコードで入り直す(`shouldCreateUser: false`、電話番号で新規登録させない)、支援団体のメンバーなら運営が団体の管理の人に確かめてから `/admin/accounts` で変える。**相談者のアドレスは運営が変えない**(本人と確かめる手がかりがない)。運営が変えてよい人の判定は `src/lib/domain/accountEmail.ts` の `adminEmailChangeBlocker` だけで行う。ログインとアドレス変更のメールにリンクを載せない(書きかけの相談がリンク先で引き継がれない・会社のメールのセキュリティ機能がリンクを先に開くとコードも無効になる、#154)。
 - **AI に渡す相談文は `maskPii` と `fenceConsultation` を通す。**
@@ -47,6 +48,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - **体験ページ `/trial` が呼ぶのは分類の API(`/api/public/trial/classify`)だけ。** 本番と同じ分類を動かして、届けたら支援団体の画面にどう並ぶかを見せる(#133 までは「近いもの」の API だった)。相談の保存・届け出はしない。AI に渡す前に伏せる・何も保存しない・回数の上限(DB の `hit_rate_limit`、10 分に 10 回・1 日 300 回)を外さない(2026-11-06 代表。それまでは API・DB・AI を呼ばない作りだった)。
 - **相談は先に書き、届けるときにログインする**(2026-11-17 岡本さん。会社・地域の登録も届けるときに求める)。`/consult/new`・`/consult/org` は `OptionalMe` で包む。書いた内容はログインの往復のあいだ端末の sessionStorage に預ける(`src/lib/domain/consultDraft.ts`。サーバーに送らない・届けたら消す)。相談を届ける API(`/api/cases`)は今までどおりログインが要る。
 - Next.js 16 の `params` は Promise。`src/proxy.ts` が middleware の役(メンテナンスモード・Staging の入口パスワード・言語)。
+- Tailwind のクラス名は補間や関数で組まず、完全な文字列で書く(ソースに現れないクラスは CSS が作られない)。Server Component から Client Component に関数を props で渡さない(型検査もビルドも通り、実行時に 500 になる)。
 - 地域(`regions`)は外部キーの JOIN を使わず、2 回に分けて取る。
 - 画面の言語は ja・en・es(v2.0、11/5 定例。中国語は入れない)。相談する側と支える側の画面は 3 言語、運営の画面は日本語だけ。文言は `messages/<言語>/app|consult|support.json` に足し、`npm run check:i18n` で 3 言語のキーをそろえる。
 - 災害SOS(2026-09-16 に受付終了)の画面と処理は v2.0 で外した。再開するときは v1(main の履歴)から取り出して v2 の形で作り直す。
@@ -61,7 +63,7 @@ Codex / ClaudeCode がこのプロジェクトで作業するときに必ず読�
 - **支える側から見える相談の決まりは `src/lib/domain/visibility.ts` だけで判定する。** API ごとに条件を書き直さない(個人の支え手に個人の相談を出さない・機微は2つ目の確認・自分の相談を出さない)。
 - **支える側として活動できるのは18歳以上**(2026-11-06 代表。どの国でも同じ)。判定は `src/lib/domain/age.ts` の `canSupportAtAge` だけ。支える側の API は `requireFace` を通し、相談にかかわる API は `caseAccess` を通す(どちらも年齢を見る)。`loadFaces` は会社・地域として相談するときにも使うので、年齢で絞らない。
 - **`contributions` は追記だけ。** UPDATE は DB が断る。直すときは CORRECTION の行を足す。消すのは退会のときだけ。
-- Cloudflare Workers への載せ替え中(v2.0、#72)。Vercel と Workers の両方で動く書き方にする: 環境の判定は `src/lib/deployEnv.ts`(`VERCEL_ENV` を直接見ない)、Workers で読めない Node のネイティブ部品(sharp など)を静的に import しない。**手元でビルドした Workers の成果物をデプロイしない**(OpenNext が `.env.local` の秘密キーを Worker のコードに焼き込む。`docs/operations.md` §2.1.1)。
+- Cloudflare Workers への載せ替え中(v2.0、#72)。Vercel と Workers の両方で動く書き方にする: 環境の判定は `src/lib/deployEnv.ts`(`VERCEL_ENV` を直接見ない)、Workers で読めない Node のネイティブ部品(sharp など)を静的に import しない。**手元でビルドした Workers の成果物をデプロイしない**(OpenNext が `.env.local` の秘密キーを Worker のコードに焼き込む。`docs/operations.md` §2.1.1)。Next.js を上げたら Workers の Staging で画面が開くのを確かめる(OpenNext では 16.4.0 で全ページが 500 になった)。Workers の時計は計算中に進まないので、コードで測った時間に CPU は入らない(重さは Workers Logs の `cpuTimeMs` で見る)。
 
 <!-- BEGIN:nextjs-agent-rules -->
 
