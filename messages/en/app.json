@@ -40,7 +40,7 @@
       },
       "records": {
         "title": "How records are kept",
-        "body": "When a request is solved, the samasama team keeps a short summary of the situation, what was done and what happened next (names and contact details are hidden). Supporters' contribution records belong to them and are deleted if they leave."
+        "body": "When a request is solved, the samasama team keeps a short summary of the request (names and contact details are hidden). Messages with supporters are not used for the summary. Supporters' contribution records belong to them and are deleted if they leave."
       },
       "roles": {
         "title": "One account",

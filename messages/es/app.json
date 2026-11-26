@@ -40,7 +40,7 @@
       },
       "records": {
         "title": "Cómo se guardan los registros",
-        "body": "Cuando se resuelve una consulta, el equipo de samasama guarda un resumen de la situación, lo que se hizo y lo que pasó después (ocultando nombres y datos de contacto). Los registros de contribución de quienes apoyan les pertenecen y se borran si se dan de baja."
+        "body": "Cuando se resuelve una consulta, el equipo de samasama guarda un resumen de la consulta (ocultando nombres y datos de contacto). Los mensajes con quienes apoyan no se usan para el resumen. Los registros de contribución de quienes apoyan les pertenecen y se borran si se dan de baja."
       },
       "roles": {
         "title": "Una sola cuenta",

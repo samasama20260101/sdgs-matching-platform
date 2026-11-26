@@ -18,14 +18,14 @@ export default function SummariesPage() {
   }
   return (
     <AdminShell title="解決の要約">
-      <Lead>解決した相談を、内容・取った手立て・その後の1枚にまとめたものです(AI が作り、名前や連絡先は伏せています)。</Lead>
+      <Lead>解決した相談の内容をまとめたものです(AI が作り、名前や連絡先は伏せています)。相談者と支え手のやりとりは、通信の秘密を守るため要約に使っていません。</Lead>
       {items?.length === 0 && <Lead>まだありません。</Lead>}
       {items?.map((s) => (
         <Card key={s.case_id} tone="support" className="flex flex-col gap-2 p-4">
           <div className="flex items-center gap-2"><span className="text-t12 text-mist">{s.cases?.display_id} ・ {s.created_at.slice(0, 10)}</span>{s.is_model_case && <Chip color="lamp">モデルケース</Chip>}</div>
           <SectionLabel>内容</SectionLabel><Lead>{s.content}</Lead>
-          <SectionLabel>取った手立て</SectionLabel><Lead>{s.actions}</Lead>
-          <SectionLabel>その後</SectionLabel><Lead>{s.aftermath}</Lead>
+          {s.actions && <><SectionLabel>取った手立て</SectionLabel><Lead>{s.actions}</Lead></>}
+          {s.aftermath && <><SectionLabel>その後</SectionLabel><Lead>{s.aftermath}</Lead></>}
           <Button tone="support" variant="outline" className="self-start" onClick={() => void toggle(s.case_id, !s.is_model_case)}>{s.is_model_case ? 'モデルケースから外す' : 'モデルケースにする'}</Button>
         </Card>
       ))}
