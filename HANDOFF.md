@@ -33,6 +33,7 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
    - 本番の Auth の設定(6 けたのコードのメール・戻り先・送り主)も入れる。今は `ops/supabase-auth/staging` しかないので、本番の分を作ってから(権限は 2026-11-06 にそろった。本番に流すのは直前に確認をもらう)
      - メールアドレスの変更(#155)の分も同じく入れる: `double_confirm_changes = false`(新しいアドレスのコードだけで確定)、アドレス変更のメールをコードだけの文面に(`template.email_change`。本番には v1 の件名と文面が残っている見込み)、古いアドレスへの知らせ(`notification.email_changed`)。電話番号で入る入口は `auth.sms`(Twilio Verify)が本番に入り、Twilio の事業者の審査が済んでから動く
 4. DNS は 2026-11-09 に Cloudflare へ移した(レコードは DNS only のまま Vercel 向き、Resend の分も写した)。本番を Workers に切り替える → 本番の目視確認
+   - CNAME が残るホスト名には Worker のカスタムドメインを付けられない(`wrangler deploy` が code 100117 で止まる)。CNAME を消してから付けると数秒の空白ができ、引いた resolver が 30 分ほど「無い」を覚える。先にルート `<ホスト名>/*` を作り、既存のレコードを同じ id のまま `PUT /zones/<zone>/dns_records/<id>` で `AAAA 100::`(proxied)に上書きする。戻すのも同じ PUT
 5. 施行のあと、相談者の個人情報の列を消す(`v2_90_drop_pii.sql`、未作成)。Vercel を止め、リポジトリを非公開にする
 
 ## 試して失敗したこと(AI で作業するとき)
@@ -40,12 +41,13 @@ v2.0(#72)を Staging で代表に使ってもらい、やりたいことが反�
 - **Supabase CLI を上げたあとに止まって見えたら、Mac の画面のキーチェーンの許可を見る**(CLI の本体が替わると、保存したトークンを読むのに許可が要る)。`!` からの `supabase login` は TTY がなく通らない(ターミナルのアプリで)
 - **手元の `npm run dev`(Turbopack)で画面が数秒ごとに読み直され続けたら `npx next dev --webpack` で起こす**(2026-11-19。ほかの処理が `~/dev/samasama` の別のリポに書き込み続けていると、Turbopack がそれを拾って読み直しを繰り返し、Playwright の撮影も終わらなかった)。日本語の画面は `/ja` を付けない URL(`/cases/<id>`)で開く
 - **`supabase db dump` は Docker を使う**。この Mac に Docker がないときは `--dry-run` の手順を pg_dump 17 で流す(`docs/operations.md` §3)
-- **画面の確認は手元の `npm run dev` を Staging の DB につないで行う**。ログインはメールを送らずに、管理 API の `generateLink`(magiclink)で出したコードを `verifyOtp` に渡してセッションを作る(一回きりのスクリプトで。コミットしない)。2つ目の確認は、登録の画面に出る文字列から TOTP を計算して入れる
+- **画面の確認は手元の `npm run dev` を Staging の DB につないで行う**。ログインはメールを送らずに、管理 API の `generateLink`(magiclink)で出したコードを `verifyOtp` に渡してセッションを作る(一回きりのスクリプトで。コミットしない)。2つ目の確認は、登録の画面に出る文字列から TOTP を計算して入れる。画面にはセッションの JSON を localStorage の `sb-<ref>-auth-token` に入れて渡す(トークンはコードに書かず、手元のファイルから読む)。運営の画面は、一時ユーザーを ADMIN にして `mfa.enroll` の secret から TOTP を出し、`challengeAndVerify` で aal2 にする
+- **アドレス変更は `.invalid` の一時ユーザーでは試せない**(Supabase が送る前に今のアドレスのドメインを確かめる)。管理 API の `updateUserById` は、使われているアドレスを渡すと中身のない 500 を返す(先に GoTrue の `/admin/users?filter=` で確かめる)
 - **auto mode の分類器は「一括削除っぽい」コマンドを止める**(xargs や for ループでのブランチ削除)。名前を並べた単一のコマンドなら通る。本番の psql も止まるので、ユーザーが `!` で実行する
 - **本番 DB の確認は、読み取りだけの確認 SQL をユーザーに渡して SQL Editor で流してもらう**
 - **SVG の `url(#id)` 参照は id の重複に弱い**: defs を持つ部品は `useId` で固有の id にする(v1 の `Logo.tsx` は消した。今の印 `Mark` は defs を持たない)
 - **`opengraph-image.tsx` を `[locale]` の下に置くと画像の URL が `/ja/...` になって 307** → 共有画像は `/api/public/...` に置く
-- 積んだ PR は、土台の PR をマージする前に base を付け替える(`--delete-branch` で土台のブランチが消えると上の PR が閉じる)
+- 積んだ PR は、土台の PR をマージする前に base を付け替える(`--delete-branch` で土台のブランチが消えると上の PR が閉じる)。土台がマージされたら `git rebase --onto origin/dev <土台の元の先頭> <ブランチ>` で載せ直す。base の付け替えだけでは CI が走らないので、push するか閉じて開き直す
 
 ## 地雷・注意(`AGENTS.md`・`docs/operations.md`・`docs/v2_design.md` にないもの)
 - **Staging のテスト用アカウントのパスワードは 2026-11-05 に無効にした**(公開リポに載っていたため。v2 はパスワードを使わない)。v1 の HANDOFF の版にあるパスワードは使えない。入るときはメールのコード(またはリンク)で
