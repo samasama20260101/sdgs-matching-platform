@@ -36,7 +36,7 @@ export function supporterIdFromUrl(url: string): string | null {
 
 // 団体の種類の名前(お知らせは日本語だけなので日本語で持つ。公開の団体ページの common.supporterType と同じ言葉)
 export const SUPPORTER_TYPE_LABEL_JA: Record<string, string> = {
-  NPO: 'NPO / 支援団体',
+  NPO: 'NPO',
   CORPORATE: '企業',
   GOVERNMENT: '行政・公共機関',
   OTHER: 'その他',
