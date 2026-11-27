@@ -175,7 +175,22 @@
     "yourTurn": "Tu turno ({count})",
     "turnOffers": "{count, plural, one {Llegó # oferta} other {Llegaron # ofertas}}",
     "turnReply": "Tienes una nueva respuesta",
-    "replyArrived": "Nueva respuesta"
+    "replyArrived": "Nueva respuesta",
+    "flow": {
+      "title": "Cómo funciona",
+      "step1": "Escribe y envía",
+      "step1Note": "Hasta que la envíes, tu borrador se queda solo en este dispositivo",
+      "step2": "Conoce organizaciones de apoyo que pueden ayudarte",
+      "step2Note": "Justo después de enviarla, te sugerimos hasta 3",
+      "step3": "Elige entre los ofrecimientos y conversa",
+      "step3Note": "Las consultas personales las leen organizaciones de apoyo que se reunieron con nuestro equipo"
+    },
+    "empty": {
+      "supporters": "Organizaciones de apoyo que reciben consultas",
+      "seeAll": "Ver todas",
+      "news": "Noticias",
+      "moreNews": "Más noticias"
+    }
   },
   "learn": {
     "title": "Conocer",

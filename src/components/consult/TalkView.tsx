@@ -1,0 +1,38 @@
+'use client'
+
+// やりとり(相談する側のタブ)。支え手と一緒に進めている相談を、こちらが返す番のものから並べる(画面の見直し 所見 2)。
+// まだないときは、ここで何をするかと相談を書く入口、支援の現場からの記事を出す(#177)
+import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { apiFetch } from '@/lib/client/api'
+import { AppFrame } from '@/components/app/AppShell'
+import { RequireMe } from '@/components/app/RequireMe'
+import { Heading } from '@/components/app/ui'
+import { useMyCaseTitle, type MyCaseItem } from '@/components/consult/MyCases'
+import { TalkRow } from '@/components/thread/TalkRow'
+import { sortTalks } from '@/lib/domain/talk'
+import { EmptyTalk, type EmptyStateNews } from '@/components/consult/EmptyStates'
+
+export function TalkView({ interview }: { interview: EmptyStateNews | null }) {
+  const t = useTranslations('consult.talk')
+  const titleOf = useMyCaseTitle()
+  const [items, setItems] = useState<MyCaseItem[] | null>(null)
+  useEffect(() => {
+    apiFetch<{ cases: MyCaseItem[] }>('/api/cases')
+      .then((d) => setItems(sortTalks(d.cases.filter((c) => c.status === 'MATCHED' || c.status === 'RESOLVED'), 'CONSULTEE')))
+      .catch(() => setItems([]))
+  }, [])
+  return (
+    <RequireMe>
+      {() => (
+        <AppFrame>
+          <Heading level={2}>{t('title')}</Heading>
+          {items !== null && items.length === 0 && <EmptyTalk interview={interview} />}
+          {(items ?? []).map((c) => (
+            <TalkRow key={c.id} href={`/cases/${c.id}`} title={titleOf(c)} sub={c.subjectName} last={c.lastMessage} viewer="CONSULTEE" resolved={c.status === 'RESOLVED'} />
+          ))}
+        </AppFrame>
+      )}
+    </RequireMe>
+  )
+}

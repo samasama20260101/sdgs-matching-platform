@@ -1,68 +1,30 @@
-'use client'
+// 相談する｜ホーム。画面は HomeView。相談がまだない人に出す支援団体とお知らせ(#177)はサーバーで読んで渡す
+// (公開の一覧・お知らせと同じ決まりで、公開してよいものだけ)
+import { HomeView } from '@/components/consult/HomeView'
+import { HOME_NEWS_ITEMS } from '@/lib/domain/emptyStates'
+import { getPublishedNews } from '@/lib/news/queries'
+import { listPublicSupporters } from '@/lib/server/publicSupporters'
 
-// 相談する｜ホーム(盤 13 の前): 一番上に「あなたの番」(届いた申し出・返事)、その下に相談を書く入口と相談ごとの「いま」
-// (画面の見直し 所見 7)
-import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/navigation'
-import { apiFetch } from '@/lib/client/api'
-import { AppFrame } from '@/components/app/AppShell'
-import { RequireMe } from '@/components/app/RequireMe'
-import { MyCases, useMyCaseTitle, type MyCaseItem } from '@/components/consult/MyCases'
-import { Card, Heading, SectionLabel } from '@/components/app/ui'
-import { talkTurn } from '@/lib/domain/talk'
-import { TomoshibiDot } from '@/components/app/LineIcon'
+export const dynamic = 'force-dynamic'
 
-function YourTurn({ items }: { items: MyCaseItem[] }) {
-  const t = useTranslations('app.home')
-  const titleOf = useMyCaseTitle()
-  const rows = [
-    ...items.filter((c) => c.status === 'OPEN' && c.pendingOffers > 0).map((c) => ({ id: c.id, title: titleOf(c), label: t('turnOffers', { count: c.pendingOffers }) })),
-    ...items.filter((c) => c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine').map((c) => ({ id: c.id, title: titleOf(c), label: t('turnReply') })),
-  ]
-  if (rows.length === 0) return null
+export default async function HomePage() {
+  const [news, supporters] = await Promise.all([
+    getPublishedNews(HOME_NEWS_ITEMS),
+    listPublicSupporters({ limit: 100 }).catch((error) => {
+      console.error('[home] supporters', error)
+      return []
+    }),
+  ])
   return (
-    <section className="flex flex-col gap-2">
-      <SectionLabel>{t('yourTurn', { count: rows.length })}</SectionLabel>
-      {rows.map((r) => (
-        <Link key={`${r.id}-${r.label}`} href={`/cases/${r.id}`} className="no-underline">
-          <Card className="flex items-center justify-between gap-3 border-night p-3.5 text-ink">
-            <span className="flex min-w-0 flex-col">
-              <span className="flex items-center gap-1.5 text-t13 font-bold text-night"><TomoshibiDot />{r.label}</span>
-              <span className="truncate text-t14">{r.title}</span>
-            </span>
-            <span aria-hidden>›</span>
-          </Card>
-        </Link>
-      ))}
-    </section>
-  )
-}
-
-export default function HomePage() {
-  const t = useTranslations('app.home')
-  const [items, setItems] = useState<MyCaseItem[] | null>(null)
-  useEffect(() => {
-    apiFetch<{ cases: MyCaseItem[] }>('/api/cases').then((d) => setItems(d.cases)).catch(() => setItems([]))
-  }, [])
-  return (
-    <RequireMe>
-      {(me) => (
-        <AppFrame>
-          <div className="px-1">
-            <Heading level={2}>{t('hello', { name: me.person.displayName })}</Heading>
-          </div>
-          {items && <YourTurn items={items} />}
-          <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-lamp text-t16 font-bold btn-track text-ink no-underline">
-            {t('write')}
-          </Link>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/consult/org?subject=COMPANY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold btn-track text-ink no-underline">{t('asCompany')}</Link>
-            <Link href="/consult/org?subject=COMMUNITY" className="flex min-h-[48px] items-center justify-center rounded-[14px] border border-line bg-paper text-t13_5 font-bold btn-track text-ink no-underline">{t('asCommunity')}</Link>
-          </div>
-          {items && <MyCases items={items} />}
-        </AppFrame>
-      )}
-    </RequireMe>
+    <HomeView
+      news={news.map((n) => ({ id: n.id, title: n.title, category: n.category, publishedAt: n.published_at }))}
+      supporters={supporters.map((s) => ({
+        id: s.id,
+        name: s.name,
+        type: s.supporterType,
+        nationwide: s.nationwide,
+        areas: s.areas.map((a) => ({ region_code: a.region_code, name_local: a.name_local, name_en: a.name_en })),
+      }))}
+    />
   )
 }

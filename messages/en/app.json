@@ -175,7 +175,22 @@
     "yourTurn": "Your turn ({count})",
     "turnOffers": "{count, plural, one {# offer has arrived} other {# offers have arrived}}",
     "turnReply": "You have a new reply",
-    "replyArrived": "New reply"
+    "replyArrived": "New reply",
+    "flow": {
+      "title": "How it works",
+      "step1": "Write and send",
+      "step1Note": "Until you send it, your draft stays only on this device",
+      "step2": "See support organizations that may fit",
+      "step2Note": "Right after you send it, we suggest up to 3",
+      "step3": "Choose from the offers and talk",
+      "step3Note": "Personal requests are read by support organizations that have met with our team"
+    },
+    "empty": {
+      "supporters": "Support organizations taking requests",
+      "seeAll": "See all",
+      "news": "News",
+      "moreNews": "More news"
+    }
   },
   "learn": {
     "title": "Learn",
