@@ -54,7 +54,6 @@
     "title": "Find requests",
     "tipLabel": "How to read the tags",
     "tip": "The numbered tags are SDG goals, named for the kind of requester. Areas and indicators are chosen by AI from the request when it arrives, and the samasama team checks them later. Open a request to see it in detail. Requests written in other languages can be translated in the conversation.",
-    "individualNote": "Individual supporters see only company and community requests (requests from individuals are supported through support organizations).",
     "category": "Category",
     "all": "All",
     "remote": "Include requests I can support remotely",

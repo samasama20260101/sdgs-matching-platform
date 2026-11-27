@@ -14,7 +14,6 @@
     "send": "Send my request",
     "sending": "Sending…",
     "sendingNote": "We are checking what you wrote and sending it. This can take a few seconds.",
-    "noPickingNote": "You don't need to pick a category. After you send it, we sort it on our side so it reaches supporters who fit.",
     "sendNeedsWords": "Write at least a few words to send",
     "sendFailed": "We couldn't send it. Please try again.",
     "activeLimit": "You can have up to 3 open requests. Cancel or close one first.",
@@ -30,7 +29,7 @@
     "loginToSend": "Log in and send my request",
     "loginToChooseCompany": "Next: log in and choose your company",
     "loginToChooseCommunity": "Next: log in and choose your local group",
-    "loginToSendNote": "Please log in to send your request. We do not ask for your name or phone number. What you wrote is kept, and you can continue after logging in.",
+    "loginToSendNote": "What you wrote is kept, and you can continue after logging in.",
     "resumedNote": "You are logged in. Check what you wrote and send it."
   },
   "org": {
@@ -143,7 +142,6 @@
   },
   "resolve": {
     "title": "A supporter says it is solved",
-    "lead": "If your problem is solved, please confirm. If not, you can say so.",
     "thanks": "Send thanks (choose any)",
     "confirm": "Confirm it is solved",
     "notYet": "Not solved yet",
@@ -248,7 +246,7 @@
     "exampleTag": "Example",
     "fromYourWordsTag": "From your words",
     "next1Title": "We sort it on our side and send it to support organizations that fit",
-    "next1": "You don't need to pick a category. On support organizations' screens, the title and areas appear like this. Requests about life or violence are visible only to people at interviewed support organizations who have passed a second check.",
+    "next1": "On support organizations' screens, the title and areas appear like this. Requests about life or violence are visible only to people at interviewed support organizations who have passed a second check.",
     "next2Title": "When offers arrive, you choose",
     "next2": "Choose who you would like to talk to. If you pass, they are not told why.",
     "next3Title": "You talk only with the ones you chose",

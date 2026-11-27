@@ -131,7 +131,6 @@ export function WriteFlow({
           {urgentWords && <HeavyWordsNotice />}
           <TextField label={t('since')} hint={t('optional')} value={since} maxLength={EXTRA_MAX} onChange={(e) => setSince(e.target.value)} />
           <TextField label={t('wish')} hint={t('optional')} value={wish} maxLength={EXTRA_MAX} onChange={(e) => setWish(e.target.value)} />
-          <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('noPickingNote')}</p>
           {!signedIn && <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('loginToSendNote')}</p>}
           <ErrorNote>{error}</ErrorNote>
           {organizationStep ? (

@@ -54,7 +54,6 @@
     "title": "Buscar consultas",
     "tipLabel": "Cómo leer las etiquetas",
     "tip": "Las etiquetas con número son los Objetivos de los ODS, con el nombre según el tipo de quien consulta. La IA elige las áreas y los indicadores a partir de la consulta cuando llega, y el equipo de samasama los revisa después. Abre la consulta para verla en detalle. Las consultas en otros idiomas se pueden traducir en la conversación.",
-    "individualNote": "A título individual solo ves consultas de empresas y comunidades (las de personas se apoyan a través de organizaciones de apoyo).",
     "category": "Categoría",
     "all": "Todas",
     "remote": "Incluir consultas que puedo apoyar a distancia",

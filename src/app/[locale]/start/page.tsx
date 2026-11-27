@@ -112,7 +112,6 @@ function LoginStep({ next, onLostEmail }: { next: string; onLostEmail?: () => vo
         <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void sendCode() }}>
           <TextField label={t('email')} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Button type="submit" variant="night" disabled={busy}>{t('sendCode')}</Button>
-          <p className="m-0 text-t12_5 leading-[1.7] text-mist">{t('sendCodeNote')}</p>
           {onLostEmail && <Button variant="quiet" className="self-start" onClick={onLostEmail}>{t('lostEmail')}</Button>}
         </form>
       ) : (

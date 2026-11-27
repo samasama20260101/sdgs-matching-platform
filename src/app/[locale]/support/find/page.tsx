@@ -93,7 +93,6 @@ function Find() {
         <Heading level={2}>{t('title')}</Heading>
         <Tip label={t('tipLabel')}>{t('tip')}</Tip>
       </div>
-      {current?.kind === 'INDIVIDUAL' && <Card tone="support" className="p-3"><Lead>{t('individualNote')}</Lead></Card>}
       {/* 絞り込みは1つのボタンにまとめ、開いたときだけ出す(縦に積むと最初の結果まで遠い。画面の見直し 所見 9)。
           閉じているときも、いまの絞り込みをボタンの中に書く */}
       <Card tone="support" className="flex flex-col px-4 py-1">

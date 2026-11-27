@@ -90,7 +90,6 @@
     "or": "or",
     "email": "Email address",
     "sendCode": "Send me a code",
-    "sendCodeNote": "Enter the code you receive to continue.",
     "emailInvalid": "Please check your email address",
     "tooMany": "Too many attempts. Please wait a little and try again.",
     "sendFailed": "We couldn't send it. Please wait a little and try again.",
@@ -159,7 +158,6 @@
   },
   "home": {
     "hello": "Hi, {name}",
-    "lead": "Write what's troubling you and we'll connect you with supporters and support organizations you can talk to.",
     "write": "Ask for help",
     "asCompany": "Ask as a company",
     "asCommunity": "Ask as a community",

@@ -9,7 +9,7 @@ import { apiFetch } from '@/lib/client/api'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { MyCases, useMyCaseTitle, type MyCaseItem } from '@/components/consult/MyCases'
-import { Card, Heading, Lead, SectionLabel } from '@/components/app/ui'
+import { Card, Heading, SectionLabel } from '@/components/app/ui'
 import { talkTurn } from '@/lib/domain/talk'
 
 function YourTurn({ items }: { items: MyCaseItem[] }) {
@@ -48,9 +48,8 @@ export default function HomePage() {
     <RequireMe>
       {(me) => (
         <AppFrame>
-          <div className="flex flex-col gap-1 px-1">
+          <div className="px-1">
             <Heading level={2}>{t('hello', { name: me.person.displayName })}</Heading>
-            <Lead>{t('lead')}</Lead>
           </div>
           {items && <YourTurn items={items} />}
           <Link href="/consult/new" className="flex min-h-[56px] items-center justify-center rounded-[16px] bg-lamp text-t16 font-bold btn-track text-ink no-underline">
