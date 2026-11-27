@@ -21,7 +21,9 @@ export type MePerson = {
   isMinor: boolean
   country: string
   regionCode: string | null
-  city: string | null
+  // 市区町村の団体コードと名前(#173)
+  municipalityCode: string | null
+  municipalityName: string | null
   locale: string
 }
 

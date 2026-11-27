@@ -13,7 +13,7 @@ import { areaLabels } from '@/lib/server/opsNotifyFormat'
 
 const patchSchema = z.object({ sensitive: z.boolean() })
 
-const CASE_COLUMNS = 'id, display_id, title, status, subject_type, subject_organization_id, proxy_organization_id, description_free, intake_qna, urgency, is_minor, is_sensitive, sensitive_reasons, region_country, region_code, city, locale, entry_channel, entry_code, created_at, escalated_at, supporter_resolved_at, resolved_at, ai_sdg_suggestion'
+const CASE_COLUMNS = 'id, display_id, title, status, subject_type, subject_organization_id, proxy_organization_id, description_free, intake_qna, urgency, is_minor, is_sensitive, sensitive_reasons, region_country, region_code, municipality_code, locale, entry_channel, entry_code, created_at, escalated_at, supporter_resolved_at, resolved_at, ai_sdg_suggestion'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -24,15 +24,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (error) return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
   if (!c) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const [indicators, offers, referrals, region, suggestions] = await Promise.all([
+  const [indicators, offers, referrals, region, suggestions, municipality] = await Promise.all([
     supabaseAdmin.from('case_indicators').select('indicator_code, source, status, confidence, reason').eq('case_id', id).order('created_at', { ascending: true }),
     supabaseAdmin.from('offers').select('id, supporter_kind, supporter_user_id, supporter_organization_id, status, accepted_order, created_at').eq('case_id', id).order('created_at', { ascending: true }),
     supabaseAdmin.from('case_referrals').select('status, consented_at, directory_entries(name, phone, kind, website_url)').eq('case_id', id),
     c.region_code ? supabaseAdmin.from('regions').select('name_local').eq('code', c.region_code).maybeSingle() : Promise.resolve({ data: null, error: null }),
     // 相談者に提案した支援団体(#138)
     supabaseAdmin.from('case_suggestions').select('rank, reason, method, directory_entries(name, phone, website_url)').eq('case_id', id).order('rank', { ascending: true }),
+    c.municipality_code ? supabaseAdmin.from('municipalities').select('name').eq('code', c.municipality_code).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ])
-  const failed = indicators.error ?? offers.error ?? referrals.error ?? region.error ?? suggestions.error
+  const failed = indicators.error ?? offers.error ?? referrals.error ?? region.error ?? suggestions.error ?? municipality.error
   if (failed) {
     console.error('[api/admin/cases/[id]]', failed)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
@@ -82,7 +83,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       locale: c.locale,
       country: c.region_country,
       regionName: (region.data?.name_local as string | undefined) ?? c.region_code,
-      city: c.city,
+      city: (municipality.data?.name as string | undefined) ?? null,
       createdAt: c.created_at,
       escalatedAt: c.escalated_at,
       supporterResolvedAt: c.supporter_resolved_at,

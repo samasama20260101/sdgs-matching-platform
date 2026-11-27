@@ -13,8 +13,9 @@ import {
 } from '@/lib/validation/person'
 import type { MeResponse } from '@/lib/client/meTypes'
 import { recordConsents } from '@/lib/server/consents'
+import { municipalityAllowed, municipalityName } from '@/lib/server/municipalities'
 
-const USER_COLUMNS = 'id, display_id, role, display_name, age_years, age_base_date, region_country, region_code, city, locale, is_suspended'
+const USER_COLUMNS = 'id, display_id, role, display_name, age_years, age_base_date, region_country, region_code, municipality_code, locale, is_suspended'
 
 type UserRow = {
   id: string
@@ -25,7 +26,7 @@ type UserRow = {
   age_base_date: string | null
   region_country: string | null
   region_code: string | null
-  city: string | null
+  municipality_code: string | null
   locale: string
   is_suspended: boolean | null
 }
@@ -66,9 +67,10 @@ export async function GET(request: Request) {
     const role = row.role === 'ADMIN' ? 'ADMIN' : 'PERSON'
     const age = currentAge(row.age_years, row.age_base_date, todayInTokyo())
     // 顔と同意の版は互いに関係しないので並べて読む(開くたびに呼ばれる API)
-    const [faces, consentsOk] = await Promise.all([
+    const [faces, consentsOk, cityName] = await Promise.all([
       role === 'ADMIN' ? Promise.resolve({ organizations: [], individual: null }) : loadFaces(row.id),
       consentsUpToDate(row.id),
+      municipalityName(row.municipality_code),
     ])
     const factors = auth.authUser.factors ?? []
     const body: MeResponse = {
@@ -83,7 +85,8 @@ export async function GET(request: Request) {
         isMinor: isMinorAge(age),
         country: row.region_country ?? 'JP',
         regionCode: row.region_code,
-        city: row.city,
+        municipalityCode: row.municipality_code,
+        municipalityName: cityName,
         locale: row.locale,
       },
       consentsUpToDate: consentsOk,
@@ -111,6 +114,13 @@ export async function POST(request: Request) {
   const parsed = onboardingSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
   const input = parsed.data
+  try {
+    if (!(await municipalityAllowed(input.municipalityCode, input.country, input.regionCode))) {
+      return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
+    }
+  } catch (e) {
+    return serverError('municipality', e)
+  }
 
   const { data: existing, error: findError } = await supabaseAdmin
     .from('users')
@@ -131,7 +141,7 @@ export async function POST(request: Request) {
         age_base_date: todayInTokyo(),
         region_country: input.country,
         region_code: input.regionCode ?? null,
-        city: input.city || null,
+        municipality_code: input.municipalityCode ?? null,
         locale: input.locale,
         onboarded_at: new Date().toISOString(),
       })
@@ -172,12 +182,27 @@ export async function PATCH(request: Request) {
     update.age_years = input.age
     update.age_base_date = todayInTokyo()
   }
+  // 国・都道府県を変えたら、その下の市区町村は選び直す(送られていなければ空にする)
   if (input.country !== undefined) {
     update.region_country = input.country
     if (input.regionCode === undefined) update.region_code = null
+    if (input.municipalityCode === undefined) update.municipality_code = null
   }
-  if (input.regionCode !== undefined) update.region_code = input.regionCode
-  if (input.city !== undefined) update.city = input.city || null
+  if (input.regionCode !== undefined) {
+    update.region_code = input.regionCode
+    if (input.municipalityCode === undefined) update.municipality_code = null
+  }
+  if (input.municipalityCode !== undefined) {
+    // 市区町村は、同じ送信の都道府県の中のものだけ(わたしの画面は国・都道府県と一緒に送る)
+    try {
+      if (!(await municipalityAllowed(input.municipalityCode, input.country, input.regionCode))) {
+        return NextResponse.json({ error: '入力を確かめてください', code: 'INVALID' }, { status: 400 })
+      }
+    } catch (e) {
+      return serverError('municipality', e)
+    }
+    update.municipality_code = input.municipalityCode ?? null
+  }
   if (input.locale !== undefined) update.locale = input.locale
 
   const { data, error } = await supabaseAdmin

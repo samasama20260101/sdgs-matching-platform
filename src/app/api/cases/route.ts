@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
   const { data: person, error: personError } = await supabaseAdmin
     .from('users')
-    .select('id, age_years, age_base_date, region_country, region_code, city, locale')
+    .select('id, age_years, age_base_date, region_country, region_code, municipality_code, locale')
     .eq('id', auth.appUser.id)
     .single()
   if (personError) return serverError('person', personError)
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
       },
       region_country: person.region_country ?? 'JP',
       region_code: person.region_code,
-      city: person.city,
+      municipality_code: person.municipality_code,
       locale: person.locale,
       is_minor: assessment.isMinor,
       is_sensitive: assessment.isSensitive,
