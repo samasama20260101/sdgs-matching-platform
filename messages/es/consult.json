@@ -179,7 +179,12 @@
   },
   "talk": {
     "title": "Mensajes",
-    "empty": "Todavía no estás trabajando con nadie que te apoye."
+    "emptyState": {
+      "namiaAlt": "Namia, el personaje de Ashita mo samasama",
+      "title": "Aquí conversas con las organizaciones de apoyo",
+      "body": "Cuando llegue un ofrecimiento o una respuesta, aparecerá una luz en Inicio.",
+      "field": "Desde el terreno"
+    }
   },
   "handover": {
     "title": "Introducir un código de traspaso",

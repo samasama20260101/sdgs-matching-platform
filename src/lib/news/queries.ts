@@ -2,7 +2,7 @@
 import 'server-only'
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { NEWS_LIST_MAX, type NewsPost, type NewsPostPublic } from '@/lib/constants/news'
+import { NEWS_LIST_MAX, type NewsCategory, type NewsPost, type NewsPostPublic } from '@/lib/constants/news'
 
 // 公開 API が返す列(本文は含めない。記事ページはサーバーで直接読む)
 const PUBLIC_COLUMNS = 'id, category, title, external_url, published_at'
@@ -27,6 +27,24 @@ export async function getPublishedNews(limit: number, max = NEWS_LIST_MAX): Prom
     .limit(clampNewsLimit(limit, NEWS_LIST_MAX, max))
   if (error) {
     console.error('[news] list error:', error)
+    return []
+  }
+  return (data ?? []) as NewsPostPublic[]
+}
+
+// 種類を 1 つに絞った新しい順(相談がまだないときのやりとりの「支援の現場から」= インタビュー。#177)
+export async function getPublishedNewsInCategory(category: NewsCategory, limit: number): Promise<NewsPostPublic[]> {
+  const { data, error } = await supabaseAdmin
+    .from('news_posts')
+    .select(PUBLIC_COLUMNS)
+    .eq('status', 'PUBLISHED')
+    .eq('category', category)
+    .not('published_at', 'is', null)
+    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(clampNewsLimit(limit, 1))
+  if (error) {
+    console.error('[news] category list error:', error)
     return []
   }
   return (data ?? []) as NewsPostPublic[]

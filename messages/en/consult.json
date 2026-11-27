@@ -179,7 +179,12 @@
   },
   "talk": {
     "title": "Messages",
-    "empty": "You're not working with a supporter yet."
+    "emptyState": {
+      "namiaAlt": "Namia, the Ashita mo samasama character",
+      "title": "This is where you talk with support organizations",
+      "body": "When an offer or a reply arrives, a lamp mark appears on Home.",
+      "field": "From the field"
+    }
   },
   "handover": {
     "title": "Enter a handover code",

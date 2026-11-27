@@ -175,7 +175,22 @@
     "yourTurn": "あなたの番({count}件)",
     "turnOffers": "申し出が {count}件 届いています",
     "turnReply": "返事が来ています",
-    "replyArrived": "返事が来ています"
+    "replyArrived": "返事が来ています",
+    "flow": {
+      "title": "相談すると、こう進みます",
+      "step1": "書いて届ける",
+      "step1Note": "届けるまで、書いた文はこの端末の中だけにあります",
+      "step2": "合いそうな支援団体がわかる",
+      "step2Note": "届けるとすぐ、3つまで紹介します",
+      "step3": "申し出から相手を選んで話す",
+      "step3Note": "個人の相談を読むのは、運営と面談した支援団体です"
+    },
+    "empty": {
+      "supporters": "相談を受けている支援団体",
+      "seeAll": "すべて見る",
+      "news": "お知らせ",
+      "moreNews": "お知らせをもっと見る"
+    }
   },
   "learn": {
     "title": "知る",
