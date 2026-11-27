@@ -14,7 +14,6 @@
     "send": "Enviar mi consulta",
     "sending": "Enviando…",
     "sendingNote": "Estamos revisando lo que escribiste y enviándolo. Puede tardar unos segundos.",
-    "noPickingNote": "No necesitas elegir una categoría. Después de enviarla, la ordenamos nosotros para que llegue a quienes pueden apoyarte.",
     "sendNeedsWords": "Escribe al menos unas palabras para enviar",
     "sendFailed": "No pudimos enviarla. Inténtalo de nuevo.",
     "activeLimit": "Puedes tener hasta 3 consultas abiertas. Cancela o cierra una primero.",
@@ -30,7 +29,7 @@
     "loginToSend": "Iniciar sesión y enviar mi consulta",
     "loginToChooseCompany": "Siguiente: iniciar sesión y elegir la empresa",
     "loginToChooseCommunity": "Siguiente: iniciar sesión y elegir la sección o asociación",
-    "loginToSendNote": "Para enviar la consulta, inicia sesión. No te pedimos tu nombre ni tu número de teléfono. Lo que escribiste se conserva y podrás continuar después de iniciar sesión.",
+    "loginToSendNote": "Lo que escribiste se conserva y podrás continuar después de iniciar sesión.",
     "resumedNote": "Has iniciado sesión. Revisa lo que escribiste y envíalo."
   },
   "org": {
@@ -143,7 +142,6 @@
   },
   "resolve": {
     "title": "Quien te apoya dice que está resuelto",
-    "lead": "Si tu problema está resuelto, confírmalo. Si no, puedes decirlo.",
     "thanks": "Dar las gracias (elige las que quieras)",
     "confirm": "Confirmar que está resuelto",
     "notYet": "Todavía no está resuelto",
@@ -248,7 +246,7 @@
     "exampleTag": "Ejemplo",
     "fromYourWordsTag": "A partir de tu texto",
     "next1Title": "La clasificamos nosotros y la enviamos a organizaciones de apoyo adecuadas",
-    "next1": "No necesitas elegir una categoría. En las pantallas de las organizaciones de apoyo, el título y las áreas aparecen así. Las consultas sobre la vida o la violencia solo las ven, en organizaciones de apoyo entrevistadas, quienes pasaron una segunda verificación.",
+    "next1": "En las pantallas de las organizaciones de apoyo, el título y las áreas aparecen así. Las consultas sobre la vida o la violencia solo las ven, en organizaciones de apoyo entrevistadas, quienes pasaron una segunda verificación.",
     "next2Title": "Cuando lleguen ofrecimientos, tú eliges",
     "next2": "Elige con quién quieres hablar. Si dices que no, no se les explica el motivo.",
     "next3Title": "Hablas solo con quienes elegiste",

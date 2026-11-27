@@ -96,7 +96,6 @@ function ResolvePanel({ caseId, onDone }: { caseId: string; onDone: () => Promis
   return (
     <Card className="flex flex-col gap-3 border-2 border-lamp p-4">
       <span className="text-t16 font-bold">{t('title')}</span>
-      <Lead>{t('lead')}</Lead>
       <SectionLabel>{t('thanks')}</SectionLabel>
       <ThanksWords words={words} onChange={setWords} />
       <ErrorNote>{error}</ErrorNote>
