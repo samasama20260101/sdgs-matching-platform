@@ -4,7 +4,7 @@
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useReadyMe } from '@/components/app/SessionProvider'
-import { cx } from '@/components/app/ui'
+import { chipOff, chipOn, cx } from '@/components/app/ui'
 import { useStoredValue } from '@/lib/client/storedValue'
 import { canSupportAtAge } from '@/lib/domain/age'
 import { isSupporterFace } from '@/lib/domain/orgVetting'
@@ -43,7 +43,7 @@ export function FacePicker({ options, current, onChoose }: { options: FaceOption
           role="radio"
           aria-checked={current?.key === o.key}
           onClick={() => onChoose(o.key)}
-          className={cx('min-h-[40px] rounded-tool px-3 text-t13 font-bold', current?.key === o.key ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}
+          className={cx('min-h-[40px] rounded-tool px-3 text-t13 font-bold', current?.key === o.key ? chipOn : chipOff)}
         >
           {o.kind === 'INDIVIDUAL' ? t('asIndividual', { name: o.label }) : o.label}
           {!o.approved && o.kind === 'ORGANIZATION' && <span className="ml-1 text-t11 opacity-80">{t('pending')}</span>}

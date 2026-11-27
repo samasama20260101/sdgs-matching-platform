@@ -17,7 +17,7 @@ import { localeLabels, locales, type AppLocale } from '@/i18n/routing'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
-import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip, Toggle } from '@/components/app/ui'
+import { Button, Card, chipOff, chipOn, choiceOff, choiceOn, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip, Toggle } from '@/components/app/ui'
 import type { MeOrganizationFace, MePerson, MeResponse } from '@/lib/client/meTypes'
 import { AREA_GOALS, areaKey, areaSubjectsForFace } from '@/lib/domain/supportAreas'
 import { canSupportAtAge } from '@/lib/domain/age'
@@ -172,7 +172,7 @@ function IndividualForm({ person, onDone }: { person: MePerson; onDone: () => vo
                   const key = areaKey(subject, g)
                   const on = skills.includes(key)
                   return (
-                    <button key={key} type="button" aria-pressed={on} onClick={() => setSkills(on ? skills.filter((x) => x !== key) : [...skills, key])} className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+                    <button key={key} type="button" aria-pressed={on} onClick={() => setSkills(on ? skills.filter((x) => x !== key) : [...skills, key])} className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', on ? chipOn : chipOff)}>
                       {tSdgs(`area.${subject}.${g}`)}
                     </button>
                   )
@@ -226,7 +226,7 @@ function SelfChecks({ choices, notes, onChoice, onNote }: {
             </div>
             <div role="radiogroup" aria-label={t(`checks.${check}.statement`)} className="grid grid-cols-2 gap-2">
               {SELF_CHECKS.map((v) => (
-                <button key={v} type="button" role="radio" aria-checked={choices[check] === v} onClick={() => onChoice(check, v)} className={cx('min-h-[44px] rounded-tool px-2 text-t13_5 font-bold', choices[check] === v ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+                <button key={v} type="button" role="radio" aria-checked={choices[check] === v} onClick={() => onChoice(check, v)} className={cx('min-h-[44px] rounded-tool px-2 text-t13_5 font-bold', choices[check] === v ? choiceOn : choiceOff)}>
                   {t(`selfCheck.${v}`)}
                 </button>
               ))}
@@ -251,7 +251,7 @@ function OrgChoice({ candidates, target, onChange }: { candidates: MeOrganizatio
       </div>
       <div role="radiogroup" aria-label={t('orgChoiceTitle')} className="flex flex-col gap-2">
         {options.map((o) => (
-          <button key={o.key} type="button" role="radio" aria-checked={target === o.key} onClick={() => onChange(o.key)} className={cx('min-h-[48px] rounded-tool px-3 text-left text-t14 font-bold', target === o.key ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+          <button key={o.key} type="button" role="radio" aria-checked={target === o.key} onClick={() => onChange(o.key)} className={cx('min-h-[48px] rounded-tool px-3 text-left text-t14 font-bold', target === o.key ? choiceOn : choiceOff)}>
             {o.label}
           </button>
         ))}

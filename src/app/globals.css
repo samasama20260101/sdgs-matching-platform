@@ -6,9 +6,13 @@
   --color-night: #062F5E;       /* 夜: 主ボタンと見出しの面。白文字で 13.3:1 */
   --color-night-deep: #041F40;
   --color-night-soft: #14497F;
-  --color-lamp: #30CCE4;        /* 灯: いま押すべきもの・あなたの番(ナミアの水色)。文字は墨で載せる(9.5:1)。夜の上の文字にも使える(6.9:1) */
-  --color-lamp-soft: #C8F1F7;   /* 灯の淡: 選んだもの・現在地の印 */
+  --color-lamp: #30CCE4;        /* 水色: いま押すボタンとお知らせの面(ナミアの水色)。文字は墨で載せる(9.5:1)。夜の上の文字にも使える(6.9:1)。名前は 11 月までの「灯」のまま */
+  --color-lamp-soft: #C8F1F7;
   --color-lamp-faint: #E6F8FB;
+  /* 灯(ロゴの灯の黄色、#171・2026-11-27 岡本さん): 選んだ・いまここ・進んだ・あなたの番だけに使う。
+     白の上では見えにくい(1.4:1)ので文字には使わず、紺の線や文字の下に塗る(墨の文字を載せて 14:1) */
+  --color-tomoshibi: #FFD21F;
+  --color-tomoshibi-soft: #FFF3C2; /* 灯の淡: 大きな選択肢を選んだときの面(紺の枠と組む) */
   --color-kinari: #F2F7FA;      /* 地: 相談する側の地(名前は 10 月案の「生成り」のまま) */
   --color-kinari-deep: #E4EDF3;
   --color-paper: #FFFFFF;
@@ -34,7 +38,9 @@
   --radius-tool: 12px;          /* 支える側の小さめの角(10〜12px) */
 
   --font-body: var(--font-v2-body), 'Hiragino Maru Gothic ProN', 'Hiragino Sans', system-ui, sans-serif;
-  --font-heading: var(--font-v2-heading), 'Hiragino Mincho ProN', 'Noto Serif', serif;
+  /* 見出しも本文と同じ丸ゴシック(#171、2026-11-27 岡本さん)。明朝はロゴの文字(明日もsamasama)だけ */
+  --font-heading: var(--font-v2-body), 'Hiragino Maru Gothic ProN', 'Hiragino Sans', system-ui, sans-serif;
+  --font-logo: var(--font-v2-logo), 'Hiragino Mincho ProN', 'Noto Serif', serif;
 }
 
 /* 文字の大きさ(引き続き考えることの 19、11/12 定例)。画面は text-t13 のように、px の数字の名前で書く。
@@ -142,4 +148,16 @@
   .namia-spark { animation: none; }
   .namia-glow { opacity: 0.6; }
   .namia-spark { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 読み込み中の灯(src/components/app/ui.tsx の Spinner)。しずくの中の灯がゆっくり明るくなる。動きを減らす設定では止めて灯したまま */
+.tomoshibi-pulse {
+  animation: tomoshibi-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tomoshibi-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tomoshibi-pulse { animation: none; }
 }

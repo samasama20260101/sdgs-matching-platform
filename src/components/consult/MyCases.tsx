@@ -51,7 +51,7 @@ export function MyCases({ items }: { items: MyCaseItem[] }) {
               {c.isProxy && <Chip color="dawn">{t('proxy')}</Chip>}
               {c.subjectName && <Chip>{c.subjectName}</Chip>}
               {c.status !== 'OPEN' && c.pendingOffers > 0 && <Chip color="night">{t('newOffers', { count: c.pendingOffers })}</Chip>}
-              {c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine' && <Chip color="night">{t('replyArrived')}</Chip>}
+              {c.status === 'MATCHED' && talkTurn(c.lastMessage, 'CONSULTEE') === 'mine' && <Chip color="tomoshibi">{t('replyArrived')}</Chip>}
             </span>
           </Card>
         </Link>

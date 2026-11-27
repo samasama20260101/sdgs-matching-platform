@@ -24,12 +24,13 @@ const OG_LOCALES: Record<SupportedLocale, string> = {
 // 使わない書体のクラスを <html> に付けないので、ブラウザはその書体のファイルを取りに行かない。
 // 日本語は字の範囲ごとに分かれたファイル(unicode-range)で配られ、使う字の分だけ落ちる。
 const jaBody = Zen_Maru_Gothic({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-v2-body", display: "swap", preload: false });
-const jaHeading = Noto_Serif_JP({ weight: ["600", "700"], subsets: ["latin"], variable: "--font-v2-heading", display: "swap", preload: false });
+// 明朝はロゴの文字だけに使う(見出しは本文と同じ丸ゴシック、#171)
+const jaLogo = Noto_Serif_JP({ weight: ["700"], subsets: ["latin"], variable: "--font-v2-logo", display: "swap", preload: false });
 const latinBody = Noto_Sans({ weight: ["400", "500", "700"], subsets: ["latin", "latin-ext"], variable: "--font-v2-body", display: "swap" });
-const latinHeading = Noto_Serif({ weight: ["600", "700"], subsets: ["latin", "latin-ext"], variable: "--font-v2-heading", display: "swap" });
+const latinLogo = Noto_Serif({ weight: ["700"], subsets: ["latin"], variable: "--font-v2-logo", display: "swap", preload: false });
 
 function fontClassesFor(locale: string) {
-  return locale === "ja" ? `${jaBody.variable} ${jaHeading.variable}` : `${latinBody.variable} ${latinHeading.variable}`;
+  return locale === "ja" ? `${jaBody.variable} ${jaLogo.variable}` : `${latinBody.variable} ${latinLogo.variable}`;
 }
 
 // hreflang の alternates は next-intl ミドルウェアが Link ヘッダで自動出力する

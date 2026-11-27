@@ -10,7 +10,7 @@ import { countryName } from '@/lib/constants/countries'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
-import { Button, Card, cx, ErrorNote, Heading, SectionLabel, Tip, Toggle } from '@/components/app/ui'
+import { Button, Card, choiceOff, choiceOn, cx, ErrorNote, Heading, SectionLabel, Tip, Toggle } from '@/components/app/ui'
 import { useTextSize } from '@/lib/client/textSize'
 import { TEXT_SIZES } from '@/lib/domain/textSize'
 import { draftToPayload, profileDraftErrors, ProfileFields, type ProfileDraft } from '@/components/app/ProfileFields'
@@ -142,7 +142,7 @@ function TextSizeCard() {
       </div>
       <div role="radiogroup" aria-label={t('textSize')} className="grid grid-cols-2 gap-2">
         {TEXT_SIZES.map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={size === k} onClick={() => choose(k)} className={cx('flex min-h-[56px] flex-col items-center justify-center rounded-[14px] px-2 font-bold', size === k ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+          <button key={k} type="button" role="radio" aria-checked={size === k} onClick={() => choose(k)} className={cx('flex min-h-[56px] flex-col items-center justify-center rounded-[14px] px-2 font-bold', size === k ? choiceOn : choiceOff)}>
             <span className={k === 'large' ? 'text-t18' : 'text-t15'} aria-hidden>あ</span>
             <span className="text-t13">{t(`textSizes.${k}`)}</span>
           </button>

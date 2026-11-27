@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
-import { Card, cx, Tip } from '@/components/app/ui'
+import { Card, choiceOff, choiceOn, cx, Tip } from '@/components/app/ui'
 
 export type ClaimCandidate = {
   id: string
@@ -51,7 +51,7 @@ export function DirectoryCandidates({ candidates, selected, onSelect }: { candid
   if (candidates.length === 0) return null
   const option = (on: boolean, onClick: () => void, body: ReactNode) => (
     <button type="button" role="radio" aria-checked={on} onClick={onClick}
-      className={cx('flex min-h-[48px] flex-1 flex-col items-start justify-center gap-0.5 rounded-tool px-3 py-2 text-left', on ? 'border-2 border-night bg-lamp-soft text-ink' : 'border-[1.5px] border-line-strong bg-paper text-ink-soft')}>
+      className={cx('flex min-h-[48px] flex-1 flex-col items-start justify-center gap-0.5 rounded-tool px-3 py-2 text-left', on ? choiceOn : choiceOff)}>
       {body}
     </button>
   )

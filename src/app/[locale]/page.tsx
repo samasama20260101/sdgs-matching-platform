@@ -9,6 +9,7 @@ import { useSession } from '@/components/app/SessionProvider'
 import { AppHeader } from '@/components/app/AppShell'
 import { Footer } from '@/components/app/Footer'
 import { Heading, Lead, Screen, SectionLabel } from '@/components/app/ui'
+import { LineIcon } from '@/components/app/LineIcon'
 
 function Chevron() {
   return (
@@ -47,8 +48,9 @@ function EntryInner() {
         <SectionLabel>{t('whose')}</SectionLabel>
         <nav aria-label={t('entriesLabel')} className="flex flex-col gap-2">
           <Link href={withShop('/consult/new')} className="flex min-h-[64px] items-center gap-3.5 rounded-[18px] bg-night px-4 py-2.5 text-white no-underline">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lamp" aria-hidden>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+            {/* 夜の面に灯がともる(#171) */}
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-tomoshibi text-ink" aria-hidden>
+              <LineIcon name="me" size={20} />
             </span>
             <span className="flex flex-1 flex-col gap-0.5">
               <span className="text-t16 font-bold">{t('mine')}</span>
@@ -58,10 +60,12 @@ function EntryInner() {
           </Link>
           <div className="grid grid-cols-2 gap-2">
             <Link href={withShop('/consult/org?subject=COMPANY')} className="flex min-h-[60px] flex-col justify-center gap-0.5 rounded-[16px] border border-line bg-paper px-3.5 py-2.5 text-ink no-underline">
+              <LineIcon name="company" size={22} className="mb-1 text-night" />
               <span className="text-t14_5 font-bold">{t('company')}</span>
               <span className="text-t11_5 text-mist">{t('companyNote')}</span>
             </Link>
             <Link href={withShop('/consult/org?subject=COMMUNITY')} className="flex min-h-[60px] flex-col justify-center gap-0.5 rounded-[16px] border border-line bg-paper px-3.5 py-2.5 text-ink no-underline">
+              <LineIcon name="community" size={22} className="mb-1 text-night" />
               <span className="text-t14_5 font-bold">{t('community')}</span>
               <span className="text-t11_5 text-mist">{t('communityNote')}</span>
             </Link>

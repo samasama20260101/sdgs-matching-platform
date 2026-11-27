@@ -23,7 +23,7 @@ export default async function MaintenancePage({ params }: { params: Promise<{ lo
             <main className="mx-auto flex min-h-dvh w-full max-w-[560px] flex-col justify-center gap-4 px-4 py-10">
                 <span className="flex items-center gap-2.5">
                     <Mark />
-                    <span className="font-heading text-t16 font-bold">{t('brand')}</span>
+                    <span className="font-logo text-t16 font-bold">{t('brand')}</span>
                 </span>
                 <Card className="flex flex-col gap-3 p-5">
                     <Chip color="lamp" className="self-start">{t('badge')}</Chip>
