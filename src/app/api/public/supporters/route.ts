@@ -10,6 +10,7 @@ export async function GET() {
         id: s.id,
         display_name: s.name,
         organization_name: s.name,
+        photo_url: s.photoUrl,
         supporter_type: s.supporterType,
         resolved_count: s.resolvedCount,
         badge_count: s.badgeCount,

@@ -1,5 +1,6 @@
 // 参加団体の記事に出す「サイト内の団体ページ」のタイル(公開ページと管理画面のプレビューで共用。データ取得はしない)
 import { Chip } from '@/components/app/ui'
+import { SupporterAvatar } from '@/components/supporters/SupporterAvatar'
 import { joinedSinceJa, SUPPORTER_TYPE_LABEL_JA, type SupporterTileData } from '@/lib/news/supporterTile'
 
 export function SupporterTileView({ data }: { data: SupporterTileData }) {
@@ -14,7 +15,10 @@ export function SupporterTileView({ data }: { data: SupporterTileData }) {
         {type && <Chip>{type}</Chip>}
         <span className="text-t12 text-mist">{joinedSinceJa(data.createdAt)}</span>
       </span>
-      <span className="wrap-anywhere font-heading text-t17 font-bold leading-[1.5] text-ink">{data.name}</span>
+      <span className="flex items-center gap-3">
+        <SupporterAvatar name={data.name} photoUrl={data.photoUrl} size="md" />
+        <span className="wrap-anywhere font-heading text-t17 font-bold leading-[1.5] text-ink">{data.name}</span>
+      </span>
       <span className="flex flex-wrap gap-x-3 gap-y-1 text-t12_5 text-ink-soft">
         {areas && <span>{areas}</span>}
         <span>解決 {data.resolvedCount}件</span>

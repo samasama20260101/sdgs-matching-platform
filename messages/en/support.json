@@ -393,7 +393,19 @@
     "areasPicked": "{count} selected",
     "areasNeedOne": "Choose at least one area",
     "areasCancel": "Cancel",
-    "areasNone": "Not set yet"
+    "areasNone": "Not set yet",
+    "photo": "Organization photo",
+    "photoTipLabel": "About the organization photo",
+    "photoTip": "You can add one photo, such as your logo or your activities. It appears in the public list of organizations, on your organization page, on requesters' Home, and with your offers. If people appear in the photo, get their permission first. Our team may remove photos that are not suitable.",
+    "photoNote": "We crop the center to a square. Location and other details in the file are removed.",
+    "photoChoose": "Choose a photo",
+    "photoChange": "Change photo",
+    "photoRemove": "Remove photo",
+    "photoSaved": "Photo added",
+    "photoRemoved": "Photo removed",
+    "photoTooSmall": "This photo is too small. Choose one that is at least 128 pixels on each side",
+    "photoConflict": "This overlapped with another change. Please try again",
+    "photoFailed": "We couldn't add the photo. Please try another one"
   },
   "world": {
     "back": "My contributions",

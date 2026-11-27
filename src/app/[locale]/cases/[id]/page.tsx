@@ -17,6 +17,7 @@ import { Referrals } from '@/components/consult/Referrals'
 import type { ConsulteeCaseView, ConsulteeOffer } from '@/lib/server/consulteeView'
 import { caseTitle } from '@/lib/domain/intake'
 import { useIndicatorLabel } from '@/lib/client/indicatorLabel'
+import { SupporterAvatar } from '@/components/supporters/SupporterAvatar'
 
 type Payload = { case: ConsulteeCaseView; canDecide: boolean }
 
@@ -40,9 +41,13 @@ function OfferCard({ offer, canChoose, full, onAct }: { offer: ConsulteeOffer; c
   return (
     <Card className={cx('flex flex-col gap-3 p-4', chosen && 'border-2 border-night')}>
       <div className="flex items-center gap-3">
-        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center text-t16 font-bold', offer.kind === 'ORGANIZATION' ? 'rounded-[12px] bg-night text-lamp' : 'rounded-full bg-dawn-soft text-dawn-ink')} aria-hidden>
-          {offer.name.slice(0, 1)}
-        </span>
+        {offer.kind === 'ORGANIZATION' ? (
+          <SupporterAvatar name={offer.name} photoUrl={offer.photoUrl} size="md" tone="night" />
+        ) : (
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-dawn-soft text-t16 font-bold text-dawn-ink" aria-hidden>
+            {offer.name.slice(0, 1)}
+          </span>
+        )}
         <span className="flex flex-1 flex-col gap-1">
           <span className="text-t15 font-bold">{offer.kind === 'INDIVIDUAL' ? t('individualName', { name: offer.name }) : offer.name}</span>
           <span className="flex flex-wrap gap-1">

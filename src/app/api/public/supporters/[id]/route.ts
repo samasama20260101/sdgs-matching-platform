@@ -16,6 +16,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         id: supporter.id,
         display_name: supporter.name,
         organization_name: supporter.name,
+        photo_url: supporter.photoUrl,
         supporter_type: supporter.supporterType,
         bio: supporter.bio,
         social_links: supporter.socialLinks,

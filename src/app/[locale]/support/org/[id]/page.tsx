@@ -9,9 +9,10 @@ import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
 import { Button, Card, Chip, ErrorNote, Heading, Lead, SectionLabel, Spinner, TextArea, TextField, Tip } from '@/components/app/ui'
 import { ServiceAreaPicker, isAreaChoiceComplete, useRegions, type AreaChoice } from '@/components/support/ServiceAreaPicker'
+import { OrgPhotoEditor } from '@/components/support/OrgPhotoEditor'
 
 type Payload = {
-  organization: { id: string; display_id: string; name: string; org_type: string; vetting_status: string; bio: string | null; contact_email: string | null; population: number | null }
+  organization: { id: string; display_id: string; name: string; org_type: string; vetting_status: string; bio: string | null; contact_email: string | null; population: number | null; supporter: boolean; photoUrl: string | null }
   areas: Areas
   myRole: 'OWNER' | 'MEMBER'
   members: { id: string; role: string; status: string; displayName: string; isMe: boolean }[]
@@ -161,6 +162,7 @@ function Org({ id }: { id: string }) {
         <Heading level={2}>{o.name}</Heading>
         <span className="flex gap-1"><Chip color={o.vetting_status === 'APPROVED' ? 'leaf' : 'outline'}>{tStatus(o.vetting_status)}</Chip></span>
       </div>
+      {canManage && o.supporter && <OrgPhotoEditor id={id} name={o.name} photoUrl={o.photoUrl} onSaved={reload} />}
       {canManage && <Profile id={id} o={o} onSaved={reload} />}
       <ServiceAreas id={id} areas={data.areas} canEdit={canManage} onSaved={reload} />
       <Card tone="support" className="flex flex-col gap-2 p-4">

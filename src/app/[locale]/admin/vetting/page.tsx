@@ -43,7 +43,7 @@ type DirectoryEntry =
   | { id: string; state: 'GONE' }
 type Org = {
   id: string; display_id: string; name: string; org_type: string; vetting_status: string; applied_at: string | null; application: Record<string, string>
-  contact_email: string | null; prefecture: string | null; population: number | null
+  contact_email: string | null; prefecture: string | null; population: number | null; photo_url: string | null
   service_areas: { nationwide: boolean; regionNames: string[] } | null
   directory_entry: DirectoryEntry | null
 }
@@ -105,6 +105,17 @@ function OrgCard({ org, onChanged, onNotice, focused }: { org: Org; onChanged: (
       setError(e instanceof Error ? e.message : '変えられませんでした')
     }
   }
+  const removePhoto = async () => {
+    setError(null)
+    onNotice(null)
+    try {
+      await apiFetch(`/api/admin/orgs/${org.id}/photo`, { method: 'DELETE' })
+      onNotice(`${org.name}: 写真を外しました`)
+      await onChanged()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '写真を外せませんでした')
+    }
+  }
   const t = useTranslations('support.join')
   const appLabel = (k: string) => LEGACY_LABELS[k] ?? (t.has(`application.${k}`) ? t(`application.${k}`) : k)
   const supporter = isSupporterPurpose(org.application)
@@ -124,6 +135,14 @@ function OrgCard({ org, onChanged, onNotice, focused }: { org: Org; onChanged: (
           {Object.entries(org.application ?? {}).filter(([k]) => k !== 'purpose' && k !== DIRECTORY_ENTRY_KEY && !parseCheckKey(k)).flatMap(([k, v]) => [<dt key={`${k}-t`} className="text-mist">{appLabel(k)}</dt>, <dd key={`${k}-d`} className="m-0 whitespace-pre-wrap">{v}</dd>])}
         </dl>
         <SelfCheckAnswers application={org.application ?? {}} />
+        {org.photo_url && (
+          <div className="flex items-center gap-3 rounded-tool bg-steel-faint p-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element -- 団体が載せた写真(#178)。合わないときは外す */}
+            <img src={org.photo_url} alt="" className="h-16 w-16 shrink-0 rounded-[12px] border border-line object-cover" />
+            <span className="flex-1 text-t12_5 text-mist">団体が載せた写真です。公開の一覧・団体のページ・相談者のホーム・申し出に出ます。</span>
+            <Button tone="support" variant="danger" onClick={() => void removePhoto()}>写真を外す</Button>
+          </div>
+        )}
         {supporter && org.directory_entry && (
           <DirectoryEntryBox
             entry={org.directory_entry}

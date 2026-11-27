@@ -217,7 +217,7 @@ export default function AdminNewsPage() {
                         if (!res.ok) { setPreviews((prev) => ({ ...prev, [url]: 'error' })); return }
                         const sp = result.supporter
                         const tile: SupporterTileData = {
-                            id: sp.id, name: sp.organization_name ?? sp.display_name, supporterType: sp.supporter_type, createdAt: sp.created_at, bio: sp.bio,
+                            id: sp.id, name: sp.organization_name ?? sp.display_name, photoUrl: sp.photo_url ?? null, supporterType: sp.supporter_type, createdAt: sp.created_at, bio: sp.bio,
                             resolvedCount: sp.resolved_count ?? 0,
                             badgeCount: Object.values((result.badges ?? {}) as Record<string, number>).reduce((a, b) => a + b, 0),
                             nationwide: Boolean(sp.service_area_nationwide),

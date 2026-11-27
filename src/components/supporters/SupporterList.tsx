@@ -6,11 +6,13 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { useReadyMe } from '@/components/app/SessionProvider'
 import { Chip, chipOff, chipOn, cx } from '@/components/app/ui'
+import { SupporterAvatar } from './SupporterAvatar'
 import { regionFirst, type PublicSupporterType } from '@/lib/domain/publicSupporter'
 
 export type SupporterCardData = {
   id: string
   name: string
+  photoUrl: string | null
   type: PublicSupporterType
   nationwide: boolean
   areas: { region_code: string; name_local: string; name_en: string }[]
@@ -64,7 +66,10 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
             return (
               <li key={s.id}>
                 <Link href={`/supporters/${s.id}`} className={cx('flex flex-col gap-1.5 rounded-soft border bg-paper p-4 text-ink no-underline', matched.has(s) ? 'border-night' : 'border-line')}>
-                  <span className="line-clamp-2 wrap-anywhere text-t15 font-bold leading-[1.5]" title={s.name}>{s.name}</span>
+                  <span className="flex items-center gap-3">
+                    <SupporterAvatar name={s.name} photoUrl={s.photoUrl} />
+                    <span className="line-clamp-2 min-w-0 wrap-anywhere text-t15 font-bold leading-[1.5]" title={s.name}>{s.name}</span>
+                  </span>
                   <span className="flex flex-wrap items-center gap-1.5">
                     <Chip>{tType(s.type)}</Chip>
                     {matched.has(s) && <Chip color="lamp">{t('regionChip')}</Chip>}

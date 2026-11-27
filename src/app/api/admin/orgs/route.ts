@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/api/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { VETTING_STATUSES } from '@/lib/domain/orgVetting'
 import { loadAdminDirectoryEntries, loadAdminServiceAreas } from '@/lib/server/directoryClaim'
+import { photoUrlOf } from '@/lib/server/supporterPhotos'
 
 const STATUSES: readonly string[] = VETTING_STATUSES
 
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
   const [{ data, error }, ...countResults] = await Promise.all([
     supabaseAdmin
       .from('organizations')
-      .select('id, display_id, name, org_type, vetting_status, applied_at, approved_at, application, contact_email, region_country, prefecture, population, created_at')
+      .select('id, display_id, name, org_type, vetting_status, applied_at, approved_at, application, contact_email, region_country, prefecture, population, created_at, photo_path')
       .eq('vetting_status', status)
       .neq('status', 'ARCHIVED')
       .order('created_at', { ascending: false })
@@ -33,7 +34,8 @@ export async function GET(request: Request) {
       loadAdminDirectoryEntries(orgs.map((o) => ({ id: o.id as string, application: o.application }))),
       loadAdminServiceAreas(orgs.map((o) => o.id as string)),
     ])
-    const organizations = orgs.map((o) => ({ ...o, directory_entry: entries.get(o.id as string) ?? null, service_areas: areas.get(o.id as string) ?? null }))
+    // 写真は置き場所でなく公開のアドレスで返す(#178。合わない写真を運営が外せるように見せる)
+    const organizations = orgs.map(({ photo_path: photoPath, ...o }) => ({ ...o, photo_url: photoUrlOf(photoPath as string | null), directory_entry: entries.get(o.id as string) ?? null, service_areas: areas.get(o.id as string) ?? null }))
     return NextResponse.json({ organizations, counts })
   } catch (e) {
     console.error('[api/admin/orgs] directory', e)

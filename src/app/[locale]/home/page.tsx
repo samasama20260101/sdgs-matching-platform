@@ -22,6 +22,7 @@ export default async function HomePage() {
         id: s.id,
         name: s.name,
         type: s.supporterType,
+        photoUrl: s.photoUrl,
         nationwide: s.nationwide,
         areas: s.areas.map((a) => ({ region_code: a.region_code, name_local: a.name_local, name_en: a.name_en })),
       }))}
