@@ -2,7 +2,12 @@
 //   - 候補は掲載台帳の民間の団体(kind = ORGANIZATION)で、相談を受けていると調べが付いたもの(accepts_consultation = YES)
 //     明日もsamasama に登録済み(claim 済み)の団体は、相談そのものが届いているので出さない
 //   - 営利の会社(org_type = COMPANY)は、提案に入れるかを決めるまで出さない(弁護士会の相談センターは出す)
-//   - 自治体の窓口は出さない(定例の決定)。民間の候補が足りないときだけ、自治体でない公的な窓口(よろず支援拠点・法テラスなど)で埋める
+//   - 民間の候補が足りないときは、自治体でない公的な窓口(よろず支援拠点・法テラスなど)で埋める
+//   - 地域の公的な窓口(自治体の窓口と、都道府県などが地域ごとに置く窓口。#173): 個人の相談で、相談者の市区町村(政令市の区は市も)を
+//     受け持つ窓口と、相談者の都道府県の窓口を AI に見せる。3 つのうち 1 つまでで、民間の支援団体の後ろに置く。
+//     11/19 定例の「自治体は提案しない」は「市区町村まで分からない」が理由で、10/30 に市区町村まで聞くと合意済みだったので
+//     2026-11-27 に岡本さんが見直した。地区ごとの窓口(地域包括支援センターなど)は、相談者の地区が分からないので出さない。
+//     AI が使えないときは、相談に合うかを決まりでは見られないので出さない
 //   - 地域: 全国から選ぶ(2026-11-19 定例「範囲は全国で、優先の高いものから 3 つ」、#148)。同じ都道府県・全国の団体は手段を問わず、
 //     ほかの都道府県の団体は遠隔(電話・オンライン・チャット・メール・フォーム)で相談を受けているものだけ(来所だけの遠い団体は行けないので出さない)
 //   - 並べ方: AI が選んだ指標との重なり・相談文と団体の要約の意味の近さ(埋め込み、#148)> 同じ大項目 > 電話・オンライン(加点)> 同じ都道府県
@@ -13,6 +18,7 @@
 //     110・119 は 2026-11-24 の代表の提案で候補に戻した(緊急の相談をどこにつないだかを見るため。#163)。
 //     緊急通報(110・119)と分野の電話窓口は、それぞれ 1 つまで(pickSuggestions)
 import { BUSINESS_WINDOW_CATEGORIES, fitsAudience, referralAudience } from './referrals'
+import { LOCAL_GOV_AI_LIMIT, LOCAL_GOV_WINDOW_LIMIT, LOCAL_GOV_WINDOW_TYPES } from './localGovWindows'
 import type { SubjectType } from './intake'
 
 export const SUGGESTION_COUNT = 3
@@ -41,6 +47,8 @@ export type SuggestCandidate = {
   categories: string[]
   name: string
   prefectureCode: string | null
+  // 窓口がある自治体の団体コード(6 桁)。分からなければ null
+  localGovCode?: string | null
   serviceScope: string
   serviceCodes: string[]
   acceptsConsultation: string
@@ -59,13 +67,18 @@ export type SuggestCase = {
   subject: SubjectType
   regionCountry: string | null
   regionCode: string | null
+  // 相談者の市区町村の団体コード(政令市の区なら区と市)。分からなければ空(#173)
+  municipalityCodes?: string[]
+  // 政令市の区(#173)。区役所の窓口は受け持ちを市として載せ、団体コードも空で、どの区かは名前にしか無いことが多いので、
+  // ほかの区の窓口を出さない・自分の区の窓口を先にするために使う。name は「港北区」のように市の名前を除いた形
+  wards?: { own: { code: string; name: string } | null; others: { code: string; name: string }[] }
   indicators: string[]
   isMinor: boolean
   // 緊急と判定した相談(全国の電話窓口を AI に見せる)
   urgent: boolean
 }
 
-export type RankedCandidate = { candidate: SuggestCandidate; score: number; tier: 'ORGANIZATION' | 'PUBLIC' | 'HOTLINE' }
+export type RankedCandidate = { candidate: SuggestCandidate; score: number; tier: 'ORGANIZATION' | 'PUBLIC' | 'LOCAL_GOV' | 'HOTLINE' }
 
 export type Suggestion = { id: string; rank: number; reason: string | null; method: 'AI' | 'RULE' }
 
@@ -178,6 +191,62 @@ export function isPublicFallback(c: SuggestCandidate, k: SuggestCase): boolean {
   return fitsAudience(c.categories, referralAudience(k.subject)) && servesRegion(c, k)
 }
 
+// 地域の公的な窓口が相談者の住む所を受け持っているか(#173)。市区町村の窓口は相談者の市区町村(政令市の区は市も)、
+// 都道府県の窓口は相談者の都道府県。地区ごとの窓口は、相談者の地区が分からないので受け持ちとみなさない。
+// 政令市のほかの区にある窓口は出さない(受け持ちが市として載っていても、区役所の窓口は区の人のため。
+// 横浜市港北区の人に旭区のこども家庭支援課が出た。市そのものを選んだ人には、どの区の窓口も出さない)
+export function servesHome(c: Pick<SuggestCandidate, 'serviceScope' | 'serviceCodes' | 'prefectureCode' | 'localGovCode' | 'name'>, k: Pick<SuggestCase, 'regionCountry' | 'regionCode' | 'municipalityCodes' | 'wards'>): boolean {
+  if ((k.regionCountry ?? 'JP') !== 'JP' || !k.regionCode) return false
+  if (c.serviceScope === 'PREFECTURE') return c.prefectureCode === k.regionCode || c.serviceCodes.includes(k.regionCode)
+  if (c.serviceScope !== 'MUNICIPALITY') return false
+  if (wardOfWindow(c, k) === 'OTHER') return false
+  const codes = k.municipalityCodes ?? []
+  return codes.some((code) => c.serviceCodes.includes(code) || c.localGovCode === code)
+}
+
+// 窓口が政令市のどの区のものか: 相談者の区(OWN)・ほかの区(OTHER)・区を問わない(null)。
+// 団体コードで分かればそれで、空なら名前に入っている区の名前で見る。「港南区」と「南区」のように一方が他方を含むので、
+// 長い名前から先に当てる(正規表現は同じ位置では先に書いた候補を取る)
+export function wardOfWindow(c: Pick<SuggestCandidate, 'localGovCode' | 'name'>, k: Pick<SuggestCase, 'wards'>): 'OWN' | 'OTHER' | null {
+  const own = k.wards?.own ?? null
+  const others = k.wards?.others ?? []
+  if (c.localGovCode) {
+    if (own && c.localGovCode === own.code) return 'OWN'
+    if (others.some((w) => w.code === c.localGovCode)) return 'OTHER'
+  }
+  const all = [...(own ? [own] : []), ...others].map((w) => w.name).filter((n) => n.length > 0)
+  if (all.length === 0) return null
+  const escaped = [...new Set(all)].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const found = new Set(c.name.normalize('NFKC').match(new RegExp(escaped.join('|'), 'gu')) ?? [])
+  if (own && found.has(own.name)) return 'OWN'
+  return found.size > 0 ? 'OTHER' : null
+}
+
+// 個人の相談で、AI に見せる地域の公的な窓口か(#173)。種類が一覧にあるもの(事業者向け・法テラスなどの埋め草は除く)
+export function isLocalGovWindow(c: SuggestCandidate, k: SuggestCase): boolean {
+  return k.subject === 'PERSON'
+    && c.kind === 'PUBLIC_WINDOW'
+    && c.categories.some((cat) => cat in LOCAL_GOV_WINDOW_TYPES)
+    && servesHome(c, k)
+}
+
+// 地域の公的な窓口を種類ごとに 1 つにし、相談者の近くのものを残す(政令市の区の窓口 > 市区町村の窓口 > 都道府県の窓口)
+export function pickLocalGovWindows(windows: readonly RankedCandidate[], k: Pick<SuggestCase, 'municipalityCodes' | 'wards'>): RankedCandidate[] {
+  const own = k.municipalityCodes?.[0] ?? null
+  const closeness = (c: SuggestCandidate) => (own && c.localGovCode === own ? 0 : wardOfWindow(c, k) === 'OWN' ? 0 : c.serviceScope === 'MUNICIPALITY' ? 1 : 2)
+  const sorted = [...windows].sort((a, b) => closeness(a.candidate) - closeness(b.candidate) || a.candidate.name.localeCompare(b.candidate.name, 'ja'))
+  const seen = new Set<string>()
+  const result: RankedCandidate[] = []
+  for (const r of sorted) {
+    const type = r.candidate.categories.find((cat) => cat in LOCAL_GOV_WINDOW_TYPES) ?? ''
+    if (seen.has(type)) continue
+    seen.add(type)
+    result.push(r)
+    if (result.length >= LOCAL_GOV_AI_LIMIT) break
+  }
+  return result
+}
+
 // 緊急の相談でも AI に見せない全国の電話窓口の種類(総合の電話相談 = よりそいホットライン。#160)
 const EXCLUDED_HOTLINE_CATEGORIES = new Set(['GENERAL_CONSULTATION_HOTLINE'])
 
@@ -237,17 +306,17 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
   for (const c of candidates) {
     if (seen.has(c.id)) continue
     seen.add(c.id)
-    const tier = isOrganizationCandidate(c, k) ? 'ORGANIZATION' : isPublicFallback(c, k) ? 'PUBLIC' : isUrgentHotline(c, k) ? 'HOTLINE' : null
+    const tier = isOrganizationCandidate(c, k) ? 'ORGANIZATION' : isPublicFallback(c, k) ? 'PUBLIC' : isLocalGovWindow(c, k) ? 'LOCAL_GOV' : isUrgentHotline(c, k) ? 'HOTLINE' : null
     if (!tier) continue
     const score = relevanceScore(c, k)
     // 埋め草の公的な窓口も相談の大項目と合うものだけ(命にかかわる相談に法テラスを出さない)。
     // ただし会社の相談の事業者向けの窓口は、指標が付かなくても出す(経営の相談はどれも受けるため)。
-    // 緊急の電話窓口は大項目で絞らず、AI が相談と見比べて選ぶ
+    // 緊急の電話窓口と地域の公的な窓口は大項目で絞らず(窓口には指標が付いていない)、AI が相談と見比べて選ぶ
     const businessForCompany = tier === 'PUBLIC' && k.subject === 'COMPANY' && c.categories.some((cat) => (BUSINESS_WINDOW_CATEGORIES as readonly string[]).includes(cat))
-    if (score === 0 && !businessForCompany && tier !== 'HOTLINE') continue
+    if (score === 0 && !businessForCompany && tier !== 'HOTLINE' && tier !== 'LOCAL_GOV') continue
     scored.push({ candidate: c, score, tier })
   }
-  const order = (r: RankedCandidate) => (r.tier === 'ORGANIZATION' ? 0 : r.tier === 'PUBLIC' ? 1 : 2)
+  const order = (r: RankedCandidate) => (r.tier === 'ORGANIZATION' ? 0 : r.tier === 'PUBLIC' ? 1 : r.tier === 'LOCAL_GOV' ? 2 : 3)
   scored.sort((a, b) => order(a) - order(b) || b.score - a.score || a.candidate.name.localeCompare(b.candidate.name, 'ja'))
   const names = new Set<string>()
   const ranked = scored.filter((r) => {
@@ -259,8 +328,9 @@ export function rankCandidates(candidates: readonly SuggestCandidate[], k: Sugge
   const organizations = ranked.filter((r) => r.tier === 'ORGANIZATION')
   const publics = ranked.filter((r) => r.tier === 'PUBLIC')
   const hotlines = ranked.filter((r) => r.tier === 'HOTLINE')
+  const localGovs = pickLocalGovWindows(ranked.filter((r) => r.tier === 'LOCAL_GOV'), k)
   // 公的な窓口は民間の数にかかわらず後ろに残す(AI が民間の候補を合わないと見たときに埋められるように。京都の会社の資金繰りで 0 件になった)
-  return [...organizations, ...publics.slice(0, SUGGESTION_COUNT), ...hotlines]
+  return [...organizations, ...publics.slice(0, SUGGESTION_COUNT), ...localGovs, ...hotlines]
 }
 
 // AI が選んだもの(候補の中の id だけ・重なりなし)を先に並べる。
@@ -278,22 +348,38 @@ export function pickSuggestions(ranked: readonly RankedCandidate[], aiPicks: rea
   const byId = new Map(ranked.map((r) => [r.candidate.id, r]))
   const picked: Suggestion[] = []
   const usedClasses = new Set<string>()
+  let localGovCount = 0
   for (const p of aiPicks ?? []) {
     if (picked.length >= SUGGESTION_COUNT) break
     const r = byId.get(p.id)
     if (!r || picked.some((s) => s.id === p.id)) continue
     const cls = hotlineClass(r)
     if (cls && usedClasses.has(cls)) continue
+    // 地域の公的な窓口は 1 つまで(#173。AI への指示でも伝えるが、選んだあとにも絞る)
+    if (r.tier === 'LOCAL_GOV' && localGovCount >= LOCAL_GOV_WINDOW_LIMIT) continue
     if (cls) usedClasses.add(cls)
+    if (r.tier === 'LOCAL_GOV') localGovCount += 1
     picked.push({ id: p.id, rank: picked.length + 1, reason: p.reason, method: 'AI' })
   }
-  const fill = aiPicks === null ? ranked.filter((r) => r.tier !== 'HOTLINE') : ranked.filter((r) => r.tier === 'PUBLIC')
+  // 地域の公的な窓口は、相談に合うかを決まりでは見られないので埋め草にしない
+  const fill = aiPicks === null ? ranked.filter((r) => r.tier !== 'HOTLINE' && r.tier !== 'LOCAL_GOV') : ranked.filter((r) => r.tier === 'PUBLIC')
   for (const r of fill) {
     if (picked.length >= SUGGESTION_COUNT) break
     if (picked.some((s) => s.id === r.candidate.id)) continue
     picked.push({ id: r.candidate.id, rank: picked.length + 1, reason: null, method: 'RULE' })
   }
-  return picked
+  return localGovAfterOrganizations(picked, byId)
+}
+
+// 地域の公的な窓口を、民間の支援団体の後ろに回す(ほかの並びは変えない)。順位を振り直す
+export function localGovAfterOrganizations(picked: readonly Suggestion[], byId: ReadonlyMap<string, RankedCandidate>): Suggestion[] {
+  const tierOf = (s: Suggestion) => byId.get(s.id)?.tier
+  const lastOrg = picked.reduce((last, s, i) => (tierOf(s) === 'ORGANIZATION' ? i : last), -1)
+  const moved = picked.filter((s, i) => !(tierOf(s) === 'LOCAL_GOV' && i < lastOrg))
+  const local = picked.filter((s, i) => tierOf(s) === 'LOCAL_GOV' && i < lastOrg)
+  const at = moved.findIndex((s) => s === picked[lastOrg]) + 1
+  const ordered = lastOrg >= 0 ? [...moved.slice(0, at), ...local, ...moved.slice(at)] : moved
+  return ordered.map((s, i) => ({ ...s, rank: i + 1 }))
 }
 
 // 札に出す所在: 全国の団体は NATIONWIDE、相談者と違う都道府県の団体はその都道府県のコード、同じ都道府県なら null(#148)

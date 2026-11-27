@@ -11,6 +11,7 @@ import { fenceConsultation } from '@/lib/aiSafety'
 import { maskPii } from '@/lib/pii'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { caseBodyForAi, type SubjectType } from '@/lib/domain/intake'
+import { LOCAL_GOV_WINDOW_CATEGORIES, localGovWindowDescription, municipalityCodesOf, shortWardName } from '@/lib/domain/localGovWindows'
 import {
   AI_CANDIDATE_LIMIT,
   NON_MUNICIPAL_PUBLIC_CATEGORIES,
@@ -25,7 +26,7 @@ import {
 import { buildSuggestPrompt, parseSuggestPicks } from '@/lib/ai/prompts/suggestOrganizations'
 import { AFTER_RESPONSE_AI_TIMEOUT_MS } from './caseAi'
 
-const CANDIDATE_COLUMNS = 'id, kind, categories, name, prefecture_code, service_scope, service_codes, accepts_consultation, claim_status, org_type, consult_indicators, sdgs_goals, consult_targets, consult_subjects, consult_channels, consult_summary'
+const CANDIDATE_COLUMNS = 'id, kind, categories, name, prefecture_code, local_gov_code, service_scope, service_codes, accepts_consultation, claim_status, org_type, consult_indicators, sdgs_goals, consult_targets, consult_subjects, consult_channels, consult_summary'
 // 指標の重なりで拾う候補の数と、意味の近さで拾う候補の数(決まりで並べ直す前)
 const INDICATOR_FETCH_LIMIT = 60
 const EMBEDDING_FETCH_LIMIT = 40
@@ -38,6 +39,7 @@ type CandidateRow = {
   categories: string[]
   name: string
   prefecture_code: string | null
+  local_gov_code: string | null
   service_scope: string
   service_codes: string[]
   accepts_consultation: string
@@ -62,6 +64,7 @@ type CaseRow = {
   urgency: string | null
   description_free: string | null
   locale: string | null
+  municipality_code: string | null
   suggestions_generated_at: string | null
 }
 
@@ -72,6 +75,7 @@ function toCandidate(r: CandidateRow): SuggestCandidate {
     categories: r.categories ?? [],
     name: r.name,
     prefectureCode: r.prefecture_code,
+    localGovCode: r.local_gov_code,
     serviceScope: r.service_scope,
     serviceCodes: r.service_codes ?? [],
     acceptsConsultation: r.accepts_consultation,
@@ -84,6 +88,15 @@ function toCandidate(r: CandidateRow): SuggestCandidate {
     channels: r.consult_channels ?? [],
     similarity: null,
   }
+}
+
+// 地域の公的な窓口の受け持ちの条件(#173): 相談者の都道府県の窓口と、相談者の市区町村(政令市の区は市も)の窓口。
+// 決まり(servesHome)で同じ条件を見直すので、ここは引きすぎてもよい
+function localGovFilter(regionCode: string, municipalityCodes: readonly string[]): string {
+  const prefecture = `and(service_scope.eq.PREFECTURE,prefecture_code.eq.${regionCode})`
+  const codes = municipalityCodes.filter((c) => /^\d{6}$/.test(c))
+  if (codes.length === 0) return prefecture
+  return `${prefecture},and(service_scope.eq.MUNICIPALITY,or(service_codes.ov.{${codes.join(',')}},local_gov_code.in.(${codes.join(',')})))`
 }
 
 // 地域の条件(全国・相談の都道府県)。都道府県で受けている団体は prefecture_code か service_codes に入っている
@@ -108,7 +121,8 @@ async function fetchCandidates(k: SuggestCase, body: string): Promise<{ rows: Ca
   const base = () => supabaseAdmin.from('directory_entries').select(CANDIDATE_COLUMNS).eq('visibility', 'PUBLIC').or(regionFilter(region))
   const goals = goalsOf(k.indicators)
   const embedding = (k.regionCountry ?? 'JP') === 'JP' ? await embedConsultation(body) : null
-  const [byIndicators, byEmbedding, publics, hotlines] = await Promise.all([
+  const wantsLocalGov = k.subject === 'PERSON' && region !== null && (k.regionCountry ?? 'JP') === 'JP'
+  const [byIndicators, byEmbedding, publics, hotlines, localGovs] = await Promise.all([
     // 指標・大項目が重なる民間の団体を、重なりの多い順に(全国から。ほかの都道府県は遠隔で受けている団体だけ)
     k.indicators.length > 0 && (k.regionCountry ?? 'JP') === 'JP'
       ? supabaseAdmin.rpc('match_directory_by_indicators', { p_indicators: k.indicators, p_goals: goals, p_region: region, p_limit: INDICATOR_FETCH_LIMIT })
@@ -121,8 +135,13 @@ async function fetchCandidates(k: SuggestCase, body: string): Promise<{ rows: Ca
     base().in('kind', ['PUBLIC_WINDOW', 'NATIONAL_HOTLINE']).overlaps('categories', [...NON_MUNICIPAL_PUBLIC_CATEGORIES]).limit(50),
     // 緊急と判定した相談では、全国の電話窓口も AI に見せる
     k.urgent ? base().eq('kind', 'NATIONAL_HOTLINE').limit(50) : Promise.resolve({ data: [], error: null }),
+    // 個人の相談では、相談者の市区町村と都道府県の公的な窓口も AI に見せる(#173)
+    wantsLocalGov
+      ? supabaseAdmin.from('directory_entries').select(CANDIDATE_COLUMNS).eq('visibility', 'PUBLIC').eq('kind', 'PUBLIC_WINDOW')
+        .overlaps('categories', LOCAL_GOV_WINDOW_CATEGORIES).or(localGovFilter(region, k.municipalityCodes ?? [])).limit(200)
+      : Promise.resolve({ data: [], error: null }),
   ])
-  const failed = [byIndicators, byEmbedding, publics, hotlines].find((r) => r.error)
+  const failed = [byIndicators, byEmbedding, publics, hotlines, localGovs].find((r) => r.error)
   if (failed?.error) throw failed.error
   const similarity = new Map(((byEmbedding.data ?? []) as { id: string; similarity: number }[]).map((r) => [r.id, r.similarity]))
   const orgIds = [...new Set([...((byIndicators.data ?? []) as { id: string }[]).map((r) => r.id), ...similarity.keys()])]
@@ -131,7 +150,7 @@ async function fetchCandidates(k: SuggestCase, body: string): Promise<{ rows: Ca
     : { data: [], error: null }
   if (orgError) throw orgError
   return {
-    rows: [...((orgRows ?? []) as CandidateRow[]), ...((publics.data ?? []) as CandidateRow[]), ...((hotlines.data ?? []) as CandidateRow[])],
+    rows: [...((orgRows ?? []) as CandidateRow[]), ...((publics.data ?? []) as CandidateRow[]), ...((hotlines.data ?? []) as CandidateRow[]), ...((localGovs.data ?? []) as CandidateRow[])],
     similarity,
   }
 }
@@ -139,6 +158,7 @@ async function fetchCandidates(k: SuggestCase, body: string): Promise<{ rows: Ca
 // AI に見せる団体の地域の書き方
 function areaLabel(r: RankedCandidate, regionCode: string | null): string {
   if (r.tier === 'HOTLINE') return '全国の電話窓口'
+  if (r.tier === 'LOCAL_GOV') return r.candidate.serviceScope === 'MUNICIPALITY' ? '相談者の市区町村の公的な窓口' : '相談者の都道府県の公的な窓口'
   if (r.candidate.serviceScope === 'NATIONWIDE') return '全国'
   if (regionCode && (r.candidate.prefectureCode === regionCode || r.candidate.serviceCodes.includes(regionCode))) return '相談と同じ都道府県'
   return 'ほかの都道府県(電話やオンラインなどで相談できる)'
@@ -151,8 +171,12 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
   const ranked = rankCandidates(rows.map((r) => ({ ...toCandidate(r), similarity: similarity.get(r.id) ?? null })), k)
 
   let aiPicks: { id: string; reason: string | null }[] | null = null
-  // 民間・公的な窓口の上位に、緊急の電話窓口(あれば全部)を足して AI に見せる
-  const forAi = [...ranked.filter((r) => r.tier !== 'HOTLINE').slice(0, AI_CANDIDATE_LIMIT), ...ranked.filter((r) => r.tier === 'HOTLINE')]
+  // 民間・公的な窓口の上位に、地域の公的な窓口(種類ごとに 1 つ)と緊急の電話窓口(あれば全部)を足して AI に見せる
+  const forAi = [
+    ...ranked.filter((r) => r.tier === 'ORGANIZATION' || r.tier === 'PUBLIC').slice(0, AI_CANDIDATE_LIMIT),
+    ...ranked.filter((r) => r.tier === 'LOCAL_GOV'),
+    ...ranked.filter((r) => r.tier === 'HOTLINE'),
+  ]
   // 民間の団体か緊急の電話窓口があるときだけ AI に見比べさせる(公的な窓口だけなら決まりの並びで足りる)
   if (forAi.some((r) => r.tier !== 'PUBLIC')) {
     const prompt = buildSuggestPrompt({
@@ -163,7 +187,8 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
       candidates: forAi.map((r) => ({
         id: r.candidate.id,
         name: r.candidate.name,
-        summary: byId.get(r.candidate.id)?.consult_summary ?? null,
+        // 地域の公的な窓口には団体の調べが無いので、窓口の種類の説明を渡す
+        summary: byId.get(r.candidate.id)?.consult_summary ?? (r.tier === 'LOCAL_GOV' ? localGovWindowDescription(r.candidate.categories) : null),
         targets: r.candidate.targets,
         channels: r.candidate.channels,
         area: areaLabel(r, k.regionCode),
@@ -176,11 +201,32 @@ export async function computeSuggestions(k: SuggestCase, body: string, locale: s
   return { picks: pickSuggestions(ranked, aiPicks), ranked, aiUsed: aiPicks !== null }
 }
 
+// 相談者の市区町村のコードの並び(政令市の区なら区と市)と、政令市の区(自分の区とほかの区)。分からなければ空
+export async function municipalityContextFor(code: string | null): Promise<Pick<SuggestCase, 'municipalityCodes' | 'wards'>> {
+  if (!code) return { municipalityCodes: [] }
+  const { data, error } = await supabaseAdmin.from('municipalities').select('code, name, kind, parent_code').eq('code', code).maybeSingle()
+  if (error) throw error
+  if (!data) return { municipalityCodes: [] }
+  const parent = (data.parent_code as string | null) ?? null
+  const city = data.kind === 'DESIGNATED_CITY' ? (data.code as string) : parent
+  const municipalityCodes = municipalityCodesOf(data.code as string, parent)
+  if (!city) return { municipalityCodes }
+  const [{ data: cityRow, error: cityError }, { data: wardRows, error: wardError }] = await Promise.all([
+    supabaseAdmin.from('municipalities').select('name').eq('code', city).maybeSingle(),
+    supabaseAdmin.from('municipalities').select('code, name').eq('parent_code', city),
+  ])
+  if (cityError) throw cityError
+  if (wardError) throw wardError
+  const cityName = (cityRow?.name as string | undefined) ?? ''
+  const wards = (wardRows ?? []).map((w) => ({ code: w.code as string, name: shortWardName(w.name as string, cityName) }))
+  return { municipalityCodes, wards: { own: wards.find((w) => w.code === data.code) ?? null, others: wards.filter((w) => w.code !== data.code) } }
+}
+
 // 提案を作って残す。作った(0 件を含む)なら true、ほかの処理が先に作っていた・対象外なら false
 export async function generateSuggestions(caseId: string): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from('cases')
-    .select('id, status, subject_type, region_country, region_code, intake_qna, is_minor, urgency, description_free, locale, suggestions_generated_at')
+    .select('id, status, subject_type, region_country, region_code, municipality_code, intake_qna, is_minor, urgency, description_free, locale, suggestions_generated_at')
     .eq('id', caseId)
     .single()
   if (error) throw error
@@ -188,7 +234,7 @@ export async function generateSuggestions(caseId: string): Promise<boolean> {
   if (c.suggestions_generated_at || c.status !== 'OPEN') return false
 
   const { picks } = await computeSuggestions(
-    { subject: c.subject_type, regionCountry: c.region_country, regionCode: c.region_code, indicators: c.intake_qna?.indicators ?? [], isMinor: c.is_minor === true, urgent: c.urgency === 'High' },
+    { subject: c.subject_type, regionCountry: c.region_country, regionCode: c.region_code, ...(await municipalityContextFor(c.municipality_code)), indicators: c.intake_qna?.indicators ?? [], isMinor: c.is_minor === true, urgent: c.urgency === 'High' },
     caseBodyForAi({ description: c.description_free ?? '', since: c.intake_qna?.since, wish: c.intake_qna?.wish }),
     c.locale ?? 'ja',
   )
