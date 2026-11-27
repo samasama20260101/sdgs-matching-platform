@@ -215,6 +215,7 @@
     "toSupport": "Ir a la parte de apoyar",
     "becomeSupporter": "Apoyar también",
     "becomeSupporterNote": "Con la misma cuenta",
+    "toContact": "Enviar una opinión o pregunta a samasama",
     "account": "Cuenta",
     "signOut": "Salir",
     "textSize": "Tamaño del texto",
@@ -235,7 +236,7 @@
   },
   "contact": {
     "title": "Contacto",
-    "lead": "Avísanos si tienes preguntas, si tu consulta no avanza o si tienes problemas con alguien que te apoya.",
+    "lead": "Avísanos si tienes preguntas, si tu consulta no avanza, si tienes problemas con alguien que te apoya o si quieres darnos tu opinión sobre la app.",
     "name": "Nombre",
     "email": "Correo electrónico",
     "organization": "Organización",
@@ -244,6 +245,7 @@
     "choose": "Elige",
     "categories": {
       "aboutService": "Sobre el servicio",
+      "feedback": "Opiniones e ideas sobre la app",
       "joinAsSupporter": "Participar como organización de apoyo",
       "media": "Prensa y medios",
       "other": "Otro",

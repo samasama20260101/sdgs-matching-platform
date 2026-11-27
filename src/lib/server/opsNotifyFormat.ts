@@ -2,11 +2,13 @@
 //   - 載せる: 番号・主体(会社・地域はその名前)・緊急/機微/18歳未満の印・分野(大項目)・AI が選んだ指標・入口・言語・国・運営の画面へのリンク
 //   - 載せない: 本文・呼び名・都道府県より細かい地域。機微な相談と18歳未満の相談は、指標も載せない(分野まで)
 //   - AI で分類できず機微として扱った相談は、そう書き添える(運営が確かめて直せるように。#133)
+//   - お問い合わせは、番号・内容の種類(一覧にあるものだけ)・ログインした人からか・運営の画面へのリンクだけ。本文・名前・メールは載せない(#175)
 // 中身はリンク先の運営の画面(2つ目の確認まで済んだログインだけが開ける)で読む(2026-11-06 岡本さん「URL と相談の類をもう少し細かく」)
 import sdgsJa from '../../../messages/ja/sdgs.json'
 import supportJa from '../../../messages/ja/support.json'
 import { INTAKE_CATEGORIES, NEIGHBOR_CATEGORY } from '@/lib/constants/intakeIndicators'
 import { optionsFor, shortTitle, type SubjectType } from '@/lib/domain/intake'
+import { knownContactCategory } from '@/lib/domain/contactCategories'
 
 export type OpsCaseRef = { displayId: string; caseId: string }
 
@@ -41,6 +43,8 @@ export type OpsEvent =
       regionName: string | null
     }
   | { kind: 'UNMATCHED'; cases: OpsCaseRef[] }
+  // お問い合わせ。category は送られたままの文字(一覧にないものは名前を出さない)。member = ログインした人から
+  | { kind: 'NEW_INQUIRY'; displayId: string; category: string; member: boolean }
 
 const SUBJECT_LABEL: Record<SubjectType, string> = { PERSON: '個人', COMPANY: '会社', COMMUNITY: '地域', NATION: '国' }
 const LOCALE_LABEL: Record<string, string> = { ja: '日本語', en: '英語', es: 'スペイン語' }
@@ -57,6 +61,10 @@ export function adminCaseUrl(origin: string, caseId: string): string {
 
 export function adminVettingUrl(origin: string, organizationDisplayId: string): string {
   return `${origin.replace(/\/$/, '')}/admin/vetting#${organizationDisplayId}`
+}
+
+export function adminInquiriesUrl(origin: string): string {
+  return `${origin.replace(/\/$/, '')}/admin/inquiries`
 }
 
 // 分野(大項目)の名前。会社・地域は主体ごとの名前、個人と、主体ごとの名前がない番号は個人の大項目の名前。
@@ -132,10 +140,16 @@ export function formatOpsEvent(event: OpsEvent, origin: string): string {
         ...(rest > 0 ? [`ほか ${rest} 件`] : []),
       ].join('\n')
     }
+    case 'NEW_INQUIRY':
+      return [
+        `お問い合わせが届きました ${event.displayId}`,
+        `種類: ${knownContactCategory(event.category) ?? '一覧にない種類'}(${event.member ? 'ログインした人から' : 'ログインしていない人から'})`,
+        adminInquiriesUrl(origin),
+      ].join('\n')
   }
 }
 
-// 知らせの種類ごとの行き先。相談のこと(新しい相談・つなぎ先の同意・申し出のない相談)は Discord の「新着sos」、
+// 知らせの種類ごとの行き先。相談のこと(新しい相談・つなぎ先の同意・申し出のない相談)とお問い合わせは Discord の「新着sos」、
 // 団体の申し込みは「サポーター申請」に流す。申し込み用の Webhook がなければ相談のほうに流す
 export type OpsWebhookEnv = { DISCORD_OPS_WEBHOOK_URL?: string; DISCORD_OPS_APPLICATION_WEBHOOK_URL?: string }
 

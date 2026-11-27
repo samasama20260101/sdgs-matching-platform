@@ -215,6 +215,7 @@
     "toSupport": "Go to the supporter side",
     "becomeSupporter": "Become a supporter too",
     "becomeSupporterNote": "With the same account",
+    "toContact": "Send feedback or a question to the samasama team",
     "account": "Account",
     "signOut": "Sign out",
     "textSize": "Text size",
@@ -235,7 +236,7 @@
   },
   "contact": {
     "title": "Contact us",
-    "lead": "Let the samasama team know if you have questions, if your request isn't moving, or if you have trouble with a supporter.",
+    "lead": "Let the samasama team know if you have questions, if your request isn't moving, if you have trouble with a supporter, or if you have feedback on the app.",
     "name": "Name",
     "email": "Email address",
     "organization": "Organization",
@@ -244,6 +245,7 @@
     "choose": "Choose",
     "categories": {
       "aboutService": "About the service",
+      "feedback": "Feedback and ideas for the app",
       "joinAsSupporter": "Join as a support organization",
       "media": "Press and media",
       "other": "Other",
