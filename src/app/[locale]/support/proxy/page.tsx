@@ -9,7 +9,7 @@ import { apiFetch, ApiError } from '@/lib/client/api'
 import { Link } from '@/i18n/navigation'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
-import { Button, Card, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip } from '@/components/app/ui'
+import { Button, Card, choiceOff, choiceOn, cx, ErrorNote, Heading, Lead, TextArea, TextField, Tip } from '@/components/app/ui'
 
 function Inner() {
   const t = useTranslations('support.proxy')
@@ -76,7 +76,7 @@ function Inner() {
                     <span className="text-t13 font-bold">{t('minor')}</span>
                     <div className="flex gap-2">
                       {[true, false].map((v) => (
-                        <button key={String(v)} type="button" aria-pressed={minor === v} onClick={() => setMinor(v)} className={cx('min-h-[44px] flex-1 rounded-tool text-t14 font-bold', minor === v ? 'border-2 border-night bg-lamp-soft' : 'border border-line-strong bg-paper')}>
+                        <button key={String(v)} type="button" aria-pressed={minor === v} onClick={() => setMinor(v)} className={cx('min-h-[44px] flex-1 rounded-tool text-t14 font-bold', minor === v ? choiceOn : choiceOff)}>
                           {v ? t('yes') : t('no')}
                         </button>
                       ))}

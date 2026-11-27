@@ -11,7 +11,7 @@ import { Link } from '@/i18n/navigation'
 import { THANKS_WORDS, type ThanksWord } from '@/lib/domain/offers'
 import { AppFrame } from '@/components/app/AppShell'
 import { RequireMe } from '@/components/app/RequireMe'
-import { Button, Card, Chip, cx, ErrorNote, Heading, Lead, SectionLabel, Spinner, Tip } from '@/components/app/ui'
+import { Button, Card, Chip, chipOff, chipOn, cx, ErrorNote, Heading, Lamps, Lead, SectionLabel, Spinner, Tip } from '@/components/app/ui'
 import { Thread } from '@/components/thread/Thread'
 import { Referrals } from '@/components/consult/Referrals'
 import type { ConsulteeCaseView, ConsulteeOffer } from '@/lib/server/consulteeView'
@@ -25,16 +25,8 @@ function Steps({ c }: { c: ConsulteeCaseView }) {
   const pending = c.offers.some((o) => o.status === 'PENDING')
   const stage = c.status === 'RESOLVED' ? 4 : c.status === 'MATCHED' ? 3 : pending ? 2 : 1
   const labels = ['written', 'delivered', 'offers', 'together', 'resolved'] as const
-  return (
-    <ol className="m-0 flex list-none gap-1 p-0" aria-label={t('stepsLabel')}>
-      {labels.map((key, i) => (
-        <li key={key} className="flex flex-1 flex-col items-center gap-1">
-          <span className={cx('h-1.5 w-full rounded-full', i <= stage ? 'bg-night' : 'bg-line')} />
-          <span className={cx('text-t11', i === stage ? 'font-bold text-ink' : 'text-mist')} aria-current={i === stage ? 'step' : undefined}>{t(`steps.${key}`)}</span>
-        </li>
-      ))}
-    </ol>
-  )
+  // 済んだ段といまの段に灯がともる(#171)
+  return <Lamps count={labels.length} lit={stage + 1} current={stage} labels={labels.map((key) => t(`steps.${key}`))} label={t('stepsLabel')} />
 }
 
 function OfferCard({ offer, canChoose, full, onAct }: { offer: ConsulteeOffer; canChoose: boolean; full: boolean; onAct: (action: 'accept' | 'decline') => Promise<void> }) {
@@ -141,7 +133,7 @@ function ThanksWords({ words, onChange }: { words: ThanksWord[]; onChange: (next
       {THANKS_WORDS.map((w) => {
         const on = words.includes(w)
         return (
-          <button key={w} type="button" aria-pressed={on} onClick={() => onChange(on ? words.filter((x) => x !== w) : [...words, w])} className={cx('min-h-[40px] rounded-full px-3 text-t13 font-bold', on ? 'bg-lamp text-ink' : 'border border-line-strong bg-paper text-ink-soft')}>
+          <button key={w} type="button" aria-pressed={on} onClick={() => onChange(on ? words.filter((x) => x !== w) : [...words, w])} className={cx('min-h-[40px] rounded-full px-3 text-t13 font-bold', on ? chipOn : chipOff)}>
             {tBadge(w)}
           </button>
         )

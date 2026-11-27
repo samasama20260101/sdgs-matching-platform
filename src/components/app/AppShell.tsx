@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
+import { LineIcon } from './LineIcon'
 import { Mark } from './Mark'
 import { useSession, type Mode } from './SessionProvider'
 import { cx, Screen, type Tone } from './ui'
@@ -48,7 +49,7 @@ export function AppHeader() {
       <Link href={state.status === 'ready' ? '/home' : '/'} className="flex shrink-0 items-center gap-2.5 text-ink no-underline">
         <Mark />
         {/* 切り替えが出る人は、スマホの幅では名前を印だけにする(390px で名前と切り替えが折り返す) */}
-        <span className={cx('whitespace-nowrap font-heading text-t16 font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
+        <span className={cx('whitespace-nowrap font-logo text-t16 font-bold', canSupport && 'max-sm:sr-only')}>{t('brand')}</span>
       </Link>
       <div className="flex min-w-0 items-center gap-1">
         {canSupport && <ModeSwitch />}
@@ -68,18 +69,19 @@ export function AppHeader() {
   )
 }
 
+// アイコンはまるい線で、選んでいるタブだけ黄色の灯がともる(#171、2026-11-27 岡本さんが案C の黄色に決定)
 const CONSULT_TABS = [
-  { key: 'home', href: '/home' },
-  { key: 'talk', href: '/talk' },
-  { key: 'learn', href: '/learn' },
-  { key: 'me', href: '/me' },
+  { key: 'home', href: '/home', icon: 'home' },
+  { key: 'talk', href: '/talk', icon: 'talk' },
+  { key: 'learn', href: '/learn', icon: 'learn' },
+  { key: 'me', href: '/me', icon: 'me' },
 ] as const
 
 const SUPPORT_TABS = [
-  { key: 'home', href: '/support' },
-  { key: 'find', href: '/support/find' },
-  { key: 'talk', href: '/support/talk' },
-  { key: 'me', href: '/me' },
+  { key: 'home', href: '/support', icon: 'home' },
+  { key: 'find', href: '/support/find', icon: 'find' },
+  { key: 'talk', href: '/support/talk', icon: 'talk' },
+  { key: 'me', href: '/me', icon: 'me' },
 ] as const
 
 export function BottomTabs() {
@@ -92,18 +94,21 @@ export function BottomTabs() {
   return (
     <nav aria-label={t('label')} className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur">
       <ul className="mx-auto flex max-w-[560px] justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {tabs.map((tab) => (
-          <li key={tab.key} className="flex-1">
-            <Link
-              href={tab.href}
-              aria-current={active(tab.href) ? 'page' : undefined}
-              className={cx('flex min-h-[56px] flex-col items-center justify-center text-t12 font-bold no-underline', active(tab.href) ? 'text-night' : 'text-mist')}
-            >
-              <span className={cx('mb-1 h-1 w-6 rounded-full', active(tab.href) ? 'bg-lamp' : 'bg-transparent')} aria-hidden />
-              {t(tab.key)}
-            </Link>
-          </li>
-        ))}
+        {tabs.map((tab) => {
+          const on = active(tab.href)
+          return (
+            <li key={tab.key} className="flex-1">
+              <Link
+                href={tab.href}
+                aria-current={on ? 'page' : undefined}
+                className={cx('flex min-h-[60px] flex-col items-center justify-center gap-[3px] text-t12 font-bold no-underline', on ? 'text-night' : 'text-mist')}
+              >
+                <LineIcon name={tab.icon} lit={on} />
+                {t(tab.key)}
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </nav>
   )

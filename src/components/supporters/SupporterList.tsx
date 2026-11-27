@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { useReadyMe } from '@/components/app/SessionProvider'
-import { Chip, cx } from '@/components/app/ui'
+import { Chip, chipOff, chipOn, cx } from '@/components/app/ui'
 import { regionFirst, type PublicSupporterType } from '@/lib/domain/publicSupporter'
 
 export type SupporterCardData = {
@@ -47,7 +47,7 @@ export function SupporterList({ supporters }: { supporters: SupporterCardData[] 
             type="button"
             aria-pressed={type === key}
             onClick={() => { setType(key); setShown(PAGE) }}
-            className={cx('min-h-[40px] whitespace-nowrap rounded-full border px-3.5 text-t13 font-bold', type === key ? 'border-night bg-night text-white' : 'border-line bg-paper text-ink-soft')}
+            className={cx('min-h-[40px] whitespace-nowrap rounded-full px-3.5 text-t13 font-bold', type === key ? chipOn : chipOff)}
           >
             {key ? tType(key) : t('filterAll')}
           </button>

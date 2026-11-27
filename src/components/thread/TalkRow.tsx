@@ -32,7 +32,7 @@ export function TalkRow({ href, title, sub, last, viewer, resolved }: { href: st
         </span>
         {(turn === 'mine' || resolved) && (
           <span className="flex flex-wrap gap-1 pt-0.5">
-            {turn === 'mine' && !resolved && <Chip color="night">{t('yourTurn')}</Chip>}
+            {turn === 'mine' && !resolved && <Chip color="tomoshibi">{t('yourTurn')}</Chip>}
             {resolved && <Chip color="leaf">{t('resolved')}</Chip>}
           </span>
         )}

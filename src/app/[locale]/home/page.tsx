@@ -11,6 +11,7 @@ import { RequireMe } from '@/components/app/RequireMe'
 import { MyCases, useMyCaseTitle, type MyCaseItem } from '@/components/consult/MyCases'
 import { Card, Heading, SectionLabel } from '@/components/app/ui'
 import { talkTurn } from '@/lib/domain/talk'
+import { TomoshibiDot } from '@/components/app/LineIcon'
 
 function YourTurn({ items }: { items: MyCaseItem[] }) {
   const t = useTranslations('app.home')
@@ -27,7 +28,7 @@ function YourTurn({ items }: { items: MyCaseItem[] }) {
         <Link key={`${r.id}-${r.label}`} href={`/cases/${r.id}`} className="no-underline">
           <Card className="flex items-center justify-between gap-3 border-night p-3.5 text-ink">
             <span className="flex min-w-0 flex-col">
-              <span className="text-t13 font-bold text-night">{r.label}</span>
+              <span className="flex items-center gap-1.5 text-t13 font-bold text-night"><TomoshibiDot />{r.label}</span>
               <span className="truncate text-t14">{r.title}</span>
             </span>
             <span aria-hidden>›</span>

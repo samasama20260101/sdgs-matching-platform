@@ -5,7 +5,7 @@
 import { useCallback } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useLoad } from '@/lib/client/useLoad'
-import { cx, Spinner } from '@/components/app/ui'
+import { chipOff, chipOn, choiceOff, choiceOn, cx, Spinner } from '@/components/app/ui'
 import { regionLevelFor } from '@/lib/domain/serviceAreas'
 
 export type AreaChoice = { nationwide: boolean | null; regionCodes: string[] }
@@ -33,7 +33,7 @@ export function ServiceAreaPicker({ country, value, onChange, label }: { country
   const toggle = (code: string) => onChange({ ...value, regionCodes: value.regionCodes.includes(code) ? value.regionCodes.filter((c) => c !== code) : [...value.regionCodes, code] })
   const choice = (on: boolean, text: string, onClick: () => void) => (
     <button type="button" role="radio" aria-checked={on} onClick={onClick}
-      className={cx('min-h-[44px] flex-1 rounded-tool px-3 text-t13_5 font-bold', on ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+      className={cx('min-h-[44px] flex-1 rounded-tool px-3 text-t13_5 font-bold', on ? choiceOn : choiceOff)}>
       {text}
     </button>
   )
@@ -49,7 +49,7 @@ export function ServiceAreaPicker({ country, value, onChange, label }: { country
           <div className="flex flex-wrap gap-1.5">
             {(regions ?? []).map((r) => (
               <button key={r.code} type="button" aria-pressed={value.regionCodes.includes(r.code)} onClick={() => toggle(r.code)}
-                className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', value.regionCodes.includes(r.code) ? 'bg-night text-white' : 'border border-line bg-paper text-ink-soft')}>
+                className={cx('min-h-[36px] rounded-full px-3 text-t12_5 font-bold', value.regionCodes.includes(r.code) ? chipOn : chipOff)}>
                 {locale === 'ja' ? r.name_local : r.name_en}
               </button>
             ))}

@@ -12,7 +12,7 @@ import { canConsultAsOrganization } from '@/lib/domain/orgVetting'
 import { AppFrame } from '@/components/app/AppShell'
 import { OptionalMe } from '@/components/app/RequireMe'
 import { useSession } from '@/components/app/SessionProvider'
-import { Button, Card, ErrorNote, Heading, Lead, TextField, Tip } from '@/components/app/ui'
+import { Button, Card, choiceOff, choiceOn, cx, ErrorNote, Heading, Lead, TextField, Tip } from '@/components/app/ui'
 import { WriteFlow } from '@/components/consult/WriteFlow'
 import type { MeOrganizationFace } from '@/lib/client/meTypes'
 
@@ -159,10 +159,10 @@ function OrgStep({ subject, candidates, send, busy, renderRegister, refresh }: {
                 role="radio"
                 aria-checked={on}
                 onClick={() => { setPicked(o.organizationId); setRegistering(false) }}
-                className={`flex min-h-[56px] items-center justify-between rounded-[16px] border px-4 text-left ${on ? 'border-night bg-lamp-faint' : 'border-line bg-paper'}`}
+                className={cx('flex min-h-[56px] items-center justify-between rounded-[16px] px-4 text-left', on ? choiceOn : choiceOff)}
               >
                 <span className="text-t15 font-bold">{o.organizationName}</span>
-                <span aria-hidden className={`h-5 w-5 rounded-full border-2 ${on ? 'border-night bg-night' : 'border-line-strong'}`} />
+                <span aria-hidden className={cx('h-5 w-5 rounded-full border-2', on ? 'border-night bg-tomoshibi' : 'border-line-strong')} />
               </button>
             )
           })}

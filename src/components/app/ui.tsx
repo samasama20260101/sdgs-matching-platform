@@ -5,8 +5,17 @@
 import { useId, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslations } from 'next-intl'
+import { LineIcon } from './LineIcon'
 
 export type Tone = 'consult' | 'support'
+
+// 選んだもの = 灯がともる(#171、2026-11-27 岡本さん)。どの画面の選ぶものも、この 4 つのどれかで書く。
+// 小さな札(ありがとうの言葉・地域・種類・顔の切り替え)は灯の黄色で塗り、大きな選択肢は淡い灯の面に紺の枠。
+// 紺で塗る見た目は「相談する / 支える」の切り替えとタブの段だけに残す(選んだものではなく、いる場所なので)
+export const chipOn = 'border border-night bg-tomoshibi text-ink'
+export const chipOff = 'border border-line bg-paper text-ink-soft'
+export const choiceOn = 'border-2 border-night bg-tomoshibi-soft text-ink'
+export const choiceOff = 'border-[1.5px] border-line-strong bg-paper text-ink-soft'
 
 export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(' ')
@@ -26,12 +35,26 @@ export function StepBar({ label, step, total }: { label?: string; step: number; 
   return (
     <div className="flex flex-col gap-1">
       {label && <span className="text-t12 font-bold text-mist">{label}</span>}
-      <div className="flex gap-2" aria-hidden>
-        {Array.from({ length: total }, (_, i) => (
-          <span key={i} className={cx('h-1.5 flex-1 rounded-full', i < step ? 'bg-night' : 'bg-line')} />
-        ))}
-      </div>
+      <Lamps count={total} lit={step} />
     </div>
+  )
+}
+
+// 進み具合の灯。済んだ段といまの段に灯がともり、間を紺の線でつなぐ(#171)。labels を渡すと灯の下に名前を出す
+export function Lamps({ count, lit, labels, current, label }: { count: number; lit: number; labels?: string[]; current?: number; label?: string }) {
+  return (
+    <ol className="m-0 flex list-none p-0" aria-label={label} aria-hidden={labels ? undefined : true}>
+      {Array.from({ length: count }, (_, i) => (
+        <li key={i} className="flex flex-1 flex-col items-center gap-1" aria-current={current === i ? 'step' : undefined}>
+          <span className="flex w-full items-center" aria-hidden>
+            <span className={cx('h-0.5 flex-1', i === 0 ? 'bg-transparent' : i < lit ? 'bg-night' : 'bg-line')} />
+            <span className={cx('h-3.5 w-3.5 shrink-0 rounded-full border-2', i < lit ? 'border-night bg-tomoshibi' : 'border-line-strong bg-paper')} />
+            <span className={cx('h-0.5 flex-1', i === count - 1 ? 'bg-transparent' : i < lit - 1 ? 'bg-night' : 'bg-line')} />
+          </span>
+          {labels && <span className={cx('text-t11', current === i ? 'font-bold text-ink' : 'text-mist')}>{labels[i]}</span>}
+        </li>
+      ))}
+    </ol>
   )
 }
 
@@ -85,9 +108,11 @@ export function Card({ tone = 'consult', className, children }: { tone?: Tone; c
   )
 }
 
-export function Chip({ children, color = 'steel', className }: { children: ReactNode; color?: 'steel' | 'lamp' | 'dawn' | 'leaf' | 'coral' | 'night' | 'outline'; className?: string }) {
+export function Chip({ children, color = 'steel', className }: { children: ReactNode; color?: 'steel' | 'lamp' | 'tomoshibi' | 'dawn' | 'leaf' | 'coral' | 'night' | 'outline'; className?: string }) {
   const styles = {
     steel: 'bg-steel text-ink-soft',
+    // あなたの番(返事が来ている)の札。灯の黄色に墨の文字(#171)
+    tomoshibi: 'bg-tomoshibi text-ink',
     lamp: 'bg-lamp-soft text-ink',
     dawn: 'bg-dawn-soft text-dawn-ink',
     leaf: 'bg-leaf-soft text-leaf-ink',
@@ -172,11 +197,11 @@ export function Tip({ kind = 'info', label, children }: { kind?: 'info' | 'warn'
         onPointerLeave={(e) => e.pointerType === 'mouse' && setHovered(false)}
         className={cx(
           // 見た目は 22px の丸、押せる範囲は 44px
-          "relative inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-t12 font-bold before:absolute before:-inset-[11px] before:content-['']",
-          kind === 'warn' ? 'bg-coral-soft text-coral' : 'bg-steel text-night',
+          "relative inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full before:absolute before:-inset-[11px] before:content-['']",
+          kind === 'warn' ? 'text-coral' : 'text-night',
         )}
       >
-        {kind === 'warn' ? '!' : 'i'}
+        <LineIcon name={kind === 'warn' ? 'warn' : 'info'} size={22} />
       </button>
       {open && typeof document !== 'undefined' && createPortal(
         <span
@@ -242,8 +267,9 @@ export function Toggle({ checked, onChange, label, description, disabled }: { ch
         <span className="text-t14 font-bold">{label}</span>
         {description && <span className="text-t12 text-mist">{description}</span>}
       </span>
+      {/* オンにすると、つまみに灯がともる(#171) */}
       <span className={cx('relative h-[28px] w-[48px] shrink-0 rounded-full transition-colors', checked ? 'bg-night' : 'bg-[#BCC9D9]')}>
-        <span className={cx('absolute top-[4px] h-[20px] w-[20px] rounded-full bg-white transition-all', checked ? 'left-[24px]' : 'left-[4px]')} />
+        <span className={cx('absolute top-[4px] h-[20px] w-[20px] rounded-full transition-all', checked ? 'left-[24px] bg-tomoshibi' : 'left-[4px] bg-white')} />
       </span>
     </button>
   )
@@ -258,7 +284,11 @@ export function Spinner() {
   const t = useTranslations('app.common')
   return (
     <div role="status" className="flex items-center justify-center py-16 text-t13 text-mist">
-      <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-line-strong border-t-night" aria-hidden />
+      {/* ロゴのしずくの中で、灯がゆっくり明るくなる(#171) */}
+      <svg viewBox="0 0 24 24" width="20" height="20" className="mr-2 shrink-0" aria-hidden="true" focusable="false">
+        <path d="M12 2.6c-.4 0-.7.2-.9.5C8.7 6.5 5.2 11.2 5.2 14.6c0 4 3 6.9 6.8 6.9s6.8-2.9 6.8-6.9c0-3.4-3.5-8.1-5.9-11.5-.2-.3-.5-.5-.9-.5Z" fill="none" stroke="var(--color-night)" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx="12" cy="15.4" r="2.9" fill="var(--color-tomoshibi)" className="tomoshibi-pulse" />
+      </svg>
       {t('loading')}
     </div>
   )

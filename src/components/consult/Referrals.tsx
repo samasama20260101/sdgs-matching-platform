@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
 import { useLoad } from '@/lib/client/useLoad'
 import { Card, Chip, Tip } from '@/components/app/ui'
+import { LineIcon } from '@/components/app/LineIcon'
 import { telHref } from '@/lib/domain/tel'
 
 type Suggestion = {
@@ -60,7 +61,7 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
   }
 
   if (!data) return null
-  const action = 'inline-flex min-h-[44px] items-center text-t13 font-bold text-night no-underline'
+  const action = 'inline-flex min-h-[44px] items-center gap-1.5 text-t13 font-bold text-night no-underline'
   const sourcesOf = (entries: { id: string; attribution: string | null; sourceUrl: string }[]) => [...new Map(entries.map((e) => [e.attribution ?? e.sourceUrl, e])).values()]
   // 出典は札ごとに出さず、一覧の下に1回だけまとめる(PDL1.0・CC BY の表記の義務は一覧の単位で満たす)
   const sourceLine = (entries: { id: string; attribution: string | null; sourceUrl: string }[]) => (
@@ -116,8 +117,8 @@ export function Referrals({ caseId, canDecide, consented }: { caseId: string; ca
         )}
         {e.hours && <span className="text-t12_5 text-mist">{e.hours}</span>}
         <span className="flex flex-wrap items-center gap-x-4">
-          {tel && <a href={tel} className={action}>{t('call')}</a>}
-          {e.website && <a href={e.website} target="_blank" rel="noopener noreferrer" className={action}>{t('website')}</a>}
+          {tel && <a href={tel} className={action}><LineIcon name="phone" size={18} />{t('call')}</a>}
+          {e.website && <a href={e.website} target="_blank" rel="noopener noreferrer" className={action}><LineIcon name="external" size={18} />{t('website')}</a>}
           {canDecide && e.canShare && (
             agreed.has(e.id)
               ? <span className="inline-flex min-h-[44px] items-center text-t12_5 font-bold text-leaf">{t('agreed')}</span>

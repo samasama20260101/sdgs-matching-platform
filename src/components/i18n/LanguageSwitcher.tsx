@@ -3,7 +3,7 @@
 // 言語の切り替え。ヘッダーには翻訳の印だけを出し、押すとそれぞれの言語で書いた名前の一覧が開く
 // (どの言語の人にも同じ印で見つけられ、選ぶときは自分の言語の名前で選べる)。
 import { useEffect, useId, useRef, useState } from 'react';
-import { Check, Languages } from 'lucide-react';
+import { LineIcon } from '@/components/app/LineIcon';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing';
@@ -74,7 +74,7 @@ export function LanguageSwitcher() {
         onClick={() => setOpen((v) => !v)}
         className="flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-steel focus-visible:outline-2 focus-visible:outline-night"
       >
-        <Languages className="h-[22px] w-[22px]" strokeWidth={2} aria-hidden="true" />
+        <LineIcon name="language" size={22} />
       </button>
       {open && (
         <ul
@@ -92,7 +92,7 @@ export function LanguageSwitcher() {
                 className="flex min-h-[44px] w-full items-center justify-between gap-3 px-4 text-left text-t14 text-ink hover:bg-steel focus-visible:bg-steel focus-visible:outline-none"
               >
                 <span className={option === locale ? 'font-bold' : undefined}>{localeLabels[option]}</span>
-                {option === locale && <Check className="h-4 w-4 text-night" aria-hidden="true" />}
+                {option === locale && <LineIcon name="check" size={16} className="text-night" />}
               </button>
             </li>
           ))}
