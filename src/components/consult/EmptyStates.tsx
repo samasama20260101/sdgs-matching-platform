@@ -8,7 +8,8 @@ import { Link } from '@/i18n/navigation'
 import { Card } from '@/components/app/ui'
 import { LineIcon, TomoshibiDot } from '@/components/app/LineIcon'
 import { NamiaGlow } from '@/components/app/NamiaGlow'
-import { homeSupporterTiles, supporterInitial } from '@/lib/domain/emptyStates'
+import { homeSupporterTiles } from '@/lib/domain/emptyStates'
+import { SupporterAvatar } from '@/components/supporters/SupporterAvatar'
 import type { PublicSupporterType } from '@/lib/domain/publicSupporter'
 import type { NewsCategory } from '@/lib/constants/news'
 import { formatNewsDate } from '@/lib/news/format'
@@ -17,6 +18,7 @@ export type EmptyStateSupporter = {
   id: string
   name: string
   type: PublicSupporterType
+  photoUrl: string | null
   nationwide: boolean
   areas: { region_code: string; name_local: string; name_en: string }[]
 }
@@ -48,7 +50,7 @@ export function HowItGoes() {
   )
 }
 
-// 相談を受けている支援団体(見ている人の地域を先に 2 つ)。写真の登録は #178 で足すまで頭文字
+// 相談を受けている支援団体(見ている人の地域を先に 2 つ)。写真がない団体は頭文字(#178)
 export function SupporterTiles({ supporters, regionCode }: { supporters: EmptyStateSupporter[]; regionCode: string | null }) {
   const t = useTranslations('app.home.empty')
   const tList = useTranslations('app.supporters')
@@ -74,7 +76,7 @@ export function SupporterTiles({ supporters, regionCode }: { supporters: EmptySt
         return (
           <Link key={s.id} href={`/supporters/${s.id}`} className="no-underline">
             <Card className="flex items-center gap-3 px-3.5 py-3 text-ink">
-              <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-lamp-faint text-t16 font-bold text-night">{supporterInitial(s.name)}</span>
+              <SupporterAvatar name={s.name} photoUrl={s.photoUrl} />
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate text-t14 font-bold">{s.name}</span>
                 <span className="truncate text-t12 text-mist">{area ? `${tType(s.type)} ・ ${area}` : tType(s.type)}</span>

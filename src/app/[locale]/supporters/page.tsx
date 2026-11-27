@@ -28,6 +28,7 @@ export default async function SupportersPage({ params }: PageProps) {
     supporters = (await listPublicSupporters({ limit: 100 })).map((s) => ({
       id: s.id,
       name: s.name,
+      photoUrl: s.photoUrl,
       type: s.supporterType,
       nationwide: s.nationwide,
       areas: s.areas.map((a) => ({ region_code: a.region_code, name_local: a.name_local, name_en: a.name_en })),

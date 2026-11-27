@@ -6,6 +6,7 @@ import 'server-only'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { isListedSupporter, publicSupporterType, type PublicSupporterType } from '@/lib/domain/publicSupporter'
 import { effectiveServiceAreas } from '@/lib/domain/serviceAreas'
+import { photoUrlOf } from '@/lib/server/supporterPhotos'
 
 export type PublicArea = { region_code: string; country: string; name_local: string; name_en: string }
 export type PublicSupporter = {
@@ -13,6 +14,8 @@ export type PublicSupporter = {
   name: string
   supporterType: PublicSupporterType
   bio: string | null
+  // 団体の写真の公開のアドレス(#178)。なければ null(画面は頭文字)
+  photoUrl: string | null
   socialLinks: unknown
   createdAt: string
   resolvedCount: number
@@ -21,12 +24,12 @@ export type PublicSupporter = {
   areas: PublicArea[]
 }
 
-type OrgRow = { id: string; name: string; supporter_type: string | null; org_type: string | null; bio: string | null; social_links: unknown; created_at: string; application: unknown; prefecture: string | null; region_country: string | null; vetting_status: string; status: string }
+type OrgRow = { id: string; name: string; supporter_type: string | null; org_type: string | null; bio: string | null; photo_path: string | null; social_links: unknown; created_at: string; application: unknown; prefecture: string | null; region_country: string | null; vetting_status: string; status: string }
 
 export async function listPublicSupporters(opts: { ids?: string[]; limit?: number } = {}): Promise<PublicSupporter[]> {
   let q = supabaseAdmin
     .from('organizations')
-    .select('id, name, supporter_type, org_type, bio, social_links, created_at, application, prefecture, region_country, vetting_status, status')
+    .select('id, name, supporter_type, org_type, bio, photo_path, social_links, created_at, application, prefecture, region_country, vetting_status, status')
     .eq('status', 'ACTIVE')
     .eq('vetting_status', 'APPROVED')
     .order('created_at', { ascending: false })
@@ -74,6 +77,7 @@ export async function listPublicSupporters(opts: { ids?: string[]; limit?: numbe
       name: o.name,
       supporterType: publicSupporterType(o.supporter_type, o.org_type),
       bio: o.bio,
+      photoUrl: photoUrlOf(o.photo_path),
       socialLinks: o.social_links,
       createdAt: o.created_at,
       resolvedCount: resolved.get(o.id) ?? 0,

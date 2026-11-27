@@ -11,6 +11,7 @@ export async function getSupporterTileData(id: string): Promise<SupporterTileDat
   return {
     id: s.id,
     name: s.name,
+    photoUrl: s.photoUrl,
     supporterType: s.supporterType,
     createdAt: s.createdAt,
     bio: s.bio,

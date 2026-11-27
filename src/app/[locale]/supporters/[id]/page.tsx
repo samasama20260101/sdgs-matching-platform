@@ -7,6 +7,7 @@ import { Link, redirect } from '@/i18n/navigation'
 import { AppHeader } from '@/components/app/AppShell'
 import { Footer } from '@/components/app/Footer'
 import { Card, Chip, Heading, Lead, Screen, SectionLabel } from '@/components/app/ui'
+import { SupporterAvatar } from '@/components/supporters/SupporterAvatar'
 import { isUuid } from '@/lib/api/validation'
 import { SUPPORTER_BADGES, type BadgeKey } from '@/lib/constants/sdgs'
 import { publicSocialLinks } from '@/lib/domain/publicSupporter'
@@ -58,7 +59,10 @@ export default async function SupporterPage({ params }: PageProps) {
             <Chip>{tType(supporter.supporterType)}</Chip>
             <span className="text-t12 text-mist">{t('since', { date: since })}</span>
           </span>
-          <Heading className="wrap-anywhere">{supporter.name}</Heading>
+          <div className="flex items-center gap-3">
+            <SupporterAvatar name={supporter.name} photoUrl={supporter.photoUrl} size="lg" />
+            <Heading className="min-w-0 wrap-anywhere">{supporter.name}</Heading>
+          </div>
           {links.length > 0 && (
             <div className="flex flex-wrap gap-1.5 border-t border-line pt-2.5">
               {links.map((l) =>

@@ -393,7 +393,19 @@
     "areasPicked": "{count} elegidas",
     "areasNeedOne": "Elijan al menos una zona",
     "areasCancel": "Cancelar",
-    "areasNone": "Aún sin definir"
+    "areasNone": "Aún sin definir",
+    "photo": "Foto de la organización",
+    "photoTipLabel": "Sobre la foto de la organización",
+    "photoTip": "Puedes subir una foto, como tu logotipo o tus actividades. Aparece en la lista pública de organizaciones, en la página de tu organización, en el Inicio de quienes consultan y en tus ofrecimientos. Si aparecen personas, pide su permiso antes. Nuestro equipo puede quitar fotos que no sean adecuadas.",
+    "photoNote": "Recortamos el centro en un cuadrado. Se borran la ubicación y otros datos del archivo.",
+    "photoChoose": "Elegir una foto",
+    "photoChange": "Cambiar la foto",
+    "photoRemove": "Quitar la foto",
+    "photoSaved": "Foto añadida",
+    "photoRemoved": "Foto quitada",
+    "photoTooSmall": "La foto es demasiado pequeña. Elige una de al menos 128 píxeles por lado",
+    "photoConflict": "Coincidió con otro cambio. Inténtalo de nuevo",
+    "photoFailed": "No pudimos añadir la foto. Prueba con otra"
   },
   "world": {
     "back": "Mi contribución",

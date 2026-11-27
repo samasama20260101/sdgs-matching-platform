@@ -4,12 +4,15 @@ import 'server-only'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { MAX_SUPPORTERS_PER_CASE } from '@/lib/domain/offers'
 import type { CaseRow, OfferRow } from './caseAccess'
+import { photoUrlOf } from '@/lib/server/supporterPhotos'
 
 export type ConsulteeOffer = {
   id: string
   status: OfferRow['status']
   kind: OfferRow['supporter_kind']
   name: string
+  // 支援団体の写真の公開のアドレス(#178)。個人の支え手と写真のない団体は null
+  photoUrl: string | null
   orgType: string | null
   approved: boolean
   phoneVerified: boolean
@@ -65,7 +68,7 @@ export async function buildConsulteeView(c: CaseRow): Promise<ConsulteeCaseView>
   const orgIds = [...new Set([...offers.map((o) => o.supporter_organization_id), c.subject_organization_id].filter((v): v is string => Boolean(v)))]
   const individualIds = offers.filter((o) => o.supporter_kind === 'INDIVIDUAL').map((o) => o.supporter_user_id)
   const [{ data: orgs, error: gErr }, { data: profiles, error: pErr }] = await Promise.all([
-    orgIds.length ? supabaseAdmin.from('organizations').select('id, name, org_type, vetting_status, remote_ok').in('id', orgIds) : Promise.resolve({ data: [], error: null }),
+    orgIds.length ? supabaseAdmin.from('organizations').select('id, name, org_type, vetting_status, remote_ok, photo_path').in('id', orgIds) : Promise.resolve({ data: [], error: null }),
     individualIds.length ? supabaseAdmin.from('supporter_profiles').select('user_id, real_name, phone_verified_at, remote_ok').in('user_id', individualIds) : Promise.resolve({ data: [], error: null }),
   ])
   if (gErr) throw gErr
@@ -88,6 +91,7 @@ export async function buildConsulteeView(c: CaseRow): Promise<ConsulteeCaseView>
       status: o.status,
       kind: o.supporter_kind,
       name: nameOf(o),
+      photoUrl: o.supporter_kind === 'ORGANIZATION' ? photoUrlOf(org?.photo_path as string | null | undefined) : null,
       orgType: (org?.org_type as string | undefined) ?? null,
       approved: org?.vetting_status === 'APPROVED',
       phoneVerified: Boolean(profile?.phone_verified_at),

@@ -4,6 +4,8 @@
 export type SupporterTileData = {
   id: string
   name: string
+  // 団体の写真の公開のアドレス(#178)。なければ null
+  photoUrl: string | null
   supporterType: string | null
   createdAt: string
   bio: string | null
