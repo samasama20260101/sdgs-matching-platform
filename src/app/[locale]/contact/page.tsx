@@ -1,7 +1,7 @@
 'use client'
 
 // お問い合わせ(最後のセーフティネット: 何度マッチングがうまくいかなくても運営につながれる)。
-// 分類の値は DB と運営の画面のため日本語を正本にし、表示だけ訳す
+// 内容の種類は src/lib/domain/contactCategories.ts(値は日本語が正本で、表示だけ訳す)
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/client/api'
@@ -9,23 +9,7 @@ import { Link } from '@/i18n/navigation'
 import { AppFrame } from '@/components/app/AppShell'
 import { useSession } from '@/components/app/SessionProvider'
 import { Button, Card, ErrorNote, Heading, Lead, TextArea, TextField } from '@/components/app/ui'
-
-const CATEGORIES = {
-  guest: [
-    { id: 'aboutService', ja: 'サービスについて知りたい' },
-    { id: 'joinAsSupporter', ja: '支援団体として参加したい' },
-    { id: 'media', ja: '取材・メディア' },
-    { id: 'other', ja: 'その他' },
-  ],
-  person: [
-    { id: 'howto', ja: '使い方がわからない' },
-    { id: 'stuck', ja: '相談が進まない・困っている' },
-    { id: 'matchingComplaint', ja: '支え手とのやりとりに困っている' },
-    { id: 'relink', ja: 'ログインの方法を付け替えたい' },
-    { id: 'joinAsSupporter', ja: '支援団体として参加したい' },
-    { id: 'other', ja: 'その他' },
-  ],
-} as const
+import { CONTACT_CATEGORIES } from '@/lib/domain/contactCategories'
 
 const MESSAGE_MAX = 1000
 
@@ -33,7 +17,7 @@ export default function ContactPage() {
   const t = useTranslations('app.contact')
   const { state } = useSession()
   const loggedIn = state.status === 'ready'
-  const categories = loggedIn ? CATEGORIES.person : CATEGORIES.guest
+  const categories = loggedIn ? CONTACT_CATEGORIES.person : CONTACT_CATEGORIES.guest
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [organization, setOrganization] = useState('')

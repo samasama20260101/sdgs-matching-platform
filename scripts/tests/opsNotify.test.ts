@@ -9,6 +9,8 @@ assert.equal(opsWebhookFor('NEW_CASE', both), 'https://example.test/cases')
 assert.equal(opsWebhookFor('REFERRAL_CONSENT', both), 'https://example.test/cases')
 assert.equal(opsWebhookFor('UNMATCHED', both), 'https://example.test/cases')
 assert.equal(opsWebhookFor('ORG_APPLICATION', both), 'https://example.test/apps')
+// お問い合わせも「新着sos」(#175)
+assert.equal(opsWebhookFor('NEW_INQUIRY', both), 'https://example.test/cases')
 
 // 申し込み用がなければ相談のほうへ。どちらもなければ送らない(空白だけも未設定と同じ)
 assert.equal(opsWebhookFor('ORG_APPLICATION', { DISCORD_OPS_WEBHOOK_URL: 'https://example.test/cases' }), 'https://example.test/cases')
@@ -53,5 +55,14 @@ assert.equal(unmatched[0], '24時間申し出のない相談が 12 件ありま�
 assert.equal(unmatched[1], 'CASE-0 https://app.example/admin/cases/c0')
 assert.equal(unmatched.at(-1), 'ほか 2 件')
 assert.equal(unmatched.length, 12)
+
+// お問い合わせ: 番号・一覧にある種類・ログインした人からか・運営の画面へのリンク。本文・名前・メールは載せない(#175)
+assert.equal(formatOpsEvent({ kind: 'NEW_INQUIRY', displayId: 'INQ-0001', category: 'アプリへの意見・要望', member: true }, ORIGIN),
+  'お問い合わせが届きました INQ-0001\n種類: アプリへの意見・要望(ログインした人から)\nhttps://app.example/admin/inquiries')
+assert.ok(formatOpsEvent({ kind: 'NEW_INQUIRY', displayId: 'INQ-0002', category: '取材・メディア', member: false }, ORIGIN).includes('種類: 取材・メディア(ログインしていない人から)'))
+// 一覧にない種類(API は自由な文字で受ける)は、送られた文字を外へ出さない
+const unknownCategory = formatOpsEvent({ kind: 'NEW_INQUIRY', displayId: 'INQ-0003', category: '090-1234-5678 に電話して', member: false }, ORIGIN)
+assert.ok(unknownCategory.includes('種類: 一覧にない種類('))
+assert.ok(!unknownCategory.includes('090-1234-5678'))
 
 console.log('opsNotify: ok')

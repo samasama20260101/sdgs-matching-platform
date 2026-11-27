@@ -268,6 +268,13 @@ export default function MePage() {
             )}
           </Card>
 
+          {/* ログインしたあとの画面から運営に届く道(最後のセーフティネット)。使ってみての意見もここから(#175) */}
+          <Card className="p-4">
+            <Link href="/contact" className="flex min-h-[48px] items-center justify-between text-t15 font-bold text-night no-underline">
+              {t('toContact')}<span aria-hidden>›</span>
+            </Link>
+          </Card>
+
           <SectionLabel>{t('account')}</SectionLabel>
           <Button variant="outline" onClick={() => { void signOut().then(() => router.replace('/')) }}>{t('signOut')}</Button>
           <WithdrawCard />

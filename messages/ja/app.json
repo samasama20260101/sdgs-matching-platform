@@ -215,6 +215,7 @@
     "toSupport": "支える側の画面へ",
     "becomeSupporter": "支える側にもなる",
     "becomeSupporterNote": "同じアカウントのまま",
+    "toContact": "運営に意見・問い合わせを送る",
     "account": "アカウント",
     "signOut": "ログアウトする",
     "textSize": "文字の大きさ",
@@ -235,7 +236,7 @@
   },
   "contact": {
     "title": "お問い合わせ",
-    "lead": "使い方の質問、相談が進まないとき、支え手とのやりとりに困ったときなど、運営にお知らせください。",
+    "lead": "使い方の質問、相談が進まないとき、支え手とのやりとりに困ったとき、使ってみての意見など、運営にお知らせください。",
     "name": "お名前",
     "email": "メールアドレス",
     "organization": "団体名",
@@ -244,6 +245,7 @@
     "choose": "選んでください",
     "categories": {
       "aboutService": "サービスについて知りたい",
+      "feedback": "アプリへの意見・要望",
       "joinAsSupporter": "支援団体として参加したい",
       "media": "取材・メディア",
       "other": "その他",

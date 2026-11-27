@@ -1,8 +1,10 @@
 // src/app/api/contact/route.ts
 // お問い合わせの受付。ログイン中なら Authorization の本人に結び付け、メールは Auth から取る(送られた値を信じない)
+// 受け付けたら運営へ知らせる(#175。載せるのは番号・種類・ログインした人からかだけ。opsNotifyFormat.ts)
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getBearerToken } from '@/lib/api/auth'
-import { NextResponse } from 'next/server'
+import { notifyOps } from '@/lib/server/opsNotify'
+import { after, NextResponse } from 'next/server'
 
 const MAX_NAME_LENGTH = 100
 const MAX_EMAIL_LENGTH = 254
@@ -71,6 +73,10 @@ export async function POST(request: Request) {
         console.error('[contact] insert error:', error)
         return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
+
+    // 運営への知らせは返事のあとで(返事を待たせない)
+    after(() => notifyOps({ kind: 'NEW_INQUIRY', displayId: data.display_id, category, member: userId !== null })
+        .catch((e) => console.error('[contact] notify:', e)))
 
     return NextResponse.json({ ok: true, display_id: data.display_id })
 }

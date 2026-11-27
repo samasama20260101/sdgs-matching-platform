@@ -212,6 +212,8 @@
     "flow": {
       "apply": "Apply on this screen",
       "interview": "Have an interview with samasama (about 60 minutes online)",
+      "interviewWhyLabel": "Why we interview",
+      "interviewWhy": "Requesters write about troubles that are hard to share with anyone. So they can ask for help with peace of mind, the samasama team meets every support organization to confirm that it is actually active and to talk through the six points.",
       "approved": "Once approved, you're listed and can make offers"
     },
     "apply": "Apply",
