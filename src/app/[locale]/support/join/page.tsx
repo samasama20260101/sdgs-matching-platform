@@ -358,7 +358,10 @@ function OrganizationForm({ person, orgChoices }: { person: MePerson; orgChoices
       <Card tone="support" className="flex flex-col gap-2 p-4">
         <span className="text-t14_5 font-bold">{t('flowTitle')}</span>
         <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-t13 leading-[1.7] text-ink-soft">
-          <li>{t('flow.apply')}</li><li>{t('flow.interview')}</li><li>{t('flow.approved')}</li>
+          <li>{t('flow.apply')}</li>
+          {/* 面談する理由は i の裏に(11/27 の登録面談で代表が「説明が分かりにくい」。#175) */}
+          <li><span className="inline-flex items-center gap-2">{t('flow.interview')} <Tip label={t('flow.interviewWhyLabel')}>{t('flow.interviewWhy')}</Tip></span></li>
+          <li>{t('flow.approved')}</li>
         </ol>
       </Card>
       {orgChoices.length > 0 && <OrgChoice candidates={orgChoices} target={target} onChange={setTarget} />}

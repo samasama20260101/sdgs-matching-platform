@@ -212,6 +212,8 @@
     "flow": {
       "apply": "Solicitarlo en esta pantalla",
       "interview": "Tener una entrevista con samasama (unos 60 minutos en línea)",
+      "interviewWhyLabel": "Por qué hacemos la entrevista",
+      "interviewWhy": "Quienes consultan escriben sobre problemas difíciles de contar. Para que puedan consultar con tranquilidad, samasama se entrevista con cada organización de apoyo para confirmar que realmente está activa y conversar sobre los seis puntos.",
       "approved": "Una vez aprobada, aparece en la lista y puede ofrecer apoyo"
     },
     "apply": "Enviar solicitud",
