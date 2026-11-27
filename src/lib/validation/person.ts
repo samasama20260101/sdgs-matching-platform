@@ -5,7 +5,6 @@ import { locales } from '@/i18n/routing'
 import { isCountryCode } from '@/lib/constants/countries'
 
 export const DISPLAY_NAME_MAX = 20
-export const CITY_MAX = 40
 
 // 規約・ポリシーの版。案文の改定(盤 70〜73)が決まったら上げる。上がると、次に入ったときに同意し直してもらう
 export const CURRENT_TERMS_VERSION = '2026-11-v2-draft'
@@ -19,12 +18,9 @@ const displayName = z
 
 const country = z.string().regex(/^[A-Z]{2}$/).refine(isCountryCode)
 const regionCode = z.string().regex(/^[A-Z]{2}-[0-9A-Z]{1,3}$/).nullable().optional()
-const city = z
-  .string()
-  .transform((v) => v.normalize('NFKC').trim())
-  .pipe(z.string().max(CITY_MAX))
-  .nullable()
-  .optional()
+// 市区町村は自由入力にせず、全国地方公共団体コード(6 桁)で受ける(番地まで書けないように。#173)。
+// 選んだ都道府県の中のものかは API が DB で確かめる
+const municipalityCode = z.string().regex(/^[0-9]{6}$/).nullable().optional()
 const age = z.number().int().min(0).max(MAX_AGE)
 const locale = z.enum(locales)
 
@@ -33,12 +29,12 @@ export const onboardingSchema = z.object({
   age,
   country,
   regionCode,
-  city,
+  municipalityCode,
   locale,
   acceptTerms: z.literal(true),
 })
 
 export const profileUpdateSchema = z
-  .object({ displayName, age, country, regionCode, city, locale })
+  .object({ displayName, age, country, regionCode, municipalityCode, locale })
   .partial()
   .refine((v) => Object.keys(v).length > 0, { message: 'empty' })

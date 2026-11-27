@@ -35,7 +35,7 @@ function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Pro
       age: person.age === null ? '' : String(person.age),
       country: person.country,
       regionCode: person.regionCode ?? '',
-      city: person.city ?? '',
+      municipalityCode: person.municipalityCode ?? '',
       locale: isAppLocale(person.locale) ? person.locale : 'ja',
     })
     setEditing(true)
@@ -78,7 +78,7 @@ function ProfileCard({ person, onSaved }: { person: MePerson; onSaved: () => Pro
     )
   }
 
-  const place = [countryName(person.country, person.locale), person.city].filter(Boolean).join(' ')
+  const place = [countryName(person.country, person.locale), person.municipalityName].filter(Boolean).join(' ')
   return (
     <Card className="flex items-center gap-3 p-4">
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lamp-soft text-t18 font-bold" aria-hidden>

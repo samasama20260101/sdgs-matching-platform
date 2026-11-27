@@ -1,12 +1,12 @@
 'use client'
 
 // 呼び名・年齢・国と地域・言語(はじめの質問と「わたし」の両方で使う)。
-// 名前・電話番号・住所・性別・生年月日は聞かない(盤 11)
+// 名前・電話番号・住所・性別・生年月日は聞かない(盤 11)。市区町村は一覧から選び、団体コードで持つ(番地まで書けないように。#173)
 import { useEffect, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { localeLabels, locales, type AppLocale } from '@/i18n/routing'
 import { sortedCountries } from '@/lib/constants/countries'
-import { DISPLAY_NAME_MAX, CITY_MAX } from '@/lib/validation/person'
+import { DISPLAY_NAME_MAX } from '@/lib/validation/person'
 import { needsGuardianConsent, parseAgeInput } from '@/lib/domain/age'
 import { GuardianConsentNote } from './GuardianConsentNote'
 import { TextField } from './ui'
@@ -16,14 +16,15 @@ export type ProfileDraft = {
   age: string
   country: string
   regionCode: string
-  city: string
+  municipalityCode: string
   locale: AppLocale
 }
 
 type Region = { code: string; name_local: string; name_en: string }
+type Municipality = { code: string; name: string; kind: string }
 
 export function emptyProfileDraft(locale: AppLocale): ProfileDraft {
-  return { displayName: '', age: '', country: locale === 'ja' ? 'JP' : '', regionCode: '', city: '', locale }
+  return { displayName: '', age: '', country: locale === 'ja' ? 'JP' : '', regionCode: '', municipalityCode: '', locale }
 }
 
 export function profileDraftErrors(d: ProfileDraft) {
@@ -50,11 +51,28 @@ function useRegions(country: string) {
   return loaded.country === country ? loaded.regions : []
 }
 
+// 都道府県の市区町村(日本だけ)。読んだ一覧はどの都道府県のものかと一緒に持つ
+function useMunicipalities(country: string, regionCode: string) {
+  const key = country === 'JP' && /^JP-\d{2}$/.test(regionCode) ? regionCode : ''
+  const [loaded, setLoaded] = useState<{ key: string; list: Municipality[] }>({ key: '', list: [] })
+  useEffect(() => {
+    if (!key) return
+    let alive = true
+    fetch(`/api/municipalities?prefecture=${encodeURIComponent(key)}`)
+      .then((r) => (r.ok ? r.json() : { municipalities: [] }))
+      .then((d: { municipalities?: Municipality[] }) => { if (alive) setLoaded({ key, list: d.municipalities ?? [] }) })
+      .catch(() => { if (alive) setLoaded({ key, list: [] }) })
+    return () => { alive = false }
+  }, [key])
+  return key && loaded.key === key ? loaded.list : []
+}
+
 export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileDraft; onChange: (d: ProfileDraft) => void; showErrors: boolean }) {
   const t = useTranslations('app.profile')
   const uiLocale = useLocale()
   const countries = useMemo(() => sortedCountries(uiLocale), [uiLocale])
   const regions = useRegions(draft.country)
+  const municipalities = useMunicipalities(draft.country, draft.regionCode)
   const errors = profileDraftErrors(draft)
   const set = (patch: Partial<ProfileDraft>) => onChange({ ...draft, ...patch })
   // 打っている途中(「30」の「3」)で案内が出たり消えたりしないよう、欄を離れてから出す
@@ -88,7 +106,7 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
         <span className="text-t13 font-bold">{t('country')}</span>
         <select
           value={draft.country}
-          onChange={(e) => set({ country: e.target.value, regionCode: '' })}
+          onChange={(e) => set({ country: e.target.value, regionCode: '', municipalityCode: '' })}
           className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
           aria-invalid={showErrors && errors.country ? true : undefined}
         >
@@ -102,7 +120,7 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
           <span className="text-t13 font-bold">{t('region')}<span className="ml-1 text-t11_5 font-normal text-mist">{t('optional')}</span></span>
           <select
             value={draft.regionCode}
-            onChange={(e) => set({ regionCode: e.target.value })}
+            onChange={(e) => set({ regionCode: e.target.value, municipalityCode: '' })}
             className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
           >
             <option value="">{t('choose')}</option>
@@ -110,13 +128,19 @@ export function ProfileFields({ draft, onChange, showErrors }: { draft: ProfileD
           </select>
         </label>
       )}
-      <TextField
-        label={t('city')}
-        hint={t('optional')}
-        value={draft.city}
-        maxLength={CITY_MAX}
-        onChange={(e) => set({ city: e.target.value })}
-      />
+      {municipalities.length > 0 && (
+        <label className="flex flex-col gap-1.5">
+          <span className="text-t13 font-bold">{t('city')}<span className="ml-1 text-t11_5 font-normal text-mist">{t('optional')}</span></span>
+          <select
+            value={draft.municipalityCode}
+            onChange={(e) => set({ municipalityCode: e.target.value })}
+            className="min-h-[48px] rounded-tool border-[1.5px] border-line-strong bg-paper px-3 text-t16"
+          >
+            <option value="">{t('choose')}</option>
+            {municipalities.map((m) => <option key={m.code} value={m.code}>{m.name}</option>)}
+          </select>
+        </label>
+      )}
       <label className="flex flex-col gap-1.5">
         <span className="text-t13 font-bold">{t('language')}</span>
         <select
@@ -137,7 +161,7 @@ export function draftToPayload(d: ProfileDraft) {
     age: Number(d.age),
     country: d.country,
     regionCode: d.regionCode || null,
-    city: d.city.trim() || null,
+    municipalityCode: d.country === 'JP' && d.regionCode ? d.municipalityCode || null : null,
     locale: d.locale,
   }
 }

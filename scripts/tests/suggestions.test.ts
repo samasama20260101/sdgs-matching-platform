@@ -22,10 +22,15 @@ import {
   rankCandidates,
   relevanceScore,
   servesRegion,
+  servesHome,
+  wardOfWindow,
+  isLocalGovWindow,
+  localGovAfterOrganizations,
   type SuggestCandidate,
   type SuggestCase,
 } from '../../src/lib/domain/suggestions'
 import { buildSuggestPrompt, parseSuggestPicks } from '../../src/lib/ai/prompts/suggestOrganizations'
+import { localGovWindowDescription, municipalityCodesOf, shortWardName } from '../../src/lib/domain/localGovWindows'
 
 const org = (over: Partial<SuggestCandidate> = {}): SuggestCandidate => ({
   id: 'o1',
@@ -186,8 +191,10 @@ const a = org({ id: 'a', name: 'あ', channels: ['PHONE'] })
 const b = org({ id: 'b', name: 'い', indicators: ['1.2.1', '11.1.1'] })
 const c = org({ id: 'c', name: 'う', indicators: ['5.2.1'], sdgsGoals: [5] })
 const legal: SuggestCase = { ...person, indicators: ['1.2.1', '16.3.1'] }
-const ranked = rankCandidates([a, b, c, houterasu, municipal, hotline, a], legal)
-assert.deepEqual(ranked.map((r) => r.candidate.id), ['a', 'b', 'h'])
+const ranked = rankCandidates([a, b, c, houterasu, { ...municipal, name: '自立相談支援センター' }, hotline, a], legal)
+// 都道府県の自立相談支援機関は、地域の公的な窓口として埋め草の後ろに残る(AI が選ぶ。#173)
+assert.deepEqual(ranked.map((r) => r.candidate.id), ['a', 'b', 'h', 'm'])
+assert.equal(ranked.find((r) => r.candidate.id === 'm')?.tier, 'LOCAL_GOV')
 // 公的な窓口の埋め草も、相談の大項目と合わなければ出さない(家賃の相談に法テラスを出さない)
 assert.deepEqual(rankCandidates([a, b, houterasu], person).map((r) => r.candidate.id), ['b', 'a'])
 const many = rankCandidates([a, b, org({ id: 'd', name: 'え' }), houterasu], legal)
@@ -305,5 +312,66 @@ assert.deepEqual(areaNoteFor({ serviceScope: 'PREFECTURE', serviceCodes: ['JP-43
 assert.deepEqual(areaNoteFor({ serviceScope: 'MUNICIPALITY', serviceCodes: [], prefectureCode: null }, 'JP-13'), { kind: 'OTHER_PREFECTURE', code: null })
 assert.deepEqual(channelsForCard(['VISIT', 'PHONE', 'OUTREACH', 'CHAT'], true), ['PHONE', 'CHAT'])
 assert.deepEqual(channelsForCard(['VISIT', 'PHONE'], false), ['PHONE', 'VISIT'])
+
+// 地域の公的な窓口(#173)。熊本市中央区の人: 区と市の両方のコードで合わせる
+assert.deepEqual(municipalityCodesOf('431010', '431001'), ['431010', '431001'])
+assert.deepEqual(municipalityCodesOf('432024', null), ['432024'])
+assert.deepEqual(municipalityCodesOf(null, null), [])
+const kumamotoChuo: SuggestCase = { ...person, regionCode: 'JP-43', municipalityCodes: ['431010', '431001'] }
+const win = (over: Partial<SuggestCandidate> = {}): SuggestCandidate => org({ kind: 'PUBLIC_WINDOW', categories: ['SELF_RELIANCE_SUPPORT'], acceptsConsultation: 'UNKNOWN', indicators: [], sdgsGoals: [], prefectureCode: 'JP-43', serviceScope: 'MUNICIPALITY', serviceCodes: ['431001'], localGovCode: '431028', ...over })
+// 市の窓口(受け持ちに市のコード)は区の人に出す。ほかの市の窓口・地区ごとの窓口・ほかの県の窓口は出さない
+assert.equal(servesHome(win(), kumamotoChuo), true)
+assert.equal(servesHome(win({ serviceCodes: [], localGovCode: '431010' }), kumamotoChuo), true)
+assert.equal(servesHome(win({ serviceCodes: ['432024'], localGovCode: '432024' }), kumamotoChuo), false)
+assert.equal(servesHome(win({ serviceScope: 'DISTRICT' }), kumamotoChuo), false)
+assert.equal(servesHome(win({ serviceScope: 'PREFECTURE', serviceCodes: ['JP-43'], localGovCode: null }), kumamotoChuo), true)
+assert.equal(servesHome(win({ serviceScope: 'PREFECTURE', prefectureCode: 'JP-40', serviceCodes: ['JP-40'] }), kumamotoChuo), false)
+// 政令市のほかの区にある窓口は、受け持ちが市でも出さない。市そのものを選んだ人には区の窓口を出さない
+const kumaWards = { own: { code: '431010', name: '中央区' }, others: [{ code: '431028', name: '東区' }, { code: '431036', name: '西区' }] }
+const kumaChuoWithWards: SuggestCase = { ...kumamotoChuo, wards: kumaWards }
+assert.equal(servesHome(win({ localGovCode: '431028' }), kumaChuoWithWards), false)
+assert.equal(servesHome(win({ localGovCode: '431010' }), kumaChuoWithWards), true)
+assert.equal(servesHome(win({ localGovCode: '431001', name: '熊本市社会福祉協議会' }), kumaChuoWithWards), true)
+// 団体コードが空で、区の名前が名前にだけあるとき(区役所の窓口)
+assert.equal(servesHome(win({ localGovCode: null, name: '西区福祉課' }), kumaChuoWithWards), false)
+assert.equal(servesHome(win({ localGovCode: null, name: '中央区福祉課' }), kumaChuoWithWards), true)
+// 市そのものを選んだ人には、どの区の窓口も出さない
+assert.equal(servesHome(win({ localGovCode: null, name: '中央区福祉課' }), { ...kumamotoChuo, municipalityCodes: ['431001'], wards: { own: null, others: [kumaWards.own, ...kumaWards.others] } }), false)
+// 「港南区」と「南区」: 南区の人に港南区の窓口を出さず、港南区の人には出す
+const yokoWards = (own: string) => ({ own: { code: own === '南区' ? '141089' : '141119', name: own }, others: [{ code: own === '南区' ? '141119' : '141089', name: own === '南区' ? '港南区' : '南区' }] })
+assert.equal(wardOfWindow({ localGovCode: null, name: '横浜市 港南区こども家庭支援課' }, { wards: yokoWards('南区') }), 'OTHER')
+assert.equal(wardOfWindow({ localGovCode: null, name: '横浜市 港南区こども家庭支援課' }, { wards: yokoWards('港南区') }), 'OWN')
+assert.equal(wardOfWindow({ localGovCode: null, name: '横浜市 南区こども家庭支援課' }, { wards: yokoWards('南区') }), 'OWN')
+assert.equal(wardOfWindow({ localGovCode: null, name: '横浜市社会福祉協議会' }, { wards: yokoWards('南区') }), null)
+assert.equal(shortWardName('横浜市港北区', '横浜市'), '港北区')
+// 市区町村が分からない人には、市区町村の窓口は出さず、都道府県の窓口だけ
+assert.equal(servesHome(win(), { ...kumamotoChuo, municipalityCodes: [] }), false)
+assert.equal(servesHome(win({ serviceScope: 'PREFECTURE', serviceCodes: ['JP-43'] }), { ...kumamotoChuo, municipalityCodes: [] }), true)
+assert.equal(servesHome(win(), { ...kumamotoChuo, regionCountry: 'US' }), false)
+// 個人の相談だけ。一覧にない種類(法テラス・よろず支援拠点)は地域の公的な窓口にしない
+assert.equal(isLocalGovWindow(win(), kumamotoChuo), true)
+assert.equal(isLocalGovWindow(win(), { ...kumamotoChuo, subject: 'COMPANY' }), false)
+assert.equal(isLocalGovWindow(win(), { ...kumamotoChuo, subject: 'COMMUNITY' }), false)
+assert.equal(isLocalGovWindow(win({ categories: ['LEGAL_SUPPORT_OFFICE'] }), kumamotoChuo), false)
+assert.ok(localGovWindowDescription(['SELF_RELIANCE_SUPPORT'])?.includes('自立相談支援'))
+assert.equal(localGovWindowDescription(['NPO']), null)
+// 種類ごとに 1 つ。区の窓口 > 市の窓口 > 都道府県の窓口
+const eastCenter = win({ id: 'east', name: '熊本市東生活自立支援センター', localGovCode: '431028' })
+const chuoCenter = win({ id: 'chuo', name: '熊本市中央生活自立支援センター', localGovCode: '431010' })
+const consumer = win({ id: 'cons', name: '熊本市消費者センター', categories: ['CONSUMER_CENTER'], localGovCode: '431001' })
+const prefSelf = win({ id: 'pself', name: '熊本県自立相談支援センター', serviceScope: 'PREFECTURE', serviceCodes: ['JP-43'], localGovCode: null })
+const localRanked = rankCandidates([a, eastCenter, prefSelf, chuoCenter, consumer], { ...kumamotoChuo, indicators: ['1.2.1'] })
+assert.deepEqual(localRanked.filter((r) => r.tier === 'LOCAL_GOV').map((r) => r.candidate.id), ['chuo', 'cons'])
+// AI が地域の公的な窓口を 2 つ選んでも 1 つまで。民間の団体より前に選んでも後ろに回す
+const localPicks = pickSuggestions(localRanked, [{ id: 'chuo', reason: 'x' }, { id: 'cons', reason: 'y' }, { id: 'a', reason: 'z' }])
+assert.deepEqual(localPicks.map((p) => [p.id, p.rank]), [['a', 1], ['chuo', 2]])
+// AI が使えないときは、地域の公的な窓口で埋めない
+assert.equal(pickSuggestions(localRanked, null).some((p) => p.id === 'chuo' || p.id === 'cons'), false)
+// AI が民間を選ばず窓口だけを選んだときは、そのまま出す
+assert.deepEqual(pickSuggestions(localRanked, [{ id: 'cons', reason: 'y' }]).map((p) => p.id), ['cons'])
+// 並べ直し: 民間の後ろへ。ほかの並び(緊急の電話窓口など)は変えない
+const byId = new Map(localRanked.map((r) => [r.candidate.id, r]))
+assert.deepEqual(localGovAfterOrganizations([{ id: 'chuo', rank: 1, reason: null, method: 'AI' }, { id: 'a', rank: 2, reason: null, method: 'AI' }], byId).map((p) => [p.id, p.rank]), [['a', 1], ['chuo', 2]])
+assert.deepEqual(localGovAfterOrganizations([{ id: 'a', rank: 1, reason: null, method: 'AI' }, { id: 'chuo', rank: 2, reason: null, method: 'AI' }], byId).map((p) => p.id), ['a', 'chuo'])
 
 console.log('suggestions: ok')

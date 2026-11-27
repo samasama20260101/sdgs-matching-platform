@@ -10,7 +10,7 @@ import { supporterCaseAccess, type SupporterFace } from '@/lib/domain/visibility
 import { requireMfaForSensitive } from './mfaPolicy'
 
 export const CASE_COLUMNS =
-  'id, display_id, owner_user_id, assignee_user_id, subject_type, subject_organization_id, proxy_organization_id, title, description_free, status, visibility, urgency, intake_qna, is_sensitive, is_minor, affected_population, region_country, region_code, city, locale, created_at, started_at, resolved_at, supporter_resolved_at, entry_code'
+  'id, display_id, owner_user_id, assignee_user_id, subject_type, subject_organization_id, proxy_organization_id, title, description_free, status, visibility, urgency, intake_qna, is_sensitive, is_minor, affected_population, region_country, region_code, municipality_code, locale, created_at, started_at, resolved_at, supporter_resolved_at, entry_code'
 
 export type CaseRow = {
   id: string
@@ -32,7 +32,7 @@ export type CaseRow = {
   affected_population: number
   region_country: string | null
   region_code: string | null
-  city: string | null
+  municipality_code: string | null
   locale: string
   created_at: string
   started_at: string | null
